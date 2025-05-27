@@ -1,0 +1,180 @@
+void ILS::SelectPTS_specialized(Graph& G, Solution& sol){
+    // Update: Andrea doet het ook zoals ik het doe, dus enkel de HAPs van i en j veranderen!!
+    // p. 308: it swaps the positions of t_i and t_j on the set of rounds in R_s
+    // They do not mention that nrH_i must be ==  to nrH_j..
+    // ONLY DO THIS MOVE FOR TRAVEL!!!
+    int i = rand()%G.NrNodes;
+    int j = ((i+1)+(rand()%(G.NrNodes-1)))%G.NrNodes; // selects another than i
+    int StartColor = rand()%G.NrColors;
+    if (G.TeamColorOpp[i][StartColor] == j){
+        ++StartColor %= G.NrColors;
+    }
+    bool evaluate_cost = true;
+    bool swap = false;
+    int cost = 0;
+    Lantarn lantarn = CreateLantarn(G, i, j, StartColor, sol);
+    if (lantarn.InfeasibleOpponents){
+        // It can happen that, if we have an infeasible color, we introduce infeasible games
+        return;
+    }
+    int cost_travel = CostEvaluationTravelLantarn(G, sol, lantarn);
+
+    // Make a copy of the orientations
+    vector<vector<HA>>OrientationsCopy(G.NrNodes, vector<HA>(G.NrColors, HA::BYE));
+    for (int t = 0; t < G.NrNodes; ++t){
+        for (int c = 0; c < G.NrColors; ++c){
+            OrientationsCopy[t][c] = G.Orientation[t][c];
+        }
+    }
+    const int l = G.getIndex();
+    int cost_HAP_before = sol.ComputeHACostLeague(l); // the capacities should be okay, so only test the constraints within the league (breaks, etc)
+
+    NrChosenTravel.at(move_name::PTS)++;
+    /*
+    if (include_travel && !Accept(cost_travel)){
+        return;  
+    }
+    */
+    NrImprovTravel.at(move_name::PTS)++;
+
+    HA_approach OA = HA_approach::Optimized;
+    bool cycles_optimized = false;
+
+    // TODO: integrate option of finding path for optimize cycles approach
+    // TODO: er zit nog een fout op de capacities bij deze..
+    /*
+    if (LantarnContainsOneTeamPerClubPerColor(G, sol, lantarn)){
+        // cout << "Lantarn contains one team per club per color!!" << endl;
+        NrPTSApproachChosen.at(OA)++;
+        if (OptimizeCyclesLantarn(G, sol, lantarn)){
+            // cout << "optimize cycles" << endl;
+            cycles_optimized = true;
+        }
+    }
+    */
+
+    if (!cycles_optimized){
+        OA = HA_approach::Traditional;
+        NrPTSApproachChosen.at(OA)++;
+        int cost_haps = CostEvaluationHAPsLantarnTraditional(G, sol, lantarn);
+        if (cost_haps > 0){
+            sol.resetNrH_temp();
+            cost_haps = CostEvaluationHAPsLantarnAlternative(G, sol, lantarn);
+            OA = HA_approach::Alternative;
+            NrPTSApproachChosen.at(OA)++;
+        }
+        else{
+            if (abs(lantarn.NrH[i] - lantarn.NrH[j]) == 1){
+                // geen resetNrH_temp hier!!
+                // Find path from i to j
+                NrPTSApproachChosen.at(OA)++;
+                vector<int>path = PathBoostLantarn(G, sol, lantarn);
+                if (path.empty()){
+                    // cout << "no path" << endl;
+                    sol.resetNrH_temp();
+                    return;
+                }
+                else{
+                    SwapPathBoostLantarn(G, sol, path);
+                    OA = HA_approach::Path;
+                }
+            }
+            else{
+                OA = HA_approach::Traditional;
+            }
+        }
+
+        /*
+        if (cost_haps > 0){
+            sol.resetNrH_temp();
+            return;
+        }
+        */
+
+        if (OA == HA_approach::Traditional || OA == HA_approach::Path){
+            // The thing that really matters is how many times they are chosen!!
+            setOrientationsTraditional(G, lantarn);
+        }
+        else if (OA == HA_approach::Alternative){
+            setOrientationsAlternative(G, lantarn);
+        }
+        else{
+            // optimize cycles PTS
+        }
+    }
+
+    // test whether the lantarn satisfies all HAP constraints
+    int cost_HAP_after = sol.ComputeHACostLeague(l); // we cannot do it only for teams in the lantarn because we possibly also use a path outside the lantarn..
+    int delta = cost_travel + cost_HAP_after - cost_HAP_before;
+    if (!Accept(delta)){
+        // Now, unfortunately, we violated the HAP constraints
+        sol.resetNrH_temp();
+        for (int t = 0; t < G.NrNodes; ++t){
+            for (int c = 0; c < G.NrColors; ++c){
+                G.Orientation[t][c] = OrientationsCopy[t][c];
+            }
+        }
+        return;
+    }
+
+    NrPTSApproachExecuted.at(OA)++;
+    // cout << "update lantarn" << endl;
+    UseLantarn(G, lantarn);
+    // cout << "cost HA = " << sol.ComputeHACostLeague(G.getIndex()) << endl;
+    /*
+    if (include_travel && include_HAP){
+        assert(sol.ComputeHACostLeague(l)==0);
+    }
+    */
+
+    current_obj += delta;
+    sol.setNrH_from_temp();
+    setAllWeightsBF(G, sol);
+    sol.resetNrH_temp();
+}
+
+
+void ILS::SelectMatching(Graph& G, Solution& sol, bool& bipartite){
+
+    int r = rand()%sol.getNrRounds();
+
+    // First, make a copy so that we can always go back if things don't work out
+    vector<vector<HA>>OrientationsCopy = MakeOrientationsCopy(G);
+    vector<pair<int,int>>OriginalMatching(G.NrNodes/2); // so that we can go back if things don't work out
+    vector<bool>NodeSeen(G.NrNodes, false);
+    int i,j;
+    int m = 0;
+    for (i = 0; i < G.NrNodes; ++i){
+        if (!NodeSeen[i]){
+            j = G.TeamColorOpp[i][r];
+            NodeSeen[j] = true;
+            OriginalMatching[m++] = {i,j};
+        }
+    }
+    int cost_before = sol.ComputeTotalCost();
+
+    // cout << "Matching" << endl;
+    bool keepHAP = true;
+    int cost = MoveMWPM(G, sol, r, bipartite, keepHAP); // always do MWPM if coloring is feasible
+    // cout << "cost = " << cost << endl;
+    if (Accept(cost)){
+        NrImprovTravel.at(move_name::M)++;
+        current_obj += cost;
+    }
+    else{
+        for (int t = 0; t < G.NrNodes; ++t){
+            for (int c = 0; c < G.NrColors; ++c){
+                G.Orientation[t][c] = OrientationsCopy[t][c];
+            }
+        }
+        SwapMatchings(G, sol, OriginalMatching, r, cost);
+        sol.resetNrH_temp();
+        sol.validate();
+    }
+
+    sol.setNrH_from_temp();
+    setAllWeightsBF(G, sol);
+    sol.resetNrH_temp();
+
+    sol.validate();
+} 

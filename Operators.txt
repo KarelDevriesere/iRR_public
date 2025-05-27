@@ -1,0 +1,913 @@
+void setOrientationsAlternative(Graph& G, Lantarn& lantarn){
+
+    vector<vector<HA>>Orientations_copy(G.NrNodes, vector<HA>(G.NrColors));
+    for (int i = 0; i < G.NrNodes; ++i){
+        for (int c = 0; c < G.NrColors; ++c){
+            Orientations_copy[i][c] = G.Orientation[i][c];
+        }
+    }
+
+    int i = lantarn.i;
+    int j = lantarn.j;
+    for (auto& k: lantarn.middle){
+        int c_i = G.MatchColor[i][k];
+        int c_j = G.MatchColor[k][j];
+        if (c_i < 0){
+            G.Orientation[i][c_j] = Orientations_copy[j][c_j];
+        }
+        else if (c_j < 0){
+            G.Orientation[j][c_i] = Orientations_copy[i][c_i];
+        }
+        else{
+            G.Orientation[i][c_j] = Orientations_copy[i][c_i];
+            G.Orientation[j][c_i] = Orientations_copy[j][c_j];
+
+            std::swap(G.Orientation[k][c_i], G.Orientation[k][c_j]);
+        }
+    }
+}
+
+
+void setOrientationsTraditional(Graph& G, Lantarn& lantarn){
+
+    // this function must come befor UseLantarn
+
+    int i = lantarn.i;
+    int j = lantarn.j;
+    for (auto& k: lantarn.middle){
+        int c_i = G.MatchColor[i][k];
+        if (c_i >= 0){
+            std::swap(G.Orientation[i][c_i], G.Orientation[j][c_i]);
+        }
+    }
+}
+
+
+
+int CostEvaluationHAPsLantarnTraditional(Graph& G, Solution& sol, Lantarn& lantarn){
+    // This is the traditional way: but we can only do this if NrH_i == NrH_j
+    int i = lantarn.i;
+    int j = lantarn.j;
+    if ((lantarn.NrH[i] != lantarn.NrH[j]) && (abs(lantarn.NrH[i] - lantarn.NrH[j]) != 1)){
+        return 100;
+    }
+    // if condition satisfied: calculate the cost (in terms of capacity violations) of swapping the HAPS of i and j
+    // the HAPs of the middle teams remain the same!!
+    for (auto& k: lantarn.middle){
+        int c = G.MatchColor[i][k];
+        // Updates the temporary capacities as if the orientations of i and j are swapped in c
+        if (c >= 0){ // we can just skip the infeasible color!!
+            UpdateNrHA_TS(G, i, j, c, sol);
+        }
+    }
+    return sol.CostCapacityViol*max(0, ComputeTotalCostHA(sol));
+}
+
+
+int CostEvaluationHAPsLantarnAlternative(Graph& G, Solution& sol, Lantarn& lantarn){
+    // Instead of swapping the HAPs of i and j, keep the direction of all matches
+    // Advantage is that we can do this even if NrH_i == NrH_j
+    // However, now all the HAPs of the middle teams also potentially change
+
+    int i = lantarn.i;
+    int j = lantarn.j;
+
+    if (lantarn.InfeasibleColor && G.Orientation[i][lantarn.c_[i]] != G.Orientation[j][lantarn.c_[j]]){
+        // There is a necessary condition, however, that the colors that are changed for the
+        // infeasible colors have the same direction (otherwise we break the balance)
+        return 100;
+    }
+
+    for (auto& k: lantarn.middle){
+        int c_i = G.MatchColor[i][k];
+        int c_j = G.MatchColor[j][k];
+        // c_i goes out for i and c_j comes in
+        if (c_i < 0){
+            if (G.Orientation[j][c_j] == HA::H){
+                --sol.NrH_temp[sol.getTeamClub(j)][c_j];
+                ++sol.NrH_temp[sol.getTeamClub(i)][c_j];
+            }
+        }
+        else if (c_j < 0){
+            if (G.Orientation[i][c_i] == HA::H){
+                --sol.NrH_temp[sol.getTeamClub(i)][c_i];
+                ++sol.NrH_temp[sol.getTeamClub(j)][c_i];
+            }
+        }
+        else{
+            UpdateNrHA_OrientationSame(G, i, k, j, sol);
+        }
+    }
+
+    return sol.CostCapacityViol*max(0, ComputeTotalCostHA(sol));
+}
+
+bool LantarnContainsOneTeamPerClubPerColor(Graph& G, Solution& sol, Lantarn& lantarn){
+    // We only need to check whether teams from the same club do not neighbor to the same color!!
+    // cout << "check whether lantarn contains one team per club" << endl;
+    int i = lantarn.i;
+    int j = lantarn.j;
+    // cout << "club of " << i << " = " << sol.getTeamClub(i) << endl;
+    // cout << "club of " << j << " = " << sol.getTeamClub(j) << endl;
+    if (sol.getTeamClub(i) == sol.getTeamClub(j)){
+        // cout << i << " and " << j << " same club" << endl;
+        return false;
+    }
+    if (lantarn.InfeasibleColor && G.Orientation[i][lantarn.c_[i]] != G.Orientation[j][lantarn.c_[j]]){
+        // There is a necessary condition, however, that the colors that are changed for the
+        // infeasible colors have the same direction (otherwise we break the balance)
+        // Condition also appears in CostEvaluationHAPsLantarnAlternative() !!!
+        return false;
+    }
+    int c_j;
+    int FirstClub = sol.getTeamClub(lantarn.middle[0]);
+    // cout << "club of " << lantarn.middle[0] << " = " << FirstClub << endl;
+    for (int k = 1; k < lantarn.middle.size(); ++k){
+        c_j = G.MatchColor[lantarn.middle[k-1]][j];
+        if (c_j >= 0){
+            // cout << "club of " << lantarn.middle[k] << " = " << sol.getTeamClub(lantarn.middle[k]) << endl;
+            if (sol.getTeamClub(lantarn.middle[k-1]) == sol.getTeamClub(lantarn.middle[k])){
+                return false;
+            }
+        }
+        else{
+            // return false; 
+            // cout << "club of " << lantarn.middle[k] << " = " << lantarn.middle[k] << endl;
+            if (FirstClub == sol.getTeamClub(lantarn.middle[k])){
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+
+bool OptimizeCyclesLantarn(Graph& G, Solution& sol, Lantarn& lantarn){
+    vector<int>ReverseTeams;
+    vector<int>IndifferentTeamsDown; // i -> k -> j, current direction feasible and directions reversed feasible
+    vector<int>IndifferentTeamsUp; // i <- k <- j, current direction feasible and directions reversed feasible
+    vector<int>SameDirectionTeams; // always keep the same direction
+    vector<int>InfeasibleColorTeams; // these always swap directions!
+    int i = lantarn.i;
+    int j = lantarn.j;
+    unordered_map<int, int>NrReverse = {{i, 0}, {j, 0}};
+    unordered_map<int, vector<int>*>IndifferentTeams = {{i, &IndifferentTeamsUp}, {j, &IndifferentTeamsDown}};
+    int c_i, c_j;
+    int club_i = sol.getTeamClub(i), club_j = sol.getTeamClub(j);
+    // cout << "Optimize cycles in lantarn" << endl;
+    for (auto& k: lantarn.middle){
+        c_i = G.MatchColor[i][k];
+        c_j = G.MatchColor[j][k];
+        if (c_i < 0){
+            if ((G.Orientation[j][c_j] == HA::H && sol.NrH_temp[club_i][c_j] + 1 <= sol.getCapacityClub(club_i, c_j)) || G.Orientation[j][c_j] == HA::A){
+                InfeasibleColorTeams.push_back(k);
+                continue;
+            }
+            else{
+                return false;
+            }
+        }
+        if (c_j < 0){
+            if ((G.Orientation[i][c_i] == HA::H && sol.NrH_temp[club_j][c_i] + 1 <= sol.getCapacityClub(club_j, c_i)) || G.Orientation[i][c_i] == HA::A){
+                InfeasibleColorTeams.push_back(k);
+                continue;
+            }
+            else{
+                return false;
+            }
+        }
+        if (G.Orientation[i][c_i] == G.Orientation[j][c_j]){
+            if (G.Orientation[i][c_i] == HA::A){
+                SameDirectionTeams.push_back(k);
+                continue;
+            }
+            else if (sol.NrH_temp[club_i][c_j] + 1 <= sol.getCapacityClub(club_i, c_j) && sol.NrH_temp[club_j][c_i] + 1 <= sol.getCapacityClub(club_j, c_i)){
+                SameDirectionTeams.push_back(k);
+                continue;
+            }
+            else{
+                return false;
+            }
+        }
+        else{
+            // First, test whether the direction is feasible:
+            bool current_direction_feasible = false;
+            bool reversed_direction_feasible = false;
+            int club_k = sol.getTeamClub(k);
+            int h = i, a = j, c_h = c_i, c_a = c_j;
+            if (G.Orientation[k][c_i] == HA::H){
+                h = j, a = i; c_h = c_j, c_a = c_i;
+            }
+            else{
+                assert(G.Orientation[k][c_i] == HA::A);
+            }
+            int club_h = sol.getTeamClub(h), club_a = sol.getTeamClub(a);
+
+            if (sol.NrH_temp[club_k][c_h] + 1 <= sol.getCapacityClub(club_k, c_h) 
+                && sol.NrH_temp[club_h][c_a] + 1 <= sol.getCapacityClub(club_h, c_a)){
+                    current_direction_feasible = true;
+            }
+            if (sol.NrH_temp[club_a][c_h] + 1 <= sol.getCapacityClub(club_a, c_h)){ // for k nothing changes!!
+                reversed_direction_feasible = true;
+            }
+            if (!current_direction_feasible && !reversed_direction_feasible){
+                return false; // Then, we cannot prevent the capacities from being violated
+            }
+
+            if (current_direction_feasible && reversed_direction_feasible){
+                IndifferentTeams[h]->push_back(k);
+                // cout << i << "-" << k << "-" << j << " is indifferent" << endl;
+            }
+            else if (current_direction_feasible){
+                SameDirectionTeams.push_back(k);
+                // cout << i << "-" << k << "-" << j << " is conservative" << endl;
+            }
+            else{
+                ++NrReverse.at(h);
+                ReverseTeams.push_back(k);
+                /// cout << i << "-" << k << "-" << j << " wants to be reversed" << endl;
+            }
+        }
+    }
+    // cout << "eveyrthing ok till here: swap the orientations" << endl;
+
+    // Make a copy of the orientations for swapping directions
+
+    vector<vector<HA>>OrientationsCopy(G.NrNodes, vector<HA>(G.NrColors, HA::BYE));
+    for (int t = 0; t < G.NrNodes; ++t){
+        for (int c = 0; c < G.NrColors; ++c){
+            OrientationsCopy[t][c] = G.Orientation[t][c];
+        }
+    }
+
+    int max_t = i, min_t = j;
+    if (NrReverse[i] <= NrReverse[j]){
+        max_t = j, min_t = i;
+    }
+
+    // cout << ReverseTeams[max_t].size() <<  " <= " << ReverseTeams[min_t].size() + IndifferentTeams[min_t].size() << endl;
+
+    if (NrReverse[max_t] <= NrReverse[min_t] + IndifferentTeams[min_t]->size()){
+
+        int T = max(0, NrReverse[max_t]-NrReverse[min_t]);
+
+        vector<int>TeamsReverse;
+        TeamsReverse.reserve((int)ReverseTeams.size()+(int)InfeasibleColorTeams.size()+T);
+        vector<int>TeamsConservative;
+        TeamsConservative.reserve((int)SameDirectionTeams.size()+(int)IndifferentTeams[max_t]->size()+(int)IndifferentTeams[min_t]->size()-T);
+
+        for (std::vector<int>*Teams: std::initializer_list<std::vector<int>*>{&ReverseTeams, &InfeasibleColorTeams}){
+            TeamsReverse.insert(TeamsReverse.end(), Teams->begin(), Teams->end());
+        }
+        TeamsReverse.insert(TeamsReverse.end(), IndifferentTeams[min_t]->begin(), IndifferentTeams[min_t]->begin()+T);
+
+        for (std::vector<int>* Teams : std::initializer_list<std::vector<int>*>{&SameDirectionTeams, IndifferentTeams[max_t]}){
+            TeamsConservative.insert(TeamsConservative.end(), Teams->begin(), Teams->end());
+        }
+        TeamsConservative.insert(TeamsConservative.end(), IndifferentTeams[min_t]->begin()+T, IndifferentTeams[min_t]->end());
+
+        // Important is that updates for NrH come before the updates for the orientations!!
+
+        for (auto& k: TeamsReverse){
+            UpdateNrHA_OrientationSwapped(G, i, k, j, sol);
+        }
+        for (auto& k: TeamsConservative){
+            UpdateNrHA_OrientationSame(G, i, k, j, sol);
+        }
+        for (auto& k: TeamsReverse){
+            SwapOrientation(G, i, k, j, OrientationsCopy);
+        }
+        for (auto& k: TeamsConservative){
+            KeepOrientation(G, i, k, j, OrientationsCopy);
+        } 
+    }
+    else{
+        return false;
+    }
+
+    // assert(sol.ComputeHACost()==0);
+    return true;
+}
+
+
+void SwapPathBoostLantarn(Graph& G, Solution& sol, vector<int>& path){
+    for (int v = 0; v < path.size()-1; ++v){
+        // path is traversed from sink to source
+        int c = G.MatchColor[path[v]][path[v+1]];
+        assert(G.Orientation[path[v]][c] == HA::H);
+        assert(G.Orientation[path[v+1]][c] == HA::A);
+        std::swap(G.Orientation[path[v]][c], G.Orientation[path[v+1]][c]);
+        // also update NrH_temp!!
+        sol.NrH_temp[sol.getTeamClub(path[v])][c]--;
+        sol.NrH_temp[sol.getTeamClub(path[v+1])][c]++;
+    }
+}
+
+void ReverseCycle(vector<int>& Cycle, Graph& G, Solution& sol){
+    int c, i, j;
+    for (int v = 1; v < Cycle.size(); ++v){
+        i = Cycle[v-1], j = Cycle[v];
+        c = G.MatchColor[i][j];
+        if (G.Orientation[i][c] == HA::H){
+            --sol.NrH[sol.getTeamClub(i)][c];
+            ++sol.NrH[sol.getTeamClub(j)][c];
+        }
+        else{
+            --sol.NrH[sol.getTeamClub(j)][c];
+            ++sol.NrH[sol.getTeamClub(i)][c];
+        }
+        std::swap(G.Orientation[i][c], G.Orientation[j][c]);
+    }
+    sol.resetNrH_temp(); // I forgot this one..
+}
+
+/*
+DEZE PRS was voor als we HAPs hebben en 1 ronde in en 1 ronde uit het schedule
+Maar dus niet meer nodig want vervangen door bipartite matching
+TODO: aantonen dat dit equivalent is met de matching!!!
+
+
+void PRS_same_direction(Graph& G, int& r, int& s, int& StartNode){
+    int max_round = max(r,s), min_round = min(r,s);
+    // min_round goes out, max_round goes in!
+    int next = StartNode;
+    do{
+
+        setMatchColorR(G, next, r, s);
+        std::swap(G.TeamColorOpp[next][r], G.TeamColorOpp[next][s]);
+        
+        // Matches of color min_round go out of the schedule
+        // Give these a random orientation
+        // We can keep the orientations of min_round, these are now automatically the directions of the new min_round (former max_round)
+        int dir = rand()%2;
+        if (dir){
+            G.Orientation[next][max_round] = HA::H;
+            G.Orientation[G.TeamColorOpp[next][max_round]][max_round] = HA::A;
+        }
+        else{
+            G.Orientation[next][max_round] = HA::A;
+            G.Orientation[G.TeamColorOpp[next][max_round]][max_round] = HA::H;
+        }
+
+        // string orn = " <-- ";
+        // if (G.TeamColorOpp[next][max_round] == G.getHomeTeamMatch(next, G.TeamColorOpp[next][max_round])){
+        //    orn = " --> ";
+        // }
+        // cout << "(" << next << orn << G.TeamColorOpp[next][max_round] << "), " << max_round << endl;
+
+        next = G.TeamColorOpp[next][min_round];
+
+        setMatchColorR(G, next, r, s);
+        std::swap(G.TeamColorOpp[next][s], G.TeamColorOpp[next][r]);
+
+        // orn = " <-- ";
+        // if (G.TeamColorOpp[next][min_round] == G.getHomeTeamMatch(next, G.TeamColorOpp[next][min_round])){
+        //    orn = " --> ";
+        // }
+        // cout << "(" << next << orn << G.TeamColorOpp[next][min_round] << "), " << min_round << endl;
+        
+        next = G.TeamColorOpp[next][max_round];
+    }
+    while (next != StartNode);
+}
+*/
+
+
+int MinimizeBreaksCycleBoost(Graph& G, Solution& sol){
+    // See: https://www.boost.org/doc/libs/1_31_0/libs/graph/example/bellman-example.cpp
+
+    // define a source node: goes to all the nodes!!
+
+    int cost = 0; // if no negative cycle cost will be 0
+
+    // Indien 0 breaks: optimaal!!!
+    // Indien meer dan 0 breaks: dan hangt het af van de break limit van de teams of het correct is of niet..
+    // Het lijk niet echt dat dat er minder breaks gevonden kunnen worden, wat ook logisch is want we gaan bv. nooit
+    // HHH of AAA toelaten, maar dit zijn de enige keren dat we een negatieve kost kunnen krijgen..
+
+    typedef pair<int, int>E;
+
+    int N = G.NrNodes;
+
+    vector<E>edge_vector;
+    vector<int>weights;
+
+    bool odd = true;
+    if (rand()%2==0){
+        odd = false;
+    }
+
+    int SOURCE = N+1;
+
+    for (int v = 0; v < N; ++v){ 
+        for (int w = v+1; w < N; ++w){
+            int h_team = v, a_team = w;
+            int r = G.MatchColor[h_team][a_team];
+            if (r < 0 || !sol.isEligible(v,w)){
+                continue;
+            }
+            if (odd && r%2 == 0){
+                continue; // only rounds in the current schedule
+            }
+            else if (!odd && r%2 != 0){
+                continue;
+            }
+            if (G.Orientation[a_team][r] == HA::H){
+                h_team = w;
+                a_team = v;
+            }
+            edge_vector.push_back(E(h_team, a_team));
+            // instead of WeighsBF, I now need to do something for breaks
+            int weight = 0;
+            array<int,2>teams = {h_team, a_team};
+            array<HA,2>mode = {HA::H, HA::A};
+            for (int t = 0; t < 2; ++t){
+                if (r-1 >= 0){
+                    if (G.Orientation[teams[t]][r-1] == mode[t]){
+                        --weight;
+                    }
+                    else{
+                        ++weight;
+                    }
+                }
+                if (r+1 <= G.NrColors-1){
+                    if (G.Orientation[teams[t]][r+1] == mode[t]){
+                        --weight;
+                    }
+                    else{
+                        ++weight;
+                    }
+                }
+            }
+            weights.push_back(weight);
+        }
+    }
+    for (int v = 0; v < N; ++v){
+        edge_vector.push_back(E(SOURCE, v)); // create edges SOURCE --> v
+        weights.push_back(0); // get weight of 0
+    }
+
+    /*
+    vecS: specifies that each vertex stores outgoing vertices in a vector
+    vecS: means that the vertices themselves are also stored in a vector
+    directedS: specifies that the edges are directed
+    no_property: vertices have no extra properties (like labels, colors, ..)
+    property <boost::edge_weight_t, int>: each edge has a property called edge_weight_t, which stores an integer value
+    */
+
+    typedef boost::adjacency_list <boost::vecS, boost::vecS, boost::directedS, boost::no_property, boost::property <boost::edge_weight_t, int>>BGraph;
+
+    BGraph g(N+1); // C+1 vertices, +1 bc of source node
+
+    typedef boost::property_map<BGraph, boost::edge_weight_t>::type WeightMap;
+    WeightMap weight_map = boost::get(boost::edge_weight, g);
+    typedef boost::graph_traits<BGraph>::vertex_descriptor Vertex;
+
+    for (std::size_t j = 0; j < edge_vector.size(); ++j){
+        boost::add_edge(edge_vector[j].first, edge_vector[j].second, weights[j], g);
+    }
+
+    N = boost::num_vertices(g);
+    vector<double> distance(N, std::numeric_limits<double>::max());
+    vector<Vertex> predecessor(N, boost::graph_traits<BGraph>::null_vertex());
+
+    distance[SOURCE] = 0; // arbitrary start node
+
+    // cout << "start BF" << endl;
+
+    // bool r = boost::bellman_ford_shortest_paths(g, C+1, weight_pmap, &parent[0], &distance[0], boost::closed_plus<int>(), std::less<int>(), boost::default_bellman_visitor());
+
+    bool r = boost::bellman_ford_shortest_paths(g, N, boost::weight_map(get(boost::edge_weight, g)).distance_map(&distance[0]).predecessor_map(&predecessor[0]));
+     
+    if (!r)
+    {
+        cout << "!r" << endl;
+        // Find a vertex that is part of a negative cycle
+        Vertex cycle_vertex = boost::graph_traits<BGraph>::null_vertex();
+ 
+        for (int i = 0; i < N; ++i)
+        {
+            for (auto e : make_iterator_range(edges(g)))
+            {
+                Vertex u = source(e, g), v = target(e, g);
+                double weight = get(boost::edge_weight, g, e);
+ 
+                // If we can still relax an edge, then v is part of a negative cycle
+                if (distance[u] + weight < distance[v])
+                {
+                    cycle_vertex = v;
+                    break;
+                }
+            }
+            if (cycle_vertex != boost::graph_traits<BGraph>::null_vertex())
+                break;
+        }
+ 
+        // Recover the negative cycle
+        vector<int> cycle;
+        if (cycle_vertex != boost::graph_traits<BGraph>::null_vertex())
+        {
+            Vertex current = cycle_vertex;
+            for (int i = 0; i < N; ++i) // Move `N` steps to guarantee being inside the cycle
+                current = predecessor[current];
+ 
+            // Track the cycle
+            Vertex cycle_start = current;
+            do
+            {
+                cycle.push_back(current);
+                current = predecessor[current];
+            } while (current != cycle_start);
+ 
+            cycle.push_back(cycle_start); // Close the cycle
+            reverse(cycle.begin(), cycle.end());
+
+            cout << "Negative cycle detected: ";
+            for (Vertex v : cycle)
+                cout << v << " ";
+            cout << endl;
+
+            cost = UpdateCycleBF(cycle, G, sol);
+
+            cin.get();
+        }
+    }
+    else{
+        // cout << "No negative cycle found!" << endl;
+    }
+
+    return cost;
+
+}
+
+vector<int> PathBoostLantarn(Graph& G, Solution& sol, Lantarn& lantarn){
+    // Keep all teams, even from multiple clubs
+    // Just calculate whether there is a path from i to j
+    // If we found such a path, compute cost of capacity
+    // If not satisfied: bad luck..;
+
+    int N = G.NrNodes;
+    vector<vector<bool>>forbidden_edge(N, vector<bool>(N, false));
+
+    int i = lantarn.i;
+    int j = lantarn.j;
+    for (auto& k: lantarn.middle){
+        forbidden_edge[i][k] = true;
+        forbidden_edge[k][i] = true;
+        forbidden_edge[j][k] = true;
+        forbidden_edge[k][j] = true;
+    }
+
+    // Same strategy: 1 team per club (except if i and j are from the same club)
+    
+    int C = sol.getNrClubs()-1; // dummy club
+    if (sol.getTeamsClub(C).size() > 0){ // if dummy club contains teams -> if not, ignore this club
+        ++C;
+    }
+    vector<int>Teams; 
+    Teams.push_back(i);
+    Teams.push_back(j);
+    for (int c = 0; c < C; ++c){
+        if (c == sol.getTeamClub(i) || c ==  sol.getTeamClub(j)){
+            continue;
+        }
+        int rd = rand()%(int)sol.getTeamsClub(c).size(); // pick 1 random team from each club
+        Teams.push_back(sol.getTeamsClub(c)[rd]);
+    }
+    C = (int)Teams.size(); // adjust C in case i and j are from the same club
+
+    int SOURCE = j;
+    int SINK = i;
+    if (lantarn.NrH[j] < lantarn.NrH[i]){
+        // bc now j gets one extra H game from the PTS, so we need to find a path from i to j so that i gets one extra H and j gets one extra A game
+        SOURCE = i;
+        SINK = j;
+    }
+    // cout << i << " has " << lantarn.NrH[i] << " H games in the lantarn and " << j << " has " << lantarn.NrH[j] << " H games in the lantarn" << endl;
+    // cout << "source = " << SOURCE << ", sink = " << SINK << endl;
+
+    vector<Edge>Edges;
+    for (int v = 0; v < C; ++v){
+        for (int w = v+1; w < C; ++w){
+            int h = Teams[v], a = Teams[w];
+            if (!forbidden_edge[h][a]){
+                int c = G.MatchColor[h][a];
+                if (c < 0){
+                    continue;
+                }
+                if (G.Orientation[h][c] == HA::A){
+                    h = Teams[w];
+                    a = Teams[v];
+                } 
+                int club_a = sol.getTeamClub(a);
+                if (sol.NrH_temp[club_a][c] + 1 <= sol.getCapacityClub(club_a, c)){
+                    Edges.push_back(Edge(a, h)); // !! Home team is team with incoming edge!!
+                }
+            }
+        }
+    }
+    vector<int>Weights(Edges.size());
+    std::fill(Weights.begin(), Weights.end(), 1);
+
+    /*
+    cout << "PATH IS: " << endl;
+    for (int v = 0; v < path.size(); ++v){
+        // path is traversed from sink to source
+        // cout << path[v] << endl;
+        if (v < path.size()-1){
+            int c = G.MatchColor[path[v]][path[v+1]];
+            string or_i = "H";
+            if (G.Orientation[path[v]][c] == HA::A){
+                or_i = "A";
+            }
+            string or_j = "H";
+            if (G.Orientation[path[v+1]][c] == HA::A){
+                or_j = "A";
+            }
+            cout << path[v] << "(" << or_i << ") -- " << path[v+1] << "(" << or_j << ")" << endl;
+            assert(G.Orientation[path[v]][c] == HA::H);
+            assert(G.Orientation[path[v+1]][c] == HA::A);
+        }
+    }
+        */
+
+    vector<int> path = FindPath(N, SOURCE, SINK, Edges, Weights);
+
+    return path;
+}
+
+vector<vector<pair<int,int>>> VizingEdgeColoring(Solution& sol, vector<vector<bool>>& ForbiddenEdge, int& NrColorsUsed){
+
+    // Not needed anymore
+    
+    int N = sol.getNrTeams();
+    typedef pair<int, int>E;
+	vector<E>edge_vector;
+
+    int i,j;
+    int e = 0;
+	for (i = 0; i < N; ++i){
+		for (j = i+1; j < N; ++j){
+			if (!ForbiddenEdge[i][j]){
+				edge_vector.push_back(E(i,j));
+				e++;
+			}
+		}
+	}
+
+    typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::undirectedS, boost::no_property, size_t,boost::no_property >BGraph;
+
+    BGraph g(N); 
+    for (std::size_t j = 0; j < edge_vector.size(); ++j){
+        boost::add_edge(edge_vector[j].first, edge_vector[j].second, g);
+    }
+	size_t colors = boost::edge_coloring(g, get(boost::edge_bundle, g));
+
+	// cout << "Colored using " << colors << " colors" << endl;
+    NrColorsUsed = colors;
+
+	vector<vector<pair<int,int>>>Factorization(NrColorsUsed);
+	int c;
+    for (size_t k = 0; k < edge_vector.size(); ++k)
+    {
+		i = edge_vector[k].first;
+		j = edge_vector[k].second;
+		c = g[boost::edge(i, j, g).first];
+        Factorization[c].push_back({i,j});
+    }
+
+    return Factorization;
+}
+
+void updateWeightBF(Graph& G, int& i, int& j, Solution& sol){
+    int team_h, team_a, club_h, club_a, cap_h, cap_a, r, w;
+    r = G.MatchColor[i][j];
+
+    if (r < 0){
+        return; // bc we want to do this only for rounds in the schedule!!
+    }
+
+    if (G.Orientation[i][r] == HA::H){
+        team_h = i, team_a = j;
+    }
+    else{
+        team_h = j, team_a = i;
+    }
+
+    club_h = sol.getTeamClub(team_h);
+    club_a = sol.getTeamClub(team_a);
+
+    cap_h = sol.getCapacityClub(club_h, r);
+    cap_a = sol.getCapacityClub(club_a, r);
+    if (sol.NrH[club_a][r]+1 <= sol.getCapacityClub(club_a, r) && sol.NrH[club_h][r] > sol.getCapacityClub(club_h, r)){
+        w = -1;
+    }
+    else if (sol.NrH[club_a][r] >= sol.getCapacityClub(club_a, r) && sol.NrH[club_h][r] <= sol.getCapacityClub(club_h, r)){
+        w = 1;
+    }
+    else{
+        w = 0;
+    }
+    G.WeightsBF[i][j]= w;
+    G.WeightsBF[j][i]= w;
+}
+
+
+void setAllWeightsBF(Graph& G, Solution& sol){
+
+    for (int i = 0; i < G.NrNodes; ++i){
+        for (int j = i+1; j < G.NrNodes; ++j){
+            updateWeightBF(G, i, j, sol);
+        }
+    }
+    int source = G.NrNodes;
+    for (int i = 0; i < G.NrNodes; ++i){
+        G.WeightsBF[i][source]= 0;
+        G.WeightsBF[source][i]= 0;
+    }
+}
+
+int UpdateCycleBF(vector<int>& Cycle, Graph& G, Solution& sol){
+    int cost = 0;
+    if (Cycle.size() > 0){
+        // swap HA of the arcs
+        for (int t = 0; t < Cycle.size()-1; ++t){
+            int i = Cycle[t];
+            int j = Cycle[t+1];
+            // cout << "swap (" << i << " - " << j << ")" << endl;
+            cost += G.WeightsBF[i][j];
+            int c = G.MatchColor[i][j];
+            // cout << "weight of edge with color " << c << " (" << i << " - " << j << ") = " << G.WeightsBF[i][j] << endl;
+            if (G.Orientation[i][c] == HA::H){
+                G.Orientation[j][c] = HA::H;
+                G.Orientation[i][c] = HA::A;
+                --sol.NrH[sol.getTeamClub(i)][c];
+                ++sol.NrH[sol.getTeamClub(j)][c];
+            }
+            else{
+                G.Orientation[i][c] = HA::H;
+                G.Orientation[j][c] = HA::A;
+                --sol.NrH[sol.getTeamClub(j)][c];
+                ++sol.NrH[sol.getTeamClub(i)][c];
+            }
+        }
+    }
+    sol.resetNrH_temp(); // I forgot this one..
+    setAllWeightsBF(G, sol); // other edges their weights also change?
+
+    return cost;
+}
+
+int NegativeCycleBoost(Graph& G, Solution& sol){
+    // See: https://www.boost.org/doc/libs/1_31_0/libs/graph/example/bellman-example.cpp
+
+    // define a source node: goes to all the nodes!!
+
+    int cost = 0; // if no negative cycle cost will be 0
+
+    typedef pair<int, int>E;
+
+    int C = sol.getNrClubs()-1; // dummy club
+    if (sol.getTeamsClub(C).size() > 0){ // if dummy club contains teams -> if not, ignore this club
+        ++C;
+    }
+    vector<int>Teams(C+1); // C+1 bc of source node
+    for (int c = 0; c < C; ++c){
+        int rd = rand()%(int)sol.getTeamsClub(c).size(); // pick 1 random team from each club
+        Teams[c] = sol.getTeamsClub(c)[rd];
+    }
+    int SOURCE = C;
+    Teams[C] = SOURCE;
+
+    /*
+    for (int c = 0; c < C; ++c){
+        cout << "team " << Teams[c] << " of club " << sol.getTeamClub(Teams[c]) << endl;
+    }
+        */
+
+    vector<E>edge_vector;
+    vector<int>weight;
+
+    for (int v = 0; v < C; ++v){
+        for (int w = v+1; w < C; ++w){
+            int h_team = v, a_team = w;
+            int r = G.MatchColor[Teams[h_team]][Teams[a_team]];
+            if (r < 0){
+                continue; // only rounds in the current schedule
+            }
+            if (G.Orientation[Teams[w]][r] == HA::H){
+                h_team = w;
+                a_team = v;
+            }
+            edge_vector.push_back(E(h_team, a_team));
+            weight.push_back(G.WeightsBF[Teams[h_team]][Teams[a_team]]);
+            /*
+            if (G.WeightsBF[Teams[h_team]][Teams[a_team]] < 2){
+                cout << "weight of (" << Teams[h_team] << " - " << Teams[a_team] << ") = " << G.WeightsBF[Teams[h_team]][Teams[a_team]] << endl;
+            }
+            */
+            assert(G.WeightsBF[Teams[h_team]][Teams[a_team]] == G.WeightsBF[Teams[a_team]][Teams[h_team]]);
+        }
+    }
+    for (int v = 0; v < C; ++v){
+        edge_vector.push_back(E(SOURCE, v)); // create edges SOURCE --> v
+        weight.push_back(0); // get weight of 0
+    }
+
+    /*
+    vecS: specifies that each vertex stores outgoing vertices in a vector
+    vecS: means that the vertices themselves are also stored in a vector
+    directedS: specifies that the edges are directed
+    no_property: vertices have no extra properties (like labels, colors, ..)
+    property <boost::edge_weight_t, int>: each edge has a property called edge_weight_t, which stores an integer value
+    */
+
+    typedef boost::adjacency_list <boost::vecS, boost::vecS, boost::directedS, boost::no_property, boost::property <boost::edge_weight_t, int>>BGraph;
+
+    BGraph g(C+1); // C+1 vertices, +1 bc of source node
+
+    typedef boost::property_map<BGraph, boost::edge_weight_t>::type WeightMap;
+    WeightMap weight_map = boost::get(boost::edge_weight, g);
+    typedef boost::graph_traits<BGraph>::vertex_descriptor Vertex;
+
+    for (std::size_t j = 0; j < edge_vector.size(); ++j){
+        boost::add_edge(edge_vector[j].first, edge_vector[j].second, weight[j], g);
+    }
+
+    // C+1 because of source node!!!
+    int N = boost::num_vertices(g);
+    assert(N == C+1);
+    vector<double> distance(N, std::numeric_limits<double>::max());
+    vector<Vertex> predecessor(N, boost::graph_traits<BGraph>::null_vertex());
+
+    distance[SOURCE] = 0; // arbitrary start node
+
+    // cout << "start BF" << endl;
+
+    // bool r = boost::bellman_ford_shortest_paths(g, C+1, weight_pmap, &parent[0], &distance[0], boost::closed_plus<int>(), std::less<int>(), boost::default_bellman_visitor());
+
+    bool r = boost::bellman_ford_shortest_paths(g, N, boost::weight_map(get(boost::edge_weight, g)).distance_map(&distance[0]).predecessor_map(&predecessor[0]));
+
+     
+    if (!r)
+    {
+        // Find a vertex that is part of a negative cycle
+        Vertex cycle_vertex = boost::graph_traits<BGraph>::null_vertex();
+ 
+        for (int i = 0; i < N; ++i)
+        {
+            for (auto e : make_iterator_range(edges(g)))
+            {
+                Vertex u = source(e, g), v = target(e, g);
+                double weight = get(boost::edge_weight, g, e);
+ 
+                // If we can still relax an edge, then v is part of a negative cycle
+                if (distance[u] + weight < distance[v])
+                {
+                    cycle_vertex = v;
+                    break;
+                }
+            }
+            if (cycle_vertex != boost::graph_traits<BGraph>::null_vertex())
+                break;
+        }
+ 
+        // Recover the negative cycle
+        vector<int> cycle;
+        if (cycle_vertex != boost::graph_traits<BGraph>::null_vertex())
+        {
+            Vertex current = cycle_vertex;
+            for (int i = 0; i < N; ++i) // Move `N` steps to guarantee being inside the cycle
+                current = predecessor[current];
+ 
+            // Track the cycle
+            Vertex cycle_start = current;
+            do
+            {
+                cycle.push_back(Teams[current]);
+                current = predecessor[current];
+            } while (current != cycle_start);
+ 
+            cycle.push_back(Teams[cycle_start]); // Close the cycle
+            reverse(cycle.begin(), cycle.end());
+
+            /*
+            cout << "Negative cycle detected: ";
+            for (Vertex v : cycle)
+                cout << v << " ";
+            cout << endl;
+            */
+
+            cost = UpdateCycleBF(cycle, G, sol);
+
+            // cin.get();
+        }
+    }
+    else{
+        // cout << "No negative cycle found!" << endl;
+    }
+
+    return cost;
+
+}
+

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<Instance>
+
+  <MetaData>
+    <InstanceName>NL4</InstanceName>
+    <DataType>A</DataType>
+    <Contributor>Easton, Nemhauser, and Trick</Contributor>
+    <Date day="0" month="0" year="2001"/>
+    <Country/>
+    <Remarks>Based on National Hockey League</Remarks>
+    <Lowerbound infeasibility="0" objective="0"/>
+  </MetaData>
+
+  <Structure>
+    <Format leagueIds="0">
+      <numberRoundRobin>2</numberRoundRobin>
+      <compactness>C</compactness>
+    </Format>
+    <AdditionalGames/>
+  </Structure>
+
+  <ObjectiveFunction>
+    <Objective>BM</Objective>
+  </ObjectiveFunction>
+
+  <Data>
+	  <Distances/>
+    <COEWeights/>
+    <Costs/>
+  </Data>
+
+  <Resources>
+    <TeamGroups>
+      <teamGroup id="0" name="All teams"/>
+    </TeamGroups>
+    <LeagueGroups/>
+    <Leagues>
+      <league id="0" name="League 0"/>
+    </Leagues>
+    <Teams>
+      <team id="0" league="0" name="ATL" teamGroups="0"/>
+      <team id="1" league="0" name="NYM" teamGroups="0"/>
+      <team id="2" league="0" name="PHI" teamGroups="0"/>
+      <team id="3" league="0" name="MON" teamGroups="0"/>
+    </Teams>
+    <SlotGroups>
+ 	<slotGroup id="0" name="Slots 1A"/>
+   </SlotGroups>
+    <Slots>
+      <slot id="0" name="Slot0" slotGroup="0"/>
+      <slot id="1" name="Slot1" slotGroup="0"/>
+      <slot id="2" name="Slot2" slotGroup="0"/>
+      <slot id="3" name="Slot3" slotGroup="0"/>
+      <slot id="4" name="Slot4" slotGroup="0"/>
+      <slot id="5" name="Slot4" slotGroup="0"/>
+    </Slots>
+  </Resources>
+
+  <Constraints>
+    <BasicConstraints/>
+    <CapacityConstraints>
+	    <!-- Balanced home games: at least floor(|R|/4) and at most floor(|R|/4 + 1) home games during first |R|/2 rounds -->
+	    <CA1 max='2' min='1' mode='H' penalty='1' slots='0;1;2' teamGroups='0' type='HARD'/>
+
+	    <!-- No HHH or AAA -->
+	    <CA3 intp='3' max='2' min='1' mode1='H' mode2='GAMES' penalty='1' teamGroups1='0' teamGroups2='0' type='HARD'/>
+    </CapacityConstraints>
+    <GameConstraints/>
+    <BreakConstraints>
+	    <!-- No break at the beginning or end of the season -->
+	    <BR1 intp='0' mode1='LEQ' mode2='HA' penalty='1' slots='1;5' teamGroups='0'  type='HARD'/>
+
+	    <!-- At most one break -->
+	    <BR1 intp='3' mode1='LEQ' mode2='HA' penalty='1' slotGroups='0' teamGroups='0'  type='HARD'/>
+    </BreakConstraints>
+    <FairnessConstraints/>
+    <SeparationConstraints>
+    </SeparationConstraints>
+  </Constraints>
+
+</Instance>

@@ -1,0 +1,14 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "test.dir\\Debug\\Solution.obj",
+            "outputs": [
+                "C:\\Users\\kardvrie\\C++\\VSprojects\\iRR\\build\\test.dir\\Debug\\vc143.pdb",
+                "test.dir\\Debug\\"
+            ],
+            "requires": []
+        }
+    ]
+}
