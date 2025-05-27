@@ -106,7 +106,8 @@ void FindSolutionIP(GurSolver& gur, Solution& sol, const bool HA, const bool min
 
 int main(int argc, char** argv){
 
-    std::string file_path_base = "C:\\Users\\kardvrie\\C++\\VSprojects\\iRR\\Instances";
+    // std::string file_path_base = "C:\\Users\\kardvrie\\C++\\VSprojects\\iRR\\Instances";
+    std::string file_path_base = "Instances";
 
     int count = 0;
     int A;
