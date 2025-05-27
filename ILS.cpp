@@ -116,6 +116,7 @@ int ILS::SelectPTS(Solution& sol){
     // kan het zijn dat een middle team nu meer als 2 edges heeft?????
     pair<int,int> pair = SelectTwoTeamsSameLeague(sol);
     int i = pair.first, j = pair.second;
+    cout << "i : " << i << " and j = " << j << endl;
     int StartColor = rand()%sol.getNrRounds();
     while (sol.TeamColorOpp[i][StartColor] == j){
         // whilke loop bc if DRR, it can happen that i plays vs j in k but also in k+1!!
@@ -474,17 +475,17 @@ void ILS::Move(Solution& sol){
     move_name selected_move;
     int delta;
     if (rnd < WeightsCumul[move_name::TS]){
-        // cout << "TS" << endl;
+        cout << "TS" << endl;
         selected_move = move_name::TS;
         delta = SelectTS(sol);
     }
     else if (rnd < WeightsCumul[move_name::PTS]){
-        // cout << "PTS" << endl;
+        cout << "PTS" << endl;
         selected_move = move_name::PTS;
         delta = SelectPTS(sol);
     }
     else if (rnd < WeightsCumul[move_name::PRS]){
-        // cout << "PRS" << endl;
+        cout << "PRS" << endl;
         selected_move = move_name::PRS;
         delta = SelectPRS(sol);
     }
@@ -498,7 +499,7 @@ void ILS::Move(Solution& sol){
         delta = SelectMatching(l, sol, bipartite);
     }
     else if (rnd < WeightsCumul[move_name::BM]){
-        // cout << "Bipartite matching" << endl;
+        cout << "Bipartite matching" << endl;
         selected_move = move_name::BM;
         if (include_HAP){
             bipartite = true;

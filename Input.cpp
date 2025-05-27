@@ -98,17 +98,17 @@ int Input::read(const std::string& file_path){
             ++k;
         }
         else if (i < 1+2*NrClubs+NrLeagues){
-            l = 0; // league
             if (i == 1+2*NrClubs){
                 t = 0; // t = index team
             }
             // vector<int>LeagueIndexCount(NrLeagues, 0);
             while (iss >> num) { 
-                TeamStrength[t] = num-1;
                 assert(num >= 0);
                 if (NrLeagues == 1){
                     assert(l == 0);
                 }
+                TeamStrength[t] = num-1;
+                // cout << "add " << t << " to league " << l << endl;
                 LeagueTeams[l].push_back(t); // TODO: only 1 league now, with eligible opponents
                 TeamLeague[t] = l;
                 // LeagueIndex[t] += LeagueIndexCount[num-1];
@@ -123,8 +123,8 @@ int Input::read(const std::string& file_path){
             if (ConstantCapacity){
                 continue;
             }
-            int c = i - (2+2*NrClubs);
-            // cout << "Nr of teams of club " << c << " = " << getNrTeamsClub(c) << endl;
+            int c = i - (1+2*NrClubs+NrLeagues);
+            cout << "Nr of teams of club " << c << " = " << getNrTeamsClub(c) << endl;
             int r = 0;
             while (iss >> num) { 
                 if (j == 0){} // no meaning
@@ -141,6 +141,8 @@ int Input::read(const std::string& file_path){
         }
         ++i;
     }
+    cout << "done" << endl;
+
     // Add the dummy teams
     int DummyCapacity = 0;
     for (l = 0; l < getNrLeagues(); ++l){
@@ -169,13 +171,16 @@ int Input::read(const std::string& file_path){
     }
 
     // New: eligible opponents
-    Eligible = vector<vector<bool>>(getNrTeamsLeague(0), vector<bool>(getNrTeamsLeague(0), false));
+    int i_, j_;
+    Eligible = vector<vector<bool>>(getNrTeams(), vector<bool>(getNrTeams(), false));
     for (l = 0; l < getNrLeagues(); ++l){
         for (i = 0; i < getNrTeamsLeague(l); ++i){ // TODO: more than 1 league
+            i_ = getGlobalIndexTeam(l, i);
             for (int j = i+1; j < getNrTeamsLeague(l); ++j){
-                if (abs(TeamStrength[i]-TeamStrength[j]) < 2){
-                    Eligible[i][j] = true;
-                    Eligible[j][i] = true;  
+                j_ = getGlobalIndexTeam(l, j);
+                if (abs(TeamStrength[i_]-TeamStrength[j_]) < 2){
+                    Eligible[i_][j_] = true;
+                    Eligible[j_][i_] = true;  
                 }
             }
         }
@@ -241,7 +246,8 @@ void Input::readAllowedNrCapacityViolations(const int num){
 }
 
 int Input::read_HAPs(){
-    std::string file_path = "C:\\Users\\kardvrie\\C++\\VSprojects\\test2\\Patterns\\patterns_" + to_string(NrRounds) + "_";
+    // std::string file_path = "C:\\Users\\kardvrie\\C++\\VSprojects\\test2\\Patterns\\patterns_" + to_string(NrRounds) + "_";
+    std::string file_path = "Patterns\\patterns_" + to_string(NrRounds) + "_";
     if (HAP_requirements.at(HAP_requirement_name::BreakLimit)){
         file_path += to_string(BreakLimit) + ".txt";
     }

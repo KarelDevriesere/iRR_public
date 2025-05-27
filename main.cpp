@@ -218,13 +218,17 @@ int main(int argc, char** argv){
             cout << "Which instance?" << endl;
             cout << "1: U8_indoor_23_24" << endl;
             cout << "2: U8_indoor_24_25" << endl;
+            cout << "3: U7_U12_outdoor_22_23" << endl;
+            cout << "4: U6_U8_outdoor_23_24a" << endl;
+            cout << "5: U7_U9_outdoor_23_24b" << endl;
+            cout << "6: U7_U8_outdoor_24_25a" << endl;
             do{
                 cin >> ex;
                 if (++count > 3){
                     cout << "Please specify available instance next time" << endl;
                     return 0;
                 }
-                else if (ex != 1 && ex != 2){
+                else if (ex != 1 && ex != 2 && ex != 3 && ex != 4 && ex != 5 && ex != 6){
                     cout << "Please enter an available instance (1-6)" << endl;
                 }
                 else{
@@ -398,6 +402,8 @@ int main(int argc, char** argv){
 
         int N = in.getNrTeams();
         output << inst << " " << N << " " << in.getNrRounds();
+
+        cin.get();
 
         if (AlgoSelected.at(Algorithm::IP_Miao)){
             GurSolver gur_miao(in);
