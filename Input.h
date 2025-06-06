@@ -83,6 +83,7 @@ class Input
         int getBreakLimit()const{return BreakLimit;};
         int getAllowedNrCapacityViolations()const{return AllowedNrCapacityViolations;};
         int getMaxSameClub()const{return MaxSameClub;};
+        void setMaxSameClub(const int max){MaxSameClub = max;};
 
         bool SRR = false;
 

@@ -189,12 +189,15 @@ int Input::read(const std::string& file_path){
     TeamLeagueIndex = vector<int>(NrTeams);
     for (int t = 0; t < NrTeams; ++t){
         int l = TeamLeague[t];
+        bool index_found = false;
         for (int j = 0; j < getNrTeamsLeague(l); ++j){
             if (LeagueTeams[l][j] == t){
                 TeamLeagueIndex[t] = j;
+                index_found = true;
                 break;
             }
         }
+        assert(index_found);
     }
 
     // ++NrClubs;

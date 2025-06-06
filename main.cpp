@@ -138,7 +138,7 @@ int main(int argc, char** argv){
             }
             else{
                 SetAlgo(AlgoSelected, A);
-                cout << "Run also another algorithm? (No: 0, Yes: 1)" << endl;
+                cout << "Run also another algorithm? (No: 0, Yes: >= 1)" << endl;
                 cin >> yn;
                 if (!yn){
                     stop = true;
@@ -160,22 +160,25 @@ int main(int argc, char** argv){
 
     int Inst;
     if (argc < 2){
-        cout << "Instances Miao (0) or Hockey (1)?" << endl;
+        cout << "Instances Miao (0), Hockey (1) or Test (2)?" << endl;
         cin >> Inst;
     }
     else{
         Inst = std::stoi(argv[2]);
     }
     try{
-        if (Inst != 0 && Inst != 1){
+        if (Inst != 0 && Inst != 1 && Inst != 2){
             throw (Inst);
         }
         else{
             if (Inst == 0){
                 file_path_base += "\\Miao";
             }
-            else{
+            else if (Inst == 1){
                 file_path_base += "\\Hockey";
+            }
+            else{
+                file_path_base += "\\Test\\Single";
             }
         }
     }
@@ -213,7 +216,7 @@ int main(int argc, char** argv){
             ex = std::stoi(argv[3]);
         }
     }
-    else{
+    else if (Inst == 1){
         if (argc < 2){
             cout << "Which instance?" << endl;
             cout << "1: U8_indoor_23_24" << endl;
@@ -241,13 +244,31 @@ int main(int argc, char** argv){
             ex = std::stoi(argv[3]);
         }
     }
+    else{
+        cout << "Which instance?" << endl;
+        cout << "Choose 1-26" << endl;
+        do{
+            cin >> ex;
+            if (++count > 3){
+                cout << "Please specify available instance next time" << endl;
+                return 0;
+            }
+            else if (ex < 1 || ex > 26){
+                cout << "Please enter an available instance (1-26)" << endl;
+            }
+            else{
+                stop = true;
+            }
+        }
+        while(!stop);
+    }
     count = 0;
     stop = false;
 
     vector<int>Instances;
     Instances = {ex};
 
-    int NrBreaksPerTeam = 100; // unlimited for hockey
+    int NrBreaksPerTeam = 100; // unlimited for hockey and test
     int Cap;
 
     if (Inst == 0){
@@ -355,14 +376,15 @@ int main(int argc, char** argv){
     // TODO: add that a team can see at most MAX nr of teams from same club -> done
     // TODO: allow 2RR
         // PRS -> done (nothing changes)
-        // BalancedCycle -> done (nothing changes)
+        // BalancedCycle -> ERROR
         // Bipartite matching -> done
-        // Normal matching -> done
+        // Normal matching -> ERROR
         // TS -> done, also stays the same
-        // PTS
+        // PTS -> done
     // TODO: calculate minimum capacity violations for each instance and store them in a file
     // Check whether these values are the same as Miao!!!
-    // TODO: test code for multiple leagues
+    // TODO: initial solution for hockey?
+    // Do greedy matchings, then assign HAPs, try to fix capacities?
 
     std::cout << "Start" << std::endl;
 
@@ -393,11 +415,34 @@ int main(int argc, char** argv){
             cout << "Could not read " << file_path << endl;
             return 0;
         }
-        in.setHAP_requirements(true, true, true, true, NrBreaksPerTeam);
+        bool NoThreeConsecutive = true;
+        bool BreakLimit;
+        bool NoBreakBeginningEnd;
+        bool QuarterBalanced;
+        if (Inst == 0){
+            BreakLimit = true;
+            NoBreakBeginningEnd = true;
+            QuarterBalanced = true;
+        }
+        else{
+            BreakLimit = false;
+            NoBreakBeginningEnd = false;
+            QuarterBalanced = false;
+        }
+        if (Inst == 2){
+            in.setMaxSameClub(in.getNrTeams()); // No restrictions
+        }
+        in.setHAP_requirements(NoThreeConsecutive, NoBreakBeginningEnd, QuarterBalanced, BreakLimit, NrBreaksPerTeam);
 
-        if (Inst != 1 && !in.read_HAPs()){ // do not use HAPs for hockey for now
+        if (Inst == 0 && !in.read_HAPs()){ // do not use HAPs for hockey for now
             cout << "Problem with reading HAP files" << endl;
             return 0;
+        }
+        if (Inst == 2){
+            in.SRR = true;
+        }
+        else{
+            in.SRR = false;
         }
 
         int N = in.getNrTeams();
@@ -495,7 +540,7 @@ int main(int argc, char** argv){
         if (AlgoSelected.at(Algorithm::FO_Karel)){
             GurSolver gur(in);
             Solution sol(in);
-            min_travel = false;
+            min_travel = false, min_cap = false;
             FindSolutionIP(gur, sol, HA, min_travel, min_cap);
             gur.AddObj(true, false);
             gur.FO(sol);
@@ -536,6 +581,7 @@ int main(int argc, char** argv){
 
             GurSolver gur(in);
             Solution sol(in);
+            min_travel = false, min_cap = false;
             FindSolutionIP(gur, sol, HA, min_travel, min_cap);
             // RF_Miao(in, sol); -> does not find improvements..
 

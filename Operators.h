@@ -84,7 +84,7 @@ int MinimizeBreaksCycleBoost(Solution& sol);
 
 int NegativeCycleBoost(Solution& sol);
 
-void SwapMatchings(Solution& sol, vector<pair<int,int>>Matching, const int l, const int r);
+void SwapMatchings(Solution& sol, vector<pair<int,int>>Matching, const int l, const int r, const bool bipartite);
 
 vector<pair<int,int>> MWPM(const vector<int>& SelectedTeams, Solution& sol, const vector<vector<bool>>& ForbiddenEdge);
 
@@ -130,7 +130,7 @@ bool AddPathToLantarn(Solution& sol, Lantarn& lantarn, const int SOURCE, const i
 
 void ReversePath(Solution& sol, const vector<int> path);
 
-void ReversePathsMatching(Solution& sol, const vector<pair<int,int>> Matching, const int l, const int r);
+vector<vector<int>> ReversePathsMatching(Solution& sol, const vector<pair<int,int>> Matching, const int l, const int r);
 
 bool InterClubSwap(Solution& sol);
 

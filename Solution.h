@@ -33,6 +33,9 @@ class Solution: public Input{
         int Cost2RRSameHalf = 1000;
         int Cost2RRSameMode = 1000;
 
+        void PrintAllRoundsLeague(const int l);
+        bool IsTeamBalanced(const int i);
+        int getNrHomeTeam(const int i);
         int getNrBreaks(const int i);
         int NrThreeConsecutiveHA(const int i); 
         int getNrBreaksBeginningEnd(const int i);
@@ -54,7 +57,7 @@ class Solution: public Input{
         int ComputeCostThreeConsecutive();
         int ComputeCostBreakLimit();
         int ComputeCostBreakBeginningEnd();
-        int ComputeCostHalfBalanced();
+        int ComputeCostQuarterBalanced();
 
         int getNrSameClub(const int i);
 

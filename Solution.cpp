@@ -14,6 +14,34 @@ Solution::Solution(const Input& in) : Input(in) {
 }
 Solution::~Solution(){}
 
+void Solution::PrintAllRoundsLeague(const int l){
+    for (int r = 0; r < getNrRounds(); ++r){
+        cout << "ROUND " << r << endl;
+        cout << "--------" << endl;
+        vector<bool>TeamSeen(getNrTeams(), false);
+        for (int i_ = 0; i_ < getNrTeamsLeague(l); ++i_){
+            int i = getTeamsLeague(l)[i_];
+            if (!TeamSeen[i]){
+                int j = TeamColorOpp[i][r];
+                TeamSeen[j] = true;
+                if (Orientation[i][r] == HA::H){
+                    cout << i << "-" << j << endl;
+                    assert(MatchColor[i][j] == r);
+                }
+                else{
+                    assert((Orientation[i][r] == HA::A));
+                    cout << j << "-" << i << endl;
+                    if (MatchColor[j][i] != r){
+                        cout << "color = " << r << endl;
+                    }
+                    assert(MatchColor[j][i] == r);
+                }
+            }
+        }
+        cout << "--------" << endl;
+    }
+}
+
 int Solution::getNrBreaks(const int i){
     int NrBreaks = 0;
     for (int c = 1; c < Orientation[i].size(); ++c){
@@ -22,6 +50,35 @@ int Solution::getNrBreaks(const int i){
         }
     }
     return NrBreaks;
+}
+
+int Solution::getNrHomeTeam(const int i){
+    int nr_H = 0;
+    for (int r = 0; r < getNrRounds(); ++r){
+        if (Orientation[i][r] == HA::H){
+            nr_H++;
+        }
+    }
+    return nr_H;
+}
+
+bool Solution::IsTeamBalanced(const int i){
+    int nr_H = 0, nr_A = 0;
+    for (int r = 0; r < getNrRounds(); ++r){
+        if (Orientation[i][r] == HA::H){
+            nr_H++;
+        }
+        else{
+            assert(Orientation[i][r] == HA::A);
+            nr_A++;
+        }
+    }
+    if (nr_H == nr_A){
+        return true;
+    }
+    else{
+        return false;
+    }
 }
 
 int Solution::NrThreeConsecutiveHA(const int i){
@@ -238,6 +295,50 @@ int Solution::ComputeCostCapacities(){
     }
 
     return CostCapacityViol*cost;
+}
+
+int Solution::ComputeCostThreeConsecutive(){
+    int cost = 0;
+    if (!getHAP_requirement(HAP_requirement_name::NoThreeConsecutive)){
+        return 0;
+    }
+    for (int i = 0; i < getNrTeams(); ++i){
+        cost += NrThreeConsecutiveHA(i);
+    }
+    return HighCostHAPs*cost;
+}
+
+int Solution::ComputeCostBreakBeginningEnd(){
+    if (!getHAP_requirement(HAP_requirement_name::NoBreakBeginningEnd)){
+        return 0;
+    }
+    int cost = 0;
+    for (int i = 0; i < getNrTeams(); ++i){
+        cost += getNrBreaksBeginningEnd(i);
+    }
+    return HighCostHAPs*cost;
+}
+
+int Solution::ComputeCostBreakLimit(){
+    if (!getHAP_requirement(HAP_requirement_name::BreakLimit)){
+        return 0;
+    }
+    int cost = 0;
+    for (int i = 0; i < getNrTeams(); ++i){
+        cost += max(0, getNrBreaks(i)-getBreakLimit());
+    }
+    return HighCostHAPs*cost;
+}
+
+int Solution::ComputeCostQuarterBalanced(){
+    if (!getHAP_requirement(HAP_requirement_name::QuarterBalanced)){
+        return 0;
+    }
+    int cost = 0;
+    for (int i = 0; i < getNrTeams(); ++i){
+        cost += getImbalanceHalf(i);
+    }
+    return HighCostHAPs*cost;
 }
 
 int Solution::ComputeHACostTeam(const int i){

@@ -84,6 +84,7 @@ pair<int,int>SelectTwoTeamsSameLeague(Solution& sol){
     int j_ = ((i_+1)+(rand()%(sol.getNrTeamsLeague(l)-1)))%sol.getNrTeamsLeague(l);
     int i = sol.getTeamsLeague(l)[i_];  
     int j = sol.getTeamsLeague(l)[j_];
+    assert(sol.getLeagueTeam(i) == l && sol.getLeagueTeam(j) == l);
     return {i,j};
 }
 
@@ -116,7 +117,7 @@ int ILS::SelectPTS(Solution& sol){
     // kan het zijn dat een middle team nu meer als 2 edges heeft?????
     pair<int,int> pair = SelectTwoTeamsSameLeague(sol);
     int i = pair.first, j = pair.second;
-    cout << "i : " << i << " and j = " << j << endl;
+    // cout << "i : " << i << " and j = " << j << endl;
     int StartColor = rand()%sol.getNrRounds();
     while (sol.TeamColorOpp[i][StartColor] == j){
         // whilke loop bc if DRR, it can happen that i plays vs j in k but also in k+1!!
@@ -142,7 +143,8 @@ int ILS::SelectPTS(Solution& sol){
     // int cost_HAP_before = sol.ComputeHACostLeague(l); // do this instead of teams bc we do not know what paths we will have
 
     // Since we do not swap everything anymore, the lantarn remains balanced
-    if (sol.SRR){
+    // cout << "optimize orientations" << endl;
+    if (false){
         OptimizeOrientationsCyclesLantarn(sol, lantarn, OrientationsCopy);
     } 
     else{
@@ -172,6 +174,7 @@ int ILS::SelectPTS(Solution& sol){
         else{
             SOURCE = j, SINK = i;
         }
+        // cout << "add path" << endl;
         PathFound = AddPathToLantarn(sol, lantarn, SOURCE, SINK);
         // cout << "path added" << endl;
         // cin.get();
@@ -244,7 +247,7 @@ int ILS::SelectMatching(const int l, Solution& sol, const bool bipartite){
     // Matching only of one league
 
     sol.validate();
-    // cout << "before: check" << endl;
+    // cout << "Travel cost before: " << sol.ComputeTravelCost() << endl;
 
     const int r = rand()%sol.getNrRounds();
 
@@ -266,6 +269,16 @@ int ILS::SelectMatching(const int l, Solution& sol, const bool bipartite){
     */
 
     // First, make a copy so that we can always go back if things don't work out
+
+    // I will make it myself easy: also make a copy of MatchColor:
+
+    vector<vector<int>>MatchColorCopy(sol.getNrTeams(), vector<int>(sol.getNrTeams()));
+    for (int i = 0; i < sol.getNrTeams(); ++i){
+        for (int j = 0; j < sol.getNrTeams(); ++j){
+            MatchColorCopy[i][j] = sol.MatchColor[i][j];
+        }
+    }
+
     vector<vector<HA>>OrientationsCopy = MakeOrientationsCopy(sol);
     vector<pair<int,int>>OriginalMatching(sol.getNrTeamsLeague(l)/2); // so that we can go back if things don't work out
     vector<bool>NodeSeen(sol.getNrTeams(), false);
@@ -282,14 +295,32 @@ int ILS::SelectMatching(const int l, Solution& sol, const bool bipartite){
 
     // cout << "Matching" << endl;
     bool keepHAP = true;
+
+    // cout << "Rounds before matching in round " << r << endl;
+    // sol.PrintAllRoundsLeague(l);
+
     vector<pair<int,int>>Matching = MoveMWPM(sol, l, r, bipartite, keepHAP); 
-    SwapMatchings(sol, Matching, l, r);
+    SwapMatchings(sol, Matching, l, r, bipartite);
+    vector<vector<int>>Paths;
     if (!bipartite && keepHAP){
-        ReversePathsMatching(sol, Matching, l, r);
+        Paths = ReversePathsMatching(sol, Matching, l, r);
     }
+
+    assert(sol.ComputeCost2RRConstraint() == 0);
+    assert(sol.ComputeCostNonEligibleOpponents() == 0);
+    assert(sol.ComputeCostSameClub() == 0);
+
+    cout << "cost 3HA = " << sol.ComputeCostThreeConsecutive() << endl;
+    cout << "cost break limit = " << sol.ComputeCostBreakLimit() << endl;
+    cout << "cost break beginning end = " << sol.ComputeCostBreakBeginningEnd() << endl;
+    cout << "cost quarter balanced = " << sol.ComputeCostQuarterBalanced() << endl;
 
     int cost_after = sol.ComputeTotalCost();
     int delta = cost_after - cost_before;
+    // cout << "cost travel = " << sol.ComputeTravelCost() << endl;
+    cout << "cost capacities = " << sol.ComputeCostCapacities() << endl;
+    cout << "delta = " << delta << endl;
+    cin.get();
      
     if (!Accept(delta) || veto_haps(sol)){
         for (int t = 0; t < sol.getNrTeams(); ++t){
@@ -297,7 +328,20 @@ int ILS::SelectMatching(const int l, Solution& sol, const bool bipartite){
                 sol.Orientation[t][c] = OrientationsCopy[t][c];
             }
         }
-        SwapMatchings(sol, OriginalMatching, l, r);
+        // cout << "swap matchings back" << endl;
+        // De MatchColors van de paden moeten ook terug goed gezet worden!!!!!
+        // SwapMatchings(sol, OriginalMatching, l, r, bipartite);
+        for (int i = 0; i < sol.getNrTeams(); ++i){
+            for (int j = 0; j < sol.getNrTeams(); ++j){
+                sol.MatchColor[i][j] = MatchColorCopy[i][j];
+            }
+        }
+        for (auto&[i,j]: OriginalMatching){
+            sol.TeamColorOpp[i][r] = j;
+            sol.TeamColorOpp[j][r] = i;
+        }
+        // cout << "Rounds after swapping to original matching" << endl;
+        // sol.PrintAllRoundsLeague(l);
         assert(sol.ComputeTotalCost() == cost_before);
     }
     else{
@@ -475,22 +519,22 @@ void ILS::Move(Solution& sol){
     move_name selected_move;
     int delta;
     if (rnd < WeightsCumul[move_name::TS]){
-        cout << "TS" << endl;
+        // cout << "TS" << endl;
         selected_move = move_name::TS;
         delta = SelectTS(sol);
     }
     else if (rnd < WeightsCumul[move_name::PTS]){
-        cout << "PTS" << endl;
+        // cout << "PTS" << endl;
         selected_move = move_name::PTS;
         delta = SelectPTS(sol);
     }
     else if (rnd < WeightsCumul[move_name::PRS]){
-        cout << "PRS" << endl;
+        // cout << "PRS" << endl;
         selected_move = move_name::PRS;
         delta = SelectPRS(sol);
     }
     else if (rnd < WeightsCumul[move_name::M]){
-        cout << "Matching" << endl;
+        // cout << "Matching" << endl;
         // Ik weet niet of dit heel goed werkt.. lijkt enkel te werken als je random matchings neemt 
         // en niet enkel de beste qua travel distance
         selected_move = move_name::M;
@@ -499,7 +543,7 @@ void ILS::Move(Solution& sol){
         delta = SelectMatching(l, sol, bipartite);
     }
     else if (rnd < WeightsCumul[move_name::BM]){
-        cout << "Bipartite matching" << endl;
+        // cout << "Bipartite matching" << endl;
         selected_move = move_name::BM;
         if (include_HAP){
             bipartite = true;
@@ -508,7 +552,7 @@ void ILS::Move(Solution& sol){
         delta = SelectMatching(l, sol, bipartite);
     }
     else{
-        cout << "Balanced cycle" << endl;
+        // cout << "Balanced cycle" << endl;
         selected_move = move_name::C;
         const int l = rand()%sol.getNrLeagues();
         delta = SelectBalancedCycle(l, sol);
@@ -547,7 +591,6 @@ void ILS::solve(Solution& sol){
 
     while(!stop){
         ++it;
-        int g = rand()%sol.getNrLeagues();
         Move(sol); // do random move
         print_solution();
         Update();

@@ -629,13 +629,19 @@ void GurSolver::Validate(){
 				nr_breaks++;
 			}
 			if (r == 1 || r == getNrRounds()-1){
-				assert(Orientation[i][r-1] != Orientation[i][r]);
+				if (getHAP_requirement(HAP_requirement_name::NoBreakBeginningEnd)){
+					assert(Orientation[i][r-1] != Orientation[i][r]);
+				}
 			}
 			if (r >= 2){
-				assert(!(Orientation[i][r-2] == Orientation[i][r-1] && Orientation[i][r-1] == Orientation[i][r]));
+				if (getHAP_requirement(HAP_requirement_name::NoThreeConsecutive)){
+					assert(!(Orientation[i][r-2] == Orientation[i][r-1] && Orientation[i][r-1] == Orientation[i][r]));
+				}
 			}
 		}
-		assert(nr_breaks <= getBreakLimit());
+		if (getHAP_requirement(HAP_requirement_name::BreakLimit)){
+			assert(nr_breaks <= getBreakLimit());
+		}
 	}
 }
 

@@ -59,9 +59,11 @@ void PrintLantarn(Solution& sol, Lantarn& lantarn){
 }
 
 void KeepOrientation(Solution& sol, Lantarn& lantarn, const int i, const int k, const int j, const vector<vector<HA>>& OrientationsCopy){
+    int c_i, c_j;
     // k: position in middle, not the team itself!!!
-    int c_i = sol.MatchColor[lantarn.EdgesMatch.at(i)[k].first][lantarn.EdgesMatch.at(i)[k].second];
-    int c_j = sol.MatchColor[lantarn.EdgesMatch.at(j)[k].first][lantarn.EdgesMatch.at(j)[k].second];
+    c_i = sol.MatchColor[lantarn.EdgesMatch.at(i)[k].first][lantarn.EdgesMatch.at(i)[k].second];
+    c_j = sol.MatchColor[lantarn.EdgesMatch.at(j)[k].first][lantarn.EdgesMatch.at(j)[k].second];
+
     if (c_i < 0){
         sol.Orientation[i][c_j] = OrientationsCopy[j][c_j];
     }
@@ -285,7 +287,7 @@ void ReplenishLantarn(Solution& sol, const int i, const int j, const int StartCo
         k = sol.TeamColorOpp[i][c_i]; 
         assert(i != k);
         assert(j != k);
-        if (!sol.SRR){
+        if (true){
             if (sol.Orientation[i][c_i] == HA::H){
                 lantarn.EdgesMatch[i].push_back({i,k});
             }
@@ -533,10 +535,13 @@ bool AddPathToLantarn(Solution& sol, Lantarn& lantarn, const int SOURCE, const i
     // For DRR: do not change the orientation of the matches, so here it makes sense to find a path outside the lantarn
 
     // TODO: it can happen that if we forbid these edges no path exists..
+
+    int i, j, k;
     if (!sol.SRR){
-        int i = lantarn.i;
-        int j = lantarn.j;
-        for (auto& k: lantarn.middle){
+        i = sol.getIndexInLeague(lantarn.i);
+        j = sol.getIndexInLeague(lantarn.j);
+        for (auto& k_: lantarn.middle){
+            k = sol.getIndexInLeague(k_);
             forbidden_edge[i][k] = true;
             forbidden_edge[k][i] = true;
             forbidden_edge[j][k] = true;
@@ -549,7 +554,7 @@ bool AddPathToLantarn(Solution& sol, Lantarn& lantarn, const int SOURCE, const i
     for (int v_ = 0; v_ < N; ++v_){
         for (int w_ = 0; w_ < N; ++w_){
             v = sol.getTeamsLeague(l)[v_], w = sol.getTeamsLeague(l)[w_];
-            if (!forbidden_edge[v][w]){
+            if (!forbidden_edge[v_][w_]){
                 int c = sol.MatchColor[v][w];
                 if (c < 0){
                     // so if game is between non-eligible opponents it will also not
@@ -561,8 +566,16 @@ bool AddPathToLantarn(Solution& sol, Lantarn& lantarn, const int SOURCE, const i
                     continue;
                 }
                 int h = v_, a = w_;
-                assert(sol.Orientation[v][c] == HA::H);
-                assert(sol.Orientation[w][c] == HA::A);
+                if (!sol.SRR){
+                    assert(sol.Orientation[v][c] == HA::H);
+                    assert(sol.Orientation[w][c] == HA::A);
+                }
+                else{
+                    if (sol.Orientation[v][c] == HA::A){
+                        assert(sol.Orientation[w][c] == HA::H);
+                        h = w_, a = v_;
+                    }
+                }
                 /*
                 if (sol.Orientation[v][c] == HA::A){
                     h = w_, a = v_;
@@ -626,14 +639,14 @@ vector<int> CycleBalanced(Solution& sol){
     return Cycle;
 }
 
-void ReversePathsMatching(Solution& sol, const vector<pair<int,int>> Matching, const int l, const int r){
+vector<vector<int>> ReversePathsMatching(Solution& sol, const vector<pair<int,int>> Matching, const int l, const int r){
     // cout << "Matching with paths" << endl;
-
     // this means that we did normal matching but didn't take into account the HAPs
     // Hence, try to restore the balance with paths (possibly using edges in the matching)
     vector<int>TeamsA; // all teams who have 1 A game too much
     vector<int>TeamsH; // all teams who have 1 H game too much
     int m, i,j;
+    int H = sol.getNrRounds()/2;
     // std::cout << "Matching:" << std::endl;
     for (m = 0; m < Matching.size(); ++m){
         i = Matching[m].first, j = Matching[m].second;
@@ -649,30 +662,16 @@ void ReversePathsMatching(Solution& sol, const vector<pair<int,int>> Matching, c
         cout << i << "(" << ha_i << "), " << j << "(" << ha_j << ")" << endl;
         */
 
-        if (sol.Orientation[i][r] != sol.Orientation[j][r]){
-            // then, nothing: orientation of the teams can stay the same
-            continue;
-        }
-        else{
-            int club_i = sol.getTeamClub(i), club_j = sol.getTeamClub(j);
-            int ImbalancedTeam = i;
-            if (sol.Orientation[i][r] == HA::H && sol.ComputeCapacityClubRound(club_i, r) < sol.getCapacityClub(club_i, r) && sol.ComputeCapacityClubRound(club_j, r) > sol.getCapacityClub(club_j, r)){
-                ImbalancedTeam = j;
+        // We now randomly assigned orientations in SwapMatchings: some teams can be unbalanced!!
+
+        for (auto& t: {i,j}){
+            if (sol.getNrHomeTeam(t) < H){
+                TeamsA.push_back(t);
             }
-            else if (sol.Orientation[i][r] == HA::A && sol.ComputeCapacityClubRound(club_i, r)+1 > sol.getCapacityClub(club_i, r) && sol.ComputeCapacityClubRound(club_j, r) < sol.getCapacityClub(club_j, r)){
-                ImbalancedTeam = j;
+            else if (sol.getNrHomeTeam(t) > H){
+                TeamsH.push_back(t);
             }
-            if (sol.Orientation[ImbalancedTeam][r] == HA::H){
-                // this team had a home game in r, does now have an away game in r, but was balanced so now it has 1 A game too much
-                sol.Orientation[ImbalancedTeam][r] = HA::A;
-                TeamsA.push_back(ImbalancedTeam);
-            }
-            else{
-                assert(sol.Orientation[ImbalancedTeam][r] == HA::A);
-                sol.Orientation[ImbalancedTeam][r] = HA::H;
-                TeamsH.push_back(ImbalancedTeam);
-            }
-        }
+        } 
     }
     // Now, choose teams from TeamsA, find shortest path to one of the teams in TeamsH, untill balance is restored
     // But we want paths at least of length 2, because otherwise this is equivalent to bipartite matching? 
@@ -688,34 +687,41 @@ void ReversePathsMatching(Solution& sol, const vector<pair<int,int>> Matching, c
     std::mt19937 generator(rd());
     // std::shuffle(TeamsA.begin(), TeamsA.end(), generator);
     int SOURCE, SINK;
-    int c, h, a, club, w, i_, j_;
+    int c, club, w, i_, j_;
     vector<vector<int>>Weight(N, vector<int>(N));
+    // shuffle TeamsH and TeamsA!!!
+    shuffle(TeamsH.begin(), TeamsH.end(), default_random_engine(42));
+    shuffle(TeamsA.begin(), TeamsA.end(), default_random_engine(42));
+    vector<vector<int>>PATHS;
     for (int t = 0; t < TeamsA.size(); ++t){
         SOURCE = TeamsA[t], SINK = TeamsH[t];
         // cout << "find path from " << SOURCE << " to " << SINK << endl;
         vector<Edge>Edges;
         vector<int>Weights;
         for (i_ = 0; i_ < sol.getNrTeamsLeague(l); ++i_){
-            for (j_ = i_+1; j_ < sol.getNrTeamsLeague(l); ++j_){
+            for (j_ = 0; j_ < sol.getNrTeamsLeague(l); ++j_){
                 i = sol.getTeamsLeague(l)[i_], j = sol.getTeamsLeague(l)[j_];
                 c = sol.MatchColor[i][j];
-                if (sol.isEligible(i,j) && c >= 0){
-                    if (sol.Orientation[i][c] == HA::H){
-                        h = i, a = j;
-                        // cout << "add " << j << "-" << i << endl;
-                        Edges.push_back(Edge(j,i)); // j->i, so i plays H
+                if (sol.isEligible(i,j) && c >= 0){ 
+                    // Do not reverse orientations of matches in the matching in case of 2RR!!
+                    // e.g. we had (0,1) in c, now we have (1,0) in r, we cannot go back to (0,1)!
+                    if (!sol.SRR && c == r){
+                        continue;
                     }
-                    else{
-                        h = j, a = i;
-                        assert(sol.Orientation[i][c] == HA::A);
-                        Edges.push_back(Edge(i,j));
-                        // cout << "add " << i << "-" << j << endl;
+                    else if (!sol.SRR && sol.MatchColor[j][i] >= 0){
+                        // Because if we reverse an arc in 2RR, we can get a game that we already scheduled!
+                        continue;
                     }
+
+                    assert(sol.Orientation[i][c] == HA::H);
+                    assert(sol.Orientation[j][c] == HA::A);
+                    Edges.push_back(Edge(j,i)); // j->i, so i plays H
+
                     if (EdgeSwapped[i][j]){
                         w = 0;
                     }
                     else{
-                        int club_h = sol.getTeamClub(h), club_a = sol.getTeamClub(a);
+                        int club_h = sol.getTeamClub(i), club_a = sol.getTeamClub(j);
                         if (sol.ComputeCapacityClubRound(club_a, c) < sol.getCapacityClub(club_a, c)){
                             if (sol.getNrTeamsClub(club_a) == 1 || club_h == club_a){
                                 w = 0;
@@ -729,7 +735,6 @@ void ReversePathsMatching(Solution& sol, const vector<pair<int,int>> Matching, c
                         }
                     }
                     Weight[i][j] = w;
-                    Weight[j][i] = w;
                     Weights.push_back(w);
                 }
             }
@@ -738,12 +743,22 @@ void ReversePathsMatching(Solution& sol, const vector<pair<int,int>> Matching, c
         // This normally includes all nodes, but only edges between the nodes in league l are drawn!
         vector<int>path = FindPath(N, SOURCE, SINK, Edges, Weights);
         assert(!path.empty());
-
+        PATHS.push_back(path);
         // cout << "Path found: " << endl;
-        // cout << path[0] << "(" << sol.getTeamClub(path[0]) << ")";
         for (int p = 1; p < path.size(); p++){
             i = path[p-1], j = path[p];
             c = sol.MatchColor[i][j];
+            // cout << i << " <- (" << sol.MatchColor[i][j] << ") ";
+            if (p == path.size()-1){
+                cout << j << endl;
+                // cout << "end of path" << endl;
+            }
+            if (!sol.SRR){
+                std::swap(sol.MatchColor[i][j], sol.MatchColor[j][i]); // should be the same
+                // sol.MatchColor[i][j] = -1;
+                // sol.MatchColor[j][i] = c;
+            }
+
             assert(sol.Orientation[i][c] == HA::H && sol.Orientation[j][c] == HA::A);
             std::swap(sol.Orientation[i][c], sol.Orientation[j][c]);
             if (EdgeSwapped[i][j]){
@@ -756,11 +771,12 @@ void ReversePathsMatching(Solution& sol, const vector<pair<int,int>> Matching, c
             }
             // cout << " <- (" << Weight[i][j] << ", " << c << ") " << j << "(" << sol.getTeamClub(j) << ")"; // bc the sink comes first so direction path is <-
         }
-        // cout << endl;
+        // cout << "path was found" << endl;
     }
+    // cout << "done" << endl;
     // cin.get();
 
-    return;
+    return PATHS;
 }
 
 vector<pair<int,int>> MWPM(const vector<int>& SelectedTeams, Solution& sol, const vector<vector<bool>>& ForbiddenEdge /*, const vector<bool>& TeamSelected*/){
@@ -844,11 +860,12 @@ vector<pair<int,int>> MWPM(const vector<int>& SelectedTeams, Solution& sol, cons
 }
 
 
-void SwapMatchings(Solution& sol, vector<pair<int,int>>Matching, const int l, const int r){
+void SwapMatchings(Solution& sol, vector<pair<int,int>>Matching, const int l, const int r, const bool bipartite){
     // cout << "SWAP MATCHINGS" << endl;
     const int N = sol.getNrTeams(), R = sol.getNrRounds();
     vector<bool>NodeSeen(N, false);
     int i,j,h,a;
+    // cout << "Old matching: " << endl;
     for (auto& i: sol.getTeamsLeague(l)){
         if (!NodeSeen[i]){
             j = sol.TeamColorOpp[i][r];
@@ -871,17 +888,66 @@ void SwapMatchings(Solution& sol, vector<pair<int,int>>Matching, const int l, co
         }
     }
 
+    // cout << "New matching:" << endl;
+    // Bipartite: behoudt orientations
+    // Normal Matching: geef random orientations
     for (int m = 0; m < Matching.size(); ++m){
         i = Matching[m].first, j = Matching[m].second;
-        if (sol.Orientation[i][r] == HA::H){
-            assert(sol.Orientation[j][r] == HA::A);
-            h = i, a = j;
+        if (bipartite){
+            if (sol.Orientation[i][r] == HA::H){
+                assert(sol.Orientation[j][r] == HA::A);
+                h = i, a = j;
+            }
+            else{
+                assert(sol.Orientation[i][r] == HA::A);
+                assert(sol.Orientation[j][r] == HA::H);
+                h = j, a = i;
+            }
         }
         else{
-            assert(sol.Orientation[i][r] == HA::A);
-            assert(sol.Orientation[j][r] == HA::H);
-            h = j, a = i;
+            if (sol.Orientation[i][r] != sol.Orientation[j][r]){
+                // then, nothing: orientation of the teams can stay the same
+                // But, for 2RR: we need to check something additionally
+                if (!sol.SRR && sol.Orientation[i][r] == HA::H && sol.Orientation[j][r] == HA::A && sol.MatchColor[i][j] >= 0 && sol.MatchColor[i][j] != r){
+                    h = j, a = i;
+                    sol.Orientation[i][r] = HA::A;
+                    sol.Orientation[j][r] = HA::H;
+                    sol.MatchColor[j][i] = r;
+                }
+                else if (!sol.SRR && sol.Orientation[j][r] == HA::H && sol.Orientation[i][r] == HA::A && sol.MatchColor[j][i] >= 0 && sol.MatchColor[j][i] != r){
+                    h = i, a = j;
+                    sol.Orientation[i][r] = HA::H;
+                    sol.Orientation[j][r] = HA::A;
+                    sol.MatchColor[i][j] = r;
+                }
+                else{
+                    if (sol.Orientation[i][r] == HA::H){
+                        assert(sol.Orientation[j][r] == HA::A);
+                        h = i, a = j;
+                    }
+                    else{
+                        assert(sol.Orientation[i][r] == HA::A);
+                        assert(sol.Orientation[j][r] == HA::H);
+                        h = j, a = i;
+                    }
+                }
+            }
+            else{
+                if (sol.MatchColor[i][j] >= 0){
+                    a = i, h = j;
+                    sol.Orientation[i][r] = HA::A;
+                    sol.Orientation[j][r] = HA::H;
+                    sol.MatchColor[j][i] = r;
+                }
+                else{
+                    a = j, h = i;
+                    sol.Orientation[i][r] = HA::H;
+                    sol.Orientation[j][r] = HA::A;
+                    sol.MatchColor[i][j] = r;
+                }
+            }
         }
+        // Problem with normal matching and 2RR is that later we maybe change matchcolor again!!
         SetValueCircleMethod(h, a, r, sol);
         // cout << "match " << h << " vs " << a << " = " << r << endl;
         // cout << "give match " << i << ", " << j << " with dist " << sol.getDistanceTeams(i,j) << " color " << r << endl;
@@ -932,11 +998,13 @@ vector<pair<int,int>>MoveMWPM(Solution& sol, const int l, const int r, const boo
     int N = sol.getNrTeamsLeague(l), R = sol.getNrRounds(), H = R/2;
     int SizeMatching = N/2;
     vector<bool>TeamSelected(sol.getNrTeams(), true);
+    /*
     if (!bipartite){
         SizeMatching = 2+rand()%(SizeMatching/4);
         SizeMatching *= 2;
         TeamSelected = SelectTeamsMatching(sol, l, r, SizeMatching);
     }
+    */
     int i_,j_, i, j;
     int m = 0;
     vector<vector<bool>>ForbiddenEdge(sol.getNrTeams(), vector<bool>(sol.getNrTeams(), false));
@@ -973,25 +1041,14 @@ vector<pair<int,int>>MoveMWPM(Solution& sol, const int l, const int r, const boo
                         ForbiddenEdge[i][j] = true;
                         ForbiddenEdge[j][i] = true;
                     }
-                    else if (sol.Orientation[i][r] == HA::H && sol.Orientation[j][r] == HA::A){
+                    // Example: we want to construct a matching for round 5, the match (0,19) happened in round 1
+                    // If now 19 plays A and 0 plays 0 in round 5, then without this forbidden edge we would select (19,0), but this game already happened!
+                    if (sol.Orientation[i][r] == HA::H && sol.Orientation[j][r] == HA::A){
                         ForbiddenEdge[j][i] = true;
                     }
                     else if (sol.Orientation[j][r] == HA::H && sol.Orientation[i][r] == HA::A){
                         ForbiddenEdge[i][j] = true;
                     }
-                    /*
-                    else if (!sol.SRR && sol.Orientation[i][r] == HA::H && sol.Orientation[j][r] == HA::A && sol.MatchColor[i][j] >= 0){
-                        ForbiddenEdge[j][i] = true;
-                        /*
-                        Example: we want to construct a matching for round 5, the match (0,19) happened in round 1
-                        If now 19 plays A and 0 plays 0 in round 5, then without this forbidden edge we would select (19,0), but this game already happened!!
-                        */
-                    /*
-                    }
-                    else if (!sol.SRR && sol.Orientation[i][r] == HA::A && sol.Orientation[j][r] == HA::H && sol.MatchColor[j][i] >= 0){
-                        ForbiddenEdge[i][j] = true;
-                    }
-                    */
                 }
                 else{
                     // TeamSelected: if we do matching on the subset of the teams
@@ -1024,8 +1081,9 @@ vector<pair<int,int>>MoveMWPM(Solution& sol, const int l, const int r, const boo
         for (i_ = 0; i_ < sol.getNrTeamsLeague(l); ++i_){
             for (j_ = 0; j_ < sol.getNrTeamsLeague(l); ++j_){
                 i = sol.getTeamsLeague(l)[i_], j = sol.getTeamsLeague(l)[j_];
-                if (sol.MatchColor[i][j] == r){
+                if (sol.MatchColor[i][j] == r && (TeamSelected[i] && TeamSelected[j])){
                     // We must always be able to go back to the original matching!!
+                    // Hence, for all teams in the original matching, their edges must also be included!
                     assert(!ForbiddenEdge[i][j]);
                 }
             }

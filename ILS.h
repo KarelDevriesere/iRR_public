@@ -42,7 +42,7 @@ class ILS
         
         array<move_name, 6>Moves = {move_name::TS, move_name::PTS, move_name::PRS, move_name::M, move_name::BM, move_name::C};
         // Cycle gives problems!!
-        unordered_map<move_name, double>Weights = {{move_name::TS, 0.1}, {move_name::PTS, 0.35}, {move_name::PRS, 0.05}, {move_name::M, 0.0}, {move_name::BM, 0.5}, {move_name::C, 0.0}};
+        unordered_map<move_name, double>Weights = {{move_name::TS, 0.0}, {move_name::PTS, 0.0}, {move_name::PRS, 0.0}, {move_name::M, 1.0}, {move_name::BM, 0.0}, {move_name::C, 0.0}};
         unordered_map<move_name, double>WeightsCumul;
         unordered_map<move_name, int>NrChosen; // Nr of times a move was chosen in total
         unordered_map<move_name, int>NrChosenT; // Nr of times a move was chosen at current temperature
