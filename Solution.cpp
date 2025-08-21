@@ -274,6 +274,22 @@ int Solution::ComputeCapacityClubRound(const int c, const int r){
     return cap;
 }
 
+int Solution::CostCapacityClubHapSwitchTeam(const int i, const int r){
+    // Calculate the impact of switching the mode of i in round r on the capacity of the club of i
+    // Optimal if one team per club
+    const int c = getTeamClub(i);
+    const int cap = ComputeCapacityClubRound(c, r);
+    int cost_before = max(0, cap - getCapacityClub(c,r));
+    int cost_after = 0;
+    if (Orientation[i][r] == HA::H){
+        cost_after = max(0, cap - 1 - getCapacityClub(c,r));
+    }
+    else if (Orientation[i][r] == HA::A){
+        cost_after = max(0, cap + 1 - getCapacityClub(c,r));
+    }
+    return (cost_after-cost_before)*CostCapacityViol;
+}
+
 int Solution::ComputeCostCapacities(){
     int cost = 0;
     int cap;
@@ -293,8 +309,9 @@ int Solution::ComputeCostCapacities(){
                 */
         }
     }
+    int final_cost = max(0, cost-getAllowedNrCapacityViolations());
 
-    return CostCapacityViol*cost;
+    return CostCapacityViol*final_cost;
 }
 
 int Solution::ComputeCostThreeConsecutive(){
@@ -401,7 +418,10 @@ void Solution::validate(){
             }
             int j = TeamColorOpp[i][r];
             if (!ViolationEligibleOpponents_allowed){
-                assert(isEligible(i,j));
+                if (!isEligible(i,j)){
+                    cout << i << " and " << j << " cannot play against each other" << endl;
+                    assert(isEligible(i,j));
+                }
             }
             assert(TeamColorOpp[j][r] == i);
             Opponent[i][r] = j;
@@ -434,7 +454,7 @@ void Solution::validate(){
             // assert(CapacityClub[c] <= getCapacityClub(c));
             cap_viol += max(0, CapacityClub[c] - getCapacityClub(c,r));
             if (!ViolationHAP_allowed){
-                assert(cap_viol == 0);
+                assert(cap_viol <= getAllowedNrCapacityViolations());
             }
         }
     }

@@ -15,10 +15,72 @@ GurSolver::GurSolver(const Input& in) : Input(in), env(true), model(createModel(
 GurSolver::~GurSolver(){}
 
 GRBModel GurSolver::createModel(GRBEnv& env) {
-	// env.set(GRB_IntParam_OutputFlag, 0);
 	env.start();
+	env.set(GRB_IntParam_Threads, 8);
+	// env.set(GRB_IntParam_LogToConsole, 0); // surpress all output
 	return GRBModel(env);
   }
+
+void GurSolver::WarmStart(Solution& sol){
+	assert(!x.empty());
+	for (int i = 0; i < getNrTeams(); ++i){
+		for (int j = 0; j < getNrTeams(); ++j){
+			for (int r = 0; r < getNrRounds(); ++r){
+				if (sol.MatchColor[i][j] == r){
+					x[i][j][r].set(GRB_DoubleAttr_Start, 1.0);
+				}
+				else{
+					x[i][j][r].set(GRB_DoubleAttr_Start, 0.0);
+				}
+			}
+		}
+	}
+	WarmStarted = true;
+}
+
+void GurSolver::FixHAP(Solution& sol){
+	// cout << "Fix haps" << endl;
+	const int Half = getNrRounds()/2;
+	for (int i = 0; i < getNrTeams(); ++i){
+		if (!HapFixed[i]){
+			continue;
+		}
+		int nr_H = 0;
+		int nr_A = 0;
+		for (int r = 0; r < getNrRounds(); ++r){
+			assert(Orientation[i][r] == HA::H || Orientation[i][r] == HA::A);
+			int nr_opp = 0;
+			if (Orientation[i][r] == HA::H){
+				nr_H++;
+				for (int j = 0; j < getNrTeams(); ++j){
+					if (!isEligible(i, j)){
+						continue;
+					}
+					// cout << "fix " << j << "-" << i << endl;
+					// x[j][i][r].set(GRB_DoubleAttr_UB, 0.0);
+					string consName = "x[" + to_string(j) + "][" + to_string(i) + "][" + to_string(r) + "] == 0";
+					model.addConstr(x[j][i][r] == 0, consName);
+				}
+			}
+			else {
+				nr_A++;
+				for (int j = 0; j < getNrTeams(); ++j){
+					if (!isEligible(i, j)){
+						continue;
+					}
+					// x[i][j][r].set(GRB_DoubleAttr_UB, 0.0);
+					string consName = "x[" + to_string(i) + "][" + to_string(j) + "][" + to_string(r) + "] == 0";
+					model.addConstr(x[i][j][r] == 0, consName);
+				}
+			}
+			// assert(nr_opp == 1);
+		}
+		if (!isTeamDummy(i)){
+			// cout << "team " << i << " has " << nr_H << " games and " << nr_A << " away games in " << getNrRounds() << " rounds" << endl;
+			assert(nr_H == Half && nr_A == Half);
+		}
+	}
+}
 
 void build_single_league_withoutHA(){
 	// In this case, we just need to select r perfect matchings such that their total sum is optimal!!
@@ -34,26 +96,6 @@ void build_single_league_withoutHA(){
 	// 
 }
 
-void GurSolver::unfix_all(){
-	for (int r = 0; r < getNrRounds(); ++r){
-		for (int i = 0; i < getNrTeams(); ++i){
-			for (int j = 0; j < getNrTeams(); ++j){
-				x_fixed[i][j][r] = false;
-			}
-		}
-	}
-}
-
-void GurSolver::fix_all(){
-	for (int r = 0; r < getNrRounds(); ++r){
-		for (int i = 0; i < getNrTeams(); ++i){
-			for (int j = 0; j < getNrTeams(); ++j){
-				x_fixed[i][j][r] = true;
-			}
-		}
-	}
-}
-
 void GurSolver::build_league(const bool HA, const bool relax_x){
 
 	assert(getNrTeams() % 2 == 0);
@@ -62,12 +104,10 @@ void GurSolver::build_league(const bool HA, const bool relax_x){
 	int i,j,r;
 
 	x = vector<vector<vector<GRBVar>>>(getNrTeams(), vector<vector<GRBVar>>(getNrTeams(), vector<GRBVar>(getNrRounds())));
-	x_fixed = vector<vector<vector<bool>>>(getNrTeams(), vector<vector<bool>>(getNrTeams(), vector<bool>(getNrRounds(), false)));
-	x_value = vector<vector<vector<bool>>>(getNrTeams(), vector<vector<bool>>(getNrTeams(), vector<bool>(getNrRounds(), false)));
 
 	for (i = 0; i < getNrTeams(); ++i){
 		for (j = 0; j < getNrTeams(); ++j){
-		   if (isEligible(i, j)){
+		   // if (isEligible(i, j)){
 			// cout << i << " and " << j << " of strength " << getStrenghtTeam(i) << " and " << getStrenghtTeam(j) << " can play vs each other" << endl;
 			   for (r = 0; r < getNrRounds(); ++r){
 				   std::string varName = "x_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(r);
@@ -79,13 +119,13 @@ void GurSolver::build_league(const bool HA, const bool relax_x){
 				   }
 				   
 			  }
-		   }
+		   // }
 		}
    }
 
    for (i = 0; i < getNrTeams(); ++i){
 		for (j = 0; j < getNrTeams(); ++j){
-		   if (isEligible(i, j)){
+		   // if (isEligible(i, j)){
 			   std::string consName = "c1_" + std::to_string(i) + "_" + std::to_string(j);
 			   GRBLinExpr sum_r = 0;
 			   for (r = 0; r < getNrRounds(); ++r){
@@ -99,15 +139,15 @@ void GurSolver::build_league(const bool HA, const bool relax_x){
 				}  
 			   }
 			   model.addConstr(sum_r <= 1, consName);
-		   }
+		   // }
 		}
 		for (r = 0; r < getNrRounds(); ++r){
 			std::string consName = "c2_" + std::to_string(i) + "_" + std::to_string(r);
 			 GRBLinExpr sum_j = 0;
 			 for (j = 0; j < getNrTeams(); ++j){
-			   if (isEligible(i, j)){
+			   // if (isEligible(i, j)){
 				   sum_j += (x[i][j][r] + x[j][i][r]);
-			   }
+			   // }
 			 }
 			 // Each team plays exactly once in each round
 			 model.addConstr(sum_j == 1, consName);
@@ -119,15 +159,16 @@ void GurSolver::build_league(const bool HA, const bool relax_x){
 		for (i = 0; i < getNrTeams(); ++i){
 			// Make DRR phased: every team sees an opponent at most once in a half
 			for (j = 0; j < getNrTeams(); ++j){
-				if (isEligible(i, j)){
+				// if (isEligible(i, j)){
 					for (auto&[start, end]: Range){
 						GRBLinExpr sum_r = 0;
+						std::string consName = "c3_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(start) + "_" + std::to_string(end);
 						for (r = start; r < end; ++r){
 							sum_r += (x[i][j][r] + x[j][i][r]);
 						}
-						model.addConstr(sum_r <= 1);
+						model.addConstr(sum_r <= 1, consName);
 					}
-				}
+				// }
 			}
 		}
 	}
@@ -136,14 +177,28 @@ void GurSolver::build_league(const bool HA, const bool relax_x){
 	// Each team plays a maximum nr of times against a team from the same club
 	const int c = getTeamClub(i);
 	GRBLinExpr sum_same_club = 0;
+	std::string consName = "c4_" + std::to_string(i);
 	for (auto& j: getTeamsClub(c)){
-		if (isEligible(i,j)){
+		if (/*isEligible(i,j) && */ !isTeamDummy(j)){
 			for (r = 0; r < getNrRounds(); ++r){
 				sum_same_club += (x[i][j][r] + x[j][i][r]);
 			}
 		}
 	}
 	model.addConstr(sum_same_club <= getMaxSameClub());
+   }
+
+   // if we outcomment this, check whether isEligible is put again in all the constraints!!!
+   // Much faster for Tiny-Constant
+   for (int i = 0; i < getNrTeams(); ++i){
+	for (int j = i+1; j < getNrTeams(); ++j){
+		if (!isEligible(i,j)){
+			for (r = 0; r < getNrRounds(); ++r){
+				x[i][j][r].set(GRB_DoubleAttr_UB, 0.0);
+				x[j][i][r].set(GRB_DoubleAttr_UB, 0.0);
+			}
+		}
+	}
    }
 
    if (!HA){
@@ -313,7 +368,11 @@ void GurSolver::AddObj(const bool min_travel, const bool min_capacity_violations
 	}
 	else if (min_capacity_violations){
 		Objective = 0;
-		for (int c = 0; c < getNrClubs()-1; ++c){ // Last club is a dummy club!!
+		for (int c = 0; c < getNrClubs(); ++c){
+			if (c == getIndexDummyClub()){
+				assert(false);
+				continue;
+			}
 			for (int r = 0; r < getNrRounds(); ++r){
 				Objective += v[c][r];
 			}
@@ -328,7 +387,7 @@ void GurSolver::AddObj(const bool min_travel, const bool min_capacity_violations
 void GurSolver::setBoundCapacityViolations(){
 
 	GRBLinExpr c_cap = 0;
-	for (int c = 0; c < getNrClubs(); ++c){ // Last club is a dummy club!!
+	for (int c = 0; c < getNrClubs(); ++c){
 		for (int r = 0; r < getNrRounds(); ++r){
 			c_cap += v[c][r];
 		}
@@ -336,360 +395,26 @@ void GurSolver::setBoundCapacityViolations(){
 	model.addConstr(c_cap <= getAllowedNrCapacityViolations());
 }
 
-void GurSolver::FixHAP(Solution& sol){
-	// cout << "Fix haps" << endl;
-	for (int i = 0; i < getNrTeams(); ++i){
-		if (!HapFixed[i]){
-			continue;
-		}
-		for (int r = 0; r < getNrRounds(); ++r){
-			int nr_opp = 0;
-			if (sol.Orientation[i][r] == HA::H){
-				for (int j = 0; j < getNrTeams(); ++j){
-					if (!isEligible(i, j)){
-						continue;
-					}
-					// cout << "fix " << j << "-" << i << endl;
-					x[j][i][r].set(GRB_DoubleAttr_UB, 0.0);
-					if (x_value[i][j][r] > 0.9){
-						++nr_opp;
-						assert(Orientation[j][r] == HA::A);
-					}
-				}
-			}
-			else{
-				for (int j = 0; j < getNrTeams(); ++j){
-					if (!isEligible(i, j)){
-						continue;
-					}
-					x[i][j][r].set(GRB_DoubleAttr_UB, 0.0);
-					if (x_value[j][i][r] > 0.9){
-						++nr_opp;
-						assert(Orientation[j][r] == HA::H);
-					}
-				}
-			}
-			// assert(nr_opp == 1);
-		}
-	}
+/*
+void GurSolver::addCallbackToTrackTime(){
+	StartTimeGurSolver = std::chrono::high_resolution_clock::now();
+    MyCallback cb(TimeTillBestSolutionGurSolverOuter, StartTimeGurSolver);
+	model.setCallback(&cb);
 }
+*/
 
-int GurSolver::ComputeObjValue(){
-	int obj_value = 0;
-	for (int i = 0; i < getNrTeams(); ++i){
-		for (int j = 0; j < getNrTeams(); ++j){
-			if (isEligible(i, j)){
-				for (int r = 0; r < getNrRounds(); ++r){
-					if (x_value[i][j][r] > 0.9){
-						obj_value += getDistanceTeams(i,j);
-					}
-				}
-			}
-		}
-	}
-	return obj_value;
-}
-
-void GurSolver::FixVariables(){
-	for (int i = 0; i < getNrTeams(); ++i){
-		for (int j = 0; j < getNrTeams(); ++j){
-			if (isEligible(i, j)){
-				for (int r = 0; r < getNrRounds(); ++r){
-					if (x_fixed[i][j][r]){
-						if (x_value[i][j][r] > 0.9){
-							x[i][j][r].set(GRB_DoubleAttr_LB, 1.0);
-						}
-						else{
-							x[i][j][r].set(GRB_DoubleAttr_UB, 0.0);
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
-void GurSolver::FreeTeams(){
-	for (int i = 0; i < getNrTeams(); ++i){
-		double rd = (double)rand()/RAND_MAX;
-		if (rd < PercFreeTeams){
-			for (int r = 0; r < getNrRounds(); ++r){
-				for (int j = 0; j < getNrTeams(); ++j){
-					x_fixed[i][j][r] = false;
-					x_fixed[j][i][r] = false;
-				}
-			}
-			if ((double)rand()/RAND_MAX < PercentageHapsFixed[nb_name::T]){
-				HapFixed[i] = true; 
-			}
-			else{
-				HapFixed[i] = false;
-			}
-		}
-	}
-}
-
-nb_name MoveNrRounds(const int nr, const bool consecutive){
-	if (nr == 1){
-		return nb_name::R1;
-	}
-	else if (nr == 2){
-		if (consecutive){
-			return nb_name::R2C;
-		}
-		else{
-			return nb_name::R2NC;
-		}
-	}
-	else{
-		assert(nr == 3);
-		if (consecutive){
-			return nb_name::R3C;
-		}
-		else{
-			return nb_name::R3NC;
-		}
-	}
-}
-
-void GurSolver::FreeRounds(const int nr, const bool consecutive){
-	vector<int>Rounds(getNrRounds());
-	iota(Rounds.begin(), Rounds.end(), 0);
-	if (!consecutive){
-		unsigned seed = 42;
-    	std::shuffle(Rounds.begin(), Rounds.end(), default_random_engine(seed));
-	}
-	const int start = rand()%(getNrRounds()-nr);
-	for (int i = 0; i < getNrTeams(); ++i){
-		double rd = (double)rand()/RAND_MAX;
-		if (rd < PercentageHapsFixed[MoveNrRounds(nr, consecutive)]){
-			HapFixed[i] = true; 
-		}
-		else{
-			HapFixed[i] = false;
-		}
-		for (int r = start; r < start+nr; ++r){
-			for (int j = 0; j < getNrTeams(); ++j){
-				x_fixed[i][j][r] = false;
-			}
-		}
-	}
-}
-
-void GurSolver::UpdateSelectionProbabilities(){
-	// This is basically the same as in ILS..
-	double nrm = 0;
-    for (const auto& movename : Moves){
-        cout << "reward / NrChosen = " << Reward.at(movename) << " /= " << NrChosen.at(movename) << endl;
-        if (NrChosen.at(movename) > 0){
-			Reward.at(movename) /= NrChosen.at(movename);
-		}
-		else{
-			assert(Reward.at(movename) == 0);
-		}
-        nrm += Reward.at(movename);
-    }
-    double sum = 0;
-    for (const auto& movename: Moves){
-        cout << "weight = max((1.0-" << lambda << ")*" <<  Weights.at(movename) << " + " << lambda << "*" << Reward.at(movename)  << "/" << nrm << "), " << MinWeight << ")" << endl;
-        if (nrm > 0){
-            Weights.at(movename)  = std::max((1.0-lambda)*Weights.at(movename)  + lambda*(Reward.at(movename) /nrm), MinWeight);
-            sum += Weights.at(movename) ;
-			CumulWeights.at(movename)  = sum;
-            cout << "Weight " << nb_name_string.at(movename) << " = " << Weights.at(movename)  << endl;
-        }
-        Reward.at(movename)  = 0;
-        NrChosen.at(movename)  = 0;
-		cout << "Percentage of HAPs fixed = " << PercentageHapsFixed.at(movename) << endl;
-    }
-	cout << "sum = " << sum << endl;
-	if (nrm > 0){
-		assert(0.99 <= sum && sum <= 1.01);
-	}
-}
-
-void GurSolver::UpdateSizeFixedVariables(const nb_name move, const bool optimal){
-	if (optimal){
-		// if solved to optimality, we can free more HAPs
-		if (move == nb_name::T && (double)rand()/RAND_MAX < 0.5 && PercFreeTeams < 1.0){
-			PercFreeTeams += 0.01;
-		}
-		else{
-			if (PercentageHapsFixed.at(move) > 0.01){
-				PercentageHapsFixed.at(move) -= 0.01;
-			}
-		}
-	}
-	else{
-		// if not, fix more haps for the rounds
-		// for the teams: either more haps or fix more teams
-		if (move == nb_name::T && (double)rand()/RAND_MAX < 0.5 && PercFreeTeams > 0.01){
-			PercFreeTeams -= 0.01;
-		}
-		else{
-			if (PercentageHapsFixed.at(move) < 1.0){
-				PercentageHapsFixed.at(move) += 0.01;
-			}
-		}
-	}
-}
-
-void GurSolver::FO(Solution& sol){
-	cout << "Start F&O" << endl;
-	fix_all();
-	start_time = std::chrono::high_resolution_clock::now();
-    current_time = std::chrono::high_resolution_clock::now();
-	setTimeLimit(TimeLimitSubIp);
-	bool stop = false;
-	bool consecutive = true;
-	int best_obj = ComputeObjValue();
-	int it = 0;
-	while (!stop){
-		double rd = (double)rand()/RAND_MAX;
-		nb_name move;
-		if (rd < CumulWeights.at(nb_name::R1)){
-			// cout << "R1" << endl;
-			move = nb_name::R1;
-			consecutive = true;
-			FreeRounds(1, consecutive);
-		}
-		else if (rd < CumulWeights.at(nb_name::R2C)){
-			// cout << "R2C" << endl;
-			move = nb_name::R2C;
-			consecutive = true;
-			FreeRounds(2, consecutive);
-		}
-		else if (rd < CumulWeights.at(nb_name::R3C)){
-			// cout << "R3C" << endl;
-			move = nb_name::R3C;
-			consecutive = true;
-			FreeRounds(3, consecutive);
-		}
-		else if (rd < CumulWeights.at(nb_name::R2NC)){
-			// cout << "R2C" << endl;
-			move = nb_name::R2NC;
-			consecutive = false;
-			FreeRounds(2, consecutive);
-		}
-		else if (rd < CumulWeights.at(nb_name::R3NC)){
-			// cout << "R3C" << endl;
-			move = nb_name::R3NC;
-			consecutive = false;
-			FreeRounds(3, consecutive);
-		}
-		else{
-			move = nb_name::T;
-			// cout << "T" << endl;
-			FreeTeams();
-		}
-		NrChosen[move]++;
-		FixHAP(sol);
-		FixVariables();
-		auto time_before_solve = std::chrono::high_resolution_clock::now();
-		int obj = solve();
-		FreeVariables();
-		if (obj < best_obj){
-			Store_x_value();
-			
-			Reward[move] += (best_obj - obj);
-			cout << nb_name_string.at(move) << ": " << obj << endl;
-			best_obj = obj;
-		}
-
-		current_time = std::chrono::high_resolution_clock::now();
-        std::chrono::high_resolution_clock::duration time_diff = current_time - start_time;
-        auto duration_gap = std::chrono::duration_cast<std::chrono::seconds>(time_diff);
-        if ((int)duration_gap.count() > TimeLimitFO){
-			cout << "F&O done" << endl;
-            stop = true;
-        }
-		time_diff = current_time - time_before_solve;
-        duration_gap = std::chrono::duration_cast<std::chrono::seconds>(time_diff);
-		bool optimal = true;
-		if ((int)duration_gap.count() > TimeLimitSubIp){
-            optimal = false;
-        }
-        UpdateSizeFixedVariables(move, optimal);
-
-		if (++it > 100){
-			it = 0;
-			UpdateSelectionProbabilities();
-		}
-
-		fix_all();
-	}
-}
-
-void GurSolver::Validate(){
-	// HAPS
-	for (int i = 0; i < getNrTeams(); ++i){
-		int nr_breaks = 0;
-		for (int r = 1; r < getNrRounds(); ++r){
-			if (Orientation[i][r-1] == Orientation[i][r]){
-				nr_breaks++;
-			}
-			if (r == 1 || r == getNrRounds()-1){
-				if (getHAP_requirement(HAP_requirement_name::NoBreakBeginningEnd)){
-					assert(Orientation[i][r-1] != Orientation[i][r]);
-				}
-			}
-			if (r >= 2){
-				if (getHAP_requirement(HAP_requirement_name::NoThreeConsecutive)){
-					assert(!(Orientation[i][r-2] == Orientation[i][r-1] && Orientation[i][r-1] == Orientation[i][r]));
-				}
-			}
-		}
-		if (getHAP_requirement(HAP_requirement_name::BreakLimit)){
-			assert(nr_breaks <= getBreakLimit());
-		}
-	}
-}
-
-void GurSolver::Store_x_value(){
-	for (int i = 0; i < getNrTeams(); ++i){
-		for (int j = 0; j < getNrTeams(); ++j){
-			if (isEligible(i, j)){
-				for (int r = 0; r < getNrRounds(); ++r){
-					x[i][j][r].set(GRB_DoubleAttr_LB, 0.0);
-					x[i][j][r].set(GRB_DoubleAttr_UB, 1.0);
-					if (x[i][j][r].get(GRB_DoubleAttr_X) > 0.9){
-						x_value[i][j][r] = 1;
-						Orientation[i][r] = HA::H;
-						Orientation[j][r] = HA::A;
-					}
-					else{
-						x_value[i][j][r] = 0;
-					}
-				}
-			}
-		}
-	}
-	Validate();
-}
-
-
-void GurSolver::FreeVariables(){
-	for (int i = 0; i < getNrTeams(); ++i){
-		for (int j = 0; j < getNrTeams(); ++j){
-			if (isEligible(i, j)){
-				for (int r = 0; r < getNrRounds(); ++r){
-					x[i][j][r].set(GRB_DoubleAttr_LB, 0.0);
-					x[i][j][r].set(GRB_DoubleAttr_UB, 1.0);
-					if (x[i][j][r].get(GRB_DoubleAttr_X) > 0.9){
-						x_value[i][j][r] = 1;
-						Orientation[i][r] = HA::H;
-						Orientation[j][r] = HA::A;
-					}
-					else{
-						x_value[i][j][r] = 0;
-					}
-				}
-			}
-		}
-	}
+// unique pointer version
+void GurSolver::addCallbackToTrackTime() {
+    StartTimeGurSolver = std::chrono::high_resolution_clock::now();
+    cb = std::make_unique<MyCallback>(TimeTillBestSolutionGurSolverOuter, StartTimeGurSolver);
+    model.setCallback(cb.get());  // Gurobi needs a raw pointer
 }
 
 int GurSolver::solve(){
+
+	if (TrackTimeBestSolution){
+		addCallbackToTrackTime();
+	}
 
 	try
 	{
@@ -734,7 +459,7 @@ int GurSolver::solve(){
 	}
 	if (model.get(GRB_IntAttr_SolCount) < 1){
 		// not one feasible solution found
-		return INT_MAX;
+		return -1;
 	}
 	return std::round(model.get(GRB_DoubleAttr_ObjVal)); // In case of time limit this returns the best found objective
 }
@@ -778,8 +503,8 @@ void GurSolver::BuildPatternFormulation(){
 		for (int c = 0; c < getNrClubs(); ++c){ // NrClubs == clubs without dummy
 			for (int r = 0; r < getNrRounds(); ++r){
 				assert(getNrTeamsClub(c) >= getCapacityClub(c, r));
-				int ub_var = getNrTeamsClub(c)-getCapacityClub(c, r);
-				v[c][r] = model.addVar(0, ub_var, 0.0, GRB_CONTINUOUS);
+				// int ub_var = getNrTeamsClub(c)-getCapacityClub(c, r);
+				v[c][r] = model.addVar(0, GRB_INFINITY, 0.0, GRB_CONTINUOUS);
 			}
 		}
 	}
@@ -809,7 +534,7 @@ void GurSolver::BuildPatternFormulation(){
 					}
 				}
 			}
-			model.addConstr(sum_th <= getCapacityClub(c, r) + v[c][r]);
+			model.addConstr(sum_th <= getCapacityClub(c, r) + v[c][r]); // capacity
 		}
 	}
 
@@ -862,12 +587,34 @@ void GurSolver::Fix_y_Patterns(const Solution& sol){
 	}
 }
 
+void GurSolver::AddMiaoSymmetryConstraint(){
+	// Because teams from the same club is not enough, they also need to have the same strength!!
+	for (int c = 0; c < getNrClubs(); ++c){
+		for (int i = 0; i < getTeamsClub(c).size(); ++i){
+			int i_ = getTeamsClub(c)[i];
+			if (!isTeamDummy(i_)){
+				for (int j = i+1; j < getTeamsClub(c).size(); ++j){
+					int j_ = getTeamsClub(c)[j];
+					if (!isTeamDummy(j_) && (getStrenghtTeam(j_) == getStrenghtTeam(i_))){
+						GRBLinExpr sum_h = 0;
+						for (int h = 0; h < getNrHAPs(); ++h){
+							sum_h += (h*(y[i_][h]-y[j_][h]));
+						}
+						model.addConstr(sum_h >= 0);
+					}
+				}
+			}
+		}
+	}
+	cout << "added symmetry constraint" << endl;
+}
+
 void GurSolver::BuildMiaoFormulation(const bool relax_x){
 	const bool HA = false;
 	build_all(HA, relax_x);
 	BuildPatternFormulation();
 	setBoundCapacityViolations();
-	// link the assigned patters with the opponent schedule
+	// link the assigned patterns with the opponent schedule
 	for (int i = 0; i < getNrTeams(); ++i){
 		for (int r = 0; r < getNrRounds(); ++r){
 			GRBLinExpr sum = 0;
@@ -884,6 +631,45 @@ void GurSolver::BuildMiaoFormulation(const bool relax_x){
 			model.addConstr(sum == 0);
 		}
 	}
+	// AddMiaoSymmetryConstraint(); // does not work with warm start
+	
+	// Constraint for the dummy teams:
+	/*
+	for (int i = 0; i < getNrTeams(); i++){
+		if (!isTeamDummy(i)){
+			GRBLinExpr sum_j = 0;
+			for (int j = 0; j < getNrTeams(); ++j){
+				if (isTeamDummy(j)){
+					for (int r = 0; r < getNrRounds(); ++r){
+						sum_j += (x[i][j][r] + x[j][i][r]);
+					}
+				}
+			}
+			model.addConstr(sum_j <= 2);
+			// In paper of Miao it is stated that "all teams originally assigned to leagues of size m-1
+			// in the solution of Toffolo can play against a dummy team at most 2x", but should this not
+			// be required for every team??
+		}
+	}
+		*/
+
+	// Limit total nr of dummy games 
+
+	if (getNrTeams() == 216){
+		// this is the U15 instance in Miao
+		// Only instance where some leagues have more than 2 dummy teams
+		GRBLinExpr sum_ij = 0;
+		for (int i = 0; i < getNrTeams(); ++i){
+			for (int j = i+1; j < getNrTeams(); ++j){
+				if (isTeamDummy(i) && isTeamDummy(j)){
+					for (int r = 0; r < getNrRounds(); ++r){
+						sum_ij += (x[i][j][r] + x[j][i][r]);
+					}
+				}
+			}
+		}
+		model.addConstr(sum_ij == 46);
+	}
 }
 
 void GurSolver::StoreHAPs(Solution& sol){
@@ -899,14 +685,30 @@ void GurSolver::StoreHAPs(Solution& sol){
 	bool printHAPs = false;
 	for (int t = 0; t < getNrTeams(); ++t){
 		assert(sol.getHAPIndexTeam(t) != -1);
+		assert(y[t][sol.getHAPIndexTeam(t)].get(GRB_DoubleAttr_X) > 0.9);
 		vector<HA>HAP = sol.getHAP(sol.getHAPIndexTeam(t)); 
+		if (printHAPs){
+			cout << "Team " << t << " is assigned HAP " << sol.getHAPIndexTeam(t) << " : ";
+		}
 		for (int h = 0; h < HAP.size(); ++h){
+			assert(HAP[h] == HA::H || HAP[h] == HA::A);
 			if (HAP[h] == HA::H){
+				assert(sol.getModeHAPRound(sol.getHAPIndexTeam(t),h) == HA::H);
 				sol.Orientation[t][h] = HA::H;
+				if (printHAPs){
+					cout << "H";
+				}
 			}
 			else{
+				assert(sol.getModeHAPRound(sol.getHAPIndexTeam(t),h) == HA::A);
 				sol.Orientation[t][h] = HA::A;
+				if (printHAPs){
+					cout << "A";
+				}
 			}
+		}
+		if (printHAPs){
+			cout << endl;
 		}
 	}
 
@@ -932,15 +734,20 @@ void GurSolver::AssignHAPsToTeams(Solution& sol){
 	cout << "Assign HAPs to teams" << endl;
 
 	BuildPatternFormulation();
+	// setBoundCapacityViolations(); // outcomment this constraint and add objective to find minimum violation
+	// HAP set!
 
 	const int NrHaps = getNrHAPs();
 
 	const bool min_travel = false;
-	const bool min_capacity_violations = true;
+	const bool min_capacity_violations = true; // set to true!!!
 	AddObj(min_travel, min_capacity_violations);
 
 	int obj = solve();
 
+	// cout << "obj = " << obj << " but allowed nr of capacity violations = " << getAllowedNrCapacityViolations() << endl;
+	// cin.get();
+	// assert(obj == getAllowedNrCapacityViolations());
 	assert(obj <= getAllowedNrCapacityViolations());
 	StoreHAPs(sol);
 }

@@ -132,14 +132,8 @@ void ReversePath(Solution& sol, const vector<int> path);
 
 vector<vector<int>> ReversePathsMatching(Solution& sol, const vector<pair<int,int>> Matching, const int l, const int r);
 
-bool InterClubSwap(Solution& sol);
-
-bool IntraClubSwap(Solution& sol);
-
-bool RandomSwap(Solution& sol);
-
-bool ComplementInsertion(Solution& sol);
-
 void KeepOrientationsAllEdgesLantarn(Solution& sol, Lantarn& lantarn, const vector<vector<HA>>& OrientationsCopy);
+
+bool RepairHAPsWithNegativeCycles(Solution& sol, const int l);
 
 #endif

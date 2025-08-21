@@ -9,14 +9,11 @@
 #include <random>
 #include <array>
 
-// R1: 1 round free, R2: 2 rounds free, R3: 3 rounds free, T: free subset of teams
-enum class nb_name{R1, R2C, R3C, R2NC, R3NC, T}; 
-const unordered_map<nb_name, string>nb_name_string = {{nb_name::R1, "R1"}, {nb_name::R2C, "R2C"}, {nb_name::R3C, "R3C"}, 
-    {nb_name::R2NC, "R2NC"}, {nb_name::R3NC, "R3NC"}, {nb_name::T, "T"}}; // C: consecutive, NC: non consecutive
-
 class GurSolver : public Input
 {
-    private:
+    protected:
+        int TimeTillBestSolutionGurSolverOuter;
+        std::chrono::high_resolution_clock::time_point StartTimeGurSolver;
 
         // const GRBEnv env;
 	    // GRBModel model = GRBModel(env);
@@ -28,37 +25,39 @@ class GurSolver : public Input
         vector<vector<GRBVar>>b;
         vector<vector<GRBVar>>y;
         vector<vector<HA>>Orientation;
-        vector<vector<vector<bool>>>x_value;
-        vector<vector<vector<bool>>>x_fixed;
 
         vector<vector<vector<GRBConstr>>>Constraints_fixed_variables; // per team per round
 
         GRBModel createModel(GRBEnv& env); // this way, we can set GRB_IntParam_OutputFlag to 0 before building the model
 
-        // Fix and Optimize:
-        std::chrono::high_resolution_clock::time_point start_time;
-        std::chrono::high_resolution_clock::time_point current_time;
-        int TimeLimitSubIp = 30.0;
-        int TimeLimitFO = 600;
-        int Consecutive_w = 0.3;
+        // Callback to retrieve time till best solution:
+        // *********** CALLBACK ***************** //
+        class MyCallback : public GRBCallback { // nested class
+            public:
+                MyCallback(int& timeVar, std::chrono::high_resolution_clock::time_point& start)
+                    : TimeTillBestSolutionGurSolver(timeVar), StartTimeGurSolver(start) {}
 
-        double PercFreeTeams = 0.05;
-        unordered_map<nb_name, double>CumulWeights = {{nb_name::R1, 0.35}, {nb_name::R2C, 0.45}, {nb_name::R3C, 0.50}, 
-            {nb_name::R2NC, 0.60}, {nb_name::R3NC, 0.65}, {nb_name::T, 1.0}};
+            protected:
+                void callback() override {
+                    try {
+                        if (where == GRB_CB_MIPSOL) { // check whether a new MIP incumbent is found
+                            auto time_diff = std::chrono::high_resolution_clock::now() - StartTimeGurSolver;
+                            TimeTillBestSolutionGurSolver = std::chrono::duration_cast<std::chrono::seconds>(time_diff).count();
 
-        unordered_map<nb_name, double>Weights = {{nb_name::R1, 0.35}, {nb_name::R2C, 0.10}, {nb_name::R3C, 0.05}, 
-            {nb_name::R2NC, 0.10}, {nb_name::R3NC, 0.05}, {nb_name::T, 0.35}}; // Whether we do something related to rounds or teams
+                            double obj = getDoubleInfo(GRB_CB_MIPSOL_OBJ);
+                            // std::cout << "New best obj = " << obj << ", Time = " << TimeTillBestSolutionGurSolver << " s" << std::endl;
+                        }
+                    } catch (GRBException& e) {
+                        std::cerr << "Gurobi callback error: " << e.getMessage() << std::endl;
+                    }
+                }
 
-        unordered_map<nb_name, double>PercentageHapsFixed = {{nb_name::R1, 0.0}, {nb_name::R2C, 0.25}, {nb_name::R3C, 0.50}, 
-            {nb_name::R2NC, 0.25}, {nb_name::R3NC, 0.50}, {nb_name::T, 0.10}}; // Number of Haps we fix based on the number of rounds
-
-        array<nb_name, 6>Moves = {nb_name::R1, nb_name::R2C, nb_name::R3C, nb_name::R2NC, nb_name::R3NC, nb_name::T};
-
-        unordered_map<nb_name, double>Reward = {{nb_name::R1, 0.0}, {nb_name::R2C, 0.0}, {nb_name::R3C, 0.0}, {nb_name::R2NC, 0.0}, {nb_name::R3NC, 0.0}, {nb_name::T, 0.0}};
-        unordered_map<nb_name, int>NrChosen = {{nb_name::R1, 0}, {nb_name::R2C, 0}, {nb_name::R3C, 0}, {nb_name::R2NC, 0}, {nb_name::R3NC, 0}, {nb_name::T, 0}};
-
-        double MinWeight = 0.01;
-        double lambda = 0.093;
+            private:
+                int& TimeTillBestSolutionGurSolver;
+                std::chrono::high_resolution_clock::time_point& StartTimeGurSolver;
+            };
+        std::unique_ptr<MyCallback> cb; // keep callback alive until GurSolver dies
+        // *********** CALLBACK ***************** //
 
     public:
 
@@ -76,28 +75,20 @@ class GurSolver : public Input
         double getMipGap();
         int getBestBound();
         void SaveSolution(Solution& sol);
-        void Store_x_value();
-        int ComputeObjValue();
-        void Validate();
+        void WarmStart(Solution& sol);
 
+        void FixHAP(Solution& sol);
         void BuildMiaoFormulation(const bool relax_x);
         void BuildPatternFormulation();
         void Fix_y_Patterns(const Solution& sol);
         void AssignHAPsToTeams(Solution& sol); // For Miao's algorithm
         void StoreHAPs(Solution& sol);
+        void AddMiaoSymmetryConstraint();
+        
+        bool TrackTimeBestSolution = false;
+        void addCallbackToTrackTime();
+        int getTimeTillBestSolution()const{return TimeTillBestSolutionGurSolverOuter;};
 
-        // Fix and optimize:
-        void FixHAP(Solution& sol);
-        void FreeRounds(const int nr, const bool consecutive);
-        void FreeTeams();
-        void FO(Solution& sol);
-        void fix_all();
-        void unfix_all();
-        void FixVariables();
-        void SetDualProbs();
-        void UpdateSizeFixedVariables(const nb_name move, const bool optimal);
-        void UpdateSelectionProbabilities();
-        void FreeVariables();
 
         vector<vector<pair<int,int>>> EdgeColoring(int& C, vector<vector<bool>>& ForbiddenEdge, int& NrColorsUsed);
 

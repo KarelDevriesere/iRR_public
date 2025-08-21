@@ -1,0 +1,1 @@
+Move, NrChosen, NrAccepted, % Improvement found, Average improvement found, % contribution to best objective, Instance

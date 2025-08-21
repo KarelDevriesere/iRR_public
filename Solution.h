@@ -40,6 +40,7 @@ class Solution: public Input{
         int NrThreeConsecutiveHA(const int i); 
         int getNrBreaksBeginningEnd(const int i);
         int getImbalanceHalf(const int i);
+        int CostCapacityClubHapSwitchTeam(const int i, const int r);
 
         bool IsMatchFeasible2RR(const int h, const int a, const int r);
 

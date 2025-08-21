@@ -59,8 +59,20 @@ void PrintLantarn(Solution& sol, Lantarn& lantarn){
 }
 
 void KeepOrientation(Solution& sol, Lantarn& lantarn, const int i, const int k, const int j, const vector<vector<HA>>& OrientationsCopy){
+    // this can be seen as swapping the colors in the lantarn but not the orientations. 
+    // E.g. if we have: 
+    // i<-G-s<-B-j
+    // i<-R-t<-G-j
+    // i<-B-u<-R-j
+    // then the new lantarn will be:
+    // i<-B-s<-G-j
+    // i<-G-t<-R-j
+    // i<-R-u<-B-j
+    // Hence, the HAPs of all teams change but at least everything stays balanced
+    // except if the orientations of i and j next to the possible fictive color do not match, so at most 1 path needs to be found!!
     int c_i, c_j;
     // k: position in middle, not the team itself!!!
+    // this + swapping colors: orientations of the middle teams does not change!!!
     c_i = sol.MatchColor[lantarn.EdgesMatch.at(i)[k].first][lantarn.EdgesMatch.at(i)[k].second];
     c_j = sol.MatchColor[lantarn.EdgesMatch.at(j)[k].first][lantarn.EdgesMatch.at(j)[k].second];
 
@@ -143,6 +155,10 @@ void TS(Solution& sol, const int i, const int j){
     // Swaps 2 teams
     // std::cout << "Swap teams " << i << " and " << j << std::endl;
     // ALWAYS KEEPS THE BALANCE!!
+    // This moves works by swapping the colors on both sides. The orienations are such that the middle teams
+    // keep their orientations in each color, hence only the HAPs of i and j change!!
+    // Because we swap all the colors and orientations, the resulting HAPs of i and j will still be balanced
+    // However, the HAPs of i and j might break..
 
     int c, opp_i, opp_j;
     for (c = 0; c < sol.getNrRounds(); ++c){
@@ -178,6 +194,7 @@ void TS(Solution& sol, const int i, const int j){
         }
         std::swap(sol.MatchColor[i][k], sol.MatchColor[j][k]);
         std::swap(sol.MatchColor[k][i], sol.MatchColor[k][j]);
+        assert(sol.ComputeHACostTeam(k) == 0); // test assumption that the HAPs of the middle teams does not change
     }
 }
 
@@ -198,6 +215,8 @@ void PRS(Solution& sol, const int r, const int s, const int StartNode){
     // The only way that something changes for PRS when doing 2RR is when a node goes back to another node before completing the cycle
     // But since any previous node except for the StartNode already has 2 neighbors with the colors r and s, this is not possible
     // What is possible is if we get a cycle directly in the beginning -> we don't need to change anything in the code
+    // This move can be imagined as a cycle in which the colors of the edges are swapped but the orientations remain the same
+    // This guarantees that the HAPs stay balanced. However, the HAPs of all the teams involved may break
     int next = StartNode;
     do{
         // std::cout << "t: " << next << std::endl;
@@ -306,7 +325,11 @@ void ReplenishLantarn(Solution& sol, const int i, const int j, const int StartCo
         if (sol.Orientation[k][c_i] == HA::H){
             match = {k,j};
             if (lantarn.MatchAlreadyPresent[k].first){
-                lantarn.Infeasible2RRMatch = true;
+                lantarn.Infeasible2RRMatch = true; // TODO, snap echt niet wat dit doet..
+                cout << "infeasible 2RR match" << endl;
+                cin.get();
+                PrintLantarn(sol, lantarn);
+                cin.get();
                 return;
             }
             else{
@@ -316,7 +339,11 @@ void ReplenishLantarn(Solution& sol, const int i, const int j, const int StartCo
         else{
             match = {j,k};
             if (lantarn.MatchAlreadyPresent[k].second){
-                lantarn.Infeasible2RRMatch = true;
+                lantarn.Infeasible2RRMatch = true; // TODO
+                cout << "infeasible 2RR match" << endl;
+                cin.get();
+                PrintLantarn(sol, lantarn);
+                cin.get();
                 return;
             }
             else{
@@ -698,24 +725,36 @@ vector<vector<int>> ReversePathsMatching(Solution& sol, const vector<pair<int,in
         // cout << "find path from " << SOURCE << " to " << SINK << endl;
         vector<Edge>Edges;
         vector<int>Weights;
+        // int nr_games = 0;
+        // int nr_usable_games = 0;
+        // int nr_same_color = 0;
+        // int nr_counterpart = 0;
         for (i_ = 0; i_ < sol.getNrTeamsLeague(l); ++i_){
             for (j_ = 0; j_ < sol.getNrTeamsLeague(l); ++j_){
                 i = sol.getTeamsLeague(l)[i_], j = sol.getTeamsLeague(l)[j_];
                 c = sol.MatchColor[i][j];
                 if (sol.isEligible(i,j) && c >= 0){ 
+                    // nr_games++;
                     // Do not reverse orientations of matches in the matching in case of 2RR!!
                     // e.g. we had (0,1) in c, now we have (1,0) in r, we cannot go back to (0,1)!
                     if (!sol.SRR && c == r){
+                        // nr_same_color++;
                         continue;
                     }
                     else if (!sol.SRR && sol.MatchColor[j][i] >= 0){
                         // Because if we reverse an arc in 2RR, we can get a game that we already scheduled!
+                        // Problem is that if we do not include these edges, we might not be able to find a path..
+                        // nr_counterpart++;
                         continue;
                     }
-
+                    if (sol.Orientation[i][c] != HA::H || sol.Orientation[j][c] != HA::A){
+                        cout << i << "-" << j << " has color " << c << endl;
+                    }
                     assert(sol.Orientation[i][c] == HA::H);
                     assert(sol.Orientation[j][c] == HA::A);
                     Edges.push_back(Edge(j,i)); // j->i, so i plays H
+                    // cout << "add edge (" << j << ", " << i << ") " << endl;
+                    // nr_usable_games++;
 
                     if (EdgeSwapped[i][j]){
                         w = 0;
@@ -739,10 +778,15 @@ vector<vector<int>> ReversePathsMatching(Solution& sol, const vector<pair<int,in
                 }
             }
         }
+        // cout << "Only " << nr_usable_games << " from the " << nr_games << " total nr of games" << endl;
+        // cout << "Nr of games from same color = " << nr_same_color << endl;
+        // cout << "Nr of games where counterpart already scheduled = " << nr_counterpart << endl;
         // cout << "find path" << endl;
         // This normally includes all nodes, but only edges between the nodes in league l are drawn!
         vector<int>path = FindPath(N, SOURCE, SINK, Edges, Weights);
-        assert(!path.empty());
+        if (path.empty()){
+            return vector<vector<int>>(); // if unable to find path, return empty vector
+        }
         PATHS.push_back(path);
         // cout << "Path found: " << endl;
         for (int p = 1; p < path.size(); p++){
@@ -750,7 +794,7 @@ vector<vector<int>> ReversePathsMatching(Solution& sol, const vector<pair<int,in
             c = sol.MatchColor[i][j];
             // cout << i << " <- (" << sol.MatchColor[i][j] << ") ";
             if (p == path.size()-1){
-                cout << j << endl;
+                // cout << j << endl;
                 // cout << "end of path" << endl;
             }
             if (!sol.SRR){
@@ -791,11 +835,9 @@ vector<pair<int,int>> MWPM(const vector<int>& SelectedTeams, Solution& sol, cons
     BGraph g(N); 
 
     bool IsWeightRandom = false;
-    /*
-    if (rand()%10 < 2){
-        IsWeightRandom = true;
+    if (rand()%100 < 1){ // give a small probability for matching with random weights
+        IsWeightRandom = true; // TODO: is this a reasonable number?
     }
-        */
 
     int i,j;
     int M = 0; // add this to all the weights: ensures we get a perfect matching
@@ -874,11 +916,9 @@ void SwapMatchings(Solution& sol, vector<pair<int,int>>Matching, const int l, co
             if (!sol.SRR){
                 if (sol.Orientation[i][r] == HA::H){
                     sol.MatchColor[i][j] = -1;
-                    // cout << "match " << i << " vs " << j << " = " << -1 << endl;
                 }
                 else{
                     sol.MatchColor[j][i] = -1;
-                    // cout << "match " << j << " vs " << i << " = " << -1 << endl;
                 }
             } 
             else{
@@ -1043,6 +1083,7 @@ vector<pair<int,int>>MoveMWPM(Solution& sol, const int l, const int r, const boo
                     }
                     // Example: we want to construct a matching for round 5, the match (0,19) happened in round 1
                     // If now 19 plays A and 0 plays 0 in round 5, then without this forbidden edge we would select (19,0), but this game already happened!
+                    // Remember: matching works with edges, not with arcs
                     if (sol.Orientation[i][r] == HA::H && sol.Orientation[j][r] == HA::A){
                         ForbiddenEdge[j][i] = true;
                     }
@@ -1068,6 +1109,7 @@ vector<pair<int,int>>MoveMWPM(Solution& sol, const int l, const int r, const boo
                     minus_j = -1;
                 }
                 // We subtract with -1 if in the current round, i or j also plays against a team from the same club
+                // This because getNrSameClub() still returns the number under the old solution
                 // In that case, we can play against another team from the same club without problem!!
                 if (sol.getNrSameClub(i)+1+minus_i > sol.getMaxSameClub() || sol.getNrSameClub(j)+1+minus_j > sol.getMaxSameClub()){
                     ForbiddenEdge[i][j] = true;
@@ -1094,7 +1136,9 @@ vector<pair<int,int>>MoveMWPM(Solution& sol, const int l, const int r, const boo
     // cout << "Bipartite matching in round " << r << endl;
 
     vector<pair<int,int>>Matching = MWPM(sol.getTeamsLeague(l), sol, ForbiddenEdge);
-    // assert(Matching.size() == SizeMatching); // matching must be perfect
+    if (Matching.size() != SizeMatching){
+        cout << "Failed to find perfect matching" << endl;
+    }
     if (!bipartite){
         vector<bool>NodeSeen(sol.getNrTeams(), false);
         for (auto& i: sol.getTeamsLeague(l)){
@@ -1112,110 +1156,270 @@ vector<pair<int,int>>MoveMWPM(Solution& sol, const int l, const int r, const boo
 
 }
 
-// Miao's HAP operators:
-
-void SwapHAPs(Solution& sol, const int i, const int j){
-    for (int r = 0; r < sol.getNrRounds(); ++r){
-        std::swap(sol.Orientation[i][r], sol.Orientation[j][r]);
+bool SwapOrientationNegativeCycle(Solution& sol, vector<pair<int,int>> cycle, const bool OneTeamPerClub){
+    int c,i,j;
+    int cost_before = sol.ComputeTotalHACost();
+    for (auto& arc: cycle){
+        j = arc.first, i = arc.second;
+        c = sol.MatchColor[i][j];
+        std::swap(sol.Orientation[i][c], sol.Orientation[j][c]);
     }
-    int h1 = sol.getHAPIndexTeam(i);
-    int h2 = sol.getHAPIndexTeam(j);
-    sol.setHAPIndexTeam(i, h2);
-    sol.setHAPIndexTeam(j, h1);
+    if (!OneTeamPerClub && sol.ComputeCostCapacities() != 0){ // if one team per club this information is in the weights 
+        // turn back solution because capacities are not okay..
+        // cout << "cycle is negative but cost of capacities = " << sol.ComputeCostCapacities() << endl;
+        // cin.get();
+        for (auto& arc: cycle){
+            j = arc.first, i = arc.second;
+            c = sol.MatchColor[i][j];
+            std::swap(sol.Orientation[i][c], sol.Orientation[j][c]);
+        }
+        assert(sol.ComputeTotalHACost() == cost_before);
+        return false;
+    }
+    else{
+        for (auto& arc: cycle){
+            j = arc.first, i = arc.second;
+            c = sol.MatchColor[i][j];
+            assert(sol.MatchColor[j][i] < 0); // this should have been accounted for in the weights
+            sol.MatchColor[i][j] = -1;
+            sol.MatchColor[j][i] = c;
+        }
+        int cost_after = sol.ComputeTotalHACost();
+        cout << cost_before << " > " << cost_after << endl;
+        assert(cost_before > cost_after);
+        return true;
+    }
 }
 
-void setHAP(Solution& sol, const int i, const int h){
-    for (int r = 0; r < sol.getNrRounds(); ++r){
-        sol.Orientation[i][r] = sol.getModeHAPRound(h, r);
+
+int ComputeWeight(Solution& sol, const pair<int,int>arc1, const pair<int,int>arc2, const int NrNodes, const bool OneTeamPerClub){
+    // Reverse orientations of arc1 and arc2 in their respective colors
+    assert(arc1.second == arc2.first);
+    int c, i, j;
+    int total_cost_before = sol.ComputeTotalHACost();
+    int cost_before = sol.ComputeHACostTeam(arc1.second);
+    bool DRR_constraint_violated = false;
+    for (auto& arc: {arc1, arc2}){
+        j = arc.first, i = arc.second;
+        c = sol.MatchColor[i][j];
+        std::swap(sol.Orientation[i][c], sol.Orientation[j][c]);
+        // we do not need to do anything with MatchColor, is not used in ComputeHACostTeam()
+        // BUT: for 2RR constraint we need this!!
+        if (arc1.first != arc2.second){ // check if, e.g. arc1 = (1,5) and arc2 = (5,1)
+            if (sol.MatchColor[j][i] >= 0){
+                // If this is the case, we cannot switch the match..
+                DRR_constraint_violated = true; // Note: it actually is also needed for SRR..
+            }
+        }
+    }
+    int cost_after = sol.ComputeHACostTeam(arc1.second);
+    for (auto& arc: {arc1, arc2}){
+        j = arc.first, i = arc.second;
+        c = sol.MatchColor[i][j];
+        std::swap(sol.Orientation[i][c], sol.Orientation[j][c]);
+    }
+    int cost_cap = 0;
+    if (OneTeamPerClub){
+        cost_cap = sol.CostCapacityClubHapSwitchTeam(arc1.second, sol.MatchColor[arc1.second][arc1.first]) + sol.CostCapacityClubHapSwitchTeam(arc1.second, sol.MatchColor[arc2.second][arc2.first]);
+    }
+    assert(total_cost_before == sol.ComputeTotalHACost()); // check if everything went well!!!
+    if (cost_before == 0 && cost_after == 0 && !DRR_constraint_violated && cost_cap <= 0){
+        return 0;
+    }
+    else if (cost_before > cost_after && !DRR_constraint_violated && cost_cap <= 0){
+        return -1;
+    }
+    else{
+        return NrNodes;
     }
 }
 
-bool InterClubSwap(Solution& sol){
-    // Must they be of the same league->yes?
-    // So modify code!!!
-    int c1_ = rand()%sol.getSingleTeamClubs().size();
-    int c1 = sol.getSingleTeamClubs()[c1_];
-    int i = rand()%sol.getTeamsClub(c1).size();
-    int c2 = ((c1+1)+(rand()%(sol.getSingleTeamClubs().size()-1)))%sol.getSingleTeamClubs().size();
-    int c2_ = sol.getSingleTeamClubs()[c2];
-    int j = rand()%sol.getTeamsClub(c2_).size();
-    // cout << "InterClubSwap: swap HAPs of teams " << i << " and " << j << " of clubs << " << c1 << " and " << c2 << endl;
-    SwapHAPs(sol, i, j);
-    // cout << "cost = " << sol.ComputeCostCapacities() << endl;
-    if (sol.ComputeCostCapacities() > 0){
-        cout << "Reject InterClubSwap" << endl;
-        SwapHAPs(sol, i, j);
+
+bool NegativeCycle(Solution& sol, const int l){
+    // cout << "try to find negative cycle" << endl;
+    // For teams in league l
+    const bool OneTeamPerClub = false; // parameter, turn this on or off
+    vector<bool>ClubPresent(sol.getNrClubs(), false);
+    typedef pair<int, int>E;
+    vector<E>Nodes;
+    int i,j,c, club_i, club_j;
+    vector<int>TeamsPresent;
+    for (int i_ = 0; i_ < sol.getNrTeamsLeague(l); ++i_){
+        i = sol.getTeamsLeague(l)[i_];
+        club_i = sol.getTeamClub(i);
+        if (OneTeamPerClub && ClubPresent[club_i]){
+            continue;
+        }
+        TeamsPresent.push_back(i);
+        ClubPresent[club_i] = true;
+    }
+
+    for (auto& i: TeamsPresent){
+        for (auto& j: TeamsPresent){
+            c = sol.MatchColor[i][j];
+            if (c >= 0){
+                assert(sol.Orientation[i][c] == HA::H);
+                assert(sol.Orientation[j][c] == HA::A);
+                Nodes.push_back({j,i}); // make for each arc a node
+                // remember, arc is j->i, so in arc {j,i} i is the home team
+                // cout << "add the node (" << j << "," << i << ")" << endl; // add node per round?
+            }
+        }
+    }
+
+    // Now, evaluate for pair of nodes what the cost will be
+    vector<E>edge_vector;
+    vector<int>weights;
+
+    int weight;
+    for (int v = 0; v < Nodes.size(); ++v){
+        for (int w = v+1; w < Nodes.size(); ++w){
+            if (Nodes[v].second == Nodes[w].first){
+                edge_vector.push_back(E(v, w));
+                weight = ComputeWeight(sol, Nodes[v], Nodes[w], (int)Nodes.size(), OneTeamPerClub);
+                // cout << "give the arc (" << Nodes[v].first << "," << Nodes[v].second << ") -> (" << Nodes[w].first << "," << Nodes[w].second << ") weight " << weight << endl;
+            }
+            else if (Nodes[w].second == Nodes[v].first){
+                edge_vector.push_back(E(w, v));
+                weight = ComputeWeight(sol, Nodes[w], Nodes[v], (int)Nodes.size(), OneTeamPerClub);
+                // cout << "give the arc (" << Nodes[w].first << "," << Nodes[w].second << ") -> (" << Nodes[v].first << "," << Nodes[v].second << ") weight " << weight << endl;
+            }
+            else{
+                continue;
+            }
+            weights.push_back(weight);
+        }
+    }
+
+    int SOURCE = Nodes.size();
+    for (int v = 0; v < Nodes.size(); ++v){
+        edge_vector.push_back(E(SOURCE, v)); // create edges SOURCE --> v
+        weights.push_back(0); // get weight of 0
+    }
+
+    typedef boost::adjacency_list <boost::vecS, boost::vecS, boost::directedS, boost::no_property, boost::property <boost::edge_weight_t, int>>BGraph;
+
+    BGraph g(Nodes.size()+1); // Nodes.size()+1 vertices, +1 bc of source node
+
+    typedef boost::property_map<BGraph, boost::edge_weight_t>::type WeightMap;
+    WeightMap weight_map = boost::get(boost::edge_weight, g);
+    typedef boost::graph_traits<BGraph>::vertex_descriptor Vertex;
+
+    for (std::size_t j = 0; j < edge_vector.size(); ++j){
+        boost::add_edge(edge_vector[j].first, edge_vector[j].second, weights[j], g);
+    }
+
+    // Nodes.size()+1 because of source node!!!
+    int N = boost::num_vertices(g);
+    assert(N == Nodes.size()+1);
+    vector<double> distance(N, std::numeric_limits<double>::max());
+    vector<Vertex> predecessor(N, boost::graph_traits<BGraph>::null_vertex());
+
+    distance[SOURCE] = 0; // arbitrary start node
+
+    // cout << "start BF" << endl;
+
+    // bool r = boost::bellman_ford_shortest_paths(g, C+1, weight_pmap, &parent[0], &distance[0], boost::closed_plus<int>(), std::less<int>(), boost::default_bellman_visitor());
+
+    bool r = boost::bellman_ford_shortest_paths(g, N, boost::weight_map(get(boost::edge_weight, g)).distance_map(&distance[0]).predecessor_map(&predecessor[0]));
+
+    // cout << "did bellman ford" << endl;
+
+     
+    if (!r)
+    {
+        // Find a vertex that is part of a negative cycle
+        Vertex cycle_vertex = boost::graph_traits<BGraph>::null_vertex();
+ 
+        for (int i = 0; i < N; ++i)
+        {
+            for (auto e : make_iterator_range(edges(g)))
+            {
+                Vertex u = source(e, g), v = target(e, g);
+                double weight = get(boost::edge_weight, g, e);
+ 
+                // If we can still relax an edge, then v is part of a negative cycle
+                if (distance[u] + weight < distance[v])
+                {
+                    cycle_vertex = v;
+                    break;
+                }
+            }
+            if (cycle_vertex != boost::graph_traits<BGraph>::null_vertex())
+                break;
+        }
+
+        // cout << "Recover negative cycle" << endl;
+ 
+        // Recover the negative cycle
+        vector<pair<int,int>> cycle;
+        if (cycle_vertex != boost::graph_traits<BGraph>::null_vertex())
+        {
+            Vertex current = cycle_vertex;
+            for (int i = 0; i < N; ++i){ // Move `N` steps to guarantee being inside the cycle
+                if (predecessor[current] == boost::graph_traits<BGraph>::null_vertex()){
+                    // cin.get();
+                    return false;
+                }
+                current = predecessor[current];
+            }
+            // Track the cycle
+            // cout << "track cycle" << endl;
+            Vertex cycle_start = current;
+            do
+            {
+                cycle.push_back(Nodes[current]);
+                current = predecessor[current];
+            } while (current != cycle_start);
+ 
+            // cycle.push_back(Nodes[cycle_start]); // Close the cycle -> not needed because then we do something 2x with the same arc
+            std::reverse(cycle.begin(), cycle.end());
+
+            // cout << "Negative cycle detected: ";
+            // for (auto& [v_in, v_out] : cycle)
+                // cout << "(" << v_in << ", " << v_out << ")" << " ";
+            // cout << endl;
+            if (!SwapOrientationNegativeCycle(sol, cycle, OneTeamPerClub)){ // test if there is a mistake in here!!
+                return false;
+            }
+        }
+    }
+    else{
+        // cout << "No negative cycle found!" << endl;
         return false;
     }
     return true;
+
 }
 
-bool IntraClubSwap(Solution& sol){
-    int c_ = rand()%sol.getMultiTeamClubs().size();
-    int c = sol.getMultiTeamClubs()[c_];
-    int i = rand()%sol.getTeamsClub(c).size();
-    int j = ((i+1)+(rand()%(sol.getTeamsClub(c).size()-1)))%sol.getTeamsClub(c).size();
-    // cout << "IntraClubSwap: swap HAPs of teams " << i << " and " << j << " of clubs << " << c << " and " << c << endl;
-    SwapHAPs(sol, i, j);
-    // cout << "cost = " << sol.ComputeCostCapacities() << endl;
-    if (sol.ComputeCostCapacities() > 0){
-        cout << "Reject IntraClubSwap" << endl;
-        SwapHAPs(sol, i, j);
+bool RepairHAPsWithNegativeCycles(Solution& sol, const int l){
+    bool haps_repaired = false;
+    bool mission_failed = false;
+    do{
+        // cout << "Cost HAPs = " << sol.ComputeTotalHACost() << endl;
+        // cin.get();
+        if (NegativeCycle(sol, l)){
+            if (sol.ComputeTotalHACost() == 0){
+                haps_repaired = true;
+                // Here, we repaired the HAPs
+                // cout << "HAPs fully repaired" << endl;
+                // cin.get();
+            }
+        }
+        else{
+            mission_failed = true;
+            // However, here we get stuck -> turn back the solution
+            // cout << "HAps could not be restored.." << endl;
+        }
+    }
+    while (!haps_repaired && !mission_failed);
+
+    if (haps_repaired){
+        return true;
+    }
+    else{
         return false;
     }
-    return true;
 }
-
-bool RandomSwap(Solution& sol){
-    int c1 = rand()%sol.getNrClubs();
-    assert(sol.getTeamsClub(c1).size() > 0);
-    int i = rand()%sol.getTeamsClub(c1).size();
-    int c2 = ((c1+1)+(rand()%(sol.getNrClubs()-1)))%sol.getNrClubs();
-    int j = rand()%sol.getTeamsClub(c2).size();
-    assert(sol.getTeamsClub(c2).size() > 0);
-    // cout << "RandomSwap: swap HAPs of teams " << i << " and " << j << " of clubs << " << c1 << " and " << c2 << endl;
-    SwapHAPs(sol, i, j);
-    // cout << "cost = " << sol.ComputeCostCapacities() << endl;
-    if (sol.ComputeCostCapacities() > 0){
-        cout << "reject RandomSwap" << endl;
-        SwapHAPs(sol, i, j);
-        return false;
-    }
-    return true;
-}
-
-bool ComplementInsertion(Solution& sol){
-    // TODO
-    // Also fill TeamsHAP!!
-    // Given two teams with complementary HAPs, replace their patterns with a newly chosen pair of 
-    // complementary HAPs from H. 
-    int i = rand()%sol.getNrTeams();
-    int h = sol.getHAPIndexTeam(i);
-    int hc = sol.getComplementIndexHAP(h);
-    // cout << "h = " << h << ", hc = " << hc << endl;
-    int j = 0;
-    while (sol.getHAPIndexTeam(j) != hc){
-        // cout << "hap of " << j << "  = " << sol.getHAPIndexTeam(j) << endl;
-        ++j;
-        // Does this complemantray HAP always exists?
-        assert(j < sol.getNrTeams());
-    }
-    // draw new haps for i and j that are complementary
-    int hc_i = rand()%sol.getNrHAPs();
-    int hc_j = sol.getComplementIndexHAP(hc_i);
-    // cout << "ComplementInsertaion: swap HAPs of " << i << " and " << j << " for " << hc_i << " and " << hc_j << endl;
-
-    setHAP(sol, i, hc_i);
-    setHAP(sol, j, hc_j);
-    // cout << "cost = " << sol.ComputeCostCapacities() << endl;
-    if (sol.ComputeCostCapacities() > 0){
-        cout << "reject ComplementInsertion" << endl;
-        setHAP(sol, i, h);
-        setHAP(sol, j, hc);
-        return false;
-    }
-    return true;
-}
-
 
 

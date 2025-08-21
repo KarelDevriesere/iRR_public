@@ -1,32 +1,106 @@
 #include "MiaoAlgo.h"
 #include "assert.h"
 
-MiaoAlgo::MiaoAlgo(Input& in){
+void FindScheduleWithIP(Input& in, Solution& sol){
+    GurSolver gur(in);
+    const bool relax_x = false;
+    gur.build_all(true, relax_x);
+    gur.setTimeLimit(6000);
+    gur.setBoundCapacityViolations();
+    for (int i = 0; i < sol.getNrTeams(); ++i){
+		gur.HapFixed[i] = true;
+	}
+    gur.FixHAP(sol);
+    gur.AddObj(true, false);
+    int gur_obj = gur.solve();
+}
+
+// Miao's HAP operators:
+
+void printHAP(Solution& sol, const int i){
+    cout << "Team " << i << " has HAP index " << sol.getHAPIndexTeam(i) << " : ";
+    for (int r = 0; r < sol.getNrRounds(); ++r){
+        if (sol.Orientation[i][r] == HA::H){
+            cout << "H";
+        }
+        else if (sol.Orientation[i][r] == HA::A){
+            cout << "A";
+        }
+        else{
+            cout << "?";
+        }
+    }
+    cout << endl;
+}
+
+void SwapHAPs(Solution& sol, const int i, const int j){
+    // cout << "Previous:" << endl;
+    // printHAP(sol, i);
+    // printHAP(sol, j);
+    for (int r = 0; r < sol.getNrRounds(); ++r){
+        std::swap(sol.Orientation[i][r], sol.Orientation[j][r]);
+    }
+    int h1 = sol.getHAPIndexTeam(i);
+    int h2 = sol.getHAPIndexTeam(j);
+    sol.setHAPIndexTeam(i, h2);
+    sol.setHAPIndexTeam(j, h1);
+    // cout << "New:" << endl;
+    // printHAP(sol, i);
+    // printHAP(sol, j);
+    // cin.get();
+}
+
+void setHAP(Solution& sol, const int i, const int h){
+    for (int r = 0; r < sol.getNrRounds(); ++r){
+        sol.Orientation[i][r] = sol.getModeHAPRound(h, r);
+    }
+    sol.setHAPIndexTeam(i, h);
+}
+
+MiaoAlgo::MiaoAlgo(const std::unordered_map<HAP_operator, string>& moves, // moves, weights and in are defined in main
+           const std::unordered_map<HAP_operator, double>& weights, Input& in, const int seed): SA<HAP_operator>(moves, weights, seed){
     Rounds = vector<int>(in.getNrRounds());
-    best_obj = INT_MAX;
     for (int r = 0; r < in.getNrRounds(); ++r){
         Rounds[r] = r;
     }
-    if (in.getHAP_requirement(HAP_requirement_name::BreakLimit) == 0){
-        Weights = {{HAP_operator::InterClubSwap, 2.0/5.0}, {HAP_operator::IntraClubSwap, 2.0/5.0}, {HAP_operator::RandomSwap, 1.0/5.0}, {HAP_operator::ComplementInsertion, 0.0}};
-    }
-    else if (in.getSingleTeamClubs().size() < 3){
-        Weights = {{HAP_operator::InterClubSwap, 0.0}, {HAP_operator::IntraClubSwap, 1.0/2.0}, {HAP_operator::RandomSwap, 1.0/4.0}, {HAP_operator::ComplementInsertion, 1.0/4.0}};
-    }
-    double sum = 0;
-    for (const auto& op: HAP_operators){
-        sum += Weights.at(op);
-        WeightsCumul[op] = sum;
-    }
-    assert(0.99 < sum && sum < 1.01);
 }
 
 MiaoAlgo::~MiaoAlgo(){}
 
-void MiaoAlgo::Update(Solution& sol){
-    if (sol.ComputeTotalCost() < best_obj){
-        best_obj = sol.ComputeTotalCost();
-        cout << "best obj = " << best_obj << endl;
+void MiaoAlgo::SaveBestSequenceMatches(Solution& sol){
+    int m, j, h, a;
+    for (int r = 0; r < sol.getNrRounds(); ++r){
+        vector<bool>TeamSeen(sol.getNrTeams(), false);
+        m = 0;
+        for (int i = 0; i < sol.getNrTeams(); ++i){
+            if (TeamSeen[i]){
+                continue;
+            }
+            j = sol.TeamColorOpp[i][r];
+            assert(sol.isEligible(i,j));
+            if (sol.Orientation[i][r] == HA::H){
+                assert(sol.Orientation[j][r] == HA::A);
+                h = i, a = j;
+            }
+            else{
+                assert(sol.Orientation[j][r] == HA::H);
+                assert(sol.Orientation[i][r] == HA::A);
+                h = j, a = i;
+            }
+            TeamSeen[h] = true;
+            TeamSeen[a] = true;
+            BestSequenceMatches[r][m++] = {h,a};
+        }
+    }
+}
+
+void MiaoAlgo::ReverseMove(Solution& sol){
+    if (CurrentMove == HAP_operator::ComplementInsertion){
+        setHAP(sol, team1, hap_index1);
+        setHAP(sol, team2, hap_index2);
+    }
+    else{
+        SwapHAPs(sol, team1, team2); // see operators
     }
 }
 
@@ -47,29 +121,31 @@ void MiaoAlgo::Reset(Solution& sol){
 
 void MiaoAlgo::ReAssignHAPs(Solution& sol){
     // cout << "ReAssign HAPs" << endl;
-    std::random_device rd;                          
-    std::mt19937 gen(rd());                         
-    std::uniform_real_distribution<> dis(0.0, 1.0);
     double rnd;
     bool MoveChosen = false;
     while(!MoveChosen){
-        rnd = dis(gen);
+        rnd = RandomNumber();
         if (rnd < WeightsCumul[HAP_operator::InterClubSwap]){
-            cout << "InterClubSwap" << endl;
+            // cout << "InterClubSwap" << endl;
             MoveChosen = InterClubSwap(sol);
+            CurrentMove = HAP_operator::InterClubSwap;
         }
         else if (rnd < WeightsCumul[HAP_operator::IntraClubSwap]){
-            cout << "IntraClubSwap" << endl;
+            // cout << "IntraClubSwap" << endl;
             MoveChosen = IntraClubSwap(sol);
+            CurrentMove = HAP_operator::IntraClubSwap;
         }
         else if (rnd < WeightsCumul[HAP_operator::RandomSwap]){
-            cout << "RandomSwap" << endl;
+            // cout << "RandomSwap" << endl;
             MoveChosen = RandomSwap(sol);
+            CurrentMove = HAP_operator::RandomSwap;
         }
         else{
-            cout << "ComplementInsertion" << endl;
+            // cout << "ComplementInsertion" << endl;
             MoveChosen = ComplementInsertion(sol);
+            CurrentMove = HAP_operator::ComplementInsertion;
         }
+        NrChosen.at(CurrentMove)++;
     }
     // cout << "Move chosen" << endl;
 }
@@ -82,13 +158,11 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
     for (int l = 0; l < sol.getNrLeagues(); ++l){
         int s = 0, count = 0;
         while (s < sol.getNrRounds()){
-            cout << "Optimize round " << s << ", try: " << count << endl;
+            // cout << "Optimize round " << s << ", try: " << count << endl;
             const int r = Rounds[s];
 
             // cout << "find matching" << endl;
             vector<pair<int,int>>matching = MoveMWPM(sol, l, r, bipartite, includeHAPs);
-            // cout << "matching done" << endl;
-
             if (matching.size() < N/2){
                 cout << "matching failed, shuffle rounds" << endl;
                 // cin.get();
@@ -100,6 +174,7 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
                 }
             }
             else{
+                // cout << "Matching in round " << s << ":" << endl;
                 for (auto& [i, j]: matching){
                     if (sol.Orientation[i][r] == HA::H){
                         assert(sol.Orientation[j][r] == HA::A);
@@ -110,71 +185,205 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
                         assert(sol.Orientation[j][r] == HA::H);
                         a = i, h = j;
                     }
+                    // cout << h << ", " << a << endl;
                     SetValueCircleMethod(h, a, r, sol);
                 }
                 ++s;
             }
-            cin.get();
+            // cin.get();
         }
     }
     sol.validate();
-    cout << "Total cost = " << sol.ComputeTotalCost() << endl;
-    cin.get();
+    // cout << "Total cost = " << sol.ComputeTotalCost() << endl;
+    // cin.get();
     assert(sol.ComputeTravelCost() == sol.ComputeTotalCost());
     return true;
 }
 
-void FindScheduleWithIP(Input& in, Solution& sol){
-    GurSolver gur(in);
-    const bool relax_x = false;
-    gur.build_all(true, relax_x);
-    gur.setTimeLimit(6000);
-    gur.setBoundCapacityViolations();
-    for (int i = 0; i < sol.getNrTeams(); ++i){
-		gur.HapFixed[i] = true;
-	}
-    gur.FixHAP(sol);
-    gur.AddObj(true, false);
-    int gur_obj = gur.solve();
+bool MiaoAlgo::InterClubSwap(Solution& sol){
+    // Must they be of the same league->yes?
+    // So modify code!!!
+    int c1_ = rand()%sol.getSingleTeamClubs().size();
+    int c1 = sol.getSingleTeamClubs()[c1_];
+    int i_ = rand()%sol.getTeamsClub(c1).size();
+    int c2_ = ((c1_+1)+(rand()%(sol.getSingleTeamClubs().size()-1)))%sol.getSingleTeamClubs().size();
+    int c2 = sol.getSingleTeamClubs()[c2_];
+    int j_ = rand()%sol.getTeamsClub(c2).size();
+
+    int i = sol.getTeamsClub(c1)[i_];
+    int j = sol.getTeamsClub(c2)[j_];
+    team1 = i;
+    team2 = j;
+    // cout << "InterClubSwap: swap HAPs of teams " << i << " and " << j << " of clubs " << c1 << " and " << c2 << endl;
+    SwapHAPs(sol, i, j);
+    // cout << "cost = " << sol.ComputeCostCapacities() << endl;
+    if (sol.ComputeCostCapacities() > 0){
+        // cout << "Reject InterClubSwap" << endl;
+        SwapHAPs(sol, i, j);
+        assert(sol.ComputeCostCapacities() <= 0);
+        return false;
+    }
+    return true;
+}
+
+bool MiaoAlgo::IntraClubSwap(Solution& sol){
+    assert(sol.ComputeCostCapacities() <= 0);
+    int c_ = rand()%sol.getMultiTeamClubs().size();
+    int c = sol.getMultiTeamClubs()[c_];
+    assert(sol.getTeamsClub(c).size() > 1);
+    int i_ = rand()%sol.getTeamsClub(c).size();
+    int j_ = ((i_+1)+(rand()%(sol.getTeamsClub(c).size()-1)))%sol.getTeamsClub(c).size();
+
+    int i = sol.getTeamsClub(c)[i_];
+    int j = sol.getTeamsClub(c)[j_];
+    team1 = i;
+    team2 = j;
+    // cout << "IntraClubSwap: swap HAPs of teams " << i << " and " << j << " of clubs << " << c << " and " << c << endl;
+
+    SwapHAPs(sol, i, j);
+    // cout << "cost = " << sol.ComputeCostCapacities() << endl;
+    assert(sol.ComputeCostCapacities() <= 0); // This because they are from the same club!!
+    /*
+    if (sol.ComputeCostCapacities() > 0){
+        cout << "Reject IntraClubSwap" << endl;
+        SwapHAPs(sol, i, j);
+        return false;
+    }
+        */
+    return true;
+}
+
+bool MiaoAlgo::RandomSwap(Solution& sol){
+    int c1 = rand()%sol.getNrClubs();
+    assert(sol.getTeamsClub(c1).size() > 0);
+    int i_ = rand()%sol.getTeamsClub(c1).size();
+    int c2 = ((c1+1)+(rand()%(sol.getNrClubs()-1)))%sol.getNrClubs();
+    int j_ = rand()%sol.getTeamsClub(c2).size();
+    assert(sol.getTeamsClub(c2).size() > 0);
+
+    int i = sol.getTeamsClub(c1)[i_];
+    int j = sol.getTeamsClub(c2)[j_];
+    team1 = i;
+    team2 = j;
+    // cout << "RandomSwap: swap HAPs of teams " << i << " and " << j << " of clubs << " << c1 << " and " << c2 << endl;
+    SwapHAPs(sol, i, j);
+    // cout << "cost = " << sol.ComputeCostCapacities() << endl;
+    if (sol.ComputeCostCapacities() > 0){
+        // cout << "reject RandomSwap" << endl;
+        SwapHAPs(sol, i, j);
+        assert(sol.ComputeCostCapacities() <= 0);
+        return false;
+    }
+    return true;
+}
+
+bool MiaoAlgo::ComplementInsertion(Solution& sol){
+    // TODO
+    // Also fill TeamsHAP!!
+    // Given two teams with complementary HAPs, replace their patterns with a newly chosen pair of 
+    // complementary HAPs from H. 
+    int i = rand()%sol.getNrTeams();
+    int h = sol.getHAPIndexTeam(i);
+    int hc = sol.getComplementIndexHAP(h);
+    // cout << "h = " << h << ", hc = " << hc << endl;
+    int j = 0;
+    while (sol.getHAPIndexTeam(j) != hc){
+        // cout << "hap of " << j << "  = " << sol.getHAPIndexTeam(j) << endl;
+        ++j;
+        // Does this complemantray HAP always exists? No, of course not!!
+        if (j >= sol.getNrTeams()){
+            return false;
+            /*
+            cout << "Chosen team = " << i << endl;
+            cout << "HAPs: " << endl;
+            for (int t = 0; t < sol.getNrTeams(); ++t){
+                printHAP(sol, t);
+            }
+            cout << "but complentary hap of " << i << ": ";
+            vector<HA>HAP = sol.getHAP(hc);
+            for (auto& ha: HAP){
+                if (ha == HA::H){
+                    cout << "H";
+                }
+                else if (ha == HA::A){
+                    cout << "A";
+                }
+                else{
+                    cout << "?";
+                }
+            }
+            cout << endl;
+            assert(j < sol.getNrTeams());
+            */
+        }
+    }
+    team1 = i;
+    team2 = j;
+    hap_index1 = h; // hap_index1 and hap_index2 are needed to return to original haps when rejected by metropolis criterion
+    hap_index2 = hc;
+    // draw new haps for i and j that are complementary
+    int hc_i = rand()%sol.getNrHAPs();
+    int hc_j = sol.getComplementIndexHAP(hc_i);
+    // cout << "ComplementInsertaion: swap HAPs of " << i << " and " << j << " for " << hc_i << " and " << hc_j << endl;
+
+    setHAP(sol, i, hc_i);
+    setHAP(sol, j, hc_j);
+    // cout << "cost = " << sol.ComputeCostCapacities() << endl;
+    if (sol.ComputeCostCapacities() > 0){
+        // cout << "reject ComplementInsertion" << endl;
+        setHAP(sol, i, h);
+        setHAP(sol, j, hc);
+        assert(sol.ComputeCostCapacities() <= 0);
+        return false;
+    }
+    return true;
 }
 
 void MiaoAlgo::solve(Input& in, Solution& sol){
+
+    StartTime = std::chrono::high_resolution_clock::now();
     // TODO: Miao is also doing something with byes...
-    GurSolver gursol(in);
-    gursol.AssignHAPsToTeams(sol);
 
-    // calculate bound if we fix the HAPs
-    // **** IP ***
-    GurSolver gur(in);
-    const bool relax_x = false;
-    gur.build_all(true, relax_x);
-    gur.setTimeLimit(6000);
-    gur.setBoundCapacityViolations();
-    for (int i = 0; i < sol.getNrTeams(); ++i){
-		gur.HapFixed[i] = true;
-	}
-    gur.AddObj(true, false);
-    // **** IP ****
-
-    bool ip = true;
-
-    do{
-        if (ip){
-            gur.FixHAP(sol);
-            int gur_obj = gur.solve();
-            gur.FreeVariables();
-            if (gur_obj < best_obj){
-                best_obj = gur_obj;
-                cout << best_obj << endl;
-            }
-        }
-        else{
-            if (SchedulePhase(sol)){
-                Update(sol);
-            }
-        }
-        ReAssignHAPs(sol);
+    if (!InitialSolutionGiven){
+        GurSolver gursol(in);
+        // Assign HAPs such that we respect v+
+        gursol.AssignHAPsToTeams(sol);
+        CurrentMove = HAP_operator::Initial;
+    }
+    else{
+        best_obj = sol.ComputeTotalCost();
+        current_obj = best_obj;
+        UpdateBestSolution(sol);
+        ReAssignHAPs(sol); // do a HAP move
         Reset(sol);
     }
-    while(true);
+
+    // Initial solution is infeasible for tiny!!!
+
+    do{
+        // cout << "solve matchings with following haps" << endl;
+        // for (int t = 0; t < sol.getNrTeams(); ++t){
+        //    printHAP(sol, t);
+        //}
+        if (SchedulePhase(sol)){ // solve sequence of matching problems (round per round)
+            if (!Update(sol, sol.ComputeTotalCost())){ // update best objective
+                // if solution not accepted: reverse
+                ReverseMove(sol);
+            } 
+            else{
+                if (InitialOnly){
+                    STOP = true;
+                }
+            }
+        }
+        // cout << "reassign haps" << endl;
+        ReAssignHAPs(sol); // do a HAP move
+        Reset(sol); // this deletes all the matchups in the rounds
+    }
+    while(!STOP);
+
+    // cout << "Miao Algo done" << endl;
+    // save into solution
+
+    SaveBestSolution(sol);
 }

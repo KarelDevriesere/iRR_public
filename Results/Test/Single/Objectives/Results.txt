@@ -1,0 +1,2 @@
+Instance,LB,,IP_Karel,Time,IP_Miao,Time,RF_Miao,Time,FO_Karel,Time, Best Meta_Miao,Time Best,, Avg Meta_Miao,Avg Time,, Best Meta_Karel,Time Best,, Avg Meta_Karel,Avg Time,
+2, 1476, 1476, 0, 1476, 0, 1476, 196, 1557, 15, 1514, 57, 1528, 46, 1516, 31, 1523, 38
