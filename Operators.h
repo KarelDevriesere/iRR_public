@@ -15,6 +15,7 @@ struct Lantarn{
     bool InfeasibleOpponents = false;
     bool InfeasibleColor = false;
     bool Infeasible2RRMatch = false;
+    bool MaxSameClubViolated = false;
     map<int,int>c_; // this is needed for the alternative PTS->color bordering to the infeasible color
     vector<vector<int>>paths; // vector with all the paths we found outside the lantarn
 
@@ -25,6 +26,8 @@ struct Lantarn{
     // So this k measures whether k plays already plays H vs j or A
     unordered_map<int, vector<pair<int,int>>>EdgesMatch; // whether edge {i,j} contains match (i,j) or match (j,i)
 };
+
+bool MaxSameClubViolated(Solution& sol, Lantarn& lantarn);
 
 void PrintEdgeLantarn(Solution& sol, const int i, const int k, const int j, Lantarn& lantarn);
 
@@ -109,10 +112,6 @@ int CostEvaluationHAPsLantarnTraditional(Solution& sol, Lantarn& lantarn);
 int CostEvaluationHAPsLantarnAlternative(Solution& sol, Lantarn& lantarn);
 
 Lantarn CreateLantarn(Solution& sol, const int i, const int j, const int startColor);
-
-void setOrientationsTraditional(Solution& sol, Lantarn& lantarn);
-
-void setOrientationsAlternative(Solution& sol, Lantarn& lantarn);
 
 void SwapColorsLantarn(Solution& sol, Lantarn& lantarn);
 

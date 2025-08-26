@@ -71,13 +71,16 @@ void Input::setAllowedNrCapacityViolations(){
         else{
             if (InstanceMiao == MiaoInstance::Tiny){
                 if (BreakLimit == 0){
-                    AllowedNrCapacityViolations = 28;
+                    AllowedNrCapacityViolations = 44;
                 }
                 else if (BreakLimit == 1){
-                    AllowedNrCapacityViolations = 4;
+                    AllowedNrCapacityViolations = 31;
                 }
-                else {
-                    AllowedNrCapacityViolations = 0;
+                else if (BreakLimit == 2) {
+                    AllowedNrCapacityViolations = 24;
+                }
+                else if (BreakLimit == 3) {
+                    AllowedNrCapacityViolations = 21;
                 }
             }
             else if (InstanceMiao == MiaoInstance::S){ // S
@@ -246,29 +249,44 @@ int Input::read(const std::string file_path, const bool Miao){
             assert(k != IndexDummyClub);
             DistanceClubs[k] = vector<int>(NrClubs+1);
             while (iss >> num) { 
-                if (j > IndexDummyClub){
-                    cout << j << endl;
-                    cout << num << endl;
-                    assert(j <= IndexDummyClub);
+                if (!(Miao && InstanceMiao == MiaoInstance::M)){
+                    DistanceClubs[k][j++] = num;
                 }
-                DistanceClubs[k][j++] = num;
+                else if (k < NrTeamsMiaoInstances.at(MiaoInstance::U13).first-NrTeamsMiaoInstances.at(MiaoInstance::U13).second
+                    && j < NrTeamsMiaoInstances.at(MiaoInstance::U13).first-NrTeamsMiaoInstances.at(MiaoInstance::U13).second){
+                    // cout << "dist = " << DistanceClubs[TeamClub[k]][TeamClub[j]] << endl;
+                    if (DistanceClubs[TeamClub[k]][TeamClub[j]] > 0){
+                        /*
+                        cout << "-------"  << endl;
+                        cout << "Club of " << k << " = " << TeamClub[k] << endl;
+                        cout << "Club of " << j << " = " << TeamClub[j] << endl;
+                        cout << "dist is " << DistanceClubs[TeamClub[k]][TeamClub[j]] << " but num is " << num << endl;
+                        cout << "-------" << endl;
+                        */
+                        assert(DistanceClubs[TeamClub[k]][TeamClub[j]] ==  num);
+                    }
+                    DistanceClubs[TeamClub[k]][TeamClub[j++]] =  num;
+                }
             }
-            assert(j == IndexDummyClub);
-            DistanceClubs[k][j] = 0;
+            if (!(Miao && InstanceMiao == MiaoInstance::M)){
+                assert(j == IndexDummyClub);
+                DistanceClubs[k][j] = 0;
+            }
             ++k;
         }
         else if (i < 1+2*NrClubs+NrLeagues){
+            cout << "Populate league " << l << endl;
             if (i == 1+2*NrClubs){
                 t = 0; // t = index team
             }
             // vector<int>LeagueIndexCount(NrLeagues, 0);
             while (iss >> num) { 
                 assert(num >= 0);
+                assert(t < NrTeams);
                 if (NrLeagues == 1){
                     assert(l == 0);
                 }
                 TeamStrength[t] = num-1;
-                // cout << "add " << t << " to league " << l << endl;
                 if (!(Miao && InstanceMiao == MiaoInstance::M)){
                     LeagueTeams[l].push_back(t); // TODO: only 1 league now, with eligible opponents
                     TeamLeague[t] = l;
@@ -316,8 +334,9 @@ int Input::read(const std::string file_path, const bool Miao){
     }
     int DummyCapacity = 0;
     for (l = 0; l < getNrLeagues(); ++l){
+        cout << "League " << l << " has size " << LeagueTeams[l].size() << endl;
         if ((int)LeagueTeams[l].size() % 2 != 0){
-            assert(!Miao);
+            assert(false); // All instances should have leagues of even size!!!
             cout << "add dummy" << endl;
             Teams.push_back(NrTeams);
             TeamStrength.push_back(l);
@@ -480,7 +499,7 @@ bool Input::HAP_satisfies_all_requirements(const vector<HA>& HAP){
         for (int h = 2; h < HAP.size(); ++h){
             if (HAP[h] == HAP[h-1] && HAP[h-1] == HAP[h-2]){
                 cout << "HHH or AAA detected in HAP" << endl;
-                cin.get();
+                // cin.get();
                 return false;
             }
         }
@@ -488,7 +507,7 @@ bool Input::HAP_satisfies_all_requirements(const vector<HA>& HAP){
     if (HAP_requirements.at(HAP_requirement_name::NoBreakBeginningEnd)){
         if (HAP[0] == HAP[1] || HAP[(int)HAP.size()-1] == HAP[(int)HAP.size()-2]){
             cout << "break beginning or end in HAP" << endl;
-            cin.get();
+            // cin.get();
             return false;
         }
     }
@@ -501,7 +520,7 @@ bool Input::HAP_satisfies_all_requirements(const vector<HA>& HAP){
         }
         if (nr_breaks > BreakLimit){
             cout << "Nr breaks higher than limit in HAP" << endl;
-            cin.get();
+            // cin.get();
             return false;
         }
     }
@@ -522,7 +541,7 @@ bool Input::HAP_satisfies_all_requirements(const vector<HA>& HAP){
         }
         if (nr_H1 < lb || nr_H2 < lb || nr_H1 > ub || nr_H2 > ub){
             cout << "HAP not quarter balanced" << endl;
-            cin.get();
+            // cin.get();
             return false;
         }
     }
@@ -532,7 +551,11 @@ bool Input::HAP_satisfies_all_requirements(const vector<HA>& HAP){
 int Input::read_HAPs(){
     // std::string file_path = "C:\\Users\\kardvrie\\C++\\VSprojects\\test2\\Patterns\\patterns_" + to_string(NrRounds) + "_";
     std::string file_path = "Patterns\\patterns_" + to_string(NrRounds) + "_";
-    if (HAP_requirements.at(HAP_requirement_name::BreakLimit)){
+    if (InstanceMiao == MiaoInstance::M){
+        file_path += "c.txt"; // always chose canoncial for this instance
+        BreakLimit = 3; // Teams have max 3 breaks
+    }
+    else if (HAP_requirements.at(HAP_requirement_name::BreakLimit)){
         file_path += to_string(BreakLimit) + ".txt";
     }
     else{
@@ -583,7 +606,8 @@ int Input::read_HAPs(){
     }
     int index = 0;
     for (h = 0; h < HAPs_even.size(); ++h){
-        if (!HAP_satisfies_all_requirements(HAPs_even[h])){ // preprocess the haps!
+        if (InstanceMiao != MiaoInstance::M && !HAP_satisfies_all_requirements(HAPs_even[h])){ // preprocess the haps!
+            // Do do not preprocess for the canoncial HAP set
             // cout << "HAP with index " << h << " not satisfactory " << endl;
             continue;
         }

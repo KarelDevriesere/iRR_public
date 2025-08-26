@@ -73,6 +73,29 @@ bool Solution::IsTeamBalanced(const int i){
             nr_A++;
         }
     }
+    assert(nr_H > 0);
+    assert(nr_A > 0);
+    if (nr_H != nr_A){
+        return false;
+    }
+    nr_H = 0, nr_A = 0;
+    if (!SRR){
+        for (int r = 0; r < getNrRounds(); ++r){
+            int j = TeamColorOpp[i][r];
+            if (MatchColor[i][j] == r){
+                assert(Orientation[i][r] == HA::H);
+                assert(MatchColor[i][j] != MatchColor[j][i]);
+                nr_H++;
+            }
+            else{
+                assert(Orientation[i][r] == HA::A);
+                assert(MatchColor[j][i] == r);
+                nr_A++;
+            }
+        }
+    }
+    assert(nr_H > 0);
+    assert(nr_A > 0);
     if (nr_H == nr_A){
         return true;
     }
@@ -376,6 +399,9 @@ int Solution::ComputeHACostTeam(const int i){
         cost += getImbalanceHalf(i);
         // assert(getImbalanceHalf(i) == 0);
     }
+    if (!IsTeamBalanced(i)){
+        cost++;
+    }
     return HighCostHAPs*cost;
 }
 
@@ -489,7 +515,10 @@ void Solution::validate(){
                 nr_same_club++;
             }
         }
-        assert(nr_same_club <= getMaxSameClub());
+        if (nr_same_club > getMaxSameClub()){
+            // cout << i << " plays more against same club than allowed!!" << endl;
+            assert(nr_same_club <= getMaxSameClub());
+        }
     }
 
     for (int i = 0; i < getNrTeams(); ++i){
@@ -501,5 +530,19 @@ void Solution::validate(){
     }
     if (!ViolationHAP_allowed){
         assert(ComputeTotalHACost() == 0);
+    }
+}
+
+
+void Solution::clear(){
+    for (int i = 0; i < getNrTeams(); ++i){
+        for (int j = i; j < getNrTeams(); ++j){
+            MatchColor[i][j] = -1;
+            MatchColor[j][i] = -1;
+        }
+        for (int r = 0; r < getNrRounds(); ++r){
+            TeamColorOpp[i][r] = -1;
+            Orientation[i][r] = HA::BYE;
+        }
     }
 }

@@ -66,27 +66,38 @@ void ResetMatchColorCopy(Solution& sol, const vector<vector<int>>MatchColorCopy)
     }
 }
 
+bool ILS::RepairHAPs(Solution& sol){
+    // Be economical: only try to repair the HAPs when we know it will deliver something!!
+    if (sol.ComputeTravelCost() < best_obj){
+        NrTimesRepairHapChosen++;
+        // first, try to repair the HAPs by finding negative cycles
+        const int l = sol.getNrLeagues()-1; // TODO pass the league as input
+        // cout << "try to repair haps" << endl;
+        if (RepairHAPsWithNegativeCycles(sol, l)){
+            NrTimesRepairHapSuccesfull++;
+            Update(sol, sol.ComputeTotalCost());
+            // cout << "succesfull" << endl;
+            return true;
+        }
+        else{
+            // We need this resetting because in the function RepairHAPsWithNegativeCycles() we make incremental changes but if things do not work out
+            // In the end we need to revert everything..
+            FailureReason.at(CurrentMove).at(failure::HAPs)++;
+            // cout << "unsuccesfull" << endl;
+            return false;
+        }
+    }
+    else{
+        return false;
+    }
+}
+
 bool ILS::veto_haps(Solution& sol){
     // Repairing the HAPs does not seem to have a lot of impact..
     // Repairing haps seems to be very slow, almost 15x more moves without repairing haps..
     // TODO: should not be possible that it takes so long???
     // NrTimesRepairHapChosen++;
     if (!sol.ViolationHAP_allowed && sol.ComputeTotalHACost() > 0){
-        // first, try to repair the HAPs by finding negative cycles
-        /*
-        const int l = sol.getNrLeagues()-1; // TODO pass the league as input
-        // cout << "try to repair haps" << endl;
-        if (RepairHAPsWithNegativeCycles(sol, l)){
-            NrTimesRepairHapSuccesfull++;
-            return false;
-        }
-        else{
-            // We need this resetting because in the function RepairHAPsWithNegativeCycles() we make incremental changes but if things do not work out
-            // In the end we need to revert everything..
-            return true;
-        }
-        */
-        FailureReason.at(CurrentMove).at(failure::HAPs)++;
         return true; 
     }
     else{
@@ -120,9 +131,22 @@ void ILS::SelectTS(Solution& sol){ // use TS for perturbation move!!
     vector<vector<int>>TeamColorOppCopy = MakeTeamColorOppCopy(sol); // can be outcommented when not repairing haps in veto_haps()
     // int cost_before = current_obj;
     TS(sol, i, j);
+    assert(sol.IsTeamBalanced(i));
+    assert(sol.IsTeamBalanced(j));
     int cost_after = sol.ComputeTotalCost();
     int delta = cost_after - cost_before;
+    /*
+    bool AcceptMove = false;
     if (veto_haps(sol) || !Update(sol, sol.ComputeTotalCost())){
+        if (RepairHAPs(sol)){
+            AcceptMove = true;
+        }
+    }
+    else{
+        AcceptMove = true;
+    }
+        */
+    if (veto_haps(sol) || !Update(sol, sol.ComputeTotalCost())/*!AcceptMove*/){
         ResetOrientations(sol, OrientationsCopy); // can be outcommented when not repairing haps in veto_haps() // TODO not efficient
         ResetMatchColorCopy(sol, MatchColorCopy); // can be outcommented when not repairing haps in veto_haps()
         ResetTeamColorOpp(sol, TeamColorOppCopy); // can be outcommented when not repairing haps in veto_haps()
@@ -166,6 +190,10 @@ void ILS::SelectPTS(Solution& sol){
     }
     if (lantarn.Infeasible2RRMatch){
         FailureReason.at(move_name::PTS).at(failure::DRR)++;
+        return;
+    }
+    if (MaxSameClubViolated(sol, lantarn)){
+        FailureReason.at(move_name::PTS).at(failure::MaxSameClub)++;
         return;
     }
     // cout << "Original lantarn:" << endl;
@@ -221,7 +249,20 @@ void ILS::SelectPTS(Solution& sol){
     int cost_after = sol.ComputeTotalCost();
     int delta = cost_after - cost_before;
     // cout << "delta = " << delta << endl;
-    if (veto_haps(sol) || !PathFound || !Update(sol, sol.ComputeTotalCost())){
+    /*
+    bool AcceptMove = false;
+    if (PathFound){
+        if (veto_haps(sol) || !Update(sol, sol.ComputeTotalCost())){
+            if (RepairHAPs(sol)){
+                AcceptMove = true;
+            }
+        }
+        else{
+            AcceptMove = true;
+        }
+    }
+    */
+    if (veto_haps(sol) || !PathFound || !Update(sol, sol.ComputeTotalCost())/*!AcceptMove*/){
         // Now, unfortunately, we violated the HAP constraints
         /*
         // Code here should be put back when outcommenting other things for going back to original!!
@@ -281,8 +322,18 @@ void ILS::SelectPRS(Solution& sol){
     PRS(sol, r, s, StartNode);
     int cost_after = sol.ComputeTotalCost();
     int delta = cost_after - cost_before;
-    bool veto = false;
+    /*
+    bool AcceptMove = false;
     if (veto_haps(sol) || !Update(sol, sol.ComputeTotalCost())){
+        if (RepairHAPs(sol)){
+            AcceptMove = true;
+        }
+    }
+    else{
+        AcceptMove = true;
+    }
+    */
+    if (veto_haps(sol) || !Update(sol, sol.ComputeTotalCost()) /*!AcceptMove*/){
         // TODO not efficient
         ResetOrientations(sol, OrientationsCopy); // can be outcommented when not repairing haps in veto_haps()
         ResetMatchColorCopy(sol, MatchColorCopy); // can be outcommented when not repairing haps in veto_haps()
@@ -384,8 +435,21 @@ void ILS::SelectMatching(const int l, Solution& sol, const bool bipartite){
     // cout << "cost capacities = " << sol.ComputeCostCapacities() << endl;
     // cout << "delta = " << delta << endl;
     // cin.get();
-     
-    if (veto_haps(sol) || unable_to_find_reversed_paths || !Update(sol, sol.ComputeTotalCost())){
+
+    /*
+   bool AcceptMove = false;
+   if (!unable_to_find_reversed_paths){
+        if (veto_haps(sol) || !Update(sol, sol.ComputeTotalCost())){
+            if (RepairHAPs(sol)){
+                AcceptMove = true;
+            }
+        }
+        else{
+            AcceptMove = true;
+        }
+    }
+    */
+    if (veto_haps(sol) || unable_to_find_reversed_paths || !Update(sol, sol.ComputeTotalCost()) /*!AcceptMove*/){
         ResetOrientations(sol, OrientationsCopy);
         // cout << "swap matchings back" << endl;
         // De MatchColors van de paden moeten ook terug goed gezet worden!!!!!
@@ -588,8 +652,8 @@ void ILS::solve(Input& in, Solution& sol){
         Move(sol); // do random move
     }
     while(!STOP);
-    cout << "ILS done " << endl;
     SaveBestSolution(sol);
+    sol.validate();
 }
 
 /*

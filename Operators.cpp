@@ -58,6 +58,9 @@ void PrintLantarn(Solution& sol, Lantarn& lantarn){
     }
 }
 
+// Another option is to swap all the colors: the HAPs of the middle teams do not change, only of i and j
+// Next, we find paths to restore the balance but we use the trick 
+
 void KeepOrientation(Solution& sol, Lantarn& lantarn, const int i, const int k, const int j, const vector<vector<HA>>& OrientationsCopy){
     // this can be seen as swapping the colors in the lantarn but not the orientations. 
     // E.g. if we have: 
@@ -90,6 +93,18 @@ void KeepOrientation(Solution& sol, Lantarn& lantarn, const int i, const int k, 
 }
 
 void SwapOrientation(Solution& sol, Lantarn& lantarn, const int i, const int k, const int j, const vector<vector<HA>>& OrientationsCopy){
+    // this can be seen as swapping the colors in the lantarn with the orientations. 
+    // E.g. if we have: 
+    // i<-G-s<-B-j
+    // i<-R-t<-G-j
+    // i<-B-u<-R-j
+    // then the new lantarn will be:
+    // i->B-s-G->j
+    // i->G-t-R->j
+    // i-R->u-B->j
+    // Hence, the HAPs of the middle teams stay the same!!
+    // Similar to TS
+
     // k: position in middle, not the team itself!!!
     int c_i = sol.MatchColor[lantarn.EdgesMatch.at(i)[k].first][lantarn.EdgesMatch.at(i)[k].second];
     int c_j = sol.MatchColor[lantarn.EdgesMatch.at(j)[k].first][lantarn.EdgesMatch.at(j)[k].second];
@@ -99,6 +114,10 @@ void SwapOrientation(Solution& sol, Lantarn& lantarn, const int i, const int k, 
     if (c_i >= 0){
         sol.Orientation[j][c_i] = OrientationsCopy[i][c_i];
     }
+    else{
+        std::swap(sol.Orientation[i][c_i], sol.Orientation[j][c_j]);
+    }
+    // TODO: how to orchestrate the MatchColors???
 }
 
 void setMatchColorR(Solution& sol, const int i, const int r, const int s){
@@ -134,6 +153,9 @@ bool TS_feasible(Solution& sol, const int i, const int j){
     for (c = 0; c < sol.getNrRounds(); ++c){
         opp_i = sol.TeamColorOpp[i][c];
         opp_j = sol.TeamColorOpp[j][c];
+        if (opp_j == i || opp_i == j){
+            continue;
+        }
         if (!sol.isEligible(i, opp_j) || !sol.isEligible(j, opp_i)){
             return false;
         }
@@ -157,7 +179,8 @@ void TS(Solution& sol, const int i, const int j){
     // ALWAYS KEEPS THE BALANCE!!
     // This moves works by swapping the colors on both sides. The orienations are such that the middle teams
     // keep their orientations in each color, hence only the HAPs of i and j change!!
-    // Because we swap all the colors and orientations, the resulting HAPs of i and j will still be balanced
+    // Because we swap all the colors and orientations, including i and j
+    // the resulting HAPs of i and j will still be balanced
     // However, the HAPs of i and j might break..
 
     int c, opp_i, opp_j;
@@ -196,6 +219,7 @@ void TS(Solution& sol, const int i, const int j){
         std::swap(sol.MatchColor[k][i], sol.MatchColor[k][j]);
         assert(sol.ComputeHACostTeam(k) == 0); // test assumption that the HAPs of the middle teams does not change
     }
+    std::swap(sol.MatchColor[i][j], sol.MatchColor[j][i]); // do this to make the HAPs of i and j balanced!
 }
 
 /*
@@ -212,6 +236,7 @@ void RS(Solution& sol, const int r, const int s){
 
 void PRS(Solution& sol, const int r, const int s, const int StartNode){
     // std::cout << "Partially swap rounds " << r << " and " << s << std::endl;
+    // r and s are always real colors!!
     // The only way that something changes for PRS when doing 2RR is when a node goes back to another node before completing the cycle
     // But since any previous node except for the StartNode already has 2 neighbors with the colors r and s, this is not possible
     // What is possible is if we get a cycle directly in the beginning -> we don't need to change anything in the code
@@ -391,6 +416,54 @@ Lantarn CreateLantarn(Solution& sol, const int i, const int j, const int StartCo
         ReplenishLantarn(sol, j, i, StartColor, lantarn);
     }
     return lantarn;
+}
+
+bool MaxSameClubViolated(Solution& sol, Lantarn& lantarn){
+    if (!lantarn.InfeasibleColor){
+        return false;
+    }
+    int i = lantarn.i, j = lantarn.j;
+    int club_j = sol.getTeamClub(sol.TeamColorOpp[i][lantarn.c_[i]]);
+    int club_i = sol.getTeamClub(sol.TeamColorOpp[j][lantarn.c_[j]]);
+    if (club_i != club_j){
+        // cout << "Test " << i << " and " << j << endl;
+        int nr_i = 1, nr_j = 1;
+        for (int r = 0; r < sol.getNrRounds(); ++r){
+            if (r != lantarn.c_[i] && sol.getTeamClub(sol.TeamColorOpp[i][r]) == club_i){
+                nr_i++;
+            }
+            if (r != lantarn.c_[j] && sol.getTeamClub(sol.TeamColorOpp[j][r]) == club_j){
+                nr_j++;
+            }
+        }
+        if (nr_i > sol.getMaxSameClub() || nr_j > sol.getMaxSameClub()){
+            // cout << "Max same club violated" << endl;
+            // cin.get();
+            return true;
+        }
+    }
+    // Now test the same for the middle teams!!
+    club_i = sol.getTeamClub(i), club_j = sol.getTeamClub(j);
+    int k1 = sol.TeamColorOpp[i][lantarn.c_[i]];
+    int k2 = sol.TeamColorOpp[j][lantarn.c_[j]];
+    if (club_i != club_j){
+        // cout << "Test " << k1 << " and " << k2 << endl;
+        int nr_i = 1, nr_j = 1;
+        for (int r = 0; r < sol.getNrRounds(); ++r){
+            if (r != lantarn.c_[i] && sol.getTeamClub(sol.TeamColorOpp[k1][r]) == club_j){
+                nr_i++;
+            }
+            if (r != lantarn.c_[j] && sol.getTeamClub(sol.TeamColorOpp[k2][r]) == club_i){
+                nr_j++;
+            }
+        }
+        if (nr_i > sol.getMaxSameClub() || nr_j > sol.getMaxSameClub()){
+            // cout << "Max same club violated" << endl;
+            // cin.get();
+            return true;
+        }
+    }
+    return false;
 }
 
 
@@ -1159,24 +1232,31 @@ vector<pair<int,int>>MoveMWPM(Solution& sol, const int l, const int r, const boo
 bool SwapOrientationNegativeCycle(Solution& sol, vector<pair<int,int>> cycle, const bool OneTeamPerClub){
     int c,i,j;
     int cost_before = sol.ComputeTotalHACost();
+    // cout << "Cost before = " << cost_before << endl;
     for (auto& arc: cycle){
         j = arc.first, i = arc.second;
         c = sol.MatchColor[i][j];
+        assert(sol.MatchColor[j][i] < 0);
         std::swap(sol.Orientation[i][c], sol.Orientation[j][c]);
+        std::swap(sol.MatchColor[i][j], sol.MatchColor[j][i]);
     }
+    // cout << "Compute cost capacities" << endl;
     if (!OneTeamPerClub && sol.ComputeCostCapacities() != 0){ // if one team per club this information is in the weights 
         // turn back solution because capacities are not okay..
         // cout << "cycle is negative but cost of capacities = " << sol.ComputeCostCapacities() << endl;
         // cin.get();
         for (auto& arc: cycle){
             j = arc.first, i = arc.second;
-            c = sol.MatchColor[i][j];
+            c = sol.MatchColor[j][i];
             std::swap(sol.Orientation[i][c], sol.Orientation[j][c]);
+            std::swap(sol.MatchColor[i][j], sol.MatchColor[j][i]);
         }
+        // cout << "cost after: " << endl; 
         assert(sol.ComputeTotalHACost() == cost_before);
         return false;
     }
     else{
+        /*
         for (auto& arc: cycle){
             j = arc.first, i = arc.second;
             c = sol.MatchColor[i][j];
@@ -1184,8 +1264,9 @@ bool SwapOrientationNegativeCycle(Solution& sol, vector<pair<int,int>> cycle, co
             sol.MatchColor[i][j] = -1;
             sol.MatchColor[j][i] = c;
         }
+        */
         int cost_after = sol.ComputeTotalHACost();
-        cout << cost_before << " > " << cost_after << endl;
+        // cout << cost_before << " > " << cost_after << endl;
         assert(cost_before > cost_after);
         return true;
     }
@@ -1201,26 +1282,44 @@ int ComputeWeight(Solution& sol, const pair<int,int>arc1, const pair<int,int>arc
     bool DRR_constraint_violated = false;
     for (auto& arc: {arc1, arc2}){
         j = arc.first, i = arc.second;
-        c = sol.MatchColor[i][j];
-        std::swap(sol.Orientation[i][c], sol.Orientation[j][c]);
         // we do not need to do anything with MatchColor, is not used in ComputeHACostTeam()
         // BUT: for 2RR constraint we need this!!
         if (arc1.first != arc2.second){ // check if, e.g. arc1 = (1,5) and arc2 = (5,1)
             if (sol.MatchColor[j][i] >= 0){
                 // If this is the case, we cannot switch the match..
                 DRR_constraint_violated = true; // Note: it actually is also needed for SRR..
+                break;
             }
         }
     }
-    int cost_after = sol.ComputeHACostTeam(arc1.second);
-    for (auto& arc: {arc1, arc2}){
-        j = arc.first, i = arc.second;
-        c = sol.MatchColor[i][j];
-        std::swap(sol.Orientation[i][c], sol.Orientation[j][c]);
-    }
-    int cost_cap = 0;
-    if (OneTeamPerClub){
-        cost_cap = sol.CostCapacityClubHapSwitchTeam(arc1.second, sol.MatchColor[arc1.second][arc1.first]) + sol.CostCapacityClubHapSwitchTeam(arc1.second, sol.MatchColor[arc2.second][arc2.first]);
+    int cost_after = 0, cost_cap = 0;
+    if (!DRR_constraint_violated){
+        for (auto& arc: {arc1, arc2}){
+            j = arc.first, i = arc.second;
+            c = sol.MatchColor[i][j];
+            std::swap(sol.Orientation[i][c], sol.Orientation[j][c]);
+            if (arc1.first != arc2.second){ 
+                std::swap(sol.MatchColor[i][j], sol.MatchColor[j][i]);
+            }
+        }
+        if (arc1.first == arc2.second){ 
+            std::swap(sol.MatchColor[i][j], sol.MatchColor[j][i]);
+        }
+        cost_after = sol.ComputeHACostTeam(arc1.second);
+        for (auto& arc: {arc1, arc2}){
+            j = arc.first, i = arc.second;
+            c = sol.MatchColor[j][i];
+            std::swap(sol.Orientation[i][c], sol.Orientation[j][c]);
+            if (arc1.first != arc2.second){ 
+                std::swap(sol.MatchColor[i][j], sol.MatchColor[j][i]);
+            }
+        }
+        if (arc1.first == arc2.second){ 
+            std::swap(sol.MatchColor[i][j], sol.MatchColor[j][i]);
+        }
+        if (OneTeamPerClub){
+            cost_cap = sol.CostCapacityClubHapSwitchTeam(arc1.second, sol.MatchColor[arc1.second][arc1.first]) + sol.CostCapacityClubHapSwitchTeam(arc1.second, sol.MatchColor[arc2.second][arc2.first]);
+        }
     }
     assert(total_cost_before == sol.ComputeTotalHACost()); // check if everything went well!!!
     if (cost_before == 0 && cost_after == 0 && !DRR_constraint_violated && cost_cap <= 0){
@@ -1277,12 +1376,20 @@ bool NegativeCycle(Solution& sol, const int l){
             if (Nodes[v].second == Nodes[w].first){
                 edge_vector.push_back(E(v, w));
                 weight = ComputeWeight(sol, Nodes[v], Nodes[w], (int)Nodes.size(), OneTeamPerClub);
-                // cout << "give the arc (" << Nodes[v].first << "," << Nodes[v].second << ") -> (" << Nodes[w].first << "," << Nodes[w].second << ") weight " << weight << endl;
+                /*
+                if (weight <= 0){
+                    cout << "give the arc (" << Nodes[v].first << "," << Nodes[v].second << ") -> (" << Nodes[w].first << "," << Nodes[w].second << ") weight " << weight << endl;
+                }
+                    */
             }
             else if (Nodes[w].second == Nodes[v].first){
                 edge_vector.push_back(E(w, v));
                 weight = ComputeWeight(sol, Nodes[w], Nodes[v], (int)Nodes.size(), OneTeamPerClub);
-                // cout << "give the arc (" << Nodes[w].first << "," << Nodes[w].second << ") -> (" << Nodes[v].first << "," << Nodes[v].second << ") weight " << weight << endl;
+                /*
+                if (weight <= 0){
+                    cout << "give the arc (" << Nodes[w].first << "," << Nodes[w].second << ") -> (" << Nodes[v].first << "," << Nodes[v].second << ") weight " << weight << endl;
+                }
+                    */
             }
             else{
                 continue;
@@ -1375,7 +1482,7 @@ bool NegativeCycle(Solution& sol, const int l){
             // cycle.push_back(Nodes[cycle_start]); // Close the cycle -> not needed because then we do something 2x with the same arc
             std::reverse(cycle.begin(), cycle.end());
 
-            // cout << "Negative cycle detected: ";
+            cout << "Negative cycle detected: ";
             // for (auto& [v_in, v_out] : cycle)
                 // cout << "(" << v_in << ", " << v_out << ")" << " ";
             // cout << endl;
@@ -1410,6 +1517,7 @@ bool RepairHAPsWithNegativeCycles(Solution& sol, const int l){
             mission_failed = true;
             // However, here we get stuck -> turn back the solution
             // cout << "HAps could not be restored.." << endl;
+            // cin.get();
         }
     }
     while (!haps_repaired && !mission_failed);

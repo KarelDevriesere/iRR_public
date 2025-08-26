@@ -120,6 +120,8 @@ class SA{
                 cout << "Failed to find a solution, abort.." << endl;
                 std::exit(0);
             }
+            // first, clear everything
+            sol.clear();
             for (int r = 0; r < sol.getNrRounds(); ++r){
                 assert(BestSequenceMatches[r].size() == sol.getNrTeams()/2);
                 for (auto& pair: BestSequenceMatches[r]){

@@ -12,9 +12,9 @@
 using namespace std;
 
 enum class move_name{TS, PTS, RS, PRS, M, BM, C, NC, Initial}; 
-enum class failure{InfeasibleOpponents, HAPs, DRR, NoPathFound};
+enum class failure{InfeasibleOpponents, HAPs, DRR, NoPathFound, MaxSameClub};
 const std::unordered_map<failure, string> Failures = {{failure::InfeasibleOpponents, "InfeasibleOpponents"},
-    {failure::HAPs, "HAPs"}, {failure::DRR, "DRR"}, {failure::NoPathFound, "NoPathFound"}};
+    {failure::HAPs, "HAPs"}, {failure::DRR, "DRR"}, {failure::NoPathFound, "NoPathFound"}, {failure::MaxSameClub, "MaxSameClub"}};
 
 
 class ILS: public SA<move_name>
@@ -41,11 +41,12 @@ class ILS: public SA<move_name>
         void SelectNegativeCycle(const int l, Solution& sol);
         void SelectBalancedCycle(const int l, Solution& sol);
         bool veto_haps(Solution& sol);
+        bool RepairHAPs(Solution& sol);
 
         // Analysis of the moves:
         std::unordered_map<move_name, std::unordered_map<failure, int>> FailureReason
             = {{move_name::TS, {{failure::InfeasibleOpponents, 0}, {failure::HAPs, 0}}},
-               {move_name::PTS, {{failure::InfeasibleOpponents, 0}, {failure::HAPs, 0}, {failure::DRR, 0}, {failure::NoPathFound, 0}}},
+               {move_name::PTS, {{failure::InfeasibleOpponents, 0}, {failure::HAPs, 0}, {failure::DRR, 0}, {failure::NoPathFound, 0}, {failure::MaxSameClub, 0}}},
                {move_name::PRS, {{failure::HAPs, 0}}},
                {move_name::M, {{failure::HAPs, 0}, {failure::NoPathFound, 0}}},
                {move_name::C, {{failure::DRR, 0}}}

@@ -17,6 +17,7 @@
 #include "ILS.h"
 #include "MiaoAlgo.h"
 #include "FO.h"
+#include "Analyze.h"
 
 enum class Algorithm{IP_Karel, IP_Miao, RF_Miao, Meta_Miao, FO_Karel, Meta_Karel};
 const unordered_map<Algorithm, string>AlgoString = {{Algorithm::IP_Karel, "IP_Karel"}, {Algorithm::IP_Miao, "IP_Miao"}, {Algorithm::RF_Miao, "RF_Miao"}, {Algorithm::Meta_Miao, "Meta_Miao"},
@@ -154,14 +155,14 @@ int RF_Miao(Input& in, Solution& sol, int& lb){
 	// This is not part of GurSolver since we cannot change the variable type once this is defined in Gurobi
 	// Instead, we should create a new model, so it's best to define this function outside GurSolver and create seperate gur objects
 
-    const int TimeLimitRF = 60;
+    const int TimeLimitRF = 3600;
     int dur = 0;
     GurSolver gur_relax(in);
 
 	// relax x_ijr variables:
 	bool relax_x = true;
 	gur_relax.BuildMiaoFormulation(relax_x);
-    gur_relax.WarmStart(sol);
+    gur_relax.WarmStart(sol); 
 
 	const bool min_travel = true;
 	const bool min_capacity_violations = false;
@@ -183,13 +184,14 @@ int RF_Miao(Input& in, Solution& sol, int& lb){
     relax_x = false;
     gur_fix.BuildMiaoFormulation(relax_x);
     gur_fix.Fix_y_Patterns(sol);
-    gur_fix.AddObj(min_travel, min_capacity_violations);
+    gur_fix.AddObj(min_travel, min_capacity_violations); // turn back
     gur_fix.setTimeLimit(TimeLimitRF);
     gur_fix.TrackTimeBestSolution = true;
 
     int obj = gur_fix.solve();
     gur_fix.SaveSolution(sol);
     dur += gur_fix.getTimeTillBestSolution();
+    cout << "solution found!!" << endl;
 
     return dur;
 }
@@ -210,10 +212,25 @@ int main(int argc, char** argv){
     int yn;
     bool stop = false;
     int seed = 42;
-    const array<int,5>MetaSeeds = {5, 42, 139, 526, 1008};
+    // const array<int,5>MetaSeeds = {5, 42, 139, 526, 1008};
+    const array<int,1>MetaSeeds = {5};
 
     unordered_map<Algorithm, bool>AlgoSelected = {{Algorithm::IP_Karel, false}, {Algorithm::IP_Miao, false}, {Algorithm::RF_Miao, false},
          {Algorithm::Meta_Miao, false}, {Algorithm::FO_Karel, false}, {Algorithm::Meta_Karel, false}};
+
+    bool answer;
+    if (argc < 2){
+        cout << "Run expirements (0) or analyze results (1)?" << endl;
+        cin >> answer;
+        if (answer){
+            const int InstanceSet = 0;
+            const bool ConstantCpacity = false;
+            for (int Setting = 1; Setting < 3; Setting++){
+                AnalyzeResults(InstanceSet, ConstantCpacity, Setting);
+            }
+            return 0;
+        }
+    }
 
     if (argc < 2){
         cout << "Enter seed" << endl;
@@ -318,7 +335,7 @@ int main(int argc, char** argv){
     stop = false;
     bool InstancesMiaoChosen = false;
     if (Inst == 0){
-        NrInstances = 6;
+        NrInstances = 7;
         InstancesMiaoChosen = true;
         if (argc < 2){
             cout << "Which instance (for all, press 0)?" << endl;
@@ -327,8 +344,8 @@ int main(int argc, char** argv){
             cout << "3: U15" << endl;
             cout << "4: U17" << endl;
             cout << "5: U21" << endl;
+            cout << "6: M" << endl; // Does not work yet
             cout << "7: Tiny" << endl; // Does not work for miao algo
-            // cout << "6: M" << endl; // Does not work yet
             do{
                 if (!(cin >> ex)) {
                     cin.clear(); // clear error flag
@@ -351,10 +368,12 @@ int main(int argc, char** argv){
         }
         else{
             ex = std::stoi(argv[4]);
+            /*
             if (ex == 7){
                 cout << "This instance does not work yet, NrClubs and nr of columns in distance matrix does not match!!" << endl;
                 return 0;
             }
+            */
         }
     }
     else if (Inst == 1){
@@ -585,11 +604,11 @@ int main(int argc, char** argv){
     std::string file_path;
     std::string file_path_initial_solution;
 
-    std::string file_path_results_performance = file_path_results_base + "\\Performance\\Results.txt";
+    std::string file_path_results_performance = file_path_results_base + "\\Performance\\Results_TS_test.txt";
     std::ofstream results_file_performance(file_path_results_performance);
     results_file_performance << "Move, NrChosen, NrAccepted, % Improvement found, Average improvement found, % contribution to best objective, Instance\n";
 
-    std::string file_path_results_failures = file_path_results_base + "\\Failures\\Results.txt";
+    std::string file_path_results_failures = file_path_results_base + "\\Failures\\Results_TS_test.txt";
     std::ofstream results_file_failures(file_path_results_failures);
     results_file_failures << "Instance,TS-InfOpp,TS-HAP,PTS-InfOpp,PTS-HAP,PTS-DRR,PTS-NoPath,PRS-HAP,M-HAP,M-NoPath,C-DRR\n";
 
@@ -664,7 +683,7 @@ int main(int argc, char** argv){
         // Instance 17: IP finds solution in 18s, Miao in 1s
 
         int N = in.getNrTeams();
-        const int TimeLimitIP = 60;
+        const int TimeLimitIP = 7200;
 
         if (AlgoSelected.at(Algorithm::IP_Miao)){
             GurSolver gur_miao(in);
@@ -672,11 +691,11 @@ int main(int argc, char** argv){
             bool relax_x = false;
             gur_miao.setTimeLimit(TimeLimitIP);
             gur_miao.BuildMiaoFormulation(relax_x);
-            gur_miao.AddObj(true, false);
+            gur_miao.AddObj(true, false); 
             gur_miao.TrackTimeBestSolution = true;
             // cout << "Solve IP Miao" << endl;
-            ReadSolution(file_path_initial_solution, sol);
-            gur_miao.WarmStart(sol);
+            ReadSolution(file_path_initial_solution, sol); 
+            gur_miao.WarmStart(sol); 
             gur_miao.solve();
             gur_miao.SaveSolution(sol);
             sol.validate();
@@ -686,7 +705,7 @@ int main(int argc, char** argv){
             Solutions.at(Algorithm::IP_Miao).push_back(sol);
         }
 
-        const bool FindInitialSolutionWithMiao = false;
+        const bool FindInitialSolutionWithMiao = false; // try to find initial solutions for hockey
 
         if (AlgoSelected.at(Algorithm::Meta_Miao)){
             for (auto& MetaSeed: MetaSeeds){
@@ -723,9 +742,10 @@ int main(int argc, char** argv){
                 Solutions.at(Algorithm::Meta_Miao).push_back(sol);
             }
         }
+
         if (AlgoSelected.at(Algorithm::RF_Miao)){
             Solution sol(in);
-            ReadSolution(file_path_initial_solution, sol);
+            // ReadSolution(file_path_initial_solution, sol); // TURN BACK
             cout << "Solve RF Miao" << endl;
             int LowerBound_RF = 0;
             int dur = RF_Miao(in, sol, LowerBound_RF);
@@ -866,7 +886,9 @@ int main(int argc, char** argv){
                 std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
                 ils.setStartTime(start_time);
                 ils.solve(in, sol);
+                cout << "validate" << endl;
                 sol.validate();
+                cout << "done" << endl;
                 results_file_failures << inst << ",";
                 ils.SaveResultsFailures(results_file_failures);
                 ils.SaveResultsMoves(results_file_performance, inst);
@@ -887,7 +909,8 @@ int main(int argc, char** argv){
                 assert(LowerBounds.at(algo).size() > 0);
                 assert(Solutions.at(algo).size() > 0);
                 assert(Objectives.at(algo).size() == Durations.at(algo).size());
-                std::string file_path_results_objectives = file_path_results_base + "\\Objectives\\" + AlgoString.at(algo) + "_" + to_string(inst) + ".txt";
+                std::string file_path_results_objectives = file_path_results_base + "\\Objectives\\" + AlgoString.at(algo) + "_" + to_string(inst) + "_TS_test.txt";
+                cout << "save file in " << file_path_results_objectives << endl;
                 std::ofstream results_file_objectives(file_path_results_objectives);
                 // Algo, Instance, Best, Time, Avg, Time, Bound
                 results_file_objectives << AlgoString.at(algo) << "," << to_string(inst);

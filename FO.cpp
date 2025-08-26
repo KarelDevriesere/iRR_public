@@ -306,7 +306,8 @@ void FO::solve(Input& in, Solution& sol){
 		if (obj < best_obj){
 			Store_x_value();
 		}
-		Update(sol, obj);
+		Update(sol, obj); // TODO: in this function, we do not update sol but the x variables in GurSolver
+		// Hence updating the best sequence of matches is unnecessary
 
         auto duration_gap = std::chrono::duration_cast<std::chrono::seconds>(time_diff);
 		bool optimal = true;

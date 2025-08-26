@@ -35,7 +35,6 @@ void GurSolver::WarmStart(Solution& sol){
 			}
 		}
 	}
-	WarmStarted = true;
 }
 
 void GurSolver::FixHAP(Solution& sol){
@@ -473,6 +472,7 @@ int GurSolver::getBestBound(){
 }
 
 void GurSolver::SaveSolution(Solution& sol){
+	sol.clear();
 	for (int i = 0; i < getNrTeams(); ++i){
 		for (int r = 0; r < getNrRounds(); ++r){
 			for (int j = 0; j < getNrTeams(); ++j){
@@ -682,7 +682,7 @@ void GurSolver::StoreHAPs(Solution& sol){
 		}
 	}
 
-	bool printHAPs = false;
+	bool printHAPs = true;
 	for (int t = 0; t < getNrTeams(); ++t){
 		assert(sol.getHAPIndexTeam(t) != -1);
 		assert(y[t][sol.getHAPIndexTeam(t)].get(GRB_DoubleAttr_X) > 0.9);
@@ -711,6 +711,7 @@ void GurSolver::StoreHAPs(Solution& sol){
 			cout << endl;
 		}
 	}
+	cin.get();
 
 	// extra check
 
@@ -747,7 +748,6 @@ void GurSolver::AssignHAPsToTeams(Solution& sol){
 
 	// cout << "obj = " << obj << " but allowed nr of capacity violations = " << getAllowedNrCapacityViolations() << endl;
 	// cin.get();
-	// assert(obj == getAllowedNrCapacityViolations());
 	assert(obj <= getAllowedNrCapacityViolations());
 	StoreHAPs(sol);
 }
