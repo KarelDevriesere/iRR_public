@@ -4,6 +4,8 @@
 #include <map>
 #include <filesystem>
 #include <array>
+#include <vector>
+#include <algorithm>
 
 #include "Analyze.h"
 
@@ -12,12 +14,12 @@ using namespace std;
 const array<string,6>Algos = {"IP_Karel", "IP_Miao", "RF_Miao", "Meta_Miao", "FO_Karel", "Meta_Karel"};
 const map<int,string>MiaoInstanceName = {{1, "S"}, {2, "U13"}, {3, "U15"}, {4, "U17"}, {5, "U21"}, {6, "M"}, {7, "Ti"}};
 
-constexpr string MiaoInstance(const int Inst, const int NrBreaks){
+string MiaoInstance(const int Inst, const int NrBreaks){
     return MiaoInstanceName.at(Inst) + "-" + to_string(NrBreaks);
 }
 
 string replaceUnderscores(std::string input) {
-    std::replace(input.begin(), input.end(), '_', ' ');
+    replace(input.begin(), input.end(), '_', ' ');
     return input;
 }
 

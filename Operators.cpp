@@ -5,7 +5,7 @@
 #include <string>
 #include <array>
 #include "GurSolver.h"
-#include "algo.h"
+#include "Algo.h"
 #include <algorithm>
 
 #include <boost/config.hpp>

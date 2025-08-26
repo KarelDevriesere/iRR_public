@@ -2,6 +2,7 @@
 #include <iostream>
 #include <assert.h>
 #include <map>
+#include <cmath>
 
 Graph::Graph(const int index, const int N, const int R){
     this->index = index;
@@ -142,4 +143,5 @@ bool Graph::IsMatchFeasible2RR(const int h, const int a, const int r){
             return false;
         }
     }
+    return false;
 }

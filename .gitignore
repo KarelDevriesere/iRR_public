@@ -1,0 +1,4 @@
+# Ignore all output files from Makefile
+*.o
+irr
+*.swp

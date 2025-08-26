@@ -7,8 +7,9 @@
 #include <random>
 #include <assert.h>
 #include <chrono>
+#include <sstream>
 
-#include "algo.h"
+#include "Algo.h"
 #include "Input.h"
 #include "GurSolver.h"
 // #include "Graph.h"
@@ -311,13 +312,13 @@ int main(int argc, char** argv){
         else{
             string InstPath;
             if (Inst == 0){
-                InstPath = "\\Miao";
+                InstPath = std::string(PATHSEP) + "Miao";
             }
             else if (Inst == 1){
-                InstPath = "\\Hockey";
+                InstPath = std::string(PATHSEP) + "Hockey";
             }
             else{
-                InstPath = "\\Test\\Single";
+                InstPath = std::string(PATHSEP) + "Test" + std::string(PATHSEP) + "Single";
             }
             file_path_base += InstPath;
             file_path_initial_solution_base += InstPath;
@@ -514,10 +515,10 @@ int main(int argc, char** argv){
         
         string CapPath;
         if (Cap == 0){
-            CapPath = "\\ConstantCapacity";
+            CapPath = std::string(PATHSEP) + "ConstantCapacity";
         }
         else{
-            CapPath = "\\VariableCapacity";
+            CapPath = std::string(PATHSEP) + "VariableCapacity";
         }
         file_path_base += CapPath;
         file_path_initial_solution_base += CapPath;
@@ -604,21 +605,21 @@ int main(int argc, char** argv){
     std::string file_path;
     std::string file_path_initial_solution;
 
-    std::string file_path_results_performance = file_path_results_base + "\\Performance\\Results_TS_test.txt";
+    std::string file_path_results_performance = file_path_results_base + std::string(PATHSEP) + "Performance" + std::string(PATHSEP) + "Results_TS_test.txt";
     std::ofstream results_file_performance(file_path_results_performance);
     results_file_performance << "Move, NrChosen, NrAccepted, % Improvement found, Average improvement found, % contribution to best objective, Instance\n";
 
-    std::string file_path_results_failures = file_path_results_base + "\\Failures\\Results_TS_test.txt";
+    std::string file_path_results_failures = file_path_results_base + std::string(PATHSEP) + "Failures" + std::string(PATHSEP) + "Results_TS_test.txt";
     std::ofstream results_file_failures(file_path_results_failures);
     results_file_failures << "Instance,TS-InfOpp,TS-HAP,PTS-InfOpp,PTS-HAP,PTS-DRR,PTS-NoPath,PRS-HAP,M-HAP,M-NoPath,C-DRR\n";
 
     for (int inst: Instances){
         string instance_path;
         if (inst < 10){
-            instance_path = "\\i0";
+            instance_path = std::string(PATHSEP) + "i0";
         }
         else{
-            instance_path = "\\i";
+            instance_path = std::string(PATHSEP) + "i";
         }
         instance_path += to_string(inst) + ".txt";
         file_path = file_path_base + instance_path;
@@ -909,7 +910,7 @@ int main(int argc, char** argv){
                 assert(LowerBounds.at(algo).size() > 0);
                 assert(Solutions.at(algo).size() > 0);
                 assert(Objectives.at(algo).size() == Durations.at(algo).size());
-                std::string file_path_results_objectives = file_path_results_base + "\\Objectives\\" + AlgoString.at(algo) + "_" + to_string(inst) + "_TS_test.txt";
+                std::string file_path_results_objectives = file_path_results_base + std::string(PATHSEP) + "Objectives" + std::string(PATHSEP) + AlgoString.at(algo) + "_" + to_string(inst) + "_TS_test.txt";
                 cout << "save file in " << file_path_results_objectives << endl;
                 std::ofstream results_file_objectives(file_path_results_objectives);
                 // Algo, Instance, Best, Time, Avg, Time, Bound

@@ -1,5 +1,6 @@
 #include "MiaoAlgo.h"
 #include "assert.h"
+#include <algorithm>
 
 void FindScheduleWithIP(Input& in, Solution& sol){
     GurSolver gur(in);

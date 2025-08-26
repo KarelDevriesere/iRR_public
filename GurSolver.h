@@ -8,6 +8,7 @@
 #include <chrono>
 #include <random>
 #include <array>
+#include <memory>
 
 class GurSolver : public Input
 {

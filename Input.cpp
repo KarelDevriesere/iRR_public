@@ -3,6 +3,7 @@
 #include <fstream> // read txt file
 #include <sstream> // split numbers of txt file
 #include <string>
+#include <cmath>
 
 Input::Input(){}
 Input::~Input(){}
@@ -550,7 +551,7 @@ bool Input::HAP_satisfies_all_requirements(const vector<HA>& HAP){
 
 int Input::read_HAPs(){
     // std::string file_path = "C:\\Users\\kardvrie\\C++\\VSprojects\\test2\\Patterns\\patterns_" + to_string(NrRounds) + "_";
-    std::string file_path = "Patterns\\patterns_" + to_string(NrRounds) + "_";
+    std::string file_path = "Patterns" + std::string(PATHSEP) + "patterns_" + to_string(NrRounds) + "_";
     if (InstanceMiao == MiaoInstance::M){
         file_path += "c.txt"; // always chose canoncial for this instance
         BreakLimit = 3; // Teams have max 3 breaks

@@ -1,6 +1,7 @@
 #include "Solution.h"
 #include <iostream>
 #include <assert.h>
+#include <cmath>
 
 Solution::Solution(const Input& in) : Input(in) {
 
@@ -160,7 +161,7 @@ int Solution::getImbalanceHalf(const int i){
     int NrH_half;
     const int Half = getNrRounds()/2;
     const vector<pair<int,int>>Halves = {{0, Half}, {Half, getNrRounds()}};
-    const int lb = floor((double)Half/2.0);
+    const int lb = std::floor((double)Half/2.0);
     const int ub = lb+1;
     for (const auto&[Start, End]: Halves){
         NrH_half = 0;

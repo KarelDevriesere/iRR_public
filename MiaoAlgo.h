@@ -1,7 +1,7 @@
 #include "GurSolver.h"
 #include "Input.h"
 #include "Operators.h"
-#include "algo.h"
+#include "Algo.h"
 #include "SA.h"
 
 enum class HAP_operator{InterClubSwap, IntraClubSwap, RandomSwap, ComplementInsertion, Initial};

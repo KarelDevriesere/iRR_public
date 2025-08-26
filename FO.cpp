@@ -1,4 +1,5 @@
 #include "FO.h"
+#include <algorithm>
 
 FO::FO(Input& in, const std::unordered_map<FO_move, string>& moves, // moves, weights and in are defined in main
            const std::unordered_map<FO_move, double>& weights, const int seed): GurSolver(in), SA<FO_move>(moves, weights, seed){

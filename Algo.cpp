@@ -1,4 +1,4 @@
-#include "algo.h"
+#include "Algo.h"
 #include <assert.h>
 #include <iostream>
 #include <fstream>
