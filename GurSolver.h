@@ -45,7 +45,7 @@ class GurSolver : public Input
                             auto time_diff = std::chrono::high_resolution_clock::now() - StartTimeGurSolver;
                             TimeTillBestSolutionGurSolver = std::chrono::duration_cast<std::chrono::seconds>(time_diff).count();
 
-                            double obj = getDoubleInfo(GRB_CB_MIPSOL_OBJ);
+                            // double obj = getDoubleInfo(GRB_CB_MIPSOL_OBJ);
                             // std::cout << "New best obj = " << obj << ", Time = " << TimeTillBestSolutionGurSolver << " s" << std::endl;
                         }
                     } catch (GRBException& e) {

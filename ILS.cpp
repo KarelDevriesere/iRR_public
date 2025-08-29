@@ -404,7 +404,9 @@ void ILS::SelectMatching(const int l, Solution& sol, const bool bipartite){
     // cout << "Rounds before matching in round " << r << endl;
     // sol.PrintAllRoundsLeague(l);
 
+    cout << "do MoveMWPM" << endl;
     vector<pair<int,int>>Matching = MoveMWPM(sol, l, r, bipartite, keepHAP); // in the file operators
+    cout << "MoveMWPM done" << endl;
     SwapMatchings(sol, Matching, l, r, bipartite);
     vector<vector<int>>Paths;
     bool unable_to_find_reversed_paths = false;
@@ -566,33 +568,30 @@ void ILS::Move(Solution& sol){
     include_HAP = true;
     bool bipartite;
     double rnd = RandomNumber();
-    if (rnd < WeightsCumul[move_name::TS]){
-        // cout << "TS" << endl;
-        CurrentMove = move_name::TS;
+    auto iterator = WeightsCumul.upper_bound(rnd);
+    CurrentMove = iterator->second;
+    if (CurrentMove == move_name::TS){
+        cout << "TS" << endl;
         SelectTS(sol);
     }
-    else if (rnd < WeightsCumul[move_name::PTS]){
-        // cout << "PTS" << endl;
-        CurrentMove = move_name::PTS;
+    else if (CurrentMove == move_name::PTS){
+        cout << "PTS" << endl;
         SelectPTS(sol);
     }
-    else if (rnd < WeightsCumul[move_name::PRS]){
-        // cout << "PRS" << endl;
-        CurrentMove = move_name::PRS;
+    else if (CurrentMove == move_name::PRS){
+        cout << "PRS" << endl;
         SelectPRS(sol);
     }
-    else if (rnd < WeightsCumul[move_name::M]){
-        // cout << "Matching" << endl;
+    else if (CurrentMove == move_name::M){
+        cout << "Matching" << endl;
         // Ik weet niet of dit heel goed werkt.. lijkt enkel te werken als je random matchings neemt 
         // en niet enkel de beste qua travel distance
-        CurrentMove = move_name::M;
         bipartite = false;
         const int l = rand()%sol.getNrLeagues();
         SelectMatching(l, sol, bipartite);
     }
-    else if (rnd < WeightsCumul[move_name::BM]){
-        // cout << "Bipartite matching" << endl;
-        CurrentMove = move_name::BM;
+    else if (CurrentMove == move_name::BM){
+        cout << "Bipartite matching" << endl;
         if (include_HAP){
             bipartite = true;
         }
@@ -600,8 +599,7 @@ void ILS::Move(Solution& sol){
         SelectMatching(l, sol, bipartite);
     }
     else{
-        // cout << "Balanced cycle" << endl;
-        CurrentMove = move_name::C;
+        cout << "Balanced cycle" << endl;
         const int l = rand()%sol.getNrLeagues();
         SelectBalancedCycle(l, sol);
     }

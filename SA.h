@@ -19,7 +19,8 @@ class SA{
     public:
         std::unordered_map<Move, string>Moves;
         std::unordered_map<Move, double>Weights;
-        std::unordered_map<Move, double>WeightsCumul;
+        std::map<double,Move>WeightsCumul; // map because this needs to be sorted!!!
+        // values first and then the moves because then we can use built-in upper_bound
 
         Move CurrentMove; 
 
@@ -32,7 +33,7 @@ class SA{
         const int I_accept = 4; // number of moves accepted before cooling
         std::chrono::high_resolution_clock::time_point StartTime;
         std::chrono::high_resolution_clock::duration time_diff;
-        int TimeTillBestSolution;
+        int TimeTillBestSolution = 0;
 
         double T;
         double current_obj;
@@ -64,7 +65,7 @@ class SA{
             double sum = 0;
             for (const auto& [move, string_name]: Moves){
                 sum += Weights.at(move);
-                WeightsCumul[move] = sum;
+                WeightsCumul[sum] = move;
                 NrImprov[move] = 0;
                 NrChosen[move] = 0;
                 NrImprovBestObj[move] = 0; 
@@ -168,7 +169,11 @@ class SA{
                 }
                 current_obj = obj; 
                 it_accepted++;
+#ifdef PRINT
+#if PRINT == 1
                 print_solution();
+#endif
+#endif
             }
             else{
                 double rnd = dis(gen);
@@ -176,7 +181,11 @@ class SA{
                     // cout << "Accept solution with prob " << exp(-(obj-current_obj)/T) << ", prev_obj = " << current_obj << ", new obj = " << obj << endl;
                     current_obj = obj;
                     it_accepted++;
+#ifdef PRINT
+#if PRINT == 1
                     print_solution();
+#endif
+#endif
                 }
                 else{
                     // reverse move
@@ -258,32 +267,5 @@ class SA{
             }
         }
 };
-
-/*
-void ILS::UpdateSelectionProbabilities(){
-    // Comes from Andrea's proceedings paper: Reinforcement Learning for Multi-Neighborhood Local Search in Combinatorial Optimization (2023)
-    double nrm = 0;
-    for (const auto& movename : Moves){
-        cout << "reward / NrChosen = " << RewardT[movename] << " /= " << NrChosenT[movename] << endl;
-        assert(NrChosenT[movename] > 0);
-        RewardT[movename] /= NrChosenT[movename];
-        nrm += RewardT[movename];
-    }
-    double sum = 0;
-    for (const auto& movename: Moves){
-        cout << "weight = max((1.0-" << lambda << ")*" <<  Weights[movename] << " + " << lambda << "*" << RewardT[movename] << "/" << nrm << "), " << MinWeight << ")" << endl;
-        if (nrm > 0){
-            Weights[movename] = std::max((1.0-lambda)*Weights[movename] + lambda*(RewardT[movename]/nrm), MinWeight);
-            sum += Weights[movename];
-            WeightsCumul[movename] = sum;
-            cout << "Weight " << move_name_string.at(movename) << " = " << Weights[movename] << endl;
-        }
-        RewardT[movename] = 0;
-        NrChosenT[movename] = 0;
-    }
-    // cin.get();
-    assert(0.9999999 <= sum && sum <= 1.000001);
-}
-*/
 
 #endif

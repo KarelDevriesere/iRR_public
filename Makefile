@@ -7,6 +7,10 @@ CXXFLAGS = -O3 -Wall -g -std=c++17
 LDFLAGS  =
 INCLUDES =
 
+# Printing
+PRINT ?= 1
+CXXFLAGS += -DPRINT=$(PRINT)
+
 # TODO Karel define PATHSEP as compileflag in cmake
 -DPATHSEP="\"/\""
 

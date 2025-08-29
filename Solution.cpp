@@ -45,7 +45,7 @@ void Solution::PrintAllRoundsLeague(const int l){
 
 int Solution::getNrBreaks(const int i){
     int NrBreaks = 0;
-    for (int c = 1; c < Orientation[i].size(); ++c){
+    for (int c = 1; c < (int)Orientation[i].size(); ++c){
         if (Orientation[i][c-1] == Orientation[i][c]){
             NrBreaks++;
         }
@@ -269,6 +269,8 @@ int Solution::ComputeTravelCost(){
             if (TeamSeen[i]){
                 continue;
             }
+            // cout << "Opponent of " << i << ":" << endl;
+            // cout << TeamColorOpp[i][c] << endl;
             cost += getDistanceTeams(i, TeamColorOpp[i][c]);
             TeamSeen[i] = true;
             TeamSeen[TeamColorOpp[i][c]] = true;
@@ -289,7 +291,6 @@ int Solution::ComputeTravelCost(){
 
 int Solution::ComputeCapacityClubRound(const int c, const int r){
     int cap = 0;
-    int l;
     for (auto& i: getTeamsClub(c)){
         if (Orientation[i][r] == HA::H){
             cap++;
@@ -415,6 +416,7 @@ int Solution::ComputeTotalHACost(){
 }
 
 int Solution::ComputeTotalCost(){
+    // cout << "Compute total cost" << endl;
     int travel_cost = ComputeTravelCost();
     // cout << "Travel cost = " << travel_cost << endl;
     int HA_cost = ComputeTotalHACost();

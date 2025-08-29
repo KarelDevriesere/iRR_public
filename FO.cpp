@@ -260,38 +260,34 @@ void FO::solve(Input& in, Solution& sol){
 	int it = 0;
 	while (!STOP){
 		double rd = RandomNumber();
-		if (rd < WeightsCumul.at(FO_move::R1)){
+		auto iterator = WeightsCumul.upper_bound(rd);
+		CurrentMove = iterator->second;
+		if (CurrentMove == FO_move::R1){
 			// cout << "R1" << endl;
-			CurrentMove = FO_move::R1;
 			consecutive = true;
 			FreeRounds(1, consecutive);
 		}
-		else if (rd < WeightsCumul.at(FO_move::R2C)){
+		else if (CurrentMove == FO_move::R2C){
 			// cout << "R2C" << endl;
-			CurrentMove = FO_move::R2C;
 			consecutive = true;
 			FreeRounds(2, consecutive);
 		}
-		else if (rd < WeightsCumul.at(FO_move::R3C)){
+		else if (CurrentMove == FO_move::R3C){
 			// cout << "R3C" << endl;
-			CurrentMove = FO_move::R3C;
 			consecutive = true;
 			FreeRounds(3, consecutive);
 		}
-		else if (rd < WeightsCumul.at(FO_move::R2NC)){
+		else if (CurrentMove ==FO_move::R2NC){
 			// cout << "R2C" << endl;
-			CurrentMove = FO_move::R2NC;
 			consecutive = false;
 			FreeRounds(2, consecutive);
 		}
-		else if (rd < WeightsCumul.at(FO_move::R3NC)){
+		else if (CurrentMove == FO_move::R3NC){
 			// cout << "R3C" << endl;
-			CurrentMove = FO_move::R3NC;
 			consecutive = false;
 			FreeRounds(3, consecutive);
 		}
 		else{
-			CurrentMove = FO_move::T;
 			// cout << "T" << endl;
 			FreeTeams();
 		}

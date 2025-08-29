@@ -498,7 +498,7 @@ void OptimizeOrientationsCyclesLantarn(Solution& sol, Lantarn& lantarn, const ve
     vector<int>TeamsDown;
     const int i = lantarn.i;
     const int j = lantarn.j;
-    int c_i, c_j, k;
+    int c_i, c_j;
     // cout << "Optimize cycles in lantarn" << endl;
     for (int k = 0; k < lantarn.middle.size(); ++k){
         c_i = sol.MatchColor[lantarn.EdgesMatch.at(i)[k].first][lantarn.EdgesMatch.at(i)[k].second];
@@ -574,7 +574,6 @@ vector<int>FindPath(const int N, const int SOURCE, const int SINK, vector<Edge>&
         boost::add_edge(Edges[e].first, Edges[e].second, Weights[e], g);
     }
 
-    boost::property_map< BGraph, boost::edge_weight_t >::type weightmap = get(boost::edge_weight, g);
     std::vector< vertex_descriptor > p(num_vertices(g));
     std::vector< int > d(num_vertices(g));
     vertex_descriptor s = vertex(SOURCE, g);
@@ -787,7 +786,7 @@ vector<vector<int>> ReversePathsMatching(Solution& sol, const vector<pair<int,in
     std::mt19937 generator(rd());
     // std::shuffle(TeamsA.begin(), TeamsA.end(), generator);
     int SOURCE, SINK;
-    int c, club, w, i_, j_;
+    int c, w, i_, j_;
     vector<vector<int>>Weight(N, vector<int>(N));
     // shuffle TeamsH and TeamsA!!!
     shuffle(TeamsH.begin(), TeamsH.end(), default_random_engine(42));
@@ -934,6 +933,7 @@ vector<pair<int,int>> MWPM(const vector<int>& SelectedTeams, Solution& sol, cons
 		for (j = 0; j < N; ++j){ // SRR: i+1
             if (!ForbiddenEdge[SelectedTeams[i]][SelectedTeams[j]]){ // TODO: random matchings or tailor costs matching to HAPs!!
                 d = M - Weight[i][j]; // - bc algorithm finds matching of MAXIMUM weight
+                assert(d >= 0);
                 boost::add_edge(i, j, EdgeProperty(d), g);
                 // cout << "add edge " << SelectedTeams[i] << "-" << SelectedTeams[j] << endl;
             }
@@ -943,7 +943,10 @@ vector<pair<int,int>> MWPM(const vector<int>& SelectedTeams, Solution& sol, cons
     assert(boost::num_edges(g) > 0); // graph cannot be empty
 
     std::vector< boost::graph_traits< BGraph >::vertex_descriptor > mate1(N);
+    cout << "do maximum weighted matching" << endl;
+    assert(mate1.size() == num_vertices(g));
     boost::maximum_weighted_matching(g, &mate1[0]);
+    cout << "maximum weighted matching done" << endl;
 
     vector<pair<int,int>>Matching;
 
@@ -977,7 +980,7 @@ vector<pair<int,int>> MWPM(const vector<int>& SelectedTeams, Solution& sol, cons
 
 void SwapMatchings(Solution& sol, vector<pair<int,int>>Matching, const int l, const int r, const bool bipartite){
     // cout << "SWAP MATCHINGS" << endl;
-    const int N = sol.getNrTeams(), R = sol.getNrRounds();
+    const int N = sol.getNrTeams();
     vector<bool>NodeSeen(N, false);
     int i,j,h,a;
     // cout << "Old matching: " << endl;
@@ -1119,7 +1122,6 @@ vector<pair<int,int>>MoveMWPM(Solution& sol, const int l, const int r, const boo
     }
     */
     int i_,j_, i, j;
-    int m = 0;
     vector<vector<bool>>ForbiddenEdge(sol.getNrTeams(), vector<bool>(sol.getNrTeams(), false));
     // forbidden edges: all edges in the current schedule (coloring of the current schedule must remain feasible)
     for (i_ = 0; i_ < N; ++i_){
@@ -1208,7 +1210,9 @@ vector<pair<int,int>>MoveMWPM(Solution& sol, const int l, const int r, const boo
     // sol.print_all_rounds();
     // cout << "Bipartite matching in round " << r << endl;
 
+    cout << "do MWPM" << endl;
     vector<pair<int,int>>Matching = MWPM(sol.getTeamsLeague(l), sol, ForbiddenEdge);
+    cout << "MWPM done" << endl;
     if (Matching.size() != SizeMatching){
         cout << "Failed to find perfect matching" << endl;
     }
@@ -1341,7 +1345,7 @@ bool NegativeCycle(Solution& sol, const int l){
     vector<bool>ClubPresent(sol.getNrClubs(), false);
     typedef pair<int, int>E;
     vector<E>Nodes;
-    int i,j,c, club_i, club_j;
+    int i,c,club_i;
     vector<int>TeamsPresent;
     for (int i_ = 0; i_ < sol.getNrTeamsLeague(l); ++i_){
         i = sol.getTeamsLeague(l)[i_];
@@ -1409,7 +1413,6 @@ bool NegativeCycle(Solution& sol, const int l){
     BGraph g(Nodes.size()+1); // Nodes.size()+1 vertices, +1 bc of source node
 
     typedef boost::property_map<BGraph, boost::edge_weight_t>::type WeightMap;
-    WeightMap weight_map = boost::get(boost::edge_weight, g);
     typedef boost::graph_traits<BGraph>::vertex_descriptor Vertex;
 
     for (std::size_t j = 0; j < edge_vector.size(); ++j){
@@ -1418,7 +1421,7 @@ bool NegativeCycle(Solution& sol, const int l){
 
     // Nodes.size()+1 because of source node!!!
     int N = boost::num_vertices(g);
-    assert(N == Nodes.size()+1);
+    assert(N == (int)Nodes.size()+1);
     vector<double> distance(N, std::numeric_limits<double>::max());
     vector<Vertex> predecessor(N, boost::graph_traits<BGraph>::null_vertex());
 

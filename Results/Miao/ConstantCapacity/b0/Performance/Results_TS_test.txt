@@ -1,7 +1,0 @@
-Move, NrChosen, NrAccepted, % Improvement found, Average improvement found, % contribution to best objective, Instance
-TS, 85, 39, 0.0117647, 0.0235294, 0, 5
-PTS, 73, 18, 0.0136986, 0.136986, 0, 5
-PRS, 73, 36, 0.219178, 0, 0, 5
-M, 81, 0, 0, 0, 0, 5
-BM, 97, 97, 0.412371, 4.85567, 0.103093, 5
-C, 0, 0, -nan(ind), -nan(ind), -nan(ind), 5

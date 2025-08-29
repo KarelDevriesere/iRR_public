@@ -221,7 +221,7 @@ int Input::read(const std::string file_path, const bool Miao){
         }
         else if (i < 1+NrClubs){ 
             if (i == 1){
-                cout << "start saving info of clubs" << endl;
+                // cout << "start saving info of clubs" << endl;
                 k = 0; // k = index of the club
                 t = 0; // t = index of the team
             }
@@ -244,7 +244,7 @@ int Input::read(const std::string file_path, const bool Miao){
         }
         else if (i < 1+2*NrClubs){ 
             if (i == 1+NrClubs){
-                cout << "start saving info of travel distances" << endl;
+                // cout << "start saving info of travel distances" << endl;
                 k = 0;
             }
             assert(k != IndexDummyClub);
@@ -276,7 +276,7 @@ int Input::read(const std::string file_path, const bool Miao){
             ++k;
         }
         else if (i < 1+2*NrClubs+NrLeagues){
-            cout << "Populate league " << l << endl;
+            // cout << "Populate league " << l << endl;
             if (i == 1+2*NrClubs){
                 t = 0; // t = index team
             }
@@ -305,7 +305,7 @@ int Input::read(const std::string file_path, const bool Miao){
                 continue;
             }
             int c = i - (1+2*NrClubs+NrLeagues);
-            cout << "Nr of teams of club " << c << " = " << getNrTeamsClub(c) << endl;
+            // cout << "Nr of teams of club " << c << " = " << getNrTeamsClub(c) << endl;
             int r = 0;
             while (iss >> num) { 
                 if (j == 0){} // no meaning
@@ -322,7 +322,7 @@ int Input::read(const std::string file_path, const bool Miao){
         }
         ++i;
     }
-    cout << "done" << endl;
+    // cout << "done" << endl;
 
     // Add the dummy teams; only when not doing Miao instances (the dummy teams are hidden under the normal teams)
     // go over the teams and specify which teams are dummy teams and which are not!
@@ -335,10 +335,10 @@ int Input::read(const std::string file_path, const bool Miao){
     }
     int DummyCapacity = 0;
     for (l = 0; l < getNrLeagues(); ++l){
-        cout << "League " << l << " has size " << LeagueTeams[l].size() << endl;
+        // cout << "League " << l << " has size " << LeagueTeams[l].size() << endl;
         if ((int)LeagueTeams[l].size() % 2 != 0){
             assert(false); // All instances should have leagues of even size!!!
-            cout << "add dummy" << endl;
+            // cout << "add dummy" << endl;
             Teams.push_back(NrTeams);
             TeamStrength.push_back(l);
             TeamClub.push_back(IndexDummyClub);
@@ -447,11 +447,13 @@ int Input::read(const std::string file_path, const bool Miao){
     }
 
     // ++NrClubs;
+    /*
     std::cout << "NrTeams = " << NrTeams << ", NrLeagues = " << NrLeagues << ", NrClubs = " << NrClubs << ", NrRounds = " << NrRounds << std::endl;
     for (l = 0; l < NrLeagues; ++l){
         std::cout << "League " << l << " has " << LeagueTeams[l].size() << " teams" << std::endl;
     }
     std::cout << "Nr of dummy clubs = " << NrTeams - NrNonDummyTeams << endl;
+    */
 
     /*
     std::cout << "## club composition ##" << std::endl;
@@ -487,7 +489,7 @@ int Input::read(const std::string file_path, const bool Miao){
     */
 
     file.close();
-    std::cout << "done reading input" << std::endl;
+    // std::cout << "done reading input" << std::endl;
     return 1;
 }
 
@@ -499,7 +501,7 @@ bool Input::HAP_satisfies_all_requirements(const vector<HA>& HAP){
     if (HAP_requirements.at(HAP_requirement_name::NoThreeConsecutive)){
         for (int h = 2; h < HAP.size(); ++h){
             if (HAP[h] == HAP[h-1] && HAP[h-1] == HAP[h-2]){
-                cout << "HHH or AAA detected in HAP" << endl;
+                // cout << "HHH or AAA detected in HAP" << endl;
                 // cin.get();
                 return false;
             }
@@ -507,7 +509,7 @@ bool Input::HAP_satisfies_all_requirements(const vector<HA>& HAP){
     }
     if (HAP_requirements.at(HAP_requirement_name::NoBreakBeginningEnd)){
         if (HAP[0] == HAP[1] || HAP[(int)HAP.size()-1] == HAP[(int)HAP.size()-2]){
-            cout << "break beginning or end in HAP" << endl;
+            // cout << "break beginning or end in HAP" << endl;
             // cin.get();
             return false;
         }
@@ -520,7 +522,7 @@ bool Input::HAP_satisfies_all_requirements(const vector<HA>& HAP){
             }
         }
         if (nr_breaks > BreakLimit){
-            cout << "Nr breaks higher than limit in HAP" << endl;
+            // cout << "Nr breaks higher than limit in HAP" << endl;
             // cin.get();
             return false;
         }
@@ -541,7 +543,7 @@ bool Input::HAP_satisfies_all_requirements(const vector<HA>& HAP){
             }
         }
         if (nr_H1 < lb || nr_H2 < lb || nr_H1 > ub || nr_H2 > ub){
-            cout << "HAP not quarter balanced" << endl;
+            // cout << "HAP not quarter balanced" << endl;
             // cin.get();
             return false;
         }
@@ -562,7 +564,7 @@ int Input::read_HAPs(){
     else{
         file_path += "all.txt";
     }
-    cout << "read " << file_path << endl;
+    // cout << "read " << file_path << endl;
     std::ifstream file(file_path);
     if (!file.is_open()) {
         std::cerr << "No pattern available for " << NrRounds << " rounds and ";
@@ -619,7 +621,7 @@ int Input::read_HAPs(){
         index += 2;
     }
     TeamsHAP = vector<int>(NrTeams);
-    cout << HAPs.size() << " satisfactory haps" << endl;
+    // cout << HAPs.size() << " satisfactory haps" << endl;
 
     return 1;
 

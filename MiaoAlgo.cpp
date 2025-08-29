@@ -13,7 +13,7 @@ void FindScheduleWithIP(Input& in, Solution& sol){
 	}
     gur.FixHAP(sol);
     gur.AddObj(true, false);
-    int gur_obj = gur.solve();
+    gur.solve();
 }
 
 // Miao's HAP operators:
@@ -107,6 +107,8 @@ void MiaoAlgo::ReverseMove(Solution& sol){
 
 void MiaoAlgo::Reset(Solution& sol){
     // cout << "Reset" << endl;
+    // Such that we can do the matchings again without conflicts
+    // But: do not reset the orientations!!
     int j;
     for (int i = 0; i < sol.getNrTeams(); ++i){
         for (int r = 0; r < sol.getNrRounds(); ++r){
@@ -126,25 +128,23 @@ void MiaoAlgo::ReAssignHAPs(Solution& sol){
     bool MoveChosen = false;
     while(!MoveChosen){
         rnd = RandomNumber();
-        if (rnd < WeightsCumul[HAP_operator::InterClubSwap]){
+        auto iterator = WeightsCumul.upper_bound(rnd); 
+        CurrentMove = iterator->second;
+        if (CurrentMove == HAP_operator::InterClubSwap){
             // cout << "InterClubSwap" << endl;
             MoveChosen = InterClubSwap(sol);
-            CurrentMove = HAP_operator::InterClubSwap;
         }
-        else if (rnd < WeightsCumul[HAP_operator::IntraClubSwap]){
+        else if (CurrentMove == HAP_operator::IntraClubSwap){
             // cout << "IntraClubSwap" << endl;
             MoveChosen = IntraClubSwap(sol);
-            CurrentMove = HAP_operator::IntraClubSwap;
         }
-        else if (rnd < WeightsCumul[HAP_operator::RandomSwap]){
+        else if (CurrentMove == HAP_operator::RandomSwap){
             // cout << "RandomSwap" << endl;
             MoveChosen = RandomSwap(sol);
-            CurrentMove = HAP_operator::RandomSwap;
         }
         else{
             // cout << "ComplementInsertion" << endl;
             MoveChosen = ComplementInsertion(sol);
-            CurrentMove = HAP_operator::ComplementInsertion;
         }
         NrChosen.at(CurrentMove)++;
     }
