@@ -404,9 +404,9 @@ void ILS::SelectMatching(const int l, Solution& sol, const bool bipartite){
     // cout << "Rounds before matching in round " << r << endl;
     // sol.PrintAllRoundsLeague(l);
 
-    cout << "do MoveMWPM" << endl;
+    // cout << "do MoveMWPM" << endl;
     vector<pair<int,int>>Matching = MoveMWPM(sol, l, r, bipartite, keepHAP); // in the file operators
-    cout << "MoveMWPM done" << endl;
+    // cout << "MoveMWPM done" << endl;
     SwapMatchings(sol, Matching, l, r, bipartite);
     vector<vector<int>>Paths;
     bool unable_to_find_reversed_paths = false;
@@ -571,19 +571,19 @@ void ILS::Move(Solution& sol){
     auto iterator = WeightsCumul.upper_bound(rnd);
     CurrentMove = iterator->second;
     if (CurrentMove == move_name::TS){
-        cout << "TS" << endl;
+        // cout << "TS" << endl;
         SelectTS(sol);
     }
     else if (CurrentMove == move_name::PTS){
-        cout << "PTS" << endl;
+        // cout << "PTS" << endl;
         SelectPTS(sol);
     }
     else if (CurrentMove == move_name::PRS){
-        cout << "PRS" << endl;
+        // cout << "PRS" << endl;
         SelectPRS(sol);
     }
     else if (CurrentMove == move_name::M){
-        cout << "Matching" << endl;
+        // cout << "Matching" << endl;
         // Ik weet niet of dit heel goed werkt.. lijkt enkel te werken als je random matchings neemt 
         // en niet enkel de beste qua travel distance
         bipartite = false;
@@ -591,7 +591,7 @@ void ILS::Move(Solution& sol){
         SelectMatching(l, sol, bipartite);
     }
     else if (CurrentMove == move_name::BM){
-        cout << "Bipartite matching" << endl;
+        // cout << "Bipartite matching" << endl;
         if (include_HAP){
             bipartite = true;
         }
@@ -599,7 +599,7 @@ void ILS::Move(Solution& sol){
         SelectMatching(l, sol, bipartite);
     }
     else{
-        cout << "Balanced cycle" << endl;
+        // cout << "Balanced cycle" << endl;
         const int l = rand()%sol.getNrLeagues();
         SelectBalancedCycle(l, sol);
     }
@@ -616,16 +616,28 @@ void ILS::Move(Solution& sol){
 }
 
 void ILS::SaveResultsFailures(ofstream& file){
+#ifdef PRINT
+#if PRINT == 1
     cout << "Nr times we tried to repair HAPs = " << NrTimesRepairHapChosen << endl;
     cout << "Nr times this was actually succesfull = " << NrTimesRepairHapSuccesfull << endl;
     cout << "Analysing why moves failed:" << endl;
+#endif
+#endif
     int cnt1 = 0, cnt2 = 0;
     for (const auto& [move, FailureCount]: FailureReason){
+#ifdef PRINT
+#if PRINT == 1
         cout << "Move: " << Moves.at(move) << endl;
+#endif
+#endif
         cnt1++;
         cnt2 = 0;
         for (const auto& [failure, count]: FailureCount){
+#ifdef PRINT
+#if PRINT == 1
             cout << Failures.at(failure) << ": " << count << endl;
+#endif
+#endif
             cnt2++;
             if (cnt1 ==  FailureReason.size() && cnt2 ==  FailureCount.size()){
                 file << count << "\n";
@@ -644,7 +656,7 @@ void ILS::solve(Input& in, Solution& sol){
     current_obj = best_obj;
     UpdateBestSolution(sol);
 
-    cout << "Start" << endl;
+    // cout << "Start" << endl;
 
     do {
         Move(sol); // do random move

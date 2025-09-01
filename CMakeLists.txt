@@ -35,7 +35,14 @@ target_link_libraries(${CMAKE_PROJECT_NAME} optimized ${GUROBI_CXX_LIBRARY}
                      debug ${GUROBI_CXX_DEBUG_LIBRARY})
 
 target_link_libraries(${CMAKE_PROJECT_NAME} ${GUROBI_LIBRARY})
+add_definitions(-DPATHSEP="\\\\")
+set(PRINT 1 CACHE STRING "Enable printing (0/1)")
+add_compile_definitions(PRINT=${PRINT})
 
 message(STATUS "Gurobi Include Dir: ${GUROBI_INCLUDE_DIRS}")
 message(STATUS "Gurobi Library: ${GUROBI_LIBRARY}")
 message(STATUS "Gurobi CXX Library: ${GUROBI_CXX_LIBRARY}")
+
+# to compile in debug mode:
+# cmake --build build --config Debug
+# .\build\Debug\test.exe

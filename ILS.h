@@ -48,8 +48,8 @@ class ILS: public SA<move_name>
             = {{move_name::TS, {{failure::InfeasibleOpponents, 0}, {failure::HAPs, 0}}},
                {move_name::PTS, {{failure::InfeasibleOpponents, 0}, {failure::HAPs, 0}, {failure::DRR, 0}, {failure::NoPathFound, 0}, {failure::MaxSameClub, 0}}},
                {move_name::PRS, {{failure::HAPs, 0}}},
-               {move_name::M, {{failure::HAPs, 0}, {failure::NoPathFound, 0}}},
-               {move_name::C, {{failure::DRR, 0}}}
+               {move_name::M, {{failure::HAPs, 0}, {failure::NoPathFound, 0}}}
+               /*,{move_name::C, {{failure::DRR, 0}}}*/
             };
 
     public:

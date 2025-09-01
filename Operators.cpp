@@ -943,10 +943,10 @@ vector<pair<int,int>> MWPM(const vector<int>& SelectedTeams, Solution& sol, cons
     assert(boost::num_edges(g) > 0); // graph cannot be empty
 
     std::vector< boost::graph_traits< BGraph >::vertex_descriptor > mate1(N);
-    cout << "do maximum weighted matching" << endl;
+    // cout << "do maximum weighted matching" << endl;
     assert(mate1.size() == num_vertices(g));
     boost::maximum_weighted_matching(g, &mate1[0]);
-    cout << "maximum weighted matching done" << endl;
+    // cout << "maximum weighted matching done" << endl;
 
     vector<pair<int,int>>Matching;
 
@@ -1111,6 +1111,8 @@ vector<pair<int,int>>MoveMWPM(Solution& sol, const int l, const int r, const boo
     The difference with Miao is that she really starts from 0, while I already have to take into account the matches in the other rounds
     */
 
+    // cout << "Start MoveMWPM" << endl;
+
     int N = sol.getNrTeamsLeague(l), R = sol.getNrRounds(), H = R/2;
     int SizeMatching = N/2;
     vector<bool>TeamSelected(sol.getNrTeams(), true);
@@ -1210,9 +1212,9 @@ vector<pair<int,int>>MoveMWPM(Solution& sol, const int l, const int r, const boo
     // sol.print_all_rounds();
     // cout << "Bipartite matching in round " << r << endl;
 
-    cout << "do MWPM" << endl;
+    // cout << "do MWPM" << endl;
     vector<pair<int,int>>Matching = MWPM(sol.getTeamsLeague(l), sol, ForbiddenEdge);
-    cout << "MWPM done" << endl;
+    // cout << "MWPM done" << endl;
     if (Matching.size() != SizeMatching){
         cout << "Failed to find perfect matching" << endl;
     }

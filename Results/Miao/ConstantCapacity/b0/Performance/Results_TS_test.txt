@@ -1,0 +1,6 @@
+Move, NrChosen, NrAccepted, % Improvement found, Average improvement found, % contribution to best objective, Instance
+TS, 13, 3, 0, 0, 0, 2
+PTS, 12, 4, 0, 0, 0, 2
+PRS, 10, 4, 0, 0, 0, 2
+M, 7, 0, 0, 0, 0, 2
+BM, 17, 17, 0.0588235, 1.23529, 0, 2

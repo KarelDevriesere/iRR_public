@@ -65,7 +65,9 @@ class SA{
             double sum = 0;
             for (const auto& [move, string_name]: Moves){
                 sum += Weights.at(move);
-                WeightsCumul[sum] = move;
+                if (string_name != "Initial"){
+                    WeightsCumul[sum] = move;
+                }
                 NrImprov[move] = 0;
                 NrChosen[move] = 0;
                 NrImprovBestObj[move] = 0; 
