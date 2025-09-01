@@ -8,6 +8,11 @@
 
 ILS::ILS(const std::unordered_map<move_name, string>& moves, // moves, weights and in are defined in main
            const std::unordered_map<move_name, double>& weights, const int seed): SA<move_name>(moves, weights, seed){
+            for (auto& [move, name]: moves){
+                if (FailureReasonAll.count(move)){
+                    FailureReason[move] = FailureReasonAll.at(move);
+                }
+            }
 }
 
 ILS::~ILS(){}
@@ -155,7 +160,7 @@ void ILS::SelectTS(Solution& sol){ // use TS for perturbation move!!
     }
     else{
         // current_obj += delta;
-        sol.validate();
+        assert(sol.validate());
     }
     return;
 }
@@ -297,7 +302,7 @@ void ILS::SelectPTS(Solution& sol){
     }
     else{
         // current_obj += delta;
-        sol.validate();
+        assert(sol.validate());
     }
     // cout << "done" << endl;
     return;
@@ -355,7 +360,7 @@ void ILS::SelectMatching(const int l, Solution& sol, const bool bipartite){
     // bipartite matching: throw away the matching in round r but keep orientations of the teams. Then, find a new matching
     // this will always succeed because we can always go back to the old matching
 
-    sol.validate();
+    assert(sol.validate());
     // cout << "Travel cost before: " << sol.ComputeTravelCost() << endl;
 
     const int r = rand()%sol.getNrRounds(); // Chose a random round to do the matching
@@ -493,7 +498,7 @@ void ILS::SelectMatching(const int l, Solution& sol, const bool bipartite){
     }
     */
 
-    sol.validate();
+    assert(sol.validate());
     // cout << "after: check" << endl;
     return;
 } 
@@ -570,20 +575,17 @@ void ILS::Move(Solution& sol){
     double rnd = RandomNumber();
     auto iterator = WeightsCumul.upper_bound(rnd);
     CurrentMove = iterator->second;
+    // cout << Moves.at(CurrentMove) << endl;
     if (CurrentMove == move_name::TS){
-        // cout << "TS" << endl;
         SelectTS(sol);
     }
     else if (CurrentMove == move_name::PTS){
-        // cout << "PTS" << endl;
         SelectPTS(sol);
     }
     else if (CurrentMove == move_name::PRS){
-        // cout << "PRS" << endl;
         SelectPRS(sol);
     }
     else if (CurrentMove == move_name::M){
-        // cout << "Matching" << endl;
         // Ik weet niet of dit heel goed werkt.. lijkt enkel te werken als je random matchings neemt 
         // en niet enkel de beste qua travel distance
         bipartite = false;
@@ -591,7 +593,6 @@ void ILS::Move(Solution& sol){
         SelectMatching(l, sol, bipartite);
     }
     else if (CurrentMove == move_name::BM){
-        // cout << "Bipartite matching" << endl;
         if (include_HAP){
             bipartite = true;
         }
@@ -599,7 +600,6 @@ void ILS::Move(Solution& sol){
         SelectMatching(l, sol, bipartite);
     }
     else{
-        // cout << "Balanced cycle" << endl;
         const int l = rand()%sol.getNrLeagues();
         SelectBalancedCycle(l, sol);
     }
@@ -609,7 +609,7 @@ void ILS::Move(Solution& sol){
     // assert(current_obj <= previous_obj);
     // cout << sol.ComputeTotalCost() << " == " << current_obj << endl;
     if (include_HAP){
-        sol.validate();
+        assert(sol.validate());
         // assert(sol.ComputeCostCapacities() == 0);
         // assert(sol.ComputeTotalHACost() == 0);
     }

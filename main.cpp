@@ -29,27 +29,12 @@ const std::unordered_map<HAP_operator, double>Miao_weights = {{HAP_operator::Int
 const std::unordered_map<HAP_operator, double>Miao_weights_zero_breaks = {{HAP_operator::InterClubSwap, 1.0/2.5}, {HAP_operator::IntraClubSwap, 1.0/2.5}, {HAP_operator::RandomSwap, 1.0/5.0}, {HAP_operator::ComplementInsertion, 0.0}, {HAP_operator::Initial, 0.0}};
 const std::unordered_map<HAP_operator, double>Miao_weights_Merged = {{HAP_operator::InterClubSwap, 1.0/2.5}, {HAP_operator::IntraClubSwap, 1.0/2.5}, {HAP_operator::RandomSwap, 0.0}, {HAP_operator::ComplementInsertion, 1.0/5.0}, {HAP_operator::Initial, 0.0}};
 
-const unordered_map<move_name, string>Karel_operators = {{move_name::TS, "TS"}, {move_name::PTS, "PTS"}, {move_name::PRS, "PRS"}, {move_name::M, "M"}, {move_name::BM, "BM"}, {move_name::Initial, "Initial"}}; // {move_name::C, "C"}
+const unordered_map<move_name, string>Karel_operators = {{move_name::TS, "TS"}, {move_name::PTS, "PTS"}, {move_name::PRS, "PRS"}, /*{move_name::M, "M"},*/ {move_name::BM, "BM"}, {move_name::Initial, "Initial"}}; // {move_name::C, "C"}
 // Cycle gives problems!!
-const unordered_map<move_name, double>Karel_weights = {{move_name::TS, 1.0/5.0}, {move_name::PTS, 1.0/5.0}, {move_name::PRS, 1.0/5.0}, {move_name::M, 1.0/5.0}, {move_name::BM, 1.0/5.0}, {move_name::Initial, 0.0}};
+const unordered_map<move_name, double>Karel_weights = {{move_name::TS, 1.0/4.0}, {move_name::PTS, 1.0/4.0}, {move_name::PRS, 1.0/4.0}, /*{move_name::M, 1.0/5.0},*/ {move_name::BM, 1.0/4.0}, {move_name::Initial, 0.0}};
 
 const unordered_map<FO_move, string>FO_operators = {{FO_move::R1, "R1"}, {FO_move::R2C, "R2C"}, {FO_move::R3C, "R3C"}, {FO_move::R2NC, "R2NC"}, {FO_move::R3NC, "R3NC"}, {FO_move::T, "T"}};
 const unordered_map<FO_move, double>FO_weights = {{FO_move::R1, 1.0/6.0}, {FO_move::R2C, 1.0/6.0}, {FO_move::R3C, 1.0/6.0}, {FO_move::R2NC, 1.0/6.0}, {FO_move::R3NC, 1.0/6.0}, {FO_move::T, 1.0/6.0}};
-
-void MakeInputFileMatchingFormulation(Input& in){
-    ofstream example;
-    example.open("example22.txt");
-    int N = in.getNrTeams();
-    example << N << "\n";
-    for (int r = 0; r < in.getNrRounds(); ++r){
-        for (int i = 0; i < N; ++i){
-            for (int j = 0; j < N; ++j){
-                example << i << " " << j << " " << r << " " << (double)in.getDistanceTeams(i,j) << "\n";
-            }
-        }
-    }
-    example.close();
-}
 
 void SetAlgo(unordered_map<Algorithm,bool>& AlgoSelected, const int A){
     if (A == 0){
@@ -156,7 +141,7 @@ int RF_Miao(Input& in, Solution& sol, int& lb){
 	// This is not part of GurSolver since we cannot change the variable type once this is defined in Gurobi
 	// Instead, we should create a new model, so it's best to define this function outside GurSolver and create seperate gur objects
 
-    const int TimeLimitRF = 20;
+    const int TimeLimitRF = 60;
     int dur = 0;
     GurSolver gur_relax(in);
 
@@ -218,7 +203,7 @@ int main(int argc, char** argv){
          {Algorithm::Meta_Miao, false}, {Algorithm::FO_Karel, false}, {Algorithm::Meta_Karel, false}};
 
     cout << "Why is Matching taking so much time?" << endl;
-    cout << "Segmentation fault on HPC?" << endl;
+    cout << "Segmentation fault on HPC in Matching, even with version 1.82.0, but not with bipartite matching?" << endl;
     int answer = 0;
     if (argc < 2){
         cout << "Run expirements (0), analyze results (1) or show arguments (2)?" << endl;
@@ -686,7 +671,7 @@ int main(int argc, char** argv){
         // Instance 17: IP finds solution in 18s, Miao in 1s
 
         int N = in.getNrTeams();
-        const int TimeLimitIP = 20;
+        const int TimeLimitIP = 60;
 
         if (AlgoSelected.at(Algorithm::IP_Miao)){
             GurSolver gur_miao(in);
@@ -760,8 +745,6 @@ int main(int argc, char** argv){
                 Solutions.at(Algorithm::RF_Miao).push_back(sol);
             }
         }
-
-        // MakeInputFileMatchingFormulation(in);
 
         // GreedyPerfectMatchings();
 

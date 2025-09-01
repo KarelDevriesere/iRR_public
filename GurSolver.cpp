@@ -17,6 +17,7 @@ GurSolver::~GurSolver(){}
 GRBModel GurSolver::createModel(GRBEnv& env) {
 	env.start();
 	env.set(GRB_IntParam_Threads, 8); // Very important when using HPC!!!
+
 	env.set(GRB_IntParam_LogToConsole, 0); // surpress all output
 	return GRBModel(env);
   }

@@ -194,7 +194,7 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
             // cin.get();
         }
     }
-    sol.validate();
+    assert(sol.validate());
     // cout << "Total cost = " << sol.ComputeTotalCost() << endl;
     // cin.get();
     assert(sol.ComputeTravelCost() == sol.ComputeTotalCost());

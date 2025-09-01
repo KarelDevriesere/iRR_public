@@ -8,7 +8,7 @@ LDFLAGS  =
 INCLUDES =
 
 # Printing
-PRINT ?= 1
+PRINT ?= 0
 CXXFLAGS += -DPRINT=$(PRINT)
 
 # TODO Karel define PATHSEP as compileflag in cmake
@@ -25,6 +25,10 @@ else ifeq ($(HPC),1)
 endif
 
 LDFLAGS += -lgurobi_c++ 
+
+# if make release: do not check assert statements
+release: CXXFLAGS += -DNDEBUG -O3
+release: all
 
 # Sources / objects / target
 SRCS = $(wildcard *.cpp)

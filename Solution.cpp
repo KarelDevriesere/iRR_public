@@ -433,7 +433,7 @@ int Solution::ComputeTotalCost(){
     return travel_cost + HA_cost + opp_cost + same_club_cost + DRR_cost;
 }
 
-void Solution::validate(){
+bool Solution::validate(){
     // cout << "Validate solution" << endl;
     int cap_viol = 0;
     vector<int>HomeGamesTeam(getNrTeams(), 0); // counts the nr of H games
@@ -534,6 +534,8 @@ void Solution::validate(){
     if (!ViolationHAP_allowed){
         assert(ComputeTotalHACost() == 0);
     }
+
+    return true;
 }
 
 

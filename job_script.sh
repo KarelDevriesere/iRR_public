@@ -5,11 +5,7 @@
 
 #PBS -l nodes=1:ppn=8 # 1 node, 8 cores
 
-#PBS -l walltime=00:10:00 # max. 2h of wall time
-
-#PBS -l mem=32GB # request memory
-
-# modules to load:
+#PBS -l mem=64GB # request memory
 
 # parameters:
 Algo=$1
@@ -24,8 +20,10 @@ cd $PBS_O_WORKDIR
 
 if [ $Setting -eq 0 ]; then
     echo "run" $Algo $InstanceSet $Instance $NrBreaksPerTeam $Capacity
+    ./irr $Algo $InstanceSet $Instance $NrBreaksPerTeam $Capacity
 else
     echo "run" $Algo $InstanceSet $Instance $NrBreaksPerTeam $Capacity $Setting
+    ./irr $Algo $InstanceSet $Instance $NrBreaksPerTeam $Capacity $Setting
 fi
 
 # After job finishes, check queue

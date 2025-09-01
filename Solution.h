@@ -63,7 +63,7 @@ class Solution: public Input{
         int getNrSameClub(const int i);
 
         void clear();
-        void validate();
+        bool validate();
 
         vector<vector<bool>>TeamsHAP; // HAP of the teams, this is for algorithm of Miao
 };

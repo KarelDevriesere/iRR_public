@@ -199,7 +199,7 @@ void FO::Set_x_value_from_sol(Solution& sol){
 			}
 		}
 	}
-	Validate();
+	assert(Validate());
 }
 
 void FO::Store_x_value(){

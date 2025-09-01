@@ -44,12 +44,13 @@ class ILS: public SA<move_name>
         bool RepairHAPs(Solution& sol);
 
         // Analysis of the moves:
-        std::unordered_map<move_name, std::unordered_map<failure, int>> FailureReason
+        std::unordered_map<move_name, std::unordered_map<failure, int>> FailureReason;
+        std::unordered_map<move_name, std::unordered_map<failure, int>> FailureReasonAll
             = {{move_name::TS, {{failure::InfeasibleOpponents, 0}, {failure::HAPs, 0}}},
                {move_name::PTS, {{failure::InfeasibleOpponents, 0}, {failure::HAPs, 0}, {failure::DRR, 0}, {failure::NoPathFound, 0}, {failure::MaxSameClub, 0}}},
                {move_name::PRS, {{failure::HAPs, 0}}},
-               {move_name::M, {{failure::HAPs, 0}, {failure::NoPathFound, 0}}}
-               /*,{move_name::C, {{failure::DRR, 0}}}*/
+               {move_name::M, {{failure::HAPs, 0}, {failure::NoPathFound, 0}}},
+               {move_name::C, {{failure::DRR, 0}}}
             };
 
     public:
