@@ -347,10 +347,6 @@ void ILS::SelectPRS(Solution& sol){
         assert(sol.ComputeTotalHACost() == cost_HA_before);
         assert(sol.ComputeTotalCost() == cost_before);
     }
-    else{
-        NrImprov[move_name::PRS]++;
-        // current_obj += delta;
-    }
     return;
 }
 
@@ -576,6 +572,7 @@ void ILS::Move(Solution& sol){
     auto iterator = WeightsCumul.upper_bound(rnd);
     CurrentMove = iterator->second;
     // cout << Moves.at(CurrentMove) << endl;
+    auto beg = std::chrono::high_resolution_clock::now();
     if (CurrentMove == move_name::TS){
         SelectTS(sol);
     }
@@ -603,6 +600,9 @@ void ILS::Move(Solution& sol){
         const int l = rand()%sol.getNrLeagues();
         SelectBalancedCycle(l, sol);
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(end - beg);
+    ExecutionTimes.at(CurrentMove).push_back(dur);
     NrChosen.at(CurrentMove)++;
     // sol.TestNrH_equal();
     // cout << current_obj << " <= " << previous_obj << endl;
@@ -615,7 +615,11 @@ void ILS::Move(Solution& sol){
     }
 }
 
-void ILS::SaveResultsFailures(ofstream& file){
+void ILS::SaveResultsFailures(std::string file_path_results_base, int inst, int seed){
+    std::string file_path_results_failures = file_path_results_base + std::string(PATHSEP) + "Failures" + std::string(PATHSEP) + to_string(inst) + "_" + to_string(seed) + ".txt";
+    std::ofstream file(file_path_results_failures);
+    file << "Instance,Seed,TS-InfOpp,TS-HAP,PTS-InfOpp,PTS-HAP,PTS-DRR,PTS-NoPath,PRS-HAP,M-HAP,M-NoPath,C-DRR\n";
+    file << inst << "," << seed << ",";
 #ifdef PRINT
 #if PRINT == 1
     cout << "Nr times we tried to repair HAPs = " << NrTimesRepairHapChosen << endl;
@@ -647,6 +651,7 @@ void ILS::SaveResultsFailures(ofstream& file){
             }
         }
     }
+    file.close();
 }
 
 void ILS::solve(Input& in, Solution& sol){

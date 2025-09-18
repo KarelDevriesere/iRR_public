@@ -1,29 +1,37 @@
 #!/bin/bash
 # job_script.sh
 
-#PBS -N iRR # job name
+#PBS -N iRR with 5 min # job name
 
 #PBS -l nodes=1:ppn=8 # 1 node, 8 cores
 
 #PBS -l mem=64GB # request memory
 
 # parameters:
-Algo=$1
-InstanceSet=$2
-Instance=$3
-NrBreaksPerTeam=$4
-Capacity=$5
-Setting=$6
-notification_flag=$7
+notification_flag=$1
+Seed=$2
+Algo=$3
+InstanceSet=$4
+Instance=$5
+if [ $InstanceSet -eq 0 ]; then
+    NrBreaksPerTeam=$6
+    Capacity=$7
+    Setting=$8
+fi
 
 cd $PBS_O_WORKDIR
 
-if [ $Setting -eq 0 ]; then
-    echo "run" $Algo $InstanceSet $Instance $NrBreaksPerTeam $Capacity
-    ./irr $Algo $InstanceSet $Instance $NrBreaksPerTeam $Capacity
+if [ $InstanceSet -eq 0 ]; then
+    if [ $Setting -eq 0 ]; then
+        echo "run" $Seed $Algo $InstanceSet $Instance $NrBreaksPerTeam $Capacity
+        ./irr $Seed $Algo $InstanceSet $Instance $NrBreaksPerTeam $Capacity
+    else
+        echo "run" $Seed $Algo $InstanceSet $Instance $NrBreaksPerTeam $Capacity $Setting
+        ./irr $Seed $Algo $InstanceSet $Instance $NrBreaksPerTeam $Capacity $Setting
+    fi
 else
-    echo "run" $Algo $InstanceSet $Instance $NrBreaksPerTeam $Capacity $Setting
-    ./irr $Algo $InstanceSet $Instance $NrBreaksPerTeam $Capacity $Setting
+    echo "run" $Seed $Algo $InstanceSet $Instance
+    ./irr $Seed $Algo $InstanceSet $Instance
 fi
 
 # After job finishes, check queue

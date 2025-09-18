@@ -1,0 +1,5 @@
+Move, NrChosen, NrAccepted, % Times improvement found, Average improvement found, % Times contribution to best objective, Instance, Seed
+BM,1593,1593,0.0144382,7.69565,0.00564972,7,951
+PRS,1525,263,0.0583607,0,0,7,951
+PTS,1599,116,0,-nan,0,7,951
+TS,1528,123,0.0117801,5.5,0.0026178,7,951

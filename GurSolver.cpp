@@ -344,7 +344,7 @@ int GurSolver::build_all(const bool HA, const bool relax_x){
 		}
 	}
 
-	std::cout << "done building model" << std::endl;
+	// std::cout << "done building model" << std::endl;
 
    return 1;
 }
@@ -568,7 +568,7 @@ void GurSolver::BuildPatternFormulation(){
 	}
 	*/
 
-	cout << "patterns done" << endl;
+	// cout << "patterns done" << endl;
 }
 
 void GurSolver::Fix_y_Patterns(const Solution& sol){
@@ -607,7 +607,7 @@ void GurSolver::AddMiaoSymmetryConstraint(){
 			}
 		}
 	}
-	cout << "added symmetry constraint" << endl;
+	// cout << "added symmetry constraint" << endl;
 }
 
 void GurSolver::BuildMiaoFormulation(const bool relax_x){
@@ -683,7 +683,7 @@ void GurSolver::StoreHAPs(Solution& sol){
 		}
 	}
 
-	bool printHAPs = true;
+	bool printHAPs = false;
 	for (int t = 0; t < getNrTeams(); ++t){
 		assert(sol.getHAPIndexTeam(t) != -1);
 		assert(y[t][sol.getHAPIndexTeam(t)].get(GRB_DoubleAttr_X) > 0.9);
@@ -712,7 +712,7 @@ void GurSolver::StoreHAPs(Solution& sol){
 			cout << endl;
 		}
 	}
-	cin.get();
+	// cin.get();
 
 	// extra check
 
@@ -733,7 +733,7 @@ void GurSolver::StoreHAPs(Solution& sol){
 
 void GurSolver::AssignHAPsToTeams(Solution& sol){
 
-	cout << "Assign HAPs to teams" << endl;
+	// cout << "Assign HAPs to teams" << endl;
 
 	BuildPatternFormulation();
 	// setBoundCapacityViolations(); // outcomment this constraint and add objective to find minimum violation

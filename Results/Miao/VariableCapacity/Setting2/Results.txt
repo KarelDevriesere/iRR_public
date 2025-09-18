@@ -1,42 +1,42 @@
 \begin{landscape}
 \begin{table}[h!]
 \centering
-\caption{Travel distance results using capacity setting 2.
+\caption{Travel distance results using capacity setting 2.}
 \label{tab:ResultsInstancesMiaoCapSetting2}
 \begin{threeparttable}
-\begin{tabular}{cccccccccccccccccccccccccc}
-Instance & LB & &  \multicolumn{2}{c}{IP Karel} & &  \multicolumn{2}{c}{IP Miao} & &  \multicolumn{2}{c}{RF Miao} & &  \multicolumn{4}{c}{FO Karel} & &  \multicolumn{4}{c}{Meta Karel} & &  \multicolumn{4}{c}{Meta Miao}\\ 
+\begin{tabular}{ccccccccccccccccccccccccccc}
+Instance & \multicolumn{2}{c}{Paper Miao} & &  \multicolumn{2}{c}{IP Karel} & &  \multicolumn{2}{c}{IP Miao} & &  \multicolumn{2}{c}{RF Miao} & &  \multicolumn{4}{c}{FO Karel} & &  \multicolumn{4}{c}{Meta Karel} & &  \multicolumn{4}{c}{Meta Miao}\\ 
 \bottomrule 
- & & &  $d_i$ & t & &  $d_i$ & t & &  $d_i$ & t & &  $d_i$ & t & $\Delta d_i$ & $\Delta t$ & &  $d_i$ & t & $\Delta d_i$ & $\Delta t$ & &  $d_i$ & t & $\Delta d_i$ & $\Delta t$\\ 
-\cline{4-5}\cline{7-8}\cline{10-11}\cline{13-16}\cline{18-21}\cline{23-26} 
-M-0 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ 
-M-1 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ 
-M-2 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ 
-M-3 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ \hdashline 
-S-0 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & 4776 & 15 & 4790 & 22\\ 
-S-1 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & 4654 & 18 & 4655 & 15\\ 
-S-2 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ 
-S-3 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ \hdashline 
-Ti-0 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ 
-Ti-1 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ 
-Ti-2 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ 
-Ti-3 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ \hdashline 
-U13-0 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & 5020 & 73 & 5047 & 49\\ 
-U13-1 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & 4788 & 48 & 4810 & 26\\ 
-U13-2 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ 
-U13-3 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ \hdashline 
-U15-0 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & 3343 & -  & 3343 & - \\ 
-U15-1 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & 3198 & 22 & 3198 & - \\ 
-U15-2 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ 
-U15-3 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ \hdashline 
-U17-0 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & 4655 & 47 & 4683 & - \\ 
-U17-1 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & 4512 & 21 & 4524 & - \\ 
-U17-2 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ 
-U17-3 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ \hdashline 
-U21-0 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & 3226 & 19 & 3227 & 22\\ 
-U21-1 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & 3201 & 27 & 3224 & 32\\ 
-U21-2 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ 
-U21-3 & &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ 
+ & $d_i$ & Method & &  $d_i$ & t & &  $d_i$ & t & &  $d_i$ & t & &  $d_i$ & t & $\Delta d_i$ & $\Delta t$ & &  $d_i$ & t & $\Delta d_i$ & $\Delta t$ & &  $d_i$ & t & $\Delta d_i$ & $\Delta t$\\ 
+\cline{2-3}\cline{5-6}\cline{8-9}\cline{11-12}\cline{14-17}\cline{19-22}\cline{24-27} 
+M-0 & -1 & - &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ 
+M-1 & -1 & - &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ 
+M-2 & -1 & - &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ 
+M-3 & -1 & - &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ \hdashline 
+S-0 & \cellcolor{green!25}4758 & IP &  & \cellcolor{green!25}4758 & 7200 &  & \cellcolor{green!25}4758 & 83 &  & \cellcolor{green!25}4758 & 8 &  & 4872 & 32 & 4872 & 32 &  & \cellcolor{red!25}4883 & 1 & 4892 & 0 &  & 4783 & 0 & 4783 & 1\\ 
+S-1 & \cellcolor{green!25}4465 & RF &  & 4498 & 4804 &  & \cellcolor{green!25}4465 & 1739 &  & \cellcolor{green!25}4465 & 3358 &  & 4698 & 50 & 4698 & 50 &  & \cellcolor{red!25}4722 & 1 & 4726 & 1 &  & 4649 & 0 & 4649 & 1\\ 
+S-2 & \cellcolor{green!25}4256 & IP &  & \cellcolor{green!25}4256 & 594 &  & \cellcolor{green!25}4256 & 165 &  & \cellcolor{green!25}4256 & 84 &  & 4565 & 51 & 4565 & 51 &  & \cellcolor{red!25}4591 & 1 & 4603 & 1 &  & 4518 & 0 & 4518 & 1\\ 
+S-3 & \cellcolor{green!25}4256 & IP &  & \cellcolor{green!25}4256 & 398 &  & \cellcolor{green!25}4256 & 666 &  & \cellcolor{green!25}4256 & 238 &  & 4461 & 50 & 4461 & 50 &  & 4478 & 1 & 4505 & 0 &  & \cellcolor{red!25}4479 & 0 & 4479 & 0\\ \hdashline 
+Ti-0 & \cellcolor{green!25}1400 & IP &  & \cellcolor{green!25}1400 & 1426 &  & \cellcolor{green!25}1400 & 7 &  & \cellcolor{green!25}1400 & 1 &  & \cellcolor{green!25}1400 & 3 & 1400 & 3 &  & \cellcolor{green!25}1400 & 0 & 1400 & 0 &  & \cellcolor{green!25}1400 & 6 & 1406 & 1\\ 
+Ti-1 & \cellcolor{green!25}1483 & IP &  & \cellcolor{green!25}1483 & 2103 &  & \cellcolor{green!25}1483 & 45 &  & \cellcolor{green!25}1483 & 61 &  & 1540 & 9 & 1540 & 9 &  & \cellcolor{red!25}1543 & 0 & 1561 & 0 &  & -  & -  & -  & - \\ 
+Ti-2 & \cellcolor{green!25}1584 & IP &  & \cellcolor{green!25}1584 & 1 &  & \cellcolor{green!25}1584 & 2 &  & \cellcolor{green!25}1584 & 1 &  & 1599 & 14 & 1599 & 14 &  & \cellcolor{red!25}1617 & 0 & 1621 & 0 &  & 1611 & 614 & 1617 & 317\\ 
+Ti-3 & \cellcolor{green!25}1584 & IP &  & \cellcolor{green!25}1584 & 1 &  & \cellcolor{green!25}1584 & 1 &  & \cellcolor{green!25}1584 & 0 &  & \cellcolor{green!25}1584 & 7 & 1584 & 7 &  & \cellcolor{red!25}1596 & 0 & 1624 & 0 &  & -  & -  & -  & - \\ \hdashline 
+U13-0 & \cellcolor{green!25}4692 & RF &  & 5140 & 6489 &  & \cellcolor{green!25}4692 & 4274 &  & \cellcolor{green!25}4692 & 3568 &  & \cellcolor{red!25}5062 & 48 & 5062 & 48 &  & 5037 & 24 & 5056 & 23 &  & 4810 & 32 & 4854 & 31\\ 
+U13-1 & \cellcolor{green!25}4554 & RF &  & 4988 & 1372 &  & \cellcolor{red!25}5677 & 1680 &  & 4565 & 3819 &  & 4795 & 51 & 4795 & 51 &  & 4805 & 29 & 4812 & 27 &  & 4715 & 16 & 4738 & 33\\ 
+U13-2 & 4380 & RF &  & 5177 & 1125 &  & \cellcolor{red!25}5285 & 366 &  & \cellcolor{green!25}4321 & 4268 &  & 4740 & 49 & 4740 & 49 &  & 4733 & 26 & 4740 & 25 &  & 4671 & 19 & 4686 & 32\\ 
+U13-3 & 4338 & IP &  & 4715 & 6636 &  & \cellcolor{red!25}4755 & 6690 &  & \cellcolor{green!25}4233 & 5676 &  & 4553 & 56 & 4553 & 56 &  & 4584 & 30 & 4591 & 22 &  & 4531 & 54 & 4548 & 42\\ \hdashline 
+U15-0 & \cellcolor{red!25}3542 & RF &  & 3301 & 1276 &  & \cellcolor{red!25}3542 & 6147 &  & \cellcolor{red!25}3542 & 90 &  & 3337 & 61 & 3337 & 61 &  & 3317 & 25 & 3319 & 26 &  & \cellcolor{green!25}3295 & 55 & 3311 & 39\\ 
+U15-1 & 3363 & RF &  & 3167 & 7081 &  & \cellcolor{red!25}4042 & 1920 &  & 3350 & 2079 &  & 3182 & 62 & 3182 & 62 &  & 3178 & 31 & 3181 & 35 &  & \cellcolor{green!25}3165 & 39 & 3177 & 49\\ 
+U15-2 & 3153 & RF &  & 3172 & 1325 &  & \cellcolor{red!25}3392 & 7114 &  & \cellcolor{green!25}3145 & 3655 &  & 3155 & 46 & 3155 & 46 &  & 3181 & 38 & 3186 & 36 &  & 3188 & 7 & 3193 & 9\\ 
+U15-3 & 3150 & RF &  & 3072 & 5804 &  & \cellcolor{red!25}3424 & 7200 &  & 3142 & 2601 &  & 3055 & 64 & 3055 & 64 &  & \cellcolor{green!25}3019 & 38 & 3036 & 37 &  & 3059 & 23 & 3070 & 19\\ \hdashline 
+U17-0 & \cellcolor{green!25}4498 & RF &  & 4712 & 426 &  & \cellcolor{green!25}4498 & 1945 &  & \cellcolor{green!25}4498 & 357 &  & \cellcolor{red!25}4708 & 47 & 4708 & 47 &  & 4701 & 13 & 4705 & 13 &  & 4528 & 38 & 4539 & 34\\ 
+U17-1 & \cellcolor{green!25}4400 & RF &  & 4517 & 6349 &  & \cellcolor{red!25}4520 & 5366 &  & 4405 & 4165 &  & 4502 & 60 & 4502 & 60 &  & \cellcolor{red!25}4520 & 14 & 4524 & 5 &  & 4515 & 60 & 4519 & 40\\ 
+U17-2 & 4250 & RF &  & 4521 & 7200 &  & 4230 & 7143 &  & \cellcolor{green!25}4229 & 3687 &  & 4512 & 48 & 4512 & 48 &  & \cellcolor{red!25}4530 & 16 & 4534 & 12 &  & 4464 & 29 & 4473 & 10\\ 
+U17-3 & 4236 & RF &  & 4425 & 4944 &  & \cellcolor{red!25}4440 & 0 &  & \cellcolor{green!25}4199 & 4040 &  & 4399 & 21 & 4399 & 21 &  & 4434 & 2 & 4438 & 3 &  & 4401 & 41 & 4408 & 32\\ \hdashline 
+U21-0 & \cellcolor{green!25}3196 & IP &  & \cellcolor{green!25}3196 & 4498 &  & \cellcolor{green!25}3196 & 98 &  & \cellcolor{green!25}3196 & 2 &  & 3260 & 32 & 3260 & 32 &  & \cellcolor{red!25}3266 & 2 & 3274 & 1 &  & 3231 & 0 & 3231 & 1\\ 
+U21-1 & \cellcolor{green!25}3063 & RF &  & \cellcolor{green!25}3063 & 5519 &  & \cellcolor{green!25}3063 & 1241 &  & \cellcolor{green!25}3063 & 3608 &  & 3211 & 60 & 3211 & 60 &  & \cellcolor{red!25}3213 & 2 & 3228 & 1 &  & 3186 & 0 & 3186 & 2\\ 
+U21-2 & \cellcolor{green!25}2958 & IP &  & \cellcolor{green!25}2958 & 570 &  & \cellcolor{green!25}2958 & 343 &  & \cellcolor{green!25}2958 & 107 &  & 3213 & 50 & 3213 & 50 &  & \cellcolor{red!25}3215 & 2 & 3233 & 2 &  & 3183 & 0 & 3183 & 4\\ 
+U21-3 & \cellcolor{green!25}2958 & IP &  & \cellcolor{green!25}2958 & 335 &  & \cellcolor{green!25}2958 & 373 &  & \cellcolor{green!25}2958 & 91 &  & 3053 & 47 & 3053 & 47 &  & \cellcolor{red!25}3089 & 2 & 3098 & 1 &  & \cellcolor{red!25}3089 & 0 & 3089 & 1\\ 
 \bottomrule 
 \end{tabular}
 \end{threeparttable}

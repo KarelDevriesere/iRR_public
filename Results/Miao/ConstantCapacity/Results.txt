@@ -1,0 +1,44 @@
+\begin{landscape}
+\begin{table}[h!]
+\centering
+\caption{Travel distance results using constant capacity.}
+\label{tab:ResultsInstancesMiaoConstantCap}
+\begin{threeparttable}
+\begin{tabular}{ccccccccccccccccccccccccccc}
+Instance & \multicolumn{2}{c}{Paper Miao} & &  \multicolumn{2}{c}{IP Karel} & &  \multicolumn{2}{c}{IP Miao} & &  \multicolumn{2}{c}{RF Miao} & &  \multicolumn{4}{c}{FO Karel} & &  \multicolumn{4}{c}{Meta Karel} & &  \multicolumn{4}{c}{Meta Miao}\\ 
+\bottomrule 
+ & $d_i$ & Method & &  $d_i$ & t & &  $d_i$ & t & &  $d_i$ & t & &  $d_i$ & t & $\Delta d_i$ & $\Delta t$ & &  $d_i$ & t & $\Delta d_i$ & $\Delta t$ & &  $d_i$ & t & $\Delta d_i$ & $\Delta t$\\ 
+\cline{2-3}\cline{5-6}\cline{8-9}\cline{11-12}\cline{14-17}\cline{19-22}\cline{24-27} 
+M-0 & -1 & - &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ 
+M-1 & -1 & - &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ 
+M-2 & -1 & - &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ 
+M-3 & -1 & - &  & -  & -  &  & -  & -  &  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & -  &  & -  & -  & -  & - \\ \hdashline 
+S-0 & \cellcolor{green!25}4324 & RF &  & 5219 & 1672 &  & 4513 & 3836 &  & 4328 & 3610 &  & \cellcolor{red!25}5232 & 45 & 5232 & 45 &  & 4618 & 1 & 4726 & 1 &  & 4342 & 49 & 4387 & 37\\ 
+S-1 & 3611 & Meta &  & 3751 & 5292 &  & 3680 & 5536 &  & \cellcolor{green!25}3505 & 3696 &  & 4115 & 60 & 4115 & 60 &  & \cellcolor{red!25}4157 & 1 & 4187 & 1 &  & 3857 & 60 & 3886 & 51\\ 
+S-2 & \cellcolor{green!25}3446 & IP &  & 3701 & 5269 &  & 3562 & 6288 &  & -  & -  &  & \cellcolor{red!25}3816 & 57 & 3816 & 57 &  & 3813 & 0 & 3863 & 0 &  & 3570 & 58 & 3597 & 49\\ 
+S-3 & 3407 & IP &  & 3572 & 6150 &  & 3488 & 5861 &  & \cellcolor{green!25}3327 & 7200 &  & \cellcolor{red!25}3851 & 53 & 3851 & 53 &  & 3817 & 1 & 3856 & 0 &  & 3556 & 39 & 3572 & 51\\ \hdashline 
+Ti-0 & \cellcolor{green!25}1400 & IP &  & \cellcolor{green!25}1400 & 7200 &  & \cellcolor{green!25}1400 & 15 &  & \cellcolor{green!25}1400 & 2 &  & \cellcolor{green!25}1400 & 3 & 1400 & 3 &  & \cellcolor{green!25}1400 & 0 & 1403 & 0 &  & \cellcolor{red!25}1408 & 0 & 1408 & 0\\ 
+Ti-1 & 1143 & RF &  & 1159 & 7200 &  & 1145 & 7200 &  & \cellcolor{green!25}1142 & 3600 &  & 1276 & 20 & 1276 & 20 &  & \cellcolor{red!25}1303 & 0 & 1317 & 0 &  & 1293 & 45 & 1298 & 29\\ 
+Ti-2 & 1130 & RF &  & 1133 & 7200 &  & \cellcolor{green!25}1128 & 491 &  & 1130 & 25 &  & 1199 & 31 & 1199 & 31 &  & \cellcolor{red!25}1230 & 0 & 1262 & 0 &  & 1207 & 39 & 1215 & 25\\ 
+Ti-3 & \cellcolor{green!25}1128 & IP &  & \cellcolor{green!25}1128 & 1491 &  & \cellcolor{green!25}1128 & 1709 &  & 1137 & 37 &  & 1219 & 28 & 1219 & 28 &  & \cellcolor{red!25}1247 & 0 & 1274 & 0 &  & 1201 & 50 & 1211 & 37\\ \hdashline 
+U13-0 & \cellcolor{green!25}4359 & Meta &  & 5697 & 0 &  & 4767 & 6819 &  & 4428 & 871 &  & \cellcolor{red!25}5687 & 42 & 5687 & 42 &  & 5177 & 25 & 5377 & 24 &  & 4663 & 56 & 4728 & 47\\ 
+U13-1 & \cellcolor{green!25}3908 & Meta &  & 4530 & 0 &  & 4527 & 3531 &  & 4288 & 2856 &  & 4392 & 57 & 4392 & 57 &  & \cellcolor{red!25}4435 & 30 & 4457 & 24 &  & 4129 & 23 & 4234 & 34\\ 
+U13-2 & \cellcolor{green!25}3831 & Meta &  & 4286 & 1916 &  & \cellcolor{red!25}4287 & 0 &  & 4017 & 7180 &  & 4089 & 61 & 4089 & 61 &  & 4268 & 27 & 4272 & 12 &  & 4040 & 57 & 4072 & 41\\ 
+U13-3 & \cellcolor{green!25}3793 & Meta &  & \cellcolor{red!25}4181 & 0 &  & \cellcolor{red!25}4181 & 0 &  & -  & -  &  & 3978 & 58 & 3978 & 58 &  & 4121 & 21 & 4138 & 20 &  & 3978 & 59 & 3989 & 47\\ \hdashline 
+U15-0 & \cellcolor{green!25}2993 & Meta &  & 3797 & 6531 &  & 3281 & 7160 &  & 3166 & 3470 &  & \cellcolor{red!25}3436 & 43 & 3436 & 43 &  & 3254 & 33 & 3328 & 30 &  & 3070 & 20 & 3110 & 36\\ 
+U15-1 & 2754 & Meta &  & 2746 & 2660 &  & -  & -  &  & \cellcolor{red!25}3004 & 3695 &  & \cellcolor{green!25}2672 & 53 & 2672 & 53 &  & 2704 & 24 & 2711 & 23 &  & 2676 & 57 & 2690 & 48\\ 
+U15-2 & \cellcolor{green!25}2668 & Meta &  & 3053 & 2729 &  & -  & -  &  & -  & -  &  & 2968 & 49 & 2968 & 49 &  & \cellcolor{red!25}3045 & 37 & 3057 & 7 &  & 2724 & 48 & 2753 & 51\\ 
+U15-3 & \cellcolor{green!25}2658 & Meta &  & 3187 & 4462 &  & -  & -  &  & -  & -  &  & 3129 & 59 & 3129 & 59 &  & \cellcolor{red!25}3134 & 34 & 3165 & 32 &  & 2899 & 41 & 2928 & 39\\ \hdashline 
+U17-0 & 3918 & Meta &  & 4742 & 0 &  & 4464 & 7027 &  & \cellcolor{green!25}3898 & 3925 &  & \cellcolor{red!25}4724 & 47 & 4724 & 47 &  & 4445 & 14 & 4568 & 11 &  & 4139 & 59 & 4165 & 36\\ 
+U17-1 & \cellcolor{green!25}3482 & Meta &  & 4225 & 0 &  & 4222 & 4444 &  & -  & -  &  & 4117 & 55 & 4117 & 55 &  & \cellcolor{red!25}4152 & 17 & 4183 & 12 &  & 3743 & 29 & 3778 & 46\\ 
+U17-2 & \cellcolor{green!25}3406 & Meta &  & \cellcolor{red!25}3911 & 0 &  & \cellcolor{red!25}3911 & 0 &  & -  & -  &  & 3761 & 54 & 3761 & 54 &  & 3833 & 16 & 3875 & 8 &  & 3594 & 19 & 3601 & 33\\ 
+U17-3 & \cellcolor{green!25}3403 & Meta &  & \cellcolor{red!25}3801 & 0 &  & \cellcolor{red!25}3801 & 0 &  & -  & -  &  & 3683 & 42 & 3683 & 42 &  & 3750 & 9 & 3761 & 12 &  & 3552 & 56 & 3571 & 48\\ \hdashline 
+U21-0 & 2784 & RF &  & 3508 & 5781 &  & 2856 & 7200 &  & \cellcolor{green!25}2764 & 3612 &  & \cellcolor{red!25}3796 & 57 & 3796 & 57 &  & 3215 & 2 & 3282 & 1 &  & 2842 & 55 & 2861 & 56\\ 
+U21-1 & 2427 & IP &  & 2603 & 7200 &  & 2403 & 7041 &  & \cellcolor{green!25}2325 & 3638 &  & 2883 & 56 & 2883 & 56 &  & \cellcolor{red!25}2906 & 1 & 2934 & 1 &  & 2545 & 48 & 2580 & 56\\ 
+U21-2 & 2314 & RF &  & 2411 & 6881 &  & 2404 & 3716 &  & \cellcolor{green!25}2276 & 7200 &  & 2606 & 35 & 2606 & 35 &  & \cellcolor{red!25}2734 & 1 & 2752 & 0 &  & 2472 & 30 & 2486 & 45\\ 
+U21-3 & 2314 & IP &  & 2407 & 6734 &  & 2332 & 7167 &  & \cellcolor{green!25}2270 & 7200 &  & 2512 & 58 & 2512 & 58 &  & \cellcolor{red!25}2599 & 1 & 2634 & 0 &  & 2447 & 60 & 2458 & 57\\ 
+\bottomrule 
+\end{tabular}
+\end{threeparttable}
+\end{table}
+\end{landscape}

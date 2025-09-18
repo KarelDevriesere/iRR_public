@@ -11,6 +11,117 @@
 
 using namespace std;
 
+const map<string, pair<int, string>> BestReportedValuesMiaoConstant = {
+    {"Ti-0",  {1400, "IP"}},
+    {"Ti-1",  {1143, "RF"}},
+    {"Ti-2",  {1130, "RF"}},
+    {"Ti-3",  {1128, "IP"}},
+
+    {"S-0",   {4324, "RF"}},
+    {"S-1",   {3611, "Meta"}},
+    {"S-2",   {3446, "IP"}},
+    {"S-3",   {3407, "IP"}},
+
+    {"U21-0", {2784, "RF"}},
+    {"U21-1", {2427, "IP"}},
+    {"U21-2", {2314, "RF"}},
+    {"U21-3", {2314, "IP"}},
+
+    {"U17-0", {3918, "Meta"}},
+    {"U17-1", {3482, "Meta"}},
+    {"U17-2", {3406, "Meta"}},
+    {"U17-3", {3403, "Meta"}},
+
+    {"U13-0", {4359, "Meta"}},
+    {"U13-1", {3908, "Meta"}},
+    {"U13-2", {3831, "Meta"}},
+    {"U13-3", {3793, "Meta"}},
+
+    {"U15-0", {2993, "Meta"}},
+    {"U15-1", {2754, "Meta"}},
+    {"U15-2", {2668, "Meta"}},
+    {"U15-3", {2658, "Meta"}},
+
+    {"M-0", {-1, "-"}},
+    {"M-1", {-1, "-"}},
+    {"M-2", {-1, "-"}},
+    {"M-3", {-1, "-"}}
+};
+
+const map<string, pair<int, string>> BestReportedValuesMiaoNC1 = {
+    {"Ti-0",  {1400, "IP"}},
+    {"Ti-1",  {1204, "IP"}},
+    {"Ti-2",  {1138, "IP"}},
+    {"Ti-3",  {1145, "IP"}},
+
+    {"S-0", {4538, "IP"}},
+    {"S-1", {3604, "RF"}},
+    {"S-2", {3422, "RF"}},
+    {"S-3", {3409, "RF"}},
+
+    {"U21-0",   {3120, "IP"}},
+    {"U21-1",   {2464, "RF"}},
+    {"U21-2",   {2332, "RF"}},
+    {"U21-3",   {2298, "RF"}},
+
+    {"U17-0",   {4204, "RF"}},
+    {"U17-1",   {3627, "Meta"}},
+    {"U17-2",   {3435, "RF"}},
+    {"U17-3",   {3410, "RF"}},
+
+    {"U13-0",   {4492, "Meta"}},
+    {"U13-1",   {4049, "RF"}},
+    {"U13-2",   {3983, "Meta"}},
+    {"U13-3",   {3923, "Meta"}},
+
+    {"U15-0",   {3101, "Meta"}},
+    {"U15-1",   {2848, "Meta"}},
+    {"U15-2",   {2755, "Meta"}},
+    {"U15-3",   {2766, "Meta"}},
+
+    {"M-0", {-1, "-"}},
+    {"M-1", {-1, "-"}},
+    {"M-2", {-1, "-"}},
+    {"M-3", {-1, "-"}}
+};
+
+const map<string, pair<int, string>> BestReportedValuesMiaoNC2 = {
+    {"Ti-0",  {1400, "IP"}},
+    {"Ti-1",  {1483, "IP"}},
+    {"Ti-2",  {1584, "IP"}},
+    {"Ti-3",  {1584, "IP"}},
+
+    {"S-0", {4758, "IP"}},
+    {"S-1", {4465, "RF"}},
+    {"S-2", {4256, "IP"}},
+    {"S-3", {4256, "IP"}},
+
+    {"U21-0",   {3196, "IP"}},
+    {"U21-1",   {3063, "RF"}},
+    {"U21-2",   {2958, "IP"}},
+    {"U21-3",   {2958, "IP"}},
+
+    {"U17-0",   {4498, "RF"}},
+    {"U17-1",   {4400, "RF"}},
+    {"U17-2",   {4250, "RF"}},
+    {"U17-3",   {4236, "RF"}},
+
+    {"U13-0",   {4692, "RF"}},
+    {"U13-1",   {4554, "RF"}},
+    {"U13-2",   {4380, "RF"}},
+    {"U13-3",   {4338, "IP"}},
+
+    {"U15-0",   {3542, "RF"}},
+    {"U15-1",   {3363, "RF"}},
+    {"U15-2",   {3153, "RF"}},
+    {"U15-3",   {3150, "RF"}},
+
+    {"M-0", {-1, "-"}},
+    {"M-1", {-1, "-"}},
+    {"M-2", {-1, "-"}},
+    {"M-3", {-1, "-"}}
+};
+
 const array<string,6>Algos = {"IP_Karel", "IP_Miao", "RF_Miao", "Meta_Miao", "FO_Karel", "Meta_Karel"};
 const map<int,string>MiaoInstanceName = {{1, "S"}, {2, "U13"}, {3, "U15"}, {4, "U17"}, {5, "U21"}, {6, "M"}, {7, "Ti"}};
 
@@ -60,15 +171,15 @@ void AnalyzeResults(const int InstanceSet, const bool ConstantCap, const int Cap
     string file_path_results_base = "Results";
     if (InstanceSet == 0){
         cout << "Analyze results Miao instances ";
-        file_path_results_base += "/Miao";
+        file_path_results_base += (std::string(PATHSEP) + "Miao");
     }
     else if (InstanceSet == 1){
         cout << "Analyze results Hockey instances" << endl;
-        file_path_results_base += "/Hockey";
+        file_path_results_base += (std::string(PATHSEP) + "Hockey");
     }
     else if (InstanceSet == 2){
         cout << "Analyze results Miao instances" << endl;
-        file_path_results_base += "/Test";
+        file_path_results_base += (std::string(PATHSEP) + "Test");
     }
     else{
         cout << "InstanceSet should be 0,1 or 2" << endl;
@@ -78,19 +189,24 @@ void AnalyzeResults(const int InstanceSet, const bool ConstantCap, const int Cap
     if (InstanceSet == 0){
         if (ConstantCap){
             cout << " with constant capacity" << endl;
-            file_path_results_base += "/ConstantCapacity";
+            file_path_results_base += (std::string(PATHSEP) + "ConstantCapacity");
+            cout << "new file path = " << file_path_results_base << endl;
         }
         else{
             assert(CapSetting == 1 || CapSetting == 2);
             cout << " with variable capacity and setting " << CapSetting << endl;
-            file_path_results_base += ("/VariableCapacity/Setting" + to_string(CapSetting));
+            file_path_results_base += (std::string(PATHSEP) + "VariableCapacity/Setting" + to_string(CapSetting));
         }
 
         for (int b = 0; b < 4; ++b){
-            std::string file_path_results = file_path_results_base + "/b" + to_string(b) + "/Objectives";
+            std::string file_path_results = file_path_results_base + std::string(PATHSEP) + "b" + to_string(b) + std::string(PATHSEP) + "Objectives";
             try {
                 for (const auto& entry : std::filesystem::directory_iterator(file_path_results)) {
-                    if (entry.is_regular_file() && entry.path().extension() == ".txt") {
+
+                    std::string fname = entry.path().filename().string();
+                    const std::string suffix = "TS_test.txt";
+
+                    if (entry.is_regular_file() && fname.size() >= suffix.size() && fname.compare(fname.size() - suffix.size(), suffix.size(), suffix) == 0) { // TS_test: last results
                         // std::cout << "Opening file: " << entry.path() << '\n';
 
                         std::ifstream file(entry.path());
@@ -172,12 +288,12 @@ void AnalyzeResults(const int InstanceSet, const bool ConstantCap, const int Cap
             ref = "ResultsInstancesMiaoCapSetting2";
         }
     }
-    results_file << "\n";
+    results_file << "}\n";
 
     results_file << "\\label{tab:" << ref << "}\n";
     results_file << "\\begin{threeparttable}\n";
-    results_file << "\\begin{tabular}{cccccccccccccccccccccccccc}\n";
-    results_file << "Instance & LB & & ";
+    results_file << "\\begin{tabular}{ccccccccccccccccccccccccccc}\n";
+    results_file << "Instance & \\multicolumn{2}{c}{Paper Miao} & & ";
 
     for (auto& algo: {"IP Karel", "IP Miao", "RF Miao"}){
         results_file << " \\multicolumn{" << 2 << "}" << "{c}{" << algo << "} & & ";
@@ -189,7 +305,7 @@ void AnalyzeResults(const int InstanceSet, const bool ConstantCap, const int Cap
     results_file << "\\\\ \n";
     results_file << "\\bottomrule \n";
 
-    results_file << " & & & ";
+    results_file << " & $d_i$ & Method & & ";
     for (int i = 0; i < 3; ++i){
         results_file << " $d_i$ & t & & ";
     }
@@ -198,10 +314,55 @@ void AnalyzeResults(const int InstanceSet, const bool ConstantCap, const int Cap
     }
     results_file << " $d_i$ & t & $\\Delta d_i$ & $\\Delta t$";
     results_file << "\\\\ \n";
-    results_file << "\\cline{4-5}\\cline{7-8}\\cline{10-11}\\cline{13-16}\\cline{18-21}\\cline{23-26} \n";
+    results_file << "\\cline{2-3}\\cline{5-6}\\cline{8-9}\\cline{11-12}\\cline{14-17}\\cline{19-22}\\cline{24-27} \n";
 
     for (auto&[inst, algo_results]: Table){
-        results_file << inst << " & & ";
+        results_file << inst << " & ";
+
+        int BestFoundValue = 2147483647; // INT_MAX
+        int WorstFoundValue = 0;
+        for (string algo: {"IP_Karel", "IP_Miao", "RF_Miao", "FO_Karel", "Meta_Karel", "Meta_Miao"}){
+            if (Table.at(inst).at(algo).at("BestObj") > 0 && Table.at(inst).at(algo).at("BestObj") < BestFoundValue){ // distance minimization so lower is better
+                BestFoundValue = Table.at(inst).at(algo).at("BestObj");
+            }
+            else if (Table.at(inst).at(algo).at("BestObj") > 0 && Table.at(inst).at(algo).at("BestObj") > WorstFoundValue){
+                WorstFoundValue = Table.at(inst).at(algo).at("BestObj");
+            }
+        }
+
+        // --------- Miao column ------------- //
+        
+        int value;
+        string method;
+        if (ConstantCap){
+            value = BestReportedValuesMiaoConstant.at(inst).first;
+            method =  BestReportedValuesMiaoConstant.at(inst).second;
+        }
+        else{
+            if (CapSetting == 1){
+                value = BestReportedValuesMiaoNC1.at(inst).first;
+                method =  BestReportedValuesMiaoNC1.at(inst).second;
+            }
+            else {
+                value = BestReportedValuesMiaoNC2.at(inst).first;
+                method =  BestReportedValuesMiaoNC2.at(inst).second;
+            }
+        }
+
+        if (value > 0 && value <= BestFoundValue){
+            BestFoundValue = value;
+            results_file << "\\cellcolor{green!25}" << value << " & " << method << " & ";
+        }
+        else if (value > 0 && value >= WorstFoundValue){
+            WorstFoundValue = value;
+            results_file << "\\cellcolor{red!25}" << value << " & " << method << " & ";
+        }
+        else{
+            results_file << value << " & " << method << " & ";
+        }
+
+        // --------- Miao column ------------- //
+
         for (string algo: {"IP_Karel", "IP_Miao", "RF_Miao", "FO_Karel", "Meta_Karel", "Meta_Miao"}){
             vector<string>Metrics;
             if (algo == "IP_Karel" || algo == "IP_Miao" || algo == "RF_Miao"){
@@ -216,7 +377,15 @@ void AnalyzeResults(const int InstanceSet, const bool ConstantCap, const int Cap
                     results_file << " & - ";
                 }
                 else{
-                    results_file << " & " << m;
+                    if (metric == "BestObj" && Table.at(inst).at(algo).at("BestObj") == BestFoundValue){
+                        results_file << " & " << "\\cellcolor{green!25}" << m;
+                    }
+                    else if (metric == "BestObj" && Table.at(inst).at(algo).at("BestObj") == WorstFoundValue){
+                        results_file << " & " << "\\cellcolor{red!25}" << m;
+                    }
+                    else{
+                        results_file << " & " << m;
+                    }
                 }
             }
             if (algo != "Meta_Miao"){

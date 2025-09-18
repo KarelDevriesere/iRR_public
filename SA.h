@@ -57,6 +57,7 @@ class SA{
         unordered_map<Move, int>NrImprov; // Nr of times a move found an improvement  
         unordered_map<Move, int>NrImprovBestObj; // Nr of times this move found a better best solution
         unordered_map<Move, vector<int>>Improv; // stores the improvements: to make boxplots
+        unordered_map<Move, vector<std::chrono::milliseconds>>ExecutionTimes;
 
         vector<vector<pair<int,int>>>BestSequenceMatches;
 
@@ -74,6 +75,7 @@ class SA{
                 Reward[move] = 0;
                 NrAccepted[move] = 0;
                 Improv[move]; // vector is default constructed
+                ExecutionTimes[move];
             }
             assert(0.99 < sum && sum < 1.01);
             T = T_begin;
@@ -164,8 +166,8 @@ class SA{
             }
             if (obj <= current_obj){
                 // cout << "Accept solution" << endl;
-                Reward.at(CurrentMove) += (current_obj-obj);
                 if (obj < current_obj){
+                    Reward.at(CurrentMove) += (current_obj-obj);
                     NrImprov.at(CurrentMove)++;
                     Improv.at(CurrentMove).push_back(current_obj-obj);
                 }
@@ -209,23 +211,58 @@ class SA{
             return true;
         }
         
-        void SaveResultsMoves(ofstream& file, int instance){
-            cout << "Move, NrChosen, NrAccepted, % Improvement found, Average improvement found, % contribution to best objective" << endl;
+        void SaveResultsMoves(std::string file_path_results_base, int instance, int seed){
+            std::string file_path_results_performance = file_path_results_base + std::string(PATHSEP) + "Performance" + std::string(PATHSEP) + to_string(instance) + "_" + to_string(seed) + ".txt";
+            std::ofstream file(file_path_results_performance);
+            file << "Move, NrChosen, NrAccepted, % Times improvement found, Average improvement found, % Times contribution to best objective, Instance, Seed\n";
+            // cout << "Move, NrChosen, NrAccepted, % Improvement found, Average improvement found, % contribution to best objective" << endl;
             for (const auto& [move, string_name]: Moves){
                 if (string_name == "Initial"){
                     continue;
                 }
-                cout << string_name << ", " << NrChosen.at(move) << ", " << NrAccepted.at(move) << ", " << (double) NrImprov.at(move) / (double) NrChosen.at(move) << ", " << (double) Reward.at(move) / (double) NrChosen.at(move) << ", " << (double) NrImprovBestObj.at(move) / (double) NrChosen.at(move)  << endl;
-                file << string_name << ", ";
-                file << NrChosen.at(move) << ", ";
-                file << NrAccepted.at(move) << ", ";
-                file << (double) NrImprov.at(move) / (double) NrChosen.at(move) << ", ";
-                file << (double) Reward.at(move) / (double) NrChosen.at(move) << ", ";
-                file << (double) NrImprovBestObj.at(move) / (double) NrChosen.at(move) << ", ";
-                file << instance << "\n";
+                // cout << string_name << ", " << NrChosen.at(move) << ", " << NrAccepted.at(move) << ", " << (double) NrImprov.at(move) / (double) NrChosen.at(move) << ", " << (double) Reward.at(move) / (double) NrChosen.at(move) << ", " << (double) NrImprovBestObj.at(move) / (double) NrChosen.at(move)  << endl;
+                file << string_name << ",";
+                file << NrChosen.at(move) << ",";
+                file << NrAccepted.at(move) << ",";
+                file << (double) NrImprov.at(move) / (double) NrChosen.at(move) << ",";
+                file << (double) Reward.at(move) / (double) NrImprov.at(move) << ",";
+                file << (double) NrImprovBestObj.at(move) / (double) NrChosen.at(move) << ",";
+                file << instance << "," << seed << "\n";
             }
-
-            // TODO: boxplots
+            file.close();
+   
+            std::string file_path_results_time= file_path_results_base + std::string(PATHSEP) + "ExecutionTime" + std::string(PATHSEP) + to_string(instance) + "_" + to_string(seed) + ".txt";
+            std::ofstream file2(file_path_results_time);
+            file2 << "Move,Min,Max,Mean,Instance,Seed\n";
+            // cout << "Move, NrChosen, NrAccepted, % Improvement found, Average improvement found, % contribution to best objective" << endl;
+            for (const auto& [move, string_name]: Moves){
+                if (string_name == "Initial" || ExecutionTimes.at(move).empty()){
+                    continue;
+                }
+                auto Min = ExecutionTimes.at(move)[0];
+                auto Max = ExecutionTimes.at(move)[0];
+                std::chrono::microseconds Mean{0};
+                for (auto dur: ExecutionTimes.at(move)){
+                    if (dur > Max){
+                        Max = dur;
+                    }
+                    else if (dur < Min){
+                        Min = dur;
+                    }
+                    Mean += dur;
+                }
+                Mean = Mean / ExecutionTimes.at(move).size();
+                Mean /= 1000;
+                file2 << string_name << ",";
+                file2 << Min.count() << ",";
+                file2 << Max.count() << ",";
+                file2 << Mean.count() << ",";
+                file2 << instance << "," << seed << "\n";
+                for (auto dur: ExecutionTimes.at(move)){ // store these as well to make boxplots later?
+                    file2 << dur.count() << "\n";
+                }
+            }
+            file2.close();
         }
 
         void setStartTime(std::chrono::high_resolution_clock::time_point start_time){

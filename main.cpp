@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <chrono>
 #include <sstream>
+#include <filesystem>
 
 #include "Algo.h"
 #include "Input.h"
@@ -89,9 +90,10 @@ void ReadSolution(const string path, Solution& sol){
     sol.validate();
 }
 
-void SaveSolution(const string path, Solution& sol){
+void SaveSolution(const string path, Solution& sol, const Algorithm algo, const int TimeToSolution){
     string file_name = path;
     std::ofstream file(file_name);
+    file << AlgoString.at(algo) << "," << TimeToSolution << "\n"; // store the algo that found the initial solution and the time it took
     file << "i,j,r,value\n";
     for (int i = 0; i < sol.getNrTeams(); ++i){
         for (int j = 0; j < sol.getNrTeams(); ++j){
@@ -110,15 +112,21 @@ void SaveSolution(const string path, Solution& sol){
     file.close();
 }
 
-void FindSolutionIP(GurSolver& gur, Solution& sol, const bool HA, const bool min_travel, const bool min_cap){
+int FindSolutionIP(GurSolver& gur, Solution& sol, const bool HA, const bool min_travel, const bool min_cap, const bool WarmStart=false){
     const bool relax_x = false;
     gur.build_all(HA, relax_x);
     gur.setBoundCapacityViolations();
     gur.AddObj(min_travel, min_cap);
-    gur.WarmStart(sol);
-    gur.solve();
-    gur.SaveSolution(sol);
-    assert(sol.ComputeTotalHACost() == 0);
+    if (WarmStart){
+        gur.WarmStart(sol);
+    }
+    int status = gur.solve();
+    if (status >= 0){ // if -1 no solution was found
+        gur.SaveSolution(sol);
+        sol.validate();
+        assert(sol.ComputeTotalHACost() == 0);
+    }
+    return status;
 }
 
 void FindInitialSolution(Input& in, Solution& sol, const int seed){
@@ -141,7 +149,7 @@ int RF_Miao(Input& in, Solution& sol, int& lb){
 	// This is not part of GurSolver since we cannot change the variable type once this is defined in Gurobi
 	// Instead, we should create a new model, so it's best to define this function outside GurSolver and create seperate gur objects
 
-    const int TimeLimitRF = 60;
+    const int TimeLimitRF = 3600;
     int dur = 0;
     GurSolver gur_relax(in);
 
@@ -196,21 +204,22 @@ int main(int argc, char** argv){
     int yn;
     bool stop = false;
     int seed = 42;
-    const array<int,5>MetaSeeds = {5, 42, 139, 526, 1008};
-    // const array<int,1>MetaSeeds = {5};
 
     unordered_map<Algorithm, bool>AlgoSelected = {{Algorithm::IP_Karel, false}, {Algorithm::IP_Miao, false}, {Algorithm::RF_Miao, false},
          {Algorithm::Meta_Miao, false}, {Algorithm::FO_Karel, false}, {Algorithm::Meta_Karel, false}};
 
-    cout << "Why is Matching taking so much time?" << endl;
-    cout << "Segmentation fault on HPC in Matching, even with version 1.82.0, but not with bipartite matching?" << endl;
+    cout << "Why is Matching M taking so much time?" << endl;
+    cout << "Segmentation fault on HPC in M, even with version 1.82.0, but not with BM?" << endl;
+    cout << "BM faster if I use algorithm for bipartite matching?" << endl;
     int answer = 0;
     if (argc < 2){
         cout << "Run expirements (0), analyze results (1) or show arguments (2)?" << endl;
         cin >> answer;
         if (answer == 1){
             const int InstanceSet = 0;
-            const bool ConstantCpacity = false;
+            bool ConstantCpacity = true;
+            AnalyzeResults(InstanceSet, ConstantCpacity);
+            ConstantCpacity = false;
             for (int Setting = 1; Setting < 3; Setting++){
                 AnalyzeResults(InstanceSet, ConstantCpacity, Setting);
             }
@@ -234,6 +243,15 @@ int main(int argc, char** argv){
     }
     else{
         seed = std::stoi(argv[1]);
+    }
+
+    array<int,5>MetaSeeds;
+
+    std::random_device rd; 
+    std::mt19937 gen(seed);
+    std::uniform_int_distribution<> dis(0, 1000);
+    for (int i = 0; i < MetaSeeds.size(); ++i){
+        MetaSeeds[i] = (int)dis(gen);
     }
 
     if (argc < 2){
@@ -592,14 +610,6 @@ int main(int argc, char** argv){
     std::string file_path;
     std::string file_path_initial_solution;
 
-    std::string file_path_results_performance = file_path_results_base + std::string(PATHSEP) + "Performance" + std::string(PATHSEP) + "Results_TS_test.txt";
-    std::ofstream results_file_performance(file_path_results_performance);
-    results_file_performance << "Move, NrChosen, NrAccepted, % Improvement found, Average improvement found, % contribution to best objective, Instance\n";
-
-    std::string file_path_results_failures = file_path_results_base + std::string(PATHSEP) + "Failures" + std::string(PATHSEP) + "Results_TS_test.txt";
-    std::ofstream results_file_failures(file_path_results_failures);
-    results_file_failures << "Instance,TS-InfOpp,TS-HAP,PTS-InfOpp,PTS-HAP,PTS-DRR,PTS-NoPath,PRS-HAP,M-HAP,M-NoPath,C-DRR\n";
-
     for (int inst: Instances){
         string instance_path;
         if (inst < 10){
@@ -608,10 +618,17 @@ int main(int argc, char** argv){
         else{
             instance_path = std::string(PATHSEP) + "i";
         }
-        instance_path += to_string(inst) + ".txt";
-        file_path = file_path_base + instance_path;
-        file_path_initial_solution = file_path_initial_solution_base + instance_path;
-        // cout << file_path << endl;
+        string instance = to_string(inst) + ".txt";
+        file_path = file_path_base + instance_path + instance;
+        file_path_initial_solution = file_path_initial_solution_base + instance_path + instance;
+        // Code below is for when we are trying to find initial solutions!!
+        /*
+        int i = 0;
+        while (std::filesystem::exists(file_path_initial_solution)){ // this to avoid that we accidently remove initial solutions
+            instance = to_string(inst) + "_" + to_string(i++) +".txt";
+            file_path_initial_solution = file_path_initial_solution_base + instance_path + instance;
+        }
+        */
         
         // std::string file_path = (string) argv[1];
         Input in;
@@ -671,7 +688,7 @@ int main(int argc, char** argv){
         // Instance 17: IP finds solution in 18s, Miao in 1s
 
         int N = in.getNrTeams();
-        const int TimeLimitIP = 60;
+        int TimeLimitIP = 7200;
 
         if (AlgoSelected.at(Algorithm::IP_Miao)){
             GurSolver gur_miao(in);
@@ -693,7 +710,7 @@ int main(int argc, char** argv){
             Solutions.at(Algorithm::IP_Miao).push_back(sol);
         }
 
-        const bool FindInitialSolutionWithMiao = false; // try to find initial solutions for hockey
+        const bool FindInitialSolutionWithMiao = false; // try to find initial solutions 
 
         if (AlgoSelected.at(Algorithm::Meta_Miao)){
             for (auto& MetaSeed: MetaSeeds){
@@ -720,10 +737,10 @@ int main(int argc, char** argv){
                 // cout << "Solve Meta Miao" << endl;
                 sol.validate();
                 if (FindInitialSolutionWithMiao){
-                    SaveSolution(file_path_initial_solution, sol); // INITIAL
+                    SaveSolution(file_path_initial_solution, sol, Algorithm::Meta_Miao, miao_algo.TimeTillBestSolution); // INITIAL
                     return 0;
                 }
-                miao_algo.SaveResultsMoves(results_file_performance, inst);
+                miao_algo.SaveResultsMoves(file_path_results_base, inst, MetaSeed);
                 Objectives.at(Algorithm::Meta_Miao).push_back(sol.ComputeTotalCost());
                 Durations.at(Algorithm::Meta_Miao).push_back(miao_algo.TimeTillBestSolution);
                 LowerBounds.at(Algorithm::Meta_Miao).push_back(sol.ComputeTotalCost());
@@ -791,43 +808,62 @@ int main(int argc, char** argv){
         const bool HA = true;
         bool min_travel = false, min_cap = false;
 
+        const bool FindInitialSolutionWithIPKarel = false; // try to find initial solutions for hockey instances, giving a lot of time
+
         if (AlgoSelected.at(Algorithm::IP_Karel)){
             GurSolver gur(in);
             Solution sol(in);
-            min_travel = true;
             // cout << "solve IP Karel" << endl;
+            bool WarmStart;
+            if (!FindInitialSolutionWithIPKarel){
+                ReadSolution(file_path_initial_solution, sol);
+                min_travel = true;
+                WarmStart = true;
+            }
+            else{
+                min_travel = false;
+                TimeLimitIP = 48*3600; // allow 2 days of computation time
+                WarmStart = false;
+            }
             gur.setTimeLimit(TimeLimitIP);
             gur.TrackTimeBestSolution = true;
-            ReadSolution(file_path_initial_solution, sol);
-            FindSolutionIP(gur, sol, HA, min_travel, min_cap);
-            // cout << "save solution" << endl;
-            gur.SaveSolution(sol);
-            sol.validate();
-            Objectives.at(Algorithm::IP_Karel).push_back(sol.ComputeTotalCost());
-            Durations.at(Algorithm::IP_Karel).push_back(gur.getTimeTillBestSolution());
-            LowerBounds.at(Algorithm::IP_Karel).push_back(gur.getBestBound());
-            Solutions.at(Algorithm::IP_Karel).push_back(sol);
+            int status = FindSolutionIP(gur, sol, HA, min_travel, min_cap, WarmStart);
+            if (status >= 0){
+                if (FindInitialSolutionWithIPKarel){
+                    SaveSolution(file_path_initial_solution, sol, Algorithm::IP_Karel, gur.getTimeTillBestSolution()); // INITIAL
+                    return 0;
+                }
+                Objectives.at(Algorithm::IP_Karel).push_back(sol.ComputeTotalCost());
+                Durations.at(Algorithm::IP_Karel).push_back(gur.getTimeTillBestSolution());
+                LowerBounds.at(Algorithm::IP_Karel).push_back(gur.getBestBound());
+                Solutions.at(Algorithm::IP_Karel).push_back(sol);
+            }
+            else{
+                cout << "No solution IP was found" << endl;
+            }
             // cout << "cost = " << sol.ComputeTotalCost() << endl;
         }
 
         // Save initial solutions in file in map?
 
         if (AlgoSelected.at(Algorithm::FO_Karel)){
-            Solution sol(in);
-            // const bool min_travel = false, min_cap = false;
-            // FindSolutionIP(gur, sol, HA, min_travel, min_cap);
-            // FindInitialSolution(in, sol);
-            ReadSolution(file_path_initial_solution, sol);
-            FO fo(in, FO_operators, FO_weights, seed);
-            // cout << "Solve FO" << endl;
-            fo.solve(in,sol);
-            sol.validate();
-            fo.SaveResultsMoves(results_file_performance, inst);
-            Objectives.at(Algorithm::FO_Karel).push_back(sol.ComputeTotalCost());
-            Durations.at(Algorithm::FO_Karel).push_back(fo.TimeTillBestSolution);
-            LowerBounds.at(Algorithm::FO_Karel).push_back(sol.ComputeTotalCost());
-            Solutions.at(Algorithm::FO_Karel).push_back(sol);
-            // cout << "Objective = " << sol.ComputeTotalCost() << endl;
+            for (auto& MetaSeed: MetaSeeds){
+                Solution sol(in);
+                // const bool min_travel = false, min_cap = false;
+                // FindSolutionIP(gur, sol, HA, min_travel, min_cap);
+                // FindInitialSolution(in, sol);
+                ReadSolution(file_path_initial_solution, sol);
+                FO fo(in, FO_operators, FO_weights, MetaSeed);
+                // cout << "Solve FO" << endl;
+                fo.solve(in,sol);
+                sol.validate();
+                fo.SaveResultsMoves(file_path_results_base, inst, MetaSeed);
+                Objectives.at(Algorithm::FO_Karel).push_back(sol.ComputeTotalCost());
+                Durations.at(Algorithm::FO_Karel).push_back(fo.TimeTillBestSolution);
+                LowerBounds.at(Algorithm::FO_Karel).push_back(sol.ComputeTotalCost());
+                Solutions.at(Algorithm::FO_Karel).push_back(sol);
+                // cout << "Objective = " << sol.ComputeTotalCost() << endl;
+            }
         } 
 
         /*
@@ -873,9 +909,8 @@ int main(int argc, char** argv){
                 // cout << "validate" << endl;
                 sol.validate();
                 // cout << "done" << endl;
-                results_file_failures << inst << ",";
-                ils.SaveResultsFailures(results_file_failures);
-                ils.SaveResultsMoves(results_file_performance, inst);
+                ils.SaveResultsFailures(file_path_results_base, inst, MetaSeed);
+                ils.SaveResultsMoves(file_path_results_base, inst, MetaSeed);
                 Objectives.at(Algorithm::Meta_Karel).push_back(sol.ComputeTotalCost());
                 Durations.at(Algorithm::Meta_Karel).push_back(ils.TimeTillBestSolution);
                 LowerBounds.at(Algorithm::Meta_Karel).push_back(sol.ComputeTotalCost());
@@ -892,7 +927,7 @@ int main(int argc, char** argv){
 #endif
         for (auto&[algo, selected]: AlgoSelected){
             if (selected){
-                std::string file_path_results_objectives = file_path_results_base + std::string(PATHSEP) + "Objectives" + std::string(PATHSEP) + AlgoString.at(algo) + "_" + to_string(inst) + "_TS_test.txt";
+                std::string file_path_results_objectives = file_path_results_base + std::string(PATHSEP) + "Objectives" + std::string(PATHSEP) + AlgoString.at(algo) + "_" + to_string(inst) + "_5min.txt";
 #ifdef PRINT
 #if PRINT == 1
                 cout << "save file in " << file_path_results_objectives << endl;
@@ -956,9 +991,6 @@ int main(int argc, char** argv){
 #endif
 #endif
     }
-
-    results_file_performance.close();
-    results_file_failures.close();
 
     return 1;
 }

@@ -60,5 +60,5 @@ class ILS: public SA<move_name>
         // Custom functions already declared in SA:
         void solve(Input& in, Solution& sol) override;
 
-        void SaveResultsFailures(ofstream& file);
+        void SaveResultsFailures(std::string file_path_results_base, int inst, int seed);
 };
