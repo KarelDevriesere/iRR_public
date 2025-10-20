@@ -176,9 +176,7 @@ void Heuristic_CM::SelectPRS_CM(Solution& sol){
 #endif
     PRS(sol, r, s, StartNode);
     if (!Update(sol, sol.ComputeCostGeneralMatrix())){
-        cout << "Revert back PRS" << endl;
         PRS(sol, r, s, StartNode); // should be put back if other things are outcommented for going back to original
-        cout << "done" << endl;
 #ifndef NDEBUG
         assert(sol.ComputeCostGeneralMatrix() == cost_before);
 #endif
