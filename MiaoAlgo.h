@@ -18,7 +18,7 @@ class MiaoAlgo: public SA<HAP_operator>{
         int hap_index2;
 
     public:
-        MiaoAlgo(const std::unordered_map<HAP_operator, string>& moves, const std::unordered_map<HAP_operator, double>& weights, Input& in, const int seed);
+        MiaoAlgo(const std::unordered_map<HAP_operator, string>& moves, const std::unordered_map<HAP_operator, double>& weights, Input& in, std::mt19937& g);
         ~MiaoAlgo();
 
         bool InitialOnly = false;
@@ -38,4 +38,6 @@ class MiaoAlgo: public SA<HAP_operator>{
 
         // Custom functions already declared in SA:
         void solve(Input& in, Solution& sol) override;
+
+        void SolveGivenSeqeuence(Input& in, Solution& sol);
 };

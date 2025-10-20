@@ -77,6 +77,7 @@ bool Solution::IsTeamBalanced(const int i){
     assert(nr_H > 0);
     assert(nr_A > 0);
     if (nr_H != nr_A){
+        cout << i << " has " << nr_H << " H games but " << nr_A << " A games" << endl;
         return false;
     }
     nr_H = 0, nr_A = 0;
@@ -94,14 +95,17 @@ bool Solution::IsTeamBalanced(const int i){
                 nr_A++;
             }
         }
-    }
-    assert(nr_H > 0);
-    assert(nr_A > 0);
-    if (nr_H == nr_A){
-        return true;
+        assert(nr_H > 0);
+        assert(nr_A > 0);
+        if (nr_H == nr_A){
+            return true;
+        }
+        else{
+            return false;
+        }
     }
     else{
-        return false;
+        return true;
     }
 }
 
@@ -387,21 +391,42 @@ int Solution::ComputeHACostTeam(const int i){
     int cost = 0;
     if (getHAP_requirement(HAP_requirement_name::NoThreeConsecutive)){
         cost += NrThreeConsecutiveHA(i);
+        /*
+        if (NrThreeConsecutiveHA(i) > 0){
+            cout << "NrThreeConsecutiveHA violated" << endl;
+        }
+            */
         // assert(NrThreeConsecutiveHA(i) == 0);
     }
     if (getHAP_requirement(HAP_requirement_name::NoBreakBeginningEnd)){
         cost += getNrBreaksBeginningEnd(i);
+        /*
+        if (getNrBreaksBeginningEnd(i) > 0){
+            cout << "NrBreaksBeginningEnd violated" << endl;
+        }
+            */
         // assert(getNrBreaksBeginningEnd(i) == 0);
     }
     if (getHAP_requirement(HAP_requirement_name::BreakLimit)){
         cost += max(0, getNrBreaks(i)-getBreakLimit());
+        /*
+        if (max(0, getNrBreaks(i)-getBreakLimit()) > 0){
+            cout << "BreakLimit violated" << endl;
+        }
+            */
         // assert(getNrBreaks(i) <= getBreakLimit());
     }
     if (getHAP_requirement(HAP_requirement_name::QuarterBalanced)){
         cost += getImbalanceHalf(i);
+        /*
+        if (getImbalanceHalf(i) > 0){
+            cout << "NrBreaksBeginningEnd violated" << endl;
+        }
+            */
         // assert(getImbalanceHalf(i) == 0);
     }
     if (!IsTeamBalanced(i)){
+        // cout << "Not balanced!!" << endl;
         cost++;
     }
     return HighCostHAPs*cost;
@@ -433,6 +458,27 @@ int Solution::ComputeTotalCost(){
     return travel_cost + HA_cost + opp_cost + same_club_cost + DRR_cost;
 }
 
+int Solution::ComputeCostGeneralMatrix(){
+    int cost = 0;
+    int j;
+    for (int r = 0; r < getNrRounds(); ++r){
+        vector<bool>NodeSeen(getNrTeams(), false);
+        for (int i = 0; i < getNrTeams(); ++i){
+            if (!NodeSeen[i]){
+                j = TeamColorOpp[i][r];
+                if (Orientation[i][r] == HA::H){
+                    cost += getCostMatchRound(i,j,r);
+                }
+                else{
+                    cost += getCostMatchRound(j,i,r);
+                }
+                NodeSeen[j] = true;
+            }
+        }
+    }
+    return cost;
+}
+
 bool Solution::validate(){
     // cout << "Validate solution" << endl;
     int cap_viol = 0;
@@ -462,6 +508,9 @@ bool Solution::validate(){
                 if (MatchColor[i][j] != r){
                     cout << "MatchColor[" << i << "][" << j << "] should be " << r << " but is " << MatchColor[i][j] << endl;
                 }
+                if (SRR){
+                   assert(MatchColor[j][i] == r); 
+                }
                 assert(MatchColor[i][j] == r);
                 assert(Orientation[j][r] == HA::A);
                 HomeGamesTeam[i]++;
@@ -471,7 +520,13 @@ bool Solution::validate(){
                 if (MatchColor[j][i] != r){
                     cout << "MatchColor[" << j << "][" << i << "] should be " << r << " but is " << MatchColor[j][i] << endl;
                 }
+                if (SRR){
+                   assert(MatchColor[i][j] == r); 
+                }
                 assert(MatchColor[j][i] == r);
+                if ((Orientation[j][r] != HA::H)){
+                    cout << "error for " << i << " vs " << j << endl;
+                }
                 assert(Orientation[j][r] == HA::H);
                 assert(Orientation[i][r] == HA::A);
                 HomeGamesTeam[j]++;

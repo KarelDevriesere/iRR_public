@@ -7,7 +7,7 @@
 #include <algorithm>
 
 ILS::ILS(const std::unordered_map<move_name, string>& moves, // moves, weights and in are defined in main
-           const std::unordered_map<move_name, double>& weights, const int seed): SA<move_name>(moves, weights, seed){
+           const std::unordered_map<move_name, double>& weights, std::mt19937& g): SA<move_name>(moves, weights, g){
             for (auto& [move, name]: moves){
                 if (FailureReasonAll.count(move)){
                     FailureReason[move] = FailureReasonAll.at(move);
@@ -73,6 +73,7 @@ void ResetMatchColorCopy(Solution& sol, const vector<vector<int>>MatchColorCopy)
 
 bool ILS::RepairHAPs(Solution& sol){
     // Be economical: only try to repair the HAPs when we know it will deliver something!!
+    /*
     if (sol.ComputeTravelCost() < best_obj){
         NrTimesRepairHapChosen++;
         // first, try to repair the HAPs by finding negative cycles
@@ -95,6 +96,8 @@ bool ILS::RepairHAPs(Solution& sol){
     else{
         return false;
     }
+    */
+   return false;
 }
 
 bool ILS::veto_haps(Solution& sol){
@@ -110,14 +113,53 @@ bool ILS::veto_haps(Solution& sol){
     }
 }
 
-pair<int,int>SelectTwoTeamsSameLeague(Solution& sol){
-    int l = rand()%sol.getNrLeagues();
-    int i_ = rand()%sol.getNrTeamsLeague(l);
-    int j_ = ((i_+1)+(rand()%(sol.getNrTeamsLeague(l)-1)))%sol.getNrTeamsLeague(l);
-    int i = sol.getTeamsLeague(l)[i_];  
+pair<int,int>ILS::SelectTwoTeamsSameLeague(Solution& sol){
+    int l = RandomIntegerNumber(0, sol.getNrLeagues()-1);
+    int i_ = RandomIntegerNumber(0, sol.getNrTeamsLeague(l)-1);
+    int i = sol.getTeamsLeague(l)[i_];
+    int j_ = ((i+1)+(RandomIntegerNumber(0,sol.getNrTeamsLeague(l)-2)))%sol.getNrTeamsLeague(l); 
     int j = sol.getTeamsLeague(l)[j_];
     assert(sol.getLeagueTeam(i) == l && sol.getLeagueTeam(j) == l);
     return {i,j};
+}
+
+array<int,3>ILS::SelectTwoTeamsSameLeagueAndColor(Solution& sol){
+    int l = RandomIntegerNumber(0, sol.getNrLeagues()-1);
+    int k_ = RandomIntegerNumber(0, sol.getNrTeamsLeague(l)-1);
+    int k = sol.getTeamsLeague(l)[k_]; 
+    int i_max = -1;
+    int c_max = -1;
+    int d_max = -1;
+    int i;
+    vector<int>TeamSeen(sol.getNrTeams(),0);
+    for (int r = 0; r < sol.getNrRounds(); ++r){
+        i = sol.TeamColorOpp[k][r];
+        if (sol.getDistanceTeams(i,k) > d_max){
+            i_max = i;
+            c_max = r;
+            d_max = sol.getDistanceTeams(i,k);
+        }
+        TeamSeen[i]++;
+    }
+    int j_best = -1;
+    int j_;
+    for (j_ = 0; j_ < sol.getNrTeamsLeague(l); ++j_){
+        int j = sol.getTeamsLeague(l)[j_];
+        if (sol.isEligible(j,k) && sol.getDistanceTeams(k,j) < d_max && TeamSeen[j] < 2){
+            j_best = j;
+        }
+    }
+    if (j_best == -1){
+        j_ = ((k_+1)+(RandomIntegerNumber(0, sol.getNrTeamsLeague(l)-2)))%sol.getNrTeamsLeague(l); 
+        j_best = sol.getTeamsLeague(l)[j_];
+        int StartColor = RandomIntegerNumber(0, sol.getNrRounds()-1);
+        while (sol.TeamColorOpp[i][StartColor] == j_best){
+            // while loop bc if DRR, it can happen that i plays vs j in k but also in k+1!!
+            ++StartColor %= sol.getNrRounds();
+        }
+    }
+    assert(sol.getLeagueTeam(i) == l && sol.getLeagueTeam(j_best) == l);
+    return {i_max,j_best,c_max};
 }
 
 void ILS::SelectTS(Solution& sol){ // use TS for perturbation move!!
@@ -130,33 +172,24 @@ void ILS::SelectTS(Solution& sol){ // use TS for perturbation move!!
         FailureReason.at(move_name::TS).at(failure::InfeasibleOpponents)++;
         return;
     }
+#ifndef NDEBUG
     int cost_before = sol.ComputeTotalCost();
-    vector<vector<HA>>OrientationsCopy = MakeOrientationsCopy(sol); // can be outcommented when not repairing haps in veto_haps()
-    vector<vector<int>>MatchColorCopy = MakeMatchColorCopy(sol); // can be outcommented when not repairing haps in veto_haps()
-    vector<vector<int>>TeamColorOppCopy = MakeTeamColorOppCopy(sol); // can be outcommented when not repairing haps in veto_haps()
+#endif
+    // vector<vector<HA>>OrientationsCopy = MakeOrientationsCopy(sol); // can be outcommented when not repairing haps in veto_haps()
+    // vector<vector<int>>MatchColorCopy = MakeMatchColorCopy(sol); // can be outcommented when not repairing haps in veto_haps()
+    // vector<vector<int>>TeamColorOppCopy = MakeTeamColorOppCopy(sol); // can be outcommented when not repairing haps in veto_haps()
     // int cost_before = current_obj;
     TS(sol, i, j);
     assert(sol.IsTeamBalanced(i));
     assert(sol.IsTeamBalanced(j));
-    int cost_after = sol.ComputeTotalCost();
-    int delta = cost_after - cost_before;
-    /*
-    bool AcceptMove = false;
-    if (veto_haps(sol) || !Update(sol, sol.ComputeTotalCost())){
-        if (RepairHAPs(sol)){
-            AcceptMove = true;
-        }
-    }
-    else{
-        AcceptMove = true;
-    }
-        */
     if (veto_haps(sol) || !Update(sol, sol.ComputeTotalCost())/*!AcceptMove*/){
-        ResetOrientations(sol, OrientationsCopy); // can be outcommented when not repairing haps in veto_haps() // TODO not efficient
-        ResetMatchColorCopy(sol, MatchColorCopy); // can be outcommented when not repairing haps in veto_haps()
-        ResetTeamColorOpp(sol, TeamColorOppCopy); // can be outcommented when not repairing haps in veto_haps()
-        // TS(sol, i, j); // put puck when other things are outcommented to go back to original
+        // ResetOrientations(sol, OrientationsCopy); // can be outcommented when not repairing haps in veto_haps() // TODO not efficient
+        // ResetMatchColorCopy(sol, MatchColorCopy); // can be outcommented when not repairing haps in veto_haps()
+        // ResetTeamColorOpp(sol, TeamColorOppCopy); // can be outcommented when not repairing haps in veto_haps()
+        TS(sol, i, j); // put puck when other things are outcommented to go back to original
+#ifndef NDEBUG
         assert(sol.ComputeTotalCost() == cost_before);
+#endif
     }
     else{
         // current_obj += delta;
@@ -169,33 +202,27 @@ void ILS::SelectPTS(Solution& sol){
     // Heel generic: create lantarn, bepaal random orientaties, reken kost uit
     // Opnieuw: teams uit zelfde leagues
     // kan het zijn dat een middle team nu meer als 2 edges heeft?????
-    pair<int,int> pair = SelectTwoTeamsSameLeague(sol);
-    int i = pair.first, j = pair.second;
+    array<int,3>triple = SelectTwoTeamsSameLeagueAndColor(sol);
+    int i = triple[0], j = triple[1], StartColor = triple[2];
     // cout << "i : " << i << " and j = " << j << endl;
-    int StartColor = rand()%sol.getNrRounds();
-    while (sol.TeamColorOpp[i][StartColor] == j){
-        // while loop bc if DRR, it can happen that i plays vs j in k but also in k+1!!
-        ++StartColor %= sol.getNrRounds();
-    }
 
-    vector<vector<int>>MatchColorCopy = MakeMatchColorCopy(sol); // can be outcommented when not repairing haps in veto_haps()
-    vector<vector<int>>TeamColorOppCopy = MakeTeamColorOppCopy(sol); // can be outcommented when not repairing haps in veto_haps()
+    // vector<vector<int>>MatchColorCopy = MakeMatchColorCopy(sol); // can be outcommented when not repairing haps in veto_haps()
+    // vector<vector<int>>TeamColorOppCopy = MakeTeamColorOppCopy(sol); // can be outcommented when not repairing haps in veto_haps()
 
+#ifndef NDEBUG
     int cost_before = sol.ComputeTotalCost();
+#endif
+
     // int cost_before = current_obj;
     Lantarn lantarn = CreateLantarn(sol, i, j, StartColor);
     // cout << "lantarn created" << endl;
     // PrintLantarn(sol, lantarn);
-    //cin.get();
+    // cin.get();
     if (!sol.ViolationEligibleOpponents_allowed && lantarn.InfeasibleOpponents){
         // It can happen that, if we have an infeasible color, we introduce infeasible games
         // e.g. i plays vs k, k has fictive color vs j, but j cannot play vs k..
         FailureReason.at(move_name::PTS).at(failure::InfeasibleOpponents)++;
-        return; // hacky..
-    }
-    if (lantarn.Infeasible2RRMatch){
-        FailureReason.at(move_name::PTS).at(failure::DRR)++;
-        return;
+        return; 
     }
     if (MaxSameClubViolated(sol, lantarn)){
         FailureReason.at(move_name::PTS).at(failure::MaxSameClub)++;
@@ -207,92 +234,55 @@ void ILS::SelectPTS(Solution& sol){
 
     // Make a copy of the orientations
     vector<vector<HA>>OrientationsCopy = MakeOrientationsCopy(sol);
-
-    // int cost_HAP_before = sol.ComputeHACostLeague(l); // do this instead of teams bc we do not know what paths we will have
-
-    // Since we do not swap everything anymore, the lantarn remains balanced
-    // cout << "optimize orientations" << endl;
-    if (false){
-        OptimizeOrientationsCyclesLantarn(sol, lantarn, OrientationsCopy);
-    } 
-    else{
-        // See function for explanation
-        KeepOrientationsAllEdgesLantarn(sol, lantarn, OrientationsCopy);
+    vector<array<int,3>>path; // fill the path so that we know 
+    const bool CostMinP = false;
+    const bool CM = false;
+    if (!SetOrientationsEdgesLantarn(sol, lantarn, OrientationsCopy, path, CostMinP, CM)){
+        // if not, orientations could not be set such that balance is kept
+        FailureReason.at(move_name::PTS).at(failure::NoPathFound)++;
+        return;
+    }
+    if (!path.empty()){
+        if (path.size() == 2){
+            NrSingleEdgePathChosen++;
+        }
+        else{
+            NrMultiEdgePathChosen++;
+        }
     }
     // cout << "Orientations optimized" << endl;
     //cin.get();
     // Now, we have set all the orientations in the right directions, so we can proceed with the path
     SwapColorsLantarn(sol, lantarn);
-    // cout << "colors lantarn swapped" << endl;
     //cin.get();
 
-    // cout << "new lantarn: " << endl;
-    // PrintLantarn(sol, lantarn);
-    // cin.get();
+#ifndef NDEBUG
+    for (int i = 0; i < sol.getNrTeams(); ++i){
+        assert(sol.IsTeamBalanced(i));
+    }
+#endif
 
-    // cout << "New lantarn:" << endl;
-    // PrintLantarn(G, lantarn);
-
-    bool PathFound = true;
-    if (lantarn.InfeasibleColor && sol.Orientation[i][lantarn.c_[j]] != sol.Orientation[j][lantarn.c_[i]]){ // bc after the swap i got c_j and j got c_i
-        // find yet another path outside the lantarn
-        int SOURCE,SINK;
-        if (sol.Orientation[i][lantarn.c_[j]] == HA::A){
-            SOURCE = i, SINK = j;
-        }
-        else{
-            SOURCE = j, SINK = i;
-        }
-        // cout << "add path" << endl;
-        PathFound = AddPathToLantarn(sol, lantarn, SOURCE, SINK);
-        // cout << "path added" << endl;
+    bool haps_ok = true;
+    if (veto_haps(sol)){
+        haps_ok = false;
+        FailureReason.at(move_name::PTS).at(failure::HAPs)++;
+    }
+    else{
+        // cout << "obj = " << sol.ComputeTotalCost() << ", current obj = " << current_obj << endl;
         // cin.get();
     }
-
-    // test whether the lantarn satisfies all HAP constraints
-    // int cost_HAP_after = sol.ComputeHACostLeague(l); // we cannot do it only for teams in the lantarn because we possibly also use a path outside the lantarn..
-    int cost_after = sol.ComputeTotalCost();
-    int delta = cost_after - cost_before;
-    // cout << "delta = " << delta << endl;
-    /*
-    bool AcceptMove = false;
-    if (PathFound){
-        if (veto_haps(sol) || !Update(sol, sol.ComputeTotalCost())){
-            if (RepairHAPs(sol)){
-                AcceptMove = true;
-            }
-        }
-        else{
-            AcceptMove = true;
-        }
-    }
-    */
-    if (veto_haps(sol) || !PathFound || !Update(sol, sol.ComputeTotalCost())/*!AcceptMove*/){
+    if (!haps_ok || !Update(sol, sol.ComputeTotalCost())/*!AcceptMove*/){
         // Now, unfortunately, we violated the HAP constraints
-        /*
-        // Code here should be put back when outcommenting other things for going back to original!!
-        if (!sol.SRR && PathFound){
-            // bc now we also swapped the matchcolors of the matches in the path!
-            // cout << "reverse path again" << endl;
-            // reverse the path because it assumed the path goes in a certain order in the function ReversePath()!!
-            std::reverse(lantarn.paths[0].begin(), lantarn.paths[0].end());
-            ReversePath(sol, lantarn.paths[0]);
-            // cout << "done" << endl;
-        }
-        for (int t = 0; t < sol.getNrTeams(); ++t){
-            for (int c = 0; c < sol.getNrRounds(); ++c){
-                sol.Orientation[t][c] = OrientationsCopy[t][c];
-            }
-        }
+        ResetOrientations(sol, OrientationsCopy); 
         SwapColorsLantarn(sol, lantarn);
-        */
-        if (!PathFound){
-            FailureReason.at(move_name::PTS).at(failure::NoPathFound)++;
+        if (!path.empty()){
+            ReversePath(sol, path);
         }
-        ResetOrientations(sol, OrientationsCopy); // can be outcommented when not repairing haps in veto_haps()
-        ResetMatchColorCopy(sol, MatchColorCopy); // can be outcommented when not repairing haps in veto_haps()
-        ResetTeamColorOpp(sol, TeamColorOppCopy); // can be outcommented when not repairing haps in veto_haps()
+        // ResetMatchColorCopy(sol, MatchColorCopy); // can be outcommented when not repairing haps in veto_haps()
+        // ResetTeamColorOpp(sol, TeamColorOppCopy); // can be outcommented when not repairing haps in veto_haps()
+#ifndef NDEBUG
         assert(sol.ComputeTotalCost() == cost_before);
+#endif
 
         /*
         cout << "old lantarn: " << endl;
@@ -300,24 +290,24 @@ void ILS::SelectPTS(Solution& sol){
         cin.get();
         */
     }
-    else{
-        // current_obj += delta;
-        assert(sol.validate());
+    else if (!path.empty()){
+        if (path.size() == 2){
+            NrSingleEdgePathSuccesful++;
+        }
+        else{
+            NrMultiEdgePathSuccesful++;
+        }
     }
-    // cout << "done" << endl;
+    assert(sol.validate());
     return;
-
-    // sol.setNrH_from_temp();
-    // setAllWeightsBF(G, sol);
-    // sol.resetNrH_temp();
 }
 
 void ILS::SelectPRS(Solution& sol){
     // rounds in current schedule
     // USE THIS SOLELY NOW FOR CAPACITY VIOLATIONS, NOT FOR TRAVEL DISTANCE
-    const int r = rand()%sol.getNrRounds();
-    const int s = ((r+1)+(rand()%(sol.getNrRounds()-1)))%sol.getNrRounds();
-    const int StartNode = rand()%sol.getNrTeams();
+    const int r = RandomIntegerNumber(0,sol.getNrRounds()-1);
+    const int s = ((r+1)+(RandomIntegerNumber(0,sol.getNrRounds()-2)))%sol.getNrRounds();
+    const int StartNode = RandomIntegerNumber(0,sol.getNrTeams()-1);
     int cost_before = sol.ComputeTotalCost();
     int cost_HA_before = sol.ComputeTotalHACost();
     vector<vector<HA>>OrientationsCopy = MakeOrientationsCopy(sol); // can be outcommented when not repairing haps in veto_haps()
@@ -359,7 +349,7 @@ void ILS::SelectMatching(const int l, Solution& sol, const bool bipartite){
     assert(sol.validate());
     // cout << "Travel cost before: " << sol.ComputeTravelCost() << endl;
 
-    const int r = rand()%sol.getNrRounds(); // Chose a random round to do the matching
+    const int r = RandomIntegerNumber(0,sol.getNrRounds()-1); // Chose a random round to do the matching
 
     /*
     for (int s = 0; s < sol.getNrRounds(); ++s){
@@ -382,21 +372,27 @@ void ILS::SelectMatching(const int l, Solution& sol, const bool bipartite){
 
     // I will make it myself easy: also make a copy of MatchColor:
 
+    /*
     vector<vector<int>>MatchColorCopy = MakeMatchColorCopy(sol);
     vector<vector<HA>>OrientationsCopy = MakeOrientationsCopy(sol);
+    */
     vector<pair<int,int>>OriginalMatching(sol.getNrTeamsLeague(l)/2); // so that we can go back if things don't work out
     vector<bool>NodeSeen(sol.getNrTeams(), false);
     int j;
     int m = 0;
+    int delta = 0;
     for (auto& t: sol.getTeamsLeague(l)){
         if (!NodeSeen[t]){
             j = sol.TeamColorOpp[t][r];
             NodeSeen[j] = true;
             OriginalMatching[m++] = {t,j};
+            delta -= sol.getDistanceTeams(t,j);
             // cout << t << "-" << j << endl;
         }
     }
+#ifndef NDEBUG
     int cost_before = sol.ComputeTotalCost();
+#endif
     // int cost_before = current_obj;
 
     // cout << "Matching" << endl;
@@ -406,11 +402,14 @@ void ILS::SelectMatching(const int l, Solution& sol, const bool bipartite){
     // sol.PrintAllRoundsLeague(l);
 
     // cout << "do MoveMWPM" << endl;
-    vector<pair<int,int>>Matching = MoveMWPM(sol, l, r, bipartite, keepHAP); // in the file operators
+    const bool CM = false;
+    const bool CostMinM = true;
+    pair<vector<pair<int,int>>,vector<int>>Matching_MatchingOpponent = MoveMWPM(sol, l, r, bipartite, keepHAP, CM, gen, CostMinM); // in the file operators
     // cout << "MoveMWPM done" << endl;
+    vector<pair<int,int>>Matching = Matching_MatchingOpponent.first;
     SwapMatchings(sol, Matching, l, r, bipartite);
-    vector<vector<int>>Paths;
     bool unable_to_find_reversed_paths = false;
+    /*
     if (!bipartite && keepHAP){
         Paths = ReversePathsMatching(sol, Matching, l, r);
         if (Paths.empty()){
@@ -424,6 +423,7 @@ void ILS::SelectMatching(const int l, Solution& sol, const bool bipartite){
         assert(sol.ComputeCostNonEligibleOpponents() == 0);
         assert(sol.ComputeCostSameClub() == 0);
     }
+        */
 
     /*
     cout << "cost 3HA = " << sol.ComputeCostThreeConsecutive() << endl;
@@ -452,11 +452,13 @@ void ILS::SelectMatching(const int l, Solution& sol, const bool bipartite){
         }
     }
     */
-    if (veto_haps(sol) || unable_to_find_reversed_paths || !Update(sol, sol.ComputeTotalCost()) /*!AcceptMove*/){
-        ResetOrientations(sol, OrientationsCopy);
+
+    /*
+    if (veto_haps(sol) || unable_to_find_reversed_paths || !Update(sol, current_obj+delta)){
+        // ResetOrientations(sol, OrientationsCopy);
         // cout << "swap matchings back" << endl;
         // De MatchColors van de paden moeten ook terug goed gezet worden!!!!!
-        // SwapMatchings(sol, OriginalMatching, l, r, bipartite);
+        SwapMatchings(sol, OriginalMatching, l, r, bipartite);
         for (int i = 0; i < sol.getNrTeams(); ++i){
             for (int j = 0; j < sol.getNrTeams(); ++j){
                 sol.MatchColor[i][j] = MatchColorCopy[i][j];
@@ -468,13 +470,11 @@ void ILS::SelectMatching(const int l, Solution& sol, const bool bipartite){
         }
         // cout << "Rounds after swapping to original matching" << endl;
         // sol.PrintAllRoundsLeague(l);
+#ifndef NDEBUG
         assert(sol.ComputeTotalCost() == cost_before);
+#endif
     }
-    else{
-        int cost_after = sol.ComputeTotalCost();
-        int delta = cost_after - cost_before;
-        // current_obj += delta;
-    }
+    */
 
     /*
     cout << "Matches after doing everything in round " << r << ": " << endl;
@@ -494,6 +494,12 @@ void ILS::SelectMatching(const int l, Solution& sol, const bool bipartite){
     }
     */
 
+    Update(sol, current_obj+delta);
+
+#ifndef NDEBUG
+    assert(cost_before >= sol.ComputeTotalCost());
+#endif
+
     assert(sol.validate());
     // cout << "after: check" << endl;
     return;
@@ -503,7 +509,7 @@ void ILS::SelectBalancedCycle(const int l, Solution& sol){
 
     // DOES GIVE ERRORS!
 
-    vector<int>Cycle = CycleBalanced(sol);
+    vector<array<int,3>>Cycle = CycleBalanced(sol,gen);
     int cost_before = sol.ComputeTotalCost();
     // int cost_before = current_obj;
 
@@ -517,7 +523,7 @@ void ILS::SelectBalancedCycle(const int l, Solution& sol){
     */
     // cout << "cost before = " << cost_cycle_before << endl;
 
-    assert(Cycle[0] == Cycle[(int)Cycle.size()-1]);
+    assert(Cycle[0][0] == Cycle[(int)Cycle.size()-1][1]);
     ReversePath(sol, Cycle);
 
     /*
@@ -543,7 +549,6 @@ void ILS::SelectBalancedCycle(const int l, Solution& sol){
         if (cost2RR > 0){
             FailureReason.at(move_name::C).at(failure::DRR)++;
         }
-        std::reverse(Cycle.begin(), Cycle.end());
         ReversePath(sol, Cycle);
         assert(sol.ComputeTotalCost() == cost_before);
     }
@@ -568,7 +573,7 @@ void ILS::Move(Solution& sol){
     include_travel = true;
     include_HAP = true;
     bool bipartite;
-    double rnd = RandomNumber();
+    double rnd = RandomDoubleNumber(0.0, 1.0);
     auto iterator = WeightsCumul.upper_bound(rnd);
     CurrentMove = iterator->second;
     // cout << Moves.at(CurrentMove) << endl;
@@ -586,22 +591,22 @@ void ILS::Move(Solution& sol){
         // Ik weet niet of dit heel goed werkt.. lijkt enkel te werken als je random matchings neemt 
         // en niet enkel de beste qua travel distance
         bipartite = false;
-        const int l = rand()%sol.getNrLeagues();
+        const int l = RandomIntegerNumber(0, sol.getNrLeagues()-1);
         SelectMatching(l, sol, bipartite);
     }
     else if (CurrentMove == move_name::BM){
         if (include_HAP){
             bipartite = true;
         }
-        const int l = rand()%sol.getNrLeagues();
+        const int l = RandomIntegerNumber(0, sol.getNrLeagues()-1);
         SelectMatching(l, sol, bipartite);
     }
     else{
-        const int l = rand()%sol.getNrLeagues();
+        const int l = RandomIntegerNumber(0, sol.getNrLeagues()-1);
         SelectBalancedCycle(l, sol);
     }
     auto end = std::chrono::high_resolution_clock::now();
-    auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(end - beg);
+    auto dur = std::chrono::duration_cast<std::chrono::microseconds>(end - beg);
     ExecutionTimes.at(CurrentMove).push_back(dur);
     NrChosen.at(CurrentMove)++;
     // sol.TestNrH_equal();
@@ -624,6 +629,10 @@ void ILS::SaveResultsFailures(std::string file_path_results_base, int inst, int 
 #if PRINT == 1
     cout << "Nr times we tried to repair HAPs = " << NrTimesRepairHapChosen << endl;
     cout << "Nr times this was actually succesfull = " << NrTimesRepairHapSuccesfull << endl;
+    cout << "Nr times we found single edge path: " << NrSingleEdgePathChosen << endl;
+    cout << "Nr of times this was effective: " << NrSingleEdgePathSuccesful << endl;
+    cout << "Nr times we found multi edge path: " << NrMultiEdgePathChosen << endl;
+    cout << "Nr of times this was effective: " << NrMultiEdgePathSuccesful << endl;
     cout << "Analysing why moves failed:" << endl;
 #endif
 #endif

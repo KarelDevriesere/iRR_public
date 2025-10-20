@@ -16,14 +16,14 @@ class FO: public GurSolver, public SA<FO_move>
         vector<vector<vector<bool>>>x_fixed;
 
     public:
-        FO(Input& in, const std::unordered_map<FO_move, string>& moves, const std::unordered_map<FO_move, double>& weights, const int seed);
+        FO(Input& in, const std::unordered_map<FO_move, string>& moves, const std::unordered_map<FO_move, double>& weights, std::mt19937& g);
         ~FO();
 
-        double PercFreeTeams = 0.05;
-        unordered_map<FO_move, double>PercentageHapsFixed = {{FO_move::R1, 0.0}, {FO_move::R2C, 0.25}, {FO_move::R3C, 0.50}, 
-            {FO_move::R2NC, 0.25}, {FO_move::R3NC, 0.50}, {FO_move::T, 0.10}}; // Number of Haps we fix based on the number of rounds
-        unordered_map<FO_move, double>TimeLimit = {{FO_move::R1, 60.0}, {FO_move::R2C, 60.0}, {FO_move::R3C, 60.0}, 
-            {FO_move::R2NC, 60.0}, {FO_move::R3NC, 60.0}, {FO_move::T, 60.0}}; // in seconds!!
+        double PercFreeTeams = 0.15;
+        unordered_map<FO_move, double>PercentageHapsFixed = {{FO_move::R1, 0.0}, {FO_move::R2C, 0.0}, {FO_move::R3C, 0.05}, 
+            {FO_move::R2NC, 0.0}, {FO_move::R3NC, 0.0}, {FO_move::T, 0.05}}; // Number of Haps we fix based on the number of rounds
+        unordered_map<FO_move, double>TimeLimit = {{FO_move::R1, 10.0}, {FO_move::R2C, 10.0}, {FO_move::R3C, 10.0}, 
+            {FO_move::R2NC, 10.0}, {FO_move::R3NC, 10.0}, {FO_move::T, 10.0}}; // in seconds!!
         
         void InitializeModel(Solution& sol);
         void FreeRounds(const int nr, const bool consecutive);

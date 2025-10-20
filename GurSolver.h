@@ -9,6 +9,8 @@
 #include <random>
 #include <array>
 #include <memory>
+#include <fstream>
+#include <filesystem>
 
 class GurSolver : public Input
 {
@@ -35,8 +37,8 @@ class GurSolver : public Input
         // *********** CALLBACK ***************** //
         class MyCallback : public GRBCallback { // nested class
             public:
-                MyCallback(int& timeVar, std::chrono::high_resolution_clock::time_point& start)
-                    : TimeTillBestSolutionGurSolver(timeVar), StartTimeGurSolver(start) {}
+                MyCallback(int& timeVar, std::chrono::high_resolution_clock::time_point& start, int& T, vector<int>& TS, unordered_map<int,int>& TSS)
+                    : TimeTillBestSolutionGurSolver(timeVar), StartTimeGurSolver(start), CurrentTimeStampIndex(T), TimeStamps(TS), TimeStampSolution(TSS) {}
 
             protected:
                 void callback() override {
@@ -45,8 +47,13 @@ class GurSolver : public Input
                             auto time_diff = std::chrono::high_resolution_clock::now() - StartTimeGurSolver;
                             TimeTillBestSolutionGurSolver = std::chrono::duration_cast<std::chrono::seconds>(time_diff).count();
 
-                            // double obj = getDoubleInfo(GRB_CB_MIPSOL_OBJ);
-                            // std::cout << "New best obj = " << obj << ", Time = " << TimeTillBestSolutionGurSolver << " s" << std::endl;
+                            if (TimeTillBestSolutionGurSolver > TimeStamps.at(CurrentTimeStampIndex)){
+                                TimeStampSolution[TimeStamps.at(CurrentTimeStampIndex)] = getDoubleInfo(GRB_CB_MIPSOL_OBJ); // retrieve objective value
+                                std::cout << "Callback triggered at t = " << TimeTillBestSolutionGurSolver << " (Current TS = " << TimeStamps.at(CurrentTimeStampIndex) << ")\n";
+                                if (CurrentTimeStampIndex+1 < TimeStamps.size()){
+                                    CurrentTimeStampIndex++;
+                                }
+                            }
                         }
                     } catch (GRBException& e) {
                         std::cerr << "Gurobi callback error: " << e.getMessage() << std::endl;
@@ -55,6 +62,9 @@ class GurSolver : public Input
 
             private:
                 int& TimeTillBestSolutionGurSolver;
+                int& CurrentTimeStampIndex;
+                vector<int>& TimeStamps;
+                unordered_map<int,int>& TimeStampSolution;
                 std::chrono::high_resolution_clock::time_point& StartTimeGurSolver;
             };
         std::unique_ptr<MyCallback> cb; // keep callback alive until GurSolver dies
@@ -62,14 +72,22 @@ class GurSolver : public Input
 
     public:
 
+        int CurrentTimeStampIndexOuter = 0; // duplicate in SA.h
+        vector<int>TimeStampsOuter; // duplicate in SA.h
+        unordered_map<int,int>TimeStampSolutionOuter; // Best solution after certain time (in seconds) // duplicate in SA.h
+
         GurSolver(const Input& in);
         ~GurSolver();
 
         vector<bool>HapFixed; // whether the hap of team i is fixed
-
+        
+        void build_base(const bool HA, const bool relax_x);
         void build_league(const bool HA, const bool relax_x);
         int build_all(const bool HA, const bool relax_x);
+        void build_HAP_constraints();
         void AddObj(const bool min_travel, const bool min_capacity_violations);
+        void AddObjGeneralCosts(); // for cost minimization
+        void AddObjMinBreaks(); // break minimization
         void setTimeLimit(const int time_limit);
         void setBoundCapacityViolations();
         int solve();
@@ -86,7 +104,7 @@ class GurSolver : public Input
         void StoreHAPs(Solution& sol);
         void AddMiaoSymmetryConstraint();
         
-        bool TrackTimeBestSolution = false;
+        bool TrackTimeBestSolution = true;
         void addCallbackToTrackTime();
         int getTimeTillBestSolution()const{return TimeTillBestSolutionGurSolverOuter;};
 
@@ -94,6 +112,20 @@ class GurSolver : public Input
         vector<vector<pair<int,int>>> EdgeColoring(int& C, vector<vector<bool>>& ForbiddenEdge, int& NrColorsUsed);
 
         int PerfectMatching(vector<vector<bool>>& GameForbidden);
+
+        void SetTimeStamps(vector<int>& TS){ // duplicate in SA.h
+            TimeStampsOuter = TS;
+        }
+
+        void SaveSolutionsTimeStamps(const string FilePath, const string config){ // duplicate in SA.h
+            cout << "Save file as " << FilePath << endl;
+            std::ofstream output_file(FilePath);
+            output_file << config << "\n";
+            for (auto&[TimeStamp, Solution]: TimeStampSolutionOuter){
+                output_file << TimeStamp << "," << Solution << "\n";
+            }
+            output_file.close();
+        }
 };
 
 #endif

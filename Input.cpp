@@ -4,9 +4,91 @@
 #include <sstream> // split numbers of txt file
 #include <string>
 #include <cmath>
+#include <numeric> // for iota
 
 Input::Input(){}
 Input::~Input(){}
+
+int Input::read_CostMinimization(const std::string file_path, InstanceSetCM inst){
+    cout << "This function is intended ONLY for cost minimization!!" << endl;
+
+    std::ifstream file(file_path);
+    if (!file.is_open()) {
+        std::cerr << "Error opening the file!";
+        return 0;
+    }
+
+    std::string line;
+    char comma;
+    getline(file, line);
+    std::istringstream iss(line);  
+    if (inst == InstanceSetCM::Karel){
+        iss >> NrTeams >> comma >> NrRounds;
+    }
+    else if (inst == InstanceSetCM::Jasper){
+        iss >> NrTeams;
+        NrRounds = NrTeams-1;
+    }
+    else if (inst == InstanceSetCM::Uthus){
+        iss >> NrTeams;
+        NrRounds = NrTeams-1;
+    }
+    else{
+        std::cerr << "Instance set should be Karel, Jasper or Uthus!!";
+        return 0;
+    }
+    cout << "NrTeams = " << NrTeams << ", NrRounds =  " << NrRounds  << endl;
+    CostMatchRound = vector<vector<vector<int>>>(NrTeams,vector<vector<int>>(NrTeams,vector<int>(NrRounds, 0)));
+    int i,j,r,c;
+    MaxEdgeCost = 0;
+    while (getline(file, line)){
+        std::istringstream iss(line);
+        if (inst == InstanceSetCM::Karel){
+            iss >> i >> comma >> j >> comma >> r >> comma >> c;
+        }
+        else if (inst == InstanceSetCM::Jasper){
+            iss >> i >> j >> r >> c;
+        }
+        else if (inst == InstanceSetCM::Uthus){
+            iss >> i >> j >> r >> c;
+            r -= 1;
+        }
+        if (r < NrRounds){
+            CostMatchRound.at(i).at(j).at(r) = c; 
+            // cout << "cost of " << i << " vs " << j << " in " << r << " = " << c << endl;
+            if (c > MaxEdgeCost){
+                MaxEdgeCost = c;
+            }
+        }
+    }
+    // All teams same strength, every team has its own club, no dummy teams, all teams in same league
+    // In solution: modify everything such that instead of travel cost, we compute the costs
+    // BUT: before we do all this, check with IP how well this solves!!
+    Teams = vector<int>(NrTeams);
+    iota(Teams.begin(), Teams.end(), 0);
+    TeamStrength = vector<int>(NrTeams, 1);
+    TeamLeague = vector<int>(NrTeams, 1);
+    TeamClub = vector<int>(NrTeams);
+    iota(TeamClub.begin(), TeamClub.end(), 0);
+
+    NrLeagues = 1;
+    LeagueTeams = vector<vector<int>>(1);
+    iota(LeagueTeams[0].begin(), LeagueTeams[0].end(), 0);
+
+    NrClubs = NrTeams;
+    ClubTeams = vector<vector<int>>(NrTeams);
+    for (int i = 0; i < NrTeams; ++i){
+        ClubTeams.at(i) = {i};
+    }
+    ClubCapacity = vector<vector<int>>(NrClubs, vector<int>(NrRounds, 1));
+    
+    Eligible = vector<vector<bool>>(getNrTeams(), vector<bool>(getNrTeams(), true));
+    TeamLeagueIndex = vector<int>(NrTeams); // index of the team in its league
+    iota(TeamLeagueIndex.begin(), TeamLeagueIndex.end(), 0);
+    IsTeamDummy = vector<bool>(NrTeams, false);
+
+    return 1;
+}
 
 MiaoInstance Input::getMiaoInstance(){
     if (NrTeams == NrTeamsMiaoInstances.at(MiaoInstance::S).first){
@@ -162,7 +244,9 @@ void Input::setAllowedNrCapacityViolations(){
     }
 }
 
-int Input::read(const std::string file_path, const bool Miao){
+int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
+
+    cout << "This function is intended ONLY for Hockey and Miao instances!!" << endl;
 
     std::ifstream file(file_path);
     if (!file.is_open()) {
@@ -175,6 +259,7 @@ int Input::read(const std::string file_path, const bool Miao){
     ConstantCapacity = true;
     int i = 0, k = 0, t = 0, l = 0;
     int IndexDummyClub;
+    int MaxDistanceClubs = 0;
     while (getline(file, line)){
         // std::cout << line << std::endl;
         std::istringstream iss(line);  // 
@@ -267,6 +352,9 @@ int Input::read(const std::string file_path, const bool Miao){
                         assert(DistanceClubs[TeamClub[k]][TeamClub[j]] ==  num);
                     }
                     DistanceClubs[TeamClub[k]][TeamClub[j++]] =  num;
+                }
+                if (num > MaxDistanceClubs){
+                    MaxDistanceClubs = num;
                 }
             }
             if (!(Miao && InstanceMiao == MiaoInstance::M)){
@@ -445,6 +533,9 @@ int Input::read(const std::string file_path, const bool Miao){
         }
         assert(index_found);
     }
+
+    // set Maximum cost of an edge )> for maximum weight matching
+    MaxEdgeCost = MaxDistanceClubs;
 
     // ++NrClubs;
     /*

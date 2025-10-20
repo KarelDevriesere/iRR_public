@@ -60,6 +60,8 @@ class Solution: public Input{
         int ComputeCostBreakBeginningEnd();
         int ComputeCostQuarterBalanced();
 
+        int ComputeCostGeneralMatrix();
+
         int getNrSameClub(const int i);
 
         void clear();

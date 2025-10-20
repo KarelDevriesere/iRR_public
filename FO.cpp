@@ -2,7 +2,7 @@
 #include <algorithm>
 
 FO::FO(Input& in, const std::unordered_map<FO_move, string>& moves, // moves, weights and in are defined in main
-           const std::unordered_map<FO_move, double>& weights, const int seed): GurSolver(in), SA<FO_move>(moves, weights, seed){
+           const std::unordered_map<FO_move, double>& weights, std::mt19937& g): GurSolver(in), SA<FO_move>(moves, weights, g){
 	x_fixed = vector<vector<vector<bool>>>(getNrTeams(), vector<vector<bool>>(getNrTeams(), vector<bool>(getNrRounds(), false)));
 	x_value = vector<vector<vector<bool>>>(getNrTeams(), vector<vector<bool>>(getNrTeams(), vector<bool>(getNrRounds(), false)));
 }
@@ -59,7 +59,7 @@ void FO::FixVariables(){
 
 void FO::FreeTeams(){
 	for (int i = 0; i < getNrTeams(); ++i){
-		double rd = RandomNumber();
+		double rd = RandomDoubleNumber(0.0, 1.0);
 		if (rd < PercFreeTeams){
 			for (int r = 0; r < getNrRounds(); ++r){
 				for (int j = 0; j < getNrTeams(); ++j){
@@ -67,7 +67,7 @@ void FO::FreeTeams(){
 					x_fixed[j][i][r] = false;
 				}
 			}
-			if (RandomNumber() < PercentageHapsFixed[FO_move::T]){
+			if (RandomDoubleNumber(0.0, 1.0) < PercentageHapsFixed[FO_move::T]){
 				HapFixed[i] = true; 
 			}
 			else{
@@ -107,12 +107,12 @@ void FO::FreeRounds(const int nr, const bool consecutive){
 	}
 	if (!consecutive){
 		unsigned seed = 42;
-    	std::shuffle(Rounds.begin(), Rounds.end(), engine); // engine is inherited from SA
+    	std::shuffle(Rounds.begin(), Rounds.end(), gen); // gen is inherited from SA
 	}
 	std::uniform_int_distribution<> dist(0, getNrRounds()-nr);
 	const int start = dist(gen);
 	for (int i = 0; i < getNrTeams(); ++i){
-		double rd = RandomNumber();
+		double rd = RandomDoubleNumber(0.0, 1.0);
 		if (rd < PercentageHapsFixed[MoveNrRounds(nr, consecutive)]){
 			HapFixed[i] = true; 
 		}
@@ -130,7 +130,7 @@ void FO::FreeRounds(const int nr, const bool consecutive){
 void FO::UpdateSizeFixedVariables(const FO_move move, const bool optimal){
 	if (optimal){
 		// if solved to optimality, we can free more HAPs
-		if (move == FO_move::T && RandomNumber() < 0.5 && PercFreeTeams < 1.0){
+		if (move == FO_move::T && RandomDoubleNumber(0.0, 1.0) < 0.5 && PercFreeTeams < 1.0){
 			PercFreeTeams += 0.01;
 		}
 		else{
@@ -142,7 +142,7 @@ void FO::UpdateSizeFixedVariables(const FO_move move, const bool optimal){
 	else{
 		// if not, fix more haps for the rounds
 		// for the teams: either more haps or fix more teams
-		if (move == FO_move::T && RandomNumber() < 0.5 && PercFreeTeams > 0.01){
+		if (move == FO_move::T && RandomDoubleNumber(0.0, 1.0) < 0.5 && PercFreeTeams > 0.01){
 			PercFreeTeams -= 0.01;
 		}
 		else{
@@ -199,7 +199,7 @@ void FO::Set_x_value_from_sol(Solution& sol){
 			}
 		}
 	}
-	assert(Validate());
+	Validate();
 }
 
 void FO::Store_x_value(){
@@ -259,7 +259,7 @@ void FO::solve(Input& in, Solution& sol){
 	current_obj = best_obj;
 	int it = 0;
 	while (!STOP){
-		double rd = RandomNumber();
+		double rd = RandomDoubleNumber(0.0, 1.0);
 		auto iterator = WeightsCumul.upper_bound(rd);
 		CurrentMove = iterator->second;
 		if (CurrentMove == FO_move::R1){

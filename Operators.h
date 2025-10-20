@@ -5,6 +5,34 @@
 #include "Input.h"
 #include "Solution.h"
 #include <map>
+#include <random>
+#include <assert.h>
+#include <iostream>
+#include <string>
+#include <array>
+#include "GurSolver.h"
+#include "Algo.h"
+#include <algorithm>
+
+#include <boost/config.hpp>
+#include <fstream>
+#include <iomanip>
+#include <boost/graph/edge_coloring.hpp>
+#include <boost/graph/properties.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/bellman_ford_shortest_paths.hpp>
+#include <boost/graph/maximum_weighted_matching.hpp>
+// #include <boost/graph/max_cardinality_matchinsol.hpp>
+#include <boost/graph/dijkstra_shortest_paths.hpp>
+
+#include <boost/graph/graphviz.hpp> // for the dot file
+
+typedef boost::adjacency_list <boost::vecS, boost::vecS, boost::directedS, boost::no_property, boost::property <boost::edge_weight_t, int>>BGraph;
+// shortest path needs listS?
+// typedef boost::adjacency_list< boost::listS, boost::vecS, boost::directedS, boost::no_property, boost::property< boost::edge_weight_t, int > >BGraph;
+typedef pair<int, int>Edge;
+typedef boost::property_map<BGraph, boost::edge_weight_t>::type WeightMap;
+typedef boost::graph_traits<BGraph>::vertex_descriptor Vertex;
 
 struct Lantarn{
     int i;
@@ -17,6 +45,7 @@ struct Lantarn{
     bool Infeasible2RRMatch = false;
     bool MaxSameClubViolated = false;
     map<int,int>c_; // this is needed for the alternative PTS->color bordering to the infeasible color
+    map<int,int>fictive_nb;
     vector<vector<int>>paths; // vector with all the paths we found outside the lantarn
 
     // the following 2 are solely for DRR:
@@ -89,9 +118,13 @@ int NegativeCycleBoost(Solution& sol);
 
 void SwapMatchings(Solution& sol, vector<pair<int,int>>Matching, const int l, const int r, const bool bipartite);
 
-vector<pair<int,int>> MWPM(const vector<int>& SelectedTeams, Solution& sol, const vector<vector<bool>>& ForbiddenEdge);
+pair<vector<pair<int,int>>,vector<int>>MoveMWPM(Solution& sol, const int l, const int r, const bool bipartite, const bool includeHAPs, const bool CM, std::mt19937& gen, const bool MinCostM);
 
-vector<pair<int,int>> MoveMWPM(Solution& sol, const int l, const int r, const bool bipartite, const bool includeHAPs);
+vector<vector<pair<int,int>>>iPRS(Solution& sol, const int l, const int r, const bool bipartite, const bool includeHAPs, const bool CM, std::mt19937& gen, const bool MinCostM);
+
+vector<vector<array<int,3>>>EvaluateAlternatingCycleWithPaths(Solution& sol, vector<pair<int,int>>& AlternatingCycle, const int r, const bool bipartite, const bool CM, int& delta, std::mt19937& gen, const bool MinCostP);
+
+void GoBackToOldCycle(Solution& sol, vector<pair<int,int>>& AlternatingCycle, const int r);
 
 int PTS_infeasible_coloring(Solution& sol, int &i, const int j, const int startColor, bool& evaluate_cost, const bool swap);
 
@@ -99,7 +132,7 @@ int NegativeCycle(Solution& sol);
 
 void ReverseCycle(vector<int>& Cycle, Solution& sol);
 
-vector<int> CycleBalanced(Solution& sol);
+vector<array<int,3>> CycleBalanced(Solution& sol, std::mt19937& gen);
 
 int PTS_infeasible_coloring_with_infeasible_color(Solution& sol, int &i, const int j, const int startColor, const bool evaluate_cost, const bool swap);
 
@@ -125,14 +158,22 @@ bool OptimizeCyclesLantarn(Solution& sol, Lantarn& lantarn);
 
 void OptimizeOrientationsCyclesLantarn(Solution& sol, Lantarn& lantarn, const vector<vector<HA>>& OrientationsCopy);
 
-bool AddPathToLantarn(Solution& sol, Lantarn& lantarn, const int SOURCE, const int SINK);
-
-void ReversePath(Solution& sol, const vector<int> path);
+void ReversePath(Solution& sol, const vector<array<int,3>> path);
 
 vector<vector<int>> ReversePathsMatching(Solution& sol, const vector<pair<int,int>> Matching, const int l, const int r);
 
 void KeepOrientationsAllEdgesLantarn(Solution& sol, Lantarn& lantarn, const vector<vector<HA>>& OrientationsCopy);
 
+bool RepairOrientationsEdgesLantarn_CM(Solution& sol, Lantarn& lantarn, const vector<vector<HA>>& OrientationsCopy, vector<array<int,3>>& path, const bool MinCostP, const bool CM);
+
+bool SetOrientationsEdgesLantarn(Solution& sol, Lantarn& lantarn, const vector<vector<HA>>& OrientationsCopy, vector<array<int,3>>& path, const bool MinCostP, const bool CM);
+
 bool RepairHAPsWithNegativeCycles(Solution& sol, const int l);
+
+bool FindNormalPathOneLeague(const int source, const int sink, Solution& sol, vector<array<int,3>>& path, int& delta, const bool MinCostP);
+
+void ReversePathLineGraph(Solution& sol, const vector<int>& path, const vector<Edge>& Nodes);
+
+tuple<vector<Edge>,vector<Edge>,vector<int>> MakeLineGraphOnlyZeroWeightEdges(Solution& sol, const int source, const int sink, const int source_nb, const int sink_nb);
 
 #endif

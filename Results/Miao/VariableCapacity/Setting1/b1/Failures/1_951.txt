@@ -1,2 +1,0 @@
-Instance,Seed,TS-InfOpp,TS-HAP,PTS-InfOpp,PTS-HAP,PTS-DRR,PTS-NoPath,PRS-HAP,M-HAP,M-NoPath,C-DRR
-1,951,0,966,208,2,0,0,355,0

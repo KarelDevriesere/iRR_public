@@ -28,7 +28,7 @@ set(CMAKE_GENERATOR_PLATFORM x64)
 find_package(GUROBI REQUIRED)
 include_directories(${GUROBI_INCLUDE_DIRS})
 
-add_executable(test main.cpp algo.h algo.cpp Input.h Input.cpp GurSolver.h GurSolver.cpp Operators.h Operators.cpp Solution.h Solution.cpp ILS.h ILS.cpp MiaoAlgo.h MiaoAlgo.cpp SA.h FO.h FO.cpp Analyze.h Analyze.cpp)
+add_executable(test main.cpp algo.h algo.cpp Input.h Input.cpp GurSolver.h GurSolver.cpp Operators.h Operators.cpp Solution.h Solution.cpp ILS.h ILS.cpp MiaoAlgo.h MiaoAlgo.cpp SA.h FO.h FO.cpp Analyze.h Analyze.cpp InstanceGenerator.h CM.h Heuristic_CM.h Heuristic_CM.cpp MiaoHockey.h)
 
 message(STATUS "TRY CXX HERE")
 target_link_libraries(${CMAKE_PROJECT_NAME} optimized ${GUROBI_CXX_LIBRARY}

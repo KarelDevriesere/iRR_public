@@ -6,8 +6,9 @@
 #include <unordered_map>
 #include <assert.h>
 
+enum class InstanceSetCM{Karel, Jasper, Uthus}; // Instances Cost Minimization
 enum class HAP_requirement_name{NoThreeConsecutive, NoBreakBeginningEnd, BreakLimit, QuarterBalanced};
-enum class MiaoInstance{S, U13, U15, U17, U21, M, Tiny};
+enum class MiaoInstance{S, U13, U15, U17, U21, M, Tiny}; // Instances paper Miao
 
 enum class HA{H, A, BYE};
 
@@ -35,6 +36,7 @@ class Input
         int AllowedNrCapacityViolations = 0; // default TODO TODO
         int MaxSameClub = 2;
         int IndexDummyClub;
+        int MaxEdgeCost;
 
         std::unordered_map<HAP_requirement_name, bool>HAP_requirements{
             {HAP_requirement_name::NoThreeConsecutive, false},
@@ -54,11 +56,15 @@ class Input
         // pair<TotalNrTeams,NrDummyTeams>
         std::unordered_map<MiaoInstance, std::pair<int,int>>NrTeamsMiaoInstances = {{MiaoInstance::S, {50,0}}, {MiaoInstance::U13, {184,18}}, {MiaoInstance::U15, {216,49}},
             {MiaoInstance::U17, {144,14}}, {MiaoInstance::U21, {64,6}}, {MiaoInstance::M, {608,87}}, {MiaoInstance::Tiny, {16,1}}};
+
+        vector<vector<vector<int>>>CostMatchRound;
         
     public:
         Input();
         ~Input();
-        int read(const string file_path, const bool Miao);
+        int read_CostMinimization(const string file_path, InstanceSetCM inst);
+        int read_CostMinimizationJasper(const string file_path);
+        int read_Miao_Hockey(const string file_path, const bool Miao);
         void readAllowedNrCapacityViolations(const int num);
         int getNrTeams()const{return NrTeams;}
         int getNrLeagues()const{return NrLeagues;}
@@ -87,6 +93,7 @@ class Input
         int getGlobalIndexTeam(const int l, const int i)const{return LeagueTeams[l][i];}
         int getIndexDummyClub()const{return IndexDummyClub;};
         bool isEligible(const int i, const int j)const{return Eligible[i][j];};
+        int getMaxEdgeCost()const{return MaxEdgeCost;};
 
         bool isTeamDummy(const int i)const{return IsTeamDummy[i];};
         
@@ -122,6 +129,8 @@ class Input
         int getComplementIndexHAP(const int h)const{return ComplementHAP[h];};
 
         MiaoInstance getMiaoInstance();
+
+        int getCostMatchRound(const int i, const int j, const int r)const{return CostMatchRound[i][j][r];};
 };
 
 #endif

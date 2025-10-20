@@ -4,7 +4,6 @@
 #include <fstream>
 #include <filesystem>
 #include "GurSolver.h"
-#include "Operators.h"
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/edge_coloring.hpp>
@@ -32,7 +31,7 @@ void SetValueCircleMethod(const int h, const int a, const int c, Solution& sol){
 	// sol.Orientation[a][c] = HA::A;
 }
 
-void setHaps(int& c1, int& c2, Solution& sol){
+void setHaps(const int c1, const int c2, Solution& sol){
 	// The idea is that even 2 disjoint perfect matchings decompose into even cycles, so we can always find an orientation where the
 	// nr of H games = nr A games
 	vector<bool>NodeSeen(sol.getNrTeams(), false);
@@ -44,11 +43,13 @@ void setHaps(int& c1, int& c2, Solution& sol){
 		do{
 			NodeSeen[i] = true;
 			j = sol.TeamColorOpp[i][c1];
-			SetValueCircleMethod(i, j, c1, sol);
+			sol.Orientation[i][c1] = HA::H;
+			sol.Orientation[j][c1] = HA::A;
 			i = j;
 			NodeSeen[i] = true;
 			j = sol.TeamColorOpp[i][c2];
-			SetValueCircleMethod(i, j, c1, sol);
+			sol.Orientation[i][c2] = HA::H;
+			sol.Orientation[j][c2] = HA::A;
 			i = j;
 		}
 		while (i != StartNode);
@@ -148,11 +149,12 @@ void CircleMethod(vector<int>& Teams, Solution& sol){
 	RepairBalanceHA(sol);
 }
 
+typedef pair<int, int>E;
+typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::undirectedS, boost::no_property, size_t,boost::no_property >BGraph;
 
-void VizingConstruction(Solution& sol){
-	const int N = sol.getNrTeams();
-	typedef pair<int, int>E;
-    vector<E>edge_vector;
+pair<BGraph,vector<E>> Vizing(const int N, const int seed){
+
+	vector<E>edge_vector;
 
 	// To get a feasible color, leave node N out at first
 	int i,j;
@@ -162,6 +164,10 @@ void VizingConstruction(Solution& sol){
 		}
 	}
 
+	// shuffle the edge vector to get truly random edge colorings
+	std::mt19937 gen(seed);
+    std::shuffle(edge_vector.begin(), edge_vector.end(), gen);
+
     typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::undirectedS, boost::no_property, size_t,boost::no_property >BGraph;
 
     BGraph g(N-1); 
@@ -170,14 +176,61 @@ void VizingConstruction(Solution& sol){
     }
 	size_t colors = boost::edge_coloring(g, get(boost::edge_bundle, g));
 
-	// cout << "Colored using " << colors << " colors" << endl;
+	return {g, edge_vector};
+}
+
+vector<vector<bool>>VizingRegularColorableGraph(const int N, const int R, const int seed){ // returns a 2D vector A where A[i][j] = true means that i and j are adjacent (so returns the induced opponent graph)
+	vector<vector<bool>>A(N, vector<bool>(N));
+	pair<BGraph,vector<E>>Output = Vizing(N, seed);
+	BGraph g = Output.first;
+	vector<E>edge_vector = Output.second;
+
+	vector<vector<bool>>ColorLeft(N-1, vector<bool>(N-1, true));
+
+	int i,j,c;
+    for (size_t k = 0; k < edge_vector.size(); ++k)
+    {
+		i = edge_vector[k].first;
+		j = edge_vector[k].second;
+		c = g[boost::edge(i, j, g).first];
+		ColorLeft[i][c] = false;
+		ColorLeft[j][c] = false;
+		if (c < R){
+			A[i][j] = true;
+			A[j][i] = true;
+		}
+    }
+
+	int LastNode = N-1;
+
+	for (i = 0; i < N-1; ++i){
+		c = 0;
+		while (!ColorLeft[i][c]){
+			++c;
+		}
+		if (c < R){
+			A[i][LastNode] = true;
+			A[LastNode][i] = true;
+		}
+	}
+
+	return A;
+}
+
+
+void VizingConstruction(Solution& sol, const int seed){ 
+	const int N = sol.getNrTeams();
+
+	pair<BGraph,vector<E>>Output = Vizing(N, seed);
+	BGraph g = Output.first;
+	vector<E>edge_vector = Output.second;
 
 	// Now, for assign colors to the edges with node N
 
 	vector<vector<bool>>ColorLeft(N-1, vector<bool>(N-1, true));
 
 	// cout << "set Colorleft" << endl;
-	int c;
+	int i,j,c;
     for (size_t k = 0; k < edge_vector.size(); ++k)
     {
 		i = edge_vector[k].first;
@@ -202,6 +255,8 @@ void VizingConstruction(Solution& sol){
 		}
 	}
 	RepairBalanceHA(sol);
+
+	return;
 }
 
 
@@ -261,6 +316,7 @@ bool CyclicConstruction(Solution& sol){
 	return true;
 }
 
+/*
 int GreedyConstruction(const int l, Solution& sol){
 	int obj_greedy = 0; // TODO
 	const int N = sol.getNrTeams();
@@ -277,7 +333,7 @@ int GreedyConstruction(const int l, Solution& sol){
 		}
 	}
 	for (int r = 0; r < sol.getNrRounds(); ++r){
-		Matching = MWPM(sol.getTeamsLeague(l), sol, ForbiddenEdge);
+		Matching = MWPM(sol.getTeamsLeague(l), sol, ForbiddenEdge, delta);
 		// Test whether matching is perfect, otherwise return obj_greedy = -1
 		if (Matching.empty()){
 			return -1;
@@ -295,3 +351,4 @@ int GreedyConstruction(const int l, Solution& sol){
 
 	return obj_greedy; // greedy succesfull
 }
+*/

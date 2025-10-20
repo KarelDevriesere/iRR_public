@@ -59,7 +59,7 @@ void setHAP(Solution& sol, const int i, const int h){
 }
 
 MiaoAlgo::MiaoAlgo(const std::unordered_map<HAP_operator, string>& moves, // moves, weights and in are defined in main
-           const std::unordered_map<HAP_operator, double>& weights, Input& in, const int seed): SA<HAP_operator>(moves, weights, seed){
+           const std::unordered_map<HAP_operator, double>& weights, Input& in, std::mt19937& g): SA<HAP_operator>(moves, weights, g){
     Rounds = vector<int>(in.getNrRounds());
     for (int r = 0; r < in.getNrRounds(); ++r){
         Rounds[r] = r;
@@ -127,7 +127,7 @@ void MiaoAlgo::ReAssignHAPs(Solution& sol){
     double rnd;
     bool MoveChosen = false;
     while(!MoveChosen){
-        rnd = RandomNumber();
+        rnd = RandomDoubleNumber(0.0, 1.0);
         auto iterator = WeightsCumul.upper_bound(rnd); 
         CurrentMove = iterator->second;
         if (CurrentMove == HAP_operator::InterClubSwap){
@@ -159,11 +159,17 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
     for (int l = 0; l < sol.getNrLeagues(); ++l){
         int s = 0, count = 0;
         while (s < sol.getNrRounds()){
-            // cout << "Optimize round " << s << ", try: " << count << endl;
+
             const int r = Rounds[s];
+            cout << "Optimize round " << r << ", try: " << count << endl;
 
             // cout << "find matching" << endl;
-            vector<pair<int,int>>matching = MoveMWPM(sol, l, r, bipartite, includeHAPs);
+            int delta = 0;
+            const bool CM = false;
+            const bool keepHAP = true;
+            const bool MinCostM = true;
+            pair<vector<pair<int,int>>, vector<int>>Matching_OpponentMatching = MoveMWPM(sol, l, r, bipartite, keepHAP, CM, gen, MinCostM); // in the file operators
+            vector<pair<int,int>>matching = Matching_OpponentMatching.first;
             if (matching.size() < N/2){
                 cout << "matching failed, shuffle rounds" << endl;
                 // cin.get();
@@ -175,7 +181,7 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
                 }
             }
             else{
-                // cout << "Matching in round " << s << ":" << endl;
+                cout << "Matching in round " << r << ":" << endl;
                 for (auto& [i, j]: matching){
                     if (sol.Orientation[i][r] == HA::H){
                         assert(sol.Orientation[j][r] == HA::A);
@@ -186,18 +192,18 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
                         assert(sol.Orientation[j][r] == HA::H);
                         a = i, h = j;
                     }
-                    // cout << h << ", " << a << endl;
+                    cout << h << ", " << a << endl;
                     SetValueCircleMethod(h, a, r, sol);
                 }
                 ++s;
             }
-            // cin.get();
         }
     }
-    assert(sol.validate());
-    // cout << "Total cost = " << sol.ComputeTotalCost() << endl;
-    // cin.get();
+    // assert(sol.validate());
+    cout << "Total travel cost = " << sol.ComputeTravelCost() << endl;
+    cout << "Total cost = " << sol.ComputeTotalCost() << endl;
     assert(sol.ComputeTravelCost() == sol.ComputeTotalCost());
+    cin.get();
     return true;
 }
 
@@ -387,4 +393,67 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
     // save into solution
 
     SaveBestSolution(sol);
+}
+
+void MiaoAlgo::SolveGivenSeqeuence(Input& in, Solution& sol){
+    cout << "Solve given sequence" << endl;
+    string file_path = "Instances" + std::string(PATHSEP) + "Miao";
+
+    if (in.IsCapacityConstant()){
+        file_path += (std::string(PATHSEP) + "SolutionsFoundByMiao" + std::string(PATHSEP) + "ConstantCapacity");
+    }
+    else if (in.getMiaoHAPSetting() == 1){
+        file_path += (std::string(PATHSEP) + "SolutionsFoundByMiao" + std::string(PATHSEP) + "VariableCapacity" + std::string(PATHSEP) + "Setting1");
+    }
+    else if (in.getMiaoHAPSetting() == 2){
+        file_path += (std::string(PATHSEP) + "SolutionsFoundByMiao" + std::string(PATHSEP) + "VariableCapacity" + std::string(PATHSEP) + "Setting2");
+    }
+
+    if (in.getNrTeams() == 184){
+        file_path += (std::string(PATHSEP) + "i02.txt");
+    }
+    else if (in.getNrTeams() == 216){
+        file_path += (std::string(PATHSEP) + "i03.txt");
+    }
+    else if (in.getNrTeams() == 144){
+        file_path += (std::string(PATHSEP) + "i04.txt");
+    }
+    std::ifstream file(file_path);
+    if (!file.is_open()) {
+        std::cerr << "Error opening the file " << file_path;
+        return;
+    }
+
+    std::string line;
+    cout << "Read HAP assignment" << endl;
+    // First read the HAP assignment
+    int nr = 0;
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        if (nr < in.getNrTeams()){
+            int i, h;
+            ss >> i;
+            ss >> h;
+            
+            if (sol.getHAP(h).size() != sol.getNrRounds()){
+                cout << "HAP " << h << " has size " << sol.getHAP(h).size() << " but there are " << sol.getNrRounds() << " rounds " << endl;
+            }
+            assert(sol.getHAP(h).size() == sol.getNrRounds());
+            setHAP(sol, i, h);
+            // cout << "Team " << i << " is assigned HAP " << h << endl;
+        }
+        else{
+            int k = 0;
+            int r;
+            std::stringstream ss(line);
+            while(ss >> r){
+                Rounds[k++] = r-1; // rounds start from 1 in the files of Miao
+            }
+        }
+        ++nr;
+    }
+    file.close();
+
+    Reset(sol);
+    SchedulePhase(sol);
 }

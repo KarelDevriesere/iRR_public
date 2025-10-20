@@ -17,8 +17,11 @@ GurSolver::~GurSolver(){}
 GRBModel GurSolver::createModel(GRBEnv& env) {
 	env.start();
 	env.set(GRB_IntParam_Threads, 8); // Very important when using HPC!!!
-
+#ifdef PRINT
+#if PRINT == 0
 	env.set(GRB_IntParam_LogToConsole, 0); // surpress all output
+#endif
+#endif
 	return GRBModel(env);
   }
 
@@ -96,8 +99,7 @@ void build_single_league_withoutHA(){
 	// 
 }
 
-void GurSolver::build_league(const bool HA, const bool relax_x){
-
+void GurSolver::build_base(const bool HA, const bool relax_x){
 	assert(getNrTeams() % 2 == 0);
 	assert(getNrTeams()-1 >= getNrRounds());
 
@@ -125,7 +127,7 @@ void GurSolver::build_league(const bool HA, const bool relax_x){
 
    for (i = 0; i < getNrTeams(); ++i){
 		for (j = 0; j < getNrTeams(); ++j){
-		   // if (isEligible(i, j)){
+		   if (/*isEligible(i, j)*/ i != j){
 			   std::string consName = "c1_" + std::to_string(i) + "_" + std::to_string(j);
 			   GRBLinExpr sum_r = 0;
 			   for (r = 0; r < getNrRounds(); ++r){
@@ -138,8 +140,13 @@ void GurSolver::build_league(const bool HA, const bool relax_x){
 					sum_r += x[i][j][r];
 				}  
 			   }
-			   model.addConstr(sum_r <= 1, consName);
-		   // }
+			   if (getNrRounds() < getNrTeams()-1){ // then not every team can play against any other team
+				model.addConstr(sum_r <= 1, consName);
+			   }
+			   else{
+				model.addConstr(sum_r == 1, consName);
+			   }
+		   }
 		}
 		for (r = 0; r < getNrRounds(); ++r){
 			std::string consName = "c2_" + std::to_string(i) + "_" + std::to_string(r);
@@ -173,6 +180,37 @@ void GurSolver::build_league(const bool HA, const bool relax_x){
 		}
 	}
 
+	if (!HA){
+		return;
+	}
+
+	assert(getNrRounds() % 2 == 0);
+
+	int nrH = getNrRounds() / 2;
+	int nrA = nrH;
+	for (i = 0; i < getNrTeams(); ++i){
+		GRBLinExpr sum_jr_H = 0;
+		// GRBLinExpr sum_jr_A = 0;
+		for (j = 0; j < getNrTeams(); ++j){
+			if (isEligible(i, j)){
+				for (r = 0; r < getNrRounds(); ++r){
+					sum_jr_H += x[i][j][r];
+					// sum_jr_A += x[j][i][r];
+				}
+			}
+		}
+		model.addConstr(sum_jr_H == nrH, "c_3H");
+		// model.addConstr(sum_jr_A == nrA, "c_3A");
+	}
+}
+
+void GurSolver::build_league(const bool HA, const bool relax_x){
+
+	const bool iRR = true;
+	build_base(HA, relax_x);
+
+	int i,j,r;
+
    for (i = 0; i < getNrTeams(); ++i){
 	// Each team plays a maximum nr of times against a team from the same club
 	const int c = getTeamClub(i);
@@ -201,44 +239,30 @@ void GurSolver::build_league(const bool HA, const bool relax_x){
 	}
    }
 
-   if (!HA){
-	return;
+   if (HA){
+	build_HAP_constraints();
    }
+}
 
-   assert(getNrRounds() % 2 == 0);
+void GurSolver::build_HAP_constraints(){
 
-   int nrH = getNrRounds() / 2;
-   int nrA = nrH;
-   for (i = 0; i < getNrTeams(); ++i){
-	   GRBLinExpr sum_jr_H = 0;
-	   // GRBLinExpr sum_jr_A = 0;
-	   for (j = 0; j < getNrTeams(); ++j){
-		   if (isEligible(i, j)){
-			   for (r = 0; r < getNrRounds(); ++r){
-				   sum_jr_H += x[i][j][r];
-				   // sum_jr_A += x[j][i][r];
-			   }
-		   }
-	   }
-	   model.addConstr(sum_jr_H == nrH, "c_3H");
-	   // model.addConstr(sum_jr_A == nrA, "c_3A");
-   }
+	int i,j,r;
 
-   if (getHAP_requirement(HAP_requirement_name::NoThreeConsecutive)){
-	for (i = 0; i < getNrTeams(); ++i){
-		for (r = 2; r < getNrRounds(); ++r){
-			GRBLinExpr sum_H = 0, sum_A = 0;
-			for (j = 0; j < getNrTeams(); ++j){
-				if (isEligible(i, j)){
-					sum_H += (x[i][j][r-2] + x[i][j][r-1] + x[i][j][r]);
-					sum_A += (x[j][i][r-2] + x[j][i][r-1] + x[j][i][r]);
+    if (getHAP_requirement(HAP_requirement_name::NoThreeConsecutive)){
+		for (i = 0; i < getNrTeams(); ++i){
+			for (r = 2; r < getNrRounds(); ++r){
+				GRBLinExpr sum_H = 0, sum_A = 0;
+				for (j = 0; j < getNrTeams(); ++j){
+					if (isEligible(i, j)){
+						sum_H += (x[i][j][r-2] + x[i][j][r-1] + x[i][j][r]);
+						sum_A += (x[j][i][r-2] + x[j][i][r-1] + x[j][i][r]);
+					}
 				}
+				model.addConstr(sum_H <= 2, "c_4H");
+				model.addConstr(sum_A <= 2, "c_4A");
 			}
-			model.addConstr(sum_H <= 2, "c_4H");
-			model.addConstr(sum_A <= 2, "c_4A");
-		}
-	}
-   }
+	  	}
+   	}
 
    if (getHAP_requirement(HAP_requirement_name::NoBreakBeginningEnd)){
 	int R = getNrRounds();
@@ -353,6 +377,30 @@ void GurSolver::setTimeLimit(const int time_limit){
 	model.set(GRB_DoubleParam_TimeLimit, time_limit);
 }
 
+void GurSolver::AddObjGeneralCosts(){
+	Objective = 0;
+	for (int i = 0; i < getNrTeams(); ++i){
+		for (int j = 0; j < getNrTeams(); ++j){
+			if (isEligible(i, j)){
+				for (int r = 0; r < getNrRounds(); ++r){
+					Objective += getCostMatchRound(i,j,r)*x[i][j][r];
+				}
+			}
+		}
+	}
+	model.setObjective(Objective, GRB_MINIMIZE);
+}
+
+void GurSolver::AddObjMinBreaks(){
+	Objective = 0;
+	for (int i = 0; i < getNrTeams(); ++i){
+		for (int r = 0; r < getNrRounds(); ++r){
+			Objective += b[i][r];
+		}
+	}
+	model.setObjective(Objective, GRB_MINIMIZE);
+}
+
 void GurSolver::AddObj(const bool min_travel, const bool min_capacity_violations){
 	if (min_travel){
 		Objective = 0;
@@ -406,7 +454,7 @@ void GurSolver::addCallbackToTrackTime(){
 // unique pointer version
 void GurSolver::addCallbackToTrackTime() {
     StartTimeGurSolver = std::chrono::high_resolution_clock::now();
-    cb = std::make_unique<MyCallback>(TimeTillBestSolutionGurSolverOuter, StartTimeGurSolver);
+    cb = std::make_unique<MyCallback>(TimeTillBestSolutionGurSolverOuter, StartTimeGurSolver, CurrentTimeStampIndexOuter, TimeStampsOuter, TimeStampSolutionOuter);
     model.setCallback(cb.get());  // Gurobi needs a raw pointer
 }
 
