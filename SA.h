@@ -358,7 +358,6 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
             }
 
             // cin.get();
-
             return SolutionAccepted;
         }
 

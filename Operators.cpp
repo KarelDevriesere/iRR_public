@@ -984,10 +984,16 @@ vector<array<int,3>> CycleBalanced(Solution& sol, std::mt19937& gen){
     // cout << "Path: " << endl;
     // cout << i;
     while (!NodeVisited[i]){
+        assert(sol.IsTeamBalanced(i));
         NodeVisited[i] = true;
         c = dist_colour(gen);
+        int start_color = c;
         while (sol.Orientation[i][c] != HA::H){
+            assert(sol.Orientation[i][c] == HA::A);
             c = (c + 1)%C;
+            if (c == start_color){
+                throw std::runtime_error("Infinite loop in CycleBalanced!!"); 
+            }
         }
         j = sol.TeamColorOpp[i][c];
         assert(sol.Orientation[j][c] == HA::A);
@@ -1504,7 +1510,10 @@ vector<vector<array<int,3>>>EvaluateAlternatingCycleWithPaths(Solution& sol, vec
         for (int k = 0; k < H_teams.size(); ++k){
             // path is shortest in distance, but does not take into account the costs
             vector<array<int,3>>path;
-            assert(FindNormalPathOneLeague(A_teams[k], H_teams[k], sol, path, delta, MinCostP));
+            bool PathFound = FindNormalPathOneLeague(A_teams[k], H_teams[k], sol, path, delta, MinCostP);
+            if (!PathFound){
+                throw std::runtime_error("No path found that can repair imbalance caused by M");
+            }
             // path is reversed in function!!
             Paths.push_back(path);
         }

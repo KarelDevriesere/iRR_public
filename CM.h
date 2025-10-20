@@ -59,11 +59,9 @@ void SolveIP(Input& in, const int seed, const int TimeLimit, vector<int>& TimeSt
     return;
 }
 
-void TestCostMinimization(const int seed, const string Instance, const bool Heuristic, const bool MinCostNB, const int HistoryLength){
+void TestCostMinimization(const int seed, const string Instance, const bool Heuristic, const bool MinCostNB, const int HistoryLength, const int TimeLimit){
 
     vector<int>TimeStamps = {30, 60, 120, 300, 600, 1800, 3600, 7200, 14400, 28800};
-    int TimeLimit = 65;
-    cout << "TimeLimit = " << TimeLimit << endl;
 
     const string FilePath = "Instances" + std::string(PATHSEP) + "CostMinimization" + std::string(PATHSEP) + "Karel" + std::string(PATHSEP) + "0_100" + std::string(PATHSEP) + Instance + ".txt";
 

@@ -77,7 +77,7 @@ bool Solution::IsTeamBalanced(const int i){
     assert(nr_H > 0);
     assert(nr_A > 0);
     if (nr_H != nr_A){
-        cout << i << " has " << nr_H << " H games but " << nr_A << " A games" << endl;
+        // cout << i << " has " << nr_H << " H games but " << nr_A << " A games" << endl;
         return false;
     }
     nr_H = 0, nr_A = 0;
