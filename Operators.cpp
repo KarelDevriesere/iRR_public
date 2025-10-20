@@ -576,8 +576,8 @@ bool RepairOrientationsEdgesLantarn_CM(Solution& sol, Lantarn& lantarn, const ve
         for (int t = 0; t < sol.getNrTeams(); ++t){
             assert(sol.IsTeamBalanced(t));
         }
-    }
 #endif
+    }
     return true;
 }
 

@@ -35,7 +35,6 @@ void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int H
     algo.SaveSolutionsTimeStamps(FilePath, config);
     assert(sol.validate());
     cout << "Final solution = " << sol.ComputeCostGeneralMatrix() << endl;
-    cin.get();
     return;
 }
 
@@ -54,7 +53,6 @@ void SolveIP(Input& in, const int seed, const int TimeLimit, vector<int>& TimeSt
     const string FilePath = "Instances" + std::string(PATHSEP) + "CostMinimization" + std::string(PATHSEP) + "Karel" + std::string(PATHSEP) + "0_100" + std::string(PATHSEP) + "Results" + std::string(PATHSEP) + "IP" + std::string(PATHSEP) + Instance + ".txt";
     const string config = to_string(seed) + ",IP";
     gur.SaveSolutionsTimeStamps(FilePath, config);
-    cin.get();
     // gur.SaveSolution(sol);
     // sol.validate();
     // cin.get();
@@ -65,6 +63,7 @@ void TestCostMinimization(const int seed, const string Instance, const bool Heur
 
     vector<int>TimeStamps = {30, 60, 120, 300, 600, 1800, 3600, 7200, 14400, 28800};
     int TimeLimit = 65;
+    cout << "TimeLimit = " << TimeLimit << endl;
 
     const string FilePath = "Instances" + std::string(PATHSEP) + "CostMinimization" + std::string(PATHSEP) + "Karel" + std::string(PATHSEP) + "0_100" + std::string(PATHSEP) + Instance + ".txt";
 

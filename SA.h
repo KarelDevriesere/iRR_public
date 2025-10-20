@@ -138,7 +138,7 @@ class MetaBase{ // Everything that can be used for all metaheuristics
                 // cout << "best obj = " << best_obj << endl;
                 NrImprovBestObj.at(CurrentMove)++;
                 UpdateBestSolution(sol); // We need to store the best solution somewhere
-                TimeTillBestSolution = (int)getTimeDiff<>();
+                TimeTillBestSolution = (int)getTimeDiff();
             }
             if (obj <= current_obj){
                 // cout << "Accept solution" << endl;
@@ -239,7 +239,7 @@ class MetaBase{ // Everything that can be used for all metaheuristics
                 array<std::chrono::microseconds,3>MinMaxMean = MinMaxMeanExecutionTime(move);
                 file2 << MinMaxMean[0].count() << ",";
                 file2 << MinMaxMean[1].count() << ",";
-                file2 << MinMaxMean[2] << ",";
+                file2 << MinMaxMean[2].count() << ",";
                 file2 << instance << "," << seed << "\n";
                 /*
                 for (auto dur: ExecutionTimes.at(move)){ // store these as well to make boxplots later?
@@ -297,7 +297,7 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
                 array<std::chrono::microseconds,3>MinMaxMean = this->MinMaxMeanExecutionTime(move);
                 output_file << MinMaxMean[0].count() << ",";
                 output_file << MinMaxMean[1].count() << ",";
-                output_file << MinMaxMean[2] << "\n";
+                output_file << MinMaxMean[2].count() << "\n";
             }
             for (auto&[TimeStamp, Solution]: TimeStampSolution){
                 output_file << TimeStamp << "," << Solution << "\n";
@@ -340,16 +340,16 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
             }
             ++this->it;
 
-            if ((int)this->getTimeDiff<>() > TimeStamps.at(CurrentTimeStampIndex)){
+            if ((int)this->getTimeDiff() > TimeStamps.at(CurrentTimeStampIndex)){
                 TimeStampSolution[TimeStamps.at(CurrentTimeStampIndex)] = this->best_obj;
                 if (CurrentTimeStampIndex+1 < TimeStamps.size()){
                     CurrentTimeStampIndex++;
                 }
             }
 
-            if (this->getTimeDiff<>() > this->TIME_LIMIT /*|| this->it_idle > this->it*0.02*/){
+            if (this->getTimeDiff() > this->TIME_LIMIT /*|| this->it_idle > this->it*0.02*/){
                 this->STOP = true;
-                if (this->getTimeDiff<>() > this->TIME_LIMIT){
+                if (this->getTimeDiff() > this->TIME_LIMIT){
                     cout << "Time limit hit" << endl;
                 }
                 else{
@@ -429,13 +429,13 @@ class SA: public MetaBase<Move>{ // Simulated Annealing
                 this->it_accepted = 0;
                 this->it = 0;
             }
-            if (this->getTimeDiff<>() > this->TIME_LIMIT || T < T_end){
+            if (this->getTimeDiff() > this->TIME_LIMIT || T < T_end){
                 this->STOP = true;
-                if (this->getTimeDiff<>() > this->TIME_LIMIT){
+                if (this->getTimeDiff() > this->TIME_LIMIT){
                     cout << "Time limit hit" << endl;
                 }
                 else{
-                    cout << "Final temperature hit after " << this->getTimeDiff<>() << " seconds" << endl;
+                    cout << "Final temperature hit after " << this->getTimeDiff() << " seconds" << endl;
                 }
                 // cin.get();
             }
