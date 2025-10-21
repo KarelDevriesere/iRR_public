@@ -41,6 +41,27 @@ void GurSolver::WarmStart(Solution& sol){
 	}
 }
 
+void GurSolver::iTTP(){
+
+	int t,i,j,r;
+	const bool HA = true;
+	const bool relax_x = false;
+	build_base(HA, relax_x); // all base constraints
+
+	// z_tij = 1 if t travels from the home venue of i to that of j
+	z = vector<vector<vector<GRBVar>>>(getNrTeams(), vector<vector<GRBVar>>(getNrTeams(), vector<GRBVar>(getNrTeams())));
+	for (t = 0; t < getNrTeams(); ++t){
+		for (i = 0; i < getNrTeams(); ++i){
+			for (j = 0; j < getNrTeams(); ++j){
+				std::string varName = "z_" + std::to_string(t) + "_" + std::to_string(i) + "_" + std::to_string(j);
+				z[t][i][j] = model.addVar(0, 1, 0.0, GRB_BINARY, varName);	   
+			}
+		}
+    }
+
+	// C1: each team plays one game in 
+}
+
 void GurSolver::FixHAP(Solution& sol){
 	// cout << "Fix haps" << endl;
 	const int Half = getNrRounds()/2;

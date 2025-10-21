@@ -27,6 +27,7 @@ class GurSolver : public Input
         vector<vector<GRBVar>>v;
         vector<vector<GRBVar>>b;
         vector<vector<GRBVar>>y;
+        vector<vector<vector<GRBVar>>>z; // for TTP
         vector<vector<HA>>Orientation;
 
         vector<vector<vector<GRBConstr>>>Constraints_fixed_variables; // per team per round
@@ -103,6 +104,7 @@ class GurSolver : public Input
         void AssignHAPsToTeams(Solution& sol); // For Miao's algorithm
         void StoreHAPs(Solution& sol);
         void AddMiaoSymmetryConstraint();
+        void iTTP();
         
         bool TrackTimeBestSolution = true;
         void addCallbackToTrackTime();
