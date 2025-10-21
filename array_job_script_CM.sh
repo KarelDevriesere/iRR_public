@@ -19,21 +19,22 @@ module load Gurobi
 # compile project only once here
 make release PRINT=0 
 
-walltime="00:05:00"
+walltime="04:05:00"
 seed=0 # random seed
+TL=14400 # 4 hours
 
-for NrTeams in 36; do
-    for k in 0; do
-        for i in 0; do
+for NrTeams in 36 100; do
+    for k in 0 1 5 10; do
+        for i in 0 1 2 3 4; do
             for heuristic in 0 1; do
                 if [ $heuristic -eq 1 ]; then
                     for MiNCostNB in 0 1; do
-                        for HL in 1 50; do
-                             sbatch --time=$walltime job_script_CM.sh $seed $NrTeams $k $i $heuristic $MinCostNB $HL
+                        for HL in 1 50 500 5000; do
+                             sbatch --time=$walltime job_script_CM.sh $seed $NrTeams $k $i $heuristic $MinCostNB $HL $TL
                         done
                     done
                 else
-                     sbatch --time=$walltime job_script_CM.sh $seed $NrTeams $k $i $heuristic 0 0 #last 2 parameters not relevant when doing IP
+                     sbatch --time=$walltime job_script_CM.sh $seed $NrTeams $k $i $heuristic 0 0 $TL #last 2 parameters not relevant when doing IP
                 fi
             done
         done
