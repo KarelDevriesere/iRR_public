@@ -26,6 +26,7 @@ int main(int argc, const char* argv[]){
         int k = 5;
         int inst = 0;
         int TL = 60;
+        int MaxIt = 10000000;
         string Instance = to_string(NrTeams) + "_" + to_string(NrRounds) + "_" + "k" + to_string(k) + "_" + to_string(inst);
 
         unordered_map<string, double>InputWeights = {{"TS", 0.0}, {"PTS", 0.0}, {"RS", 0.0}, {"PRS", 0.0},{"M", 0.0}, {"BM", 0.0}, {"C", 0.0}};
@@ -85,10 +86,17 @@ int main(int argc, const char* argv[]){
                     return 1;
                 }
             }
-            else if (arg == "--TL"){
+            else if (arg == "--TimeLimit"){
                 TL = std::stoi(argv[++i]);
                 if (TL < 0){
                     std::cerr << "TimeLimit should be positive" << endl;
+                    return 1;
+                }
+            }
+            else if (arg == "--MaxIt"){
+                MaxIt = std::stoi(argv[++i]);
+                if (MaxIt < 0){
+                    std::cerr << "Max no iterations should be positive" << endl;
                     return 1;
                 }
             }
@@ -149,7 +157,7 @@ int main(int argc, const char* argv[]){
                 }
             }
             else if (arg == "--help"){
-                cout << "Usage: " << argv[0] << "--Seed <int> --Heuristic <0/1> -- MinCostNB <0/1> --HistoryLength <+int> --NrTeams <36/100> --k <0/1/5/10> --i <0/1/2/3/4> --TL <+int>" << endl;
+                cout << "Usage: " << argv[0] << "--Seed <int> --Heuristic <0/1> -- MinCostNB <0/1> --HistoryLength <+int> --NrTeams <36/100> --k <0/1/5/10> --i <0/1/2/3/4> --TL <+int> --MaxIt <+int> --TSw <[0,1]> --PTSw <[0,1]> --RSw <[0,1]> --PRSw <[0,1]> --Mw <[0,1]> --BMw <[0,1]> --Cw <[0,1]>" << endl;
                 return 1;
             }
             else {
@@ -184,9 +192,10 @@ int main(int argc, const char* argv[]){
         cout << "Test cost minimization" << endl;
         cout << "MinCostNB = " << MinCostNB << endl;
         cout << "TimeLimit = " << TL << endl;
+        cout << "Max iterations = " << MaxIt << endl;
         Instance = to_string(NrTeams) + "_" + to_string(NrRounds) + "_" + "k" + to_string(k) + "_" + to_string(inst);
         cout << "Instance: " << Instance << endl;
-        TestCostMinimization(seed, Instance, Heuristic, MinCostNB, HistoryLength, TL, InputWeights);
+        TestCostMinimization(seed, Instance, Heuristic, MinCostNB, HistoryLength, TL, MaxIt, InputWeights);
         // GenerateCostMatrices(0);
         // cin.get();
     }

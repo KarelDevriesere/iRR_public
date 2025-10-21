@@ -17,19 +17,20 @@ module load Boost/1.83.0-GCC-13.2.0
 module load Gurobi
 
 # compile project only once here
+make clean
 make release PRINT=0 
 
-walltime="04:05:00"
+walltime="01:05:00"
 seed=0 # random seed
-TL=14400 # 4 hours
+TL=3650 # 4 hours
 
-for NrTeams in 36 100; do
-    for k in 0 1 5 10; do
-        for i in 0 1 2 3 4; do
+for NrTeams in 36; do
+    for k in 1; do
+        for i in 0; do
             for heuristic in 0 1; do
                 if [ $heuristic -eq 1 ]; then
-                    for MiNCostNB in 0 1; do
-                        for HL in 1 50 500 5000; do
+                    for MiNCostNB in 0; do
+                        for HL in 1; do
                              sbatch --time=$walltime job_script_CM.sh $seed $NrTeams $k $i $heuristic $MinCostNB $HL $TL
                         done
                     done

@@ -265,6 +265,8 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
         vector<int>TimeStamps;
         unordered_map<int,int>TimeStampSolution; // Best solution after certain time (in seconds)
 
+        int MAX_IT = 1000000;
+
         LAHC(const std::unordered_map<Move, string>& moves, // moves, weights and in are defined in main
            const std::unordered_map<Move, double>& weights, std::mt19937& g): MetaBase<Move>(moves, weights, g){
 
@@ -282,10 +284,15 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
             HistoricValues = vector<int>(HistoryLength, obj);
         }
 
+        void SetMaxIt(const int limit){
+            MAX_IT = limit;
+        }
+
         void SaveSolutionsTimeStamps(const string FilePath, const string config){
             cout << "Save file as " << FilePath << endl;
             std::ofstream output_file(FilePath);
             output_file << config << "\n";
+            /*
             output_file << "Name,NrChosen,NrAccepted,NrImprove,AvgReward,MinT,MaxT,AvgT \n";
             for (const auto& [move, string_name]: this->Moves){
                 if (string_name == "Initial"){
@@ -301,6 +308,7 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
                 output_file << MinMaxMean[1].count() << ",";
                 output_file << MinMaxMean[2].count() << "\n";
             }
+            */
             for (auto&[TimeStamp, Solution]: TimeStampSolution){
                 output_file << TimeStamp << "," << Solution << "\n";
             }
@@ -340,7 +348,6 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
             if (obj < HistoricValues.at(v)){
                 HistoricValues.at(v) = obj;
             }
-            ++this->it;
 
             if ((int)this->getTimeDiff() > TimeStamps.at(CurrentTimeStampIndex)){
                 TimeStampSolution[TimeStamps.at(CurrentTimeStampIndex)] = this->best_obj;
@@ -349,7 +356,7 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
                 }
             }
 
-            if (this->getTimeDiff() > this->TIME_LIMIT /*|| this->it_idle > this->it*0.02*/){
+            if (this->getTimeDiff() > this->TIME_LIMIT || (++this->it > MAX_IT && this->it_idle > this->it*0.02)){
                 this->STOP = true;
                 if (this->getTimeDiff() > this->TIME_LIMIT){
                     cout << "Time limit hit" << endl;

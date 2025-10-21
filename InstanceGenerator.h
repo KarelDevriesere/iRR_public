@@ -13,7 +13,7 @@ using namespace std;
 
 enum class CostMatrixType{ZeroOne, ZeroHundred, Uthus};
 
-const array<pair<int,int>,2>TeamsRounds{{{36,8},{100,16}}};
+const array<pair<int,int>,3>TeamsRounds{{{36,8},{100,16},{250,30}}};
 const array<double,5>Rho{0.5,0.6,0.7,0.8,0.9};
 const int NrInstancesPerCombination = 5;
 
@@ -172,23 +172,29 @@ int GenerateCostMatrices(const int global_seed){
     for (auto& tuple: TeamsRounds){
         NrTeams = tuple.first;
         NrRounds = tuple.second;
+        if (NrTeams != 250){
+            continue;
+        }
         for (int inst = 0; inst < NrInstancesPerCombination; ++inst){
             cout << "Create cost matrix for " << NrTeams << ", " << NrRounds << ", " << inst << endl;
             seed = distr(gen);
-
-            for (int k: {0,5,10}){
+            vector<int>k_vector = {0,1,5,10};
+            if (NrTeams == 250){
+                k_vector.push_back(20);
+            }
+            for (int k: k_vector){
                 vector<vector<bool>>A = GenerateInstance(NrTeams, NrRounds, k, seed);
 
-                vector<vector<vector<int>>>CostMatrix01 = Generate01CostMatrix(NrTeams,NrRounds,0.70,seed,A); // rho=0.70
-                StoreCostMatrix(NrTeams, NrRounds, k, inst, CostMatrix01, CostMatrixType::ZeroOne);
+                // vector<vector<vector<int>>>CostMatrix01 = Generate01CostMatrix(NrTeams,NrRounds,0.70,seed,A); // rho=0.70
+                // StoreCostMatrix(NrTeams, NrRounds, k, inst, CostMatrix01, CostMatrixType::ZeroOne);
 
                 int UB = 100;
                 vector<vector<vector<int>>>CostMatrix0100 = GenerateUniformRangeCostMatrix(NrTeams,NrRounds,seed,A,UB); 
                 StoreCostMatrix(NrTeams, NrRounds, k, inst, CostMatrix0100, CostMatrixType::ZeroHundred);
 
                 UB = NrTeams*NrTeams;
-                vector<vector<vector<int>>>CostMatrixUthus = GenerateUniformRangeCostMatrix(NrTeams,NrRounds,seed,A,UB); 
-                StoreCostMatrix(NrTeams, NrRounds, k, inst, CostMatrixUthus, CostMatrixType::Uthus);
+                // vector<vector<vector<int>>>CostMatrixUthus = GenerateUniformRangeCostMatrix(NrTeams,NrRounds,seed,A,UB); 
+                // StoreCostMatrix(NrTeams, NrRounds, k, inst, CostMatrixUthus, CostMatrixType::Uthus);
             }
         }
     }

@@ -20,4 +20,4 @@ TL=$8
 cd $PBS_O_WORKDIR
 
 echo "run" 0 $seed $heuristic $MiNCostNB $HL $NrTeams $k $i $TL
-./irr 0 $seed $heuristic $MiNCostNB $HL $NrTeams $k $i $TL
+./irr --seed $seed --Heuristic $heuristic --MinCostNB $MiNCostNB --HistoryLength $HL --NrTeams $NrTeams --k $k --i $i --TL $TL
