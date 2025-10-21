@@ -39,7 +39,7 @@ unordered_map<move_name_CM, double> WeightsMap(const unordered_map<string, doubl
     return Weights;
 }
 
-void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int HistoryLength, const int TimeLimit, vector<int>& TimeStamps, const string Instance, const unordered_map<string, double>& InputWeights){
+void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int HistoryLength, const int TimeLimit, const int MaxIt, vector<int>& TimeStamps, const string Instance, const unordered_map<string, double>& InputWeights){
     // Find initial solution with Vizing
     Solution sol(in);
     cout << "Solve Vizing" << endl;
@@ -51,6 +51,7 @@ void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int H
     unordered_map<move_name_CM, double>Weights = WeightsMap(InputWeights);
     Heuristic_CM algo(Moves, Weights, gen, HistoryLength, obj, MinCostNB);
     algo.setTimeLimit_meta(TimeLimit);
+    algo.SetMaxIt(MaxIt);
     algo.SetTimeStamps(TimeStamps);
     algo.solve(in, sol);
     string FilePath = "Instances" + std::string(PATHSEP) + "CostMinimization" + std::string(PATHSEP) + "Karel" + std::string(PATHSEP) + "0_100" + std::string(PATHSEP) + "Results" + std::string(PATHSEP) + "Heuristic" + std::string(PATHSEP);
@@ -89,9 +90,15 @@ void SolveIP(Input& in, const int seed, const int TimeLimit, vector<int>& TimeSt
     return;
 }
 
-void TestCostMinimization(const int seed, const string Instance, const bool Heuristic, const bool MinCostNB, const int HistoryLength, const int TimeLimit, const unordered_map<string, double>& InputWeights){
+void TestCostMinimization(const int seed, const string Instance, const bool Heuristic, const bool MinCostNB, const int HistoryLength, const int TimeLimit, const int MaxIt, const unordered_map<string, double>& InputWeights){
 
-    vector<int>TimeStamps = {30, 60, 120, 300, 600, 1800, 3600, 7200, 14400, 28800};
+    vector<int>TimeStamps;
+    int TimeStamp = 30;
+    int Incrementor = 30;
+    while (TimeStamp <= TimeLimit){
+        TimeStamps.push_back(TimeStamp);
+        TimeStamp += Incrementor;
+    }
 
     const string FilePath = "Instances" + std::string(PATHSEP) + "CostMinimization" + std::string(PATHSEP) + "Karel" + std::string(PATHSEP) + "0_100" + std::string(PATHSEP) + Instance + ".txt";
 
@@ -104,7 +111,7 @@ void TestCostMinimization(const int seed, const string Instance, const bool Heur
     in.SRR = true;
     
     if (Heuristic){
-        SolveHeuristic(in, seed, MinCostNB, HistoryLength, TimeLimit, TimeStamps, Instance, InputWeights);
+        SolveHeuristic(in, seed, MinCostNB, HistoryLength, TimeLimit, MaxIt, TimeStamps, Instance, InputWeights);
     }
     else{
         SolveIP(in,seed,TimeLimit,TimeStamps, Instance);
