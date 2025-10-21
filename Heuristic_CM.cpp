@@ -300,7 +300,7 @@ void Heuristic_CM::Move(Solution& sol){
     CurrentMove = iterator->second;
     auto beg = std::chrono::high_resolution_clock::now();
 #ifndef NDEBUG
-    cout << "Select " << Moves.at(CurrentMove) << endl; 
+    // cout << "Select " << Moves.at(CurrentMove) << endl; 
 #endif
     if (CurrentMove == move_name_CM::TS){
         SelectTS_CM(sol);

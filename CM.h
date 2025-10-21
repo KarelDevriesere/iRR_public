@@ -10,7 +10,36 @@
 
 namespace fs = std::filesystem;
 
-void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int HistoryLength, const int TimeLimit, vector<int>& TimeStamps, const string Instance){
+unordered_map<move_name_CM, double> WeightsMap(const unordered_map<string, double>& InputWeights){
+    // Weights: see Heuristic_CM.h
+    unordered_map<move_name_CM, double>Weights;
+    for (const auto& [move, weight]: InputWeights){
+        if (move == "TS" && weight > 0.0){
+            Weights[move_name_CM::TS] = weight;
+        }
+        else if (move == "PTS" && weight > 0.0){
+            Weights[move_name_CM::PTS] = weight;
+        }
+        else if (move == "RS" && weight > 0.0){
+            Weights[move_name_CM::RS] = weight;
+        }
+        else if (move == "PRS" && weight > 0.0){
+            Weights[move_name_CM::PRS] = weight;
+        }
+        else if (move == "M" && weight > 0.0){
+            Weights[move_name_CM::M] = weight;
+        }
+        else if (move == "BM" && weight > 0.0){
+            Weights[move_name_CM::BM] = weight;
+        }
+        else if (move == "C" && weight > 0.0){
+            Weights[move_name_CM::C] = weight;
+        }
+    }
+    return Weights;
+}
+
+void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int HistoryLength, const int TimeLimit, vector<int>& TimeStamps, const string Instance, const unordered_map<string, double>& InputWeights){
     // Find initial solution with Vizing
     Solution sol(in);
     cout << "Solve Vizing" << endl;
@@ -19,6 +48,7 @@ void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int H
     const int obj = sol.ComputeCostGeneralMatrix();
     cout << "Cost initial solution = " << obj << endl;
     std::mt19937 gen(seed);
+    unordered_map<move_name_CM, double>Weights = WeightsMap(InputWeights);
     Heuristic_CM algo(Moves, Weights, gen, HistoryLength, obj, MinCostNB);
     algo.setTimeLimit_meta(TimeLimit);
     algo.SetTimeStamps(TimeStamps);
@@ -59,7 +89,7 @@ void SolveIP(Input& in, const int seed, const int TimeLimit, vector<int>& TimeSt
     return;
 }
 
-void TestCostMinimization(const int seed, const string Instance, const bool Heuristic, const bool MinCostNB, const int HistoryLength, const int TimeLimit){
+void TestCostMinimization(const int seed, const string Instance, const bool Heuristic, const bool MinCostNB, const int HistoryLength, const int TimeLimit, const unordered_map<string, double>& InputWeights){
 
     vector<int>TimeStamps = {30, 60, 120, 300, 600, 1800, 3600, 7200, 14400, 28800};
 
@@ -74,7 +104,7 @@ void TestCostMinimization(const int seed, const string Instance, const bool Heur
     in.SRR = true;
     
     if (Heuristic){
-        SolveHeuristic(in, seed, MinCostNB, HistoryLength, TimeLimit, TimeStamps, Instance);
+        SolveHeuristic(in, seed, MinCostNB, HistoryLength, TimeLimit, TimeStamps, Instance, InputWeights);
     }
     else{
         SolveIP(in,seed,TimeLimit,TimeStamps, Instance);

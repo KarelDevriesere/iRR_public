@@ -13,7 +13,6 @@ using namespace std;
 enum class move_name_CM{TS, PTS, RS, PRS, M, BM, C, NC, Initial}; 
 const unordered_map<move_name_CM, string>Moves = {{move_name_CM::TS, "TS"}, {move_name_CM::PTS, "PTS"}, {move_name_CM::RS, "RS"}, {move_name_CM::PRS, "PRS"}, {move_name_CM::M, "M"}, {move_name_CM::BM, "BM"}, {move_name_CM::C, "C"}}; 
 // Cycle gives problems!!
-const unordered_map<move_name_CM, double>Weights = {{move_name_CM::TS, 1.0/Moves.size()}, {move_name_CM::PTS, 1.0/Moves.size()}, {move_name_CM::RS, 1.0/Moves.size()}, {move_name_CM::PRS, 1.0/Moves.size()},{move_name_CM::M, 1.0/Moves.size()}, {move_name_CM::BM, 1.0/Moves.size()}, {move_name_CM::C, 1.0/Moves.size()}};
 
 class Heuristic_CM: public LAHC<move_name_CM>
 {
