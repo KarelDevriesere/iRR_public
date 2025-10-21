@@ -15,8 +15,9 @@ i=$4
 heuristic=$5
 MinCostNB=$6
 HL=$7
+TL=$8
 
 cd $PBS_O_WORKDIR
 
-echo "run" 0 $seed $heuristic $MiNCostNB $HL $NrTeams $k $i
-./irr 0 $seed $heuristic $MiNCostNB $HL $NrTeams $k $i
+echo "run" 0 $seed $heuristic $MiNCostNB $HL $NrTeams $k $i $TL
+./irr 0 $seed $heuristic $MiNCostNB $HL $NrTeams $k $i $TL
