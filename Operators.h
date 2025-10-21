@@ -21,8 +21,14 @@
 #include <boost/graph/properties.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/bellman_ford_shortest_paths.hpp>
-#include <boost/graph/maximum_weighted_matching.hpp>
+
+// TODO Overwrite maximum weighted matching with the newest boost file.
+// See https://github.com/boostorg/graph/issues/399
+//#include <boost/graph/maximum_weighted_matching.hpp>
+#include <maximum_weighted_matching.hpp>
 // #include <boost/graph/max_cardinality_matchinsol.hpp>
+
+
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
 #include <boost/graph/graphviz.hpp> // for the dot file
