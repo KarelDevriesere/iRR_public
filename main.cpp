@@ -61,15 +61,18 @@ int main(int argc, const char* argv[]){
             }
             else if (arg == "--NrTeams"){
                 NrTeams = std::stoi(argv[++i]);
-                if (NrTeams != 36 && NrTeams != 100){
-                    std::cerr << "NrTeams must be 36 or 100" << endl;
+                if (NrTeams != 36 && NrTeams != 100 && NrTeams != 250){
+                    std::cerr << "NrTeams must be 36 or 100 or 250" << endl;
                     return 1;
                 }
                 if (NrTeams == 36){
                     NrRounds = 8;
                 }
-                else{
+                else if (NrTeams == 100){
                     NrRounds = 16;
+                }
+                else{
+                    NrRounds = 30;
                 }
             }
             else if (arg == "--k"){
@@ -157,7 +160,7 @@ int main(int argc, const char* argv[]){
                 }
             }
             else if (arg == "--help"){
-                cout << "Usage: " << argv[0] << "--Seed <int> --Heuristic <0/1> -- MinCostNB <0/1> --HistoryLength <+int> --NrTeams <36/100> --k <0/1/5/10> --i <0/1/2/3/4> --TL <+int> --MaxIt <+int> --TSw <[0,1]> --PTSw <[0,1]> --RSw <[0,1]> --PRSw <[0,1]> --Mw <[0,1]> --BMw <[0,1]> --Cw <[0,1]>" << endl;
+                cout << "Usage: " << argv[0] << "--Seed <int> --Heuristic <0/1> -- MinCostNB <0/1> --HistoryLength <+int> --NrTeams <36/100> --k <0/1/5/10> --i <0/1/2/3/4> --TimeLimit <+int> --MaxIt <+int> --TSw <[0,1]> --PTSw <[0,1]> --RSw <[0,1]> --PRSw <[0,1]> --Mw <[0,1]> --BMw <[0,1]> --Cw <[0,1]>" << endl;
                 return 1;
             }
             else {
