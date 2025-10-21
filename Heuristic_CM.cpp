@@ -230,6 +230,7 @@ void Heuristic_CM::SelectMatching_CM(Solution& sol, const bool bipartite){
     
     int delta;
     for (auto& AlternatingCycle: AlternatingCycles){
+        // cout << "AlternatingCycle found!!" << endl;
         // a_cycle contains only initially uncoloured edges!!!
 #ifndef NDEBUG
         int cost_before = sol.ComputeCostGeneralMatrix();

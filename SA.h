@@ -135,7 +135,7 @@ class MetaBase{ // Everything that can be used for all metaheuristics
             assert(best_obj <= current_obj);
             if (obj < best_obj){
                 best_obj = obj;
-                // cout << "best obj = " << best_obj << endl;
+                cout << "NEW BEST SOLUTION = " << best_obj << endl;
                 NrImprovBestObj.at(CurrentMove)++;
                 UpdateBestSolution(sol); // We need to store the best solution somewhere
                 TimeTillBestSolution = (int)getTimeDiff();
@@ -169,7 +169,6 @@ class MetaBase{ // Everything that can be used for all metaheuristics
 
         void print_solution(){
             if (current_obj <= best_obj){
-                // best_obj = current_obj;  is set somewhere else
                 std::cout << Moves.at(CurrentMove) << ": " << "\033[32m" << current_obj << "\033[0m" << std::endl;
             }
             else{

@@ -1310,6 +1310,16 @@ vector<vector<pair<int,int>>> CreateAlternatingCycles(Solution& sol, const vecto
             }
         }
     }
+#ifndef NDEBUG
+    if (AlternatingCycles.empty()){
+        for (int t = 0; t < OpponentMatching.size(); ++t){
+            if (sol.TeamColorOpp[t][r] != OpponentMatching[t]){
+                cout << "new matching but no alternating cycle?" << endl;
+                cin.get();
+            }
+        }
+    }
+#endif
     return AlternatingCycles;
 }
 
