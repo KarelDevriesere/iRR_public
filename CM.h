@@ -45,7 +45,7 @@ void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int H
     cout << "Solve Vizing" << endl;
     VizingConstruction(sol, seed);
     assert(sol.validate());
-    const int obj = sol.ComputeCostGeneralMatrix();
+    const int obj = sol.ComputeTotalCost();
     cout << "Cost initial solution = " << obj << endl;
     std::mt19937 gen(seed);
     unordered_map<move_name_CM, double>Weights = WeightsMap(InputWeights);
@@ -65,7 +65,7 @@ void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int H
     const string config = to_string(seed) + ",Heuristic," + to_string(MinCostNB) + "," + to_string(HistoryLength);
     algo.SaveSolutionsTimeStamps(FilePath, config);
     assert(sol.validate());
-    cout << "Final solution = " << sol.ComputeCostGeneralMatrix() << endl;
+    cout << "Final solution = " << sol.ComputeTotalCost() << endl;
     return;
 }
 
@@ -74,10 +74,14 @@ void SolveIP(Input& in, const int seed, const int TimeLimit, vector<int>& TimeSt
     Solution sol(in);
     bool HA = true;
     bool relax_x = false;
-    gur.build_base(HA, relax_x);
-    // gur.build_HAP_constraints();
-    gur.AddObjGeneralCosts();
-    // gur.AddObjMinBreaks();
+    if (in.getSetting() == Setting::CM){
+        gur.build_base(HA, relax_x);
+        gur.AddObjGeneralCosts();
+    }
+    else{
+        assert(in.getSetting() == Setting::TTP);
+        gur.iTTP();
+    }
     gur.setTimeLimit(TimeLimit);
     gur.SetTimeStamps(TimeStamps);
     gur.solve();
@@ -86,12 +90,12 @@ void SolveIP(Input& in, const int seed, const int TimeLimit, vector<int>& TimeSt
     gur.SaveSolutionsTimeStamps(FilePath, config);
     gur.SaveSolution(sol);
     sol.validate();
-    cout << "Final solution = " << sol.ComputeCostGeneralMatrix() << endl;
+    cout << "Final solution = " << sol.ComputeTotalCost() << endl;
     // cin.get();
     return;
 }
 
-void TestCostMinimization(const int seed, const string Instance, const bool CM, const bool TTP, const bool Heuristic, const bool MinCostNB, const int HistoryLength, const int TimeLimit, const int MaxIt, const unordered_map<string, double>& InputWeights){
+void TestCostMinimization(const int seed, const string Instance, const bool CM, const bool TTP, const bool Heuristic, const bool MinCostNB, const int HistoryLength, const int TimeLimit, const int MaxIt, const unordered_map<string, double>& InputWeights, const int NrRoundsTTP){
 
     vector<int>TimeStamps;
     int TimeStamp = 0;
@@ -114,8 +118,12 @@ void TestCostMinimization(const int seed, const string Instance, const bool CM, 
     cout << "FilePath: " << FilePath << endl;
 
     Input in;
-    if (!in.read_CostMinimization(FilePath, InstanceSetCM::Karel)){
+    if (CM && !in.read_CostMinimization(FilePath, InstanceSetCM::Karel)){
         cout << "Could not read " << FilePath << endl;
+        return;
+    }
+    else if (TTP && !in.read_TTP(FilePath, NrRoundsTTP)){
+        cout << "could not read " << FilePath << endl;
         return;
     }
     in.setHAP_requirements(false, false, false, true, in.getNrRounds());

@@ -43,11 +43,13 @@ void Input::SetDefault(const int NrTeams){
     IsTeamDummy = vector<bool>(NrTeams, false);
 }
 
-int Input::read_TTP(const std::string file_path){
+int Input::read_TTP(const std::string file_path, const int nrRounds){
+    Setting_ = Setting::TTP;
     cout << "Read TTP files" << endl;
     file<> xmlFile(file_path.c_str()); // replace with your file path
     xml_document<> doc;
     doc.parse<0>(xmlFile.data());
+    NrRounds = nrRounds;
 
     // Get root node <Instance>
     xml_node<> *root = doc.first_node("Instance");
@@ -63,10 +65,20 @@ int Input::read_TTP(const std::string file_path){
         std::string dataType = meta->first_node("DataType")->value();
         std::string contributor = meta->first_node("Contributor")->value();
 
+        int day = 0;
+        int month = 0;
+        int year = 0;
+
         xml_node<> *dateNode = meta->first_node("Date");
-        int day = std::stoi(dateNode->first_attribute("day")->value());
-        int month = std::stoi(dateNode->first_attribute("month")->value());
-        int year = std::stoi(dateNode->first_attribute("year")->value());
+        if (auto* dayAttr = dateNode->first_attribute("day")) {
+            day = std::stoi(dayAttr->value());
+        }
+        if (auto* monthAttr = dateNode->first_attribute("month")) {
+            month = std::stoi(monthAttr->value());
+        }
+        if (auto* yearAttr = dateNode->first_attribute("year")) {
+            year = std::stoi(yearAttr->value());
+        }
 
         std::cout << "Instance: " << instanceName << ", Type: " << dataType
                   << ", Contributor: " << contributor << std::endl;
@@ -74,29 +86,41 @@ int Input::read_TTP(const std::string file_path){
     }
 
     // ---- Read Teams ----
-    int NrTeams = 0;
+    NrTeams = 0;
     xml_node<> *teamsNode = root->first_node("Resources")->first_node("Teams");
     if (teamsNode) {
         for (xml_node<> *team = teamsNode->first_node("team"); team; team = team->next_sibling("team")) {
             int id = std::stoi(team->first_attribute("id")->value());
-            std::string name = team->first_attribute("name")->value();
+            // std::string name = team->first_attribute("name")->value();
             int league = std::stoi(team->first_attribute("league")->value());
-            std::cout << "Team " << id << ": " << name << " (League " << league << ")" << std::endl;
+            // std::cout << "Team " << id << ": " << name << " (League " << league << ")" << std::endl;
             NrTeams++;
         }
     }
 
     // ---- Read Distances ----
+    MaxEdgeCost = 0;
     DistanceClubs = vector<vector<int>>(NrTeams, vector<int>(NrTeams, 0));
+    CostMatchRound = vector<vector<vector<int>>>(NrTeams,vector<vector<int>>(NrTeams,vector<int>(NrRounds, 0)));
     xml_node<> *distancesNode = root->first_node("Data")->first_node("Distances");
     if (distancesNode) {
         for (xml_node<> *dist = distancesNode->first_node("distance"); dist; dist = dist->next_sibling("distance")) {
             int t1 = std::stoi(dist->first_attribute("team1")->value());
             int t2 = std::stoi(dist->first_attribute("team2")->value());
             DistanceClubs[t1][t2] = std::stoi(dist->first_attribute("dist")->value());
-            std::cout << "Distance between team " << t1 << " and " << t2 << " = " << DistanceClubs[t1][t2] << std::endl;
+            // std::cout << "Distance between team " << t1 << " and " << t2 << " = " << DistanceClubs[t1][t2] << std::endl;
+            if (MaxEdgeCost < DistanceClubs[t1][t2]){
+                MaxEdgeCost = DistanceClubs[t1][t2];
+            }
+            for (int r = 0; r < NrRounds; ++r){
+                CostMatchRound[t1][t2][r] = DistanceClubs[t1][t2];
+                CostMatchRound[t2][t1][r] = DistanceClubs[t1][t2];
+            }
         }
     }
+    CostTTPViolation = MaxEdgeCost*(NrTeams/2)*NrRounds+1;
+
+    cout << "NrTeams = " << NrTeams << ", NrRounds =  " << NrRounds  << endl;
 
     SetDefault(NrTeams);
 
@@ -104,6 +128,7 @@ int Input::read_TTP(const std::string file_path){
 }
 
 int Input::read_CostMinimization(const std::string file_path, InstanceSetCM inst){
+    Setting_ = Setting::CM;
     cout << "This function is intended ONLY for cost minimization!!" << endl;
 
     std::ifstream file(file_path);
@@ -317,6 +342,13 @@ void Input::setAllowedNrCapacityViolations(){
 int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
 
     cout << "This function is intended ONLY for Hockey and Miao instances!!" << endl;
+
+    if (Miao){
+        Setting_ = Setting::Miao;
+    }
+    else{
+        Setting_ = Setting::Hockey;
+    }
 
     std::ifstream file(file_path);
     if (!file.is_open()) {
@@ -606,6 +638,17 @@ int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
 
     // set Maximum cost of an edge )> for maximum weight matching
     MaxEdgeCost = MaxDistanceClubs;
+
+    // In Matching: always use CostMatchRound from now on!!
+    CostMatchRound = vector<vector<vector<int>>>(NrTeams,vector<vector<int>>(NrTeams,vector<int>(NrRounds, 0)));
+    for (int r = 0; r < NrRounds; ++r){
+        for (int i = 0; i < NrTeams; ++i){
+            for (int j = i; j < NrTeams; ++j){
+                CostMatchRound[i][j][r] = getDistanceTeams(i,j);
+                CostMatchRound[j][i][r] = getDistanceTeams(i,j);
+            }
+        }
+    }
 
     // ++NrClubs;
     /*

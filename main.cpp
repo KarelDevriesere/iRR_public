@@ -28,7 +28,7 @@ int main(int argc, const char* argv[]){
 
         int seed = 0;
         bool Heuristic = 1;
-        bool MinCostNB = 1;
+        bool MinCostNB = 0;
         int HistoryLength = 1;
         int NrTeams = 36;
         int NrRounds = 8;
@@ -105,6 +105,8 @@ int main(int argc, const char* argv[]){
                 else{
                     NrRounds = 30;
                 }
+                CM = true;
+                TTP = false;
             }
             else if (arg == "--k"){ // CM
                 k = std::stoi(argv[++i]);
@@ -112,6 +114,8 @@ int main(int argc, const char* argv[]){
                     std::cerr << "k must be 0, 1, 5 or 10!" << endl;
                     return 1;
                 }
+                CM = true;
+                TTP = false;
             }
             else if (arg == "--i"){ // CM
                 inst = std::stoi(argv[++i]);
@@ -119,6 +123,8 @@ int main(int argc, const char* argv[]){
                     std::cerr << "i must be 0,1,2,3 or 4" << endl;
                     return 1;
                 }
+                CM = true;
+                TTP = false;
             }
             else if (arg == "--InstanceTTP"){ // TTP
                 Instance = argv[++i];
@@ -126,7 +132,8 @@ int main(int argc, const char* argv[]){
                     std::cerr << "Incorrect TTP instance name" << endl;
                     return 1;
                 }
-                Instance += ".xml";
+                TTP = true;
+                CM = false;
             }
             else if (arg == "--NrRounds"){ // TTP
                 NrRounds = std::stoi(argv[++i]);
@@ -134,6 +141,8 @@ int main(int argc, const char* argv[]){
                     std::cerr << "NrRounds must be strictly positive!" << endl;
                     return 1;
                 }
+                TTP = true;
+                CM = false;
             }
             else if (arg == "--TimeLimit"){
                 TL = std::stoi(argv[++i]);
@@ -217,6 +226,11 @@ int main(int argc, const char* argv[]){
             }
         }
 
+        if (CM == true && TTP == true){
+            cout << "Choose either CM or TTP!!" << endl;
+            return 1;
+        }
+
         double sum = 0;
         cout << "------ Weights ------" << endl;
         bool NoMoveSeen = true;
@@ -247,7 +261,7 @@ int main(int argc, const char* argv[]){
         if (CM){
             Instance = to_string(NrTeams) + "_" + to_string(NrRounds) + "_" + "k" + to_string(k) + "_" + to_string(inst);
         }
-        TestCostMinimization(seed, Instance, CM, TTP, Heuristic, MinCostNB, HistoryLength, TL, MaxIt, InputWeights);
+        TestCostMinimization(seed, Instance, CM, TTP, Heuristic, MinCostNB, HistoryLength, TL, MaxIt, InputWeights, NrRounds);
         // GenerateCostMatrices(0);
         // cin.get();
     }

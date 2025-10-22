@@ -211,12 +211,15 @@ void build_single_league_withoutHA(){
 }
 
 void GurSolver::build_base(const bool HA, const bool relax_x){
+
 	assert(getNrTeams() % 2 == 0);
 	assert(getNrTeams()-1 >= getNrRounds());
 
 	int i,j,r;
 
 	x = vector<vector<vector<GRBVar>>>(getNrTeams(), vector<vector<GRBVar>>(getNrTeams(), vector<GRBVar>(getNrRounds())));
+
+	// cout << "x" << endl;
 
 	for (i = 0; i < getNrTeams(); ++i){
 		for (j = 0; j < getNrTeams(); ++j){
@@ -235,6 +238,8 @@ void GurSolver::build_base(const bool HA, const bool relax_x){
 		   // }
 		}
    }
+
+   // cout << "c1" << endl;
 
    for (i = 0; i < getNrTeams(); ++i){
 		for (j = 0; j < getNrTeams(); ++j){
@@ -272,6 +277,8 @@ void GurSolver::build_base(const bool HA, const bool relax_x){
 		}
    }
 
+    // cout << "c3" << endl;
+
     if (!SRR){
 		array<pair<int,int>,2>Range = {{{0, getNrRounds()/2}, {getNrRounds()/2, getNrRounds()}}};
 		for (i = 0; i < getNrTeams(); ++i){
@@ -295,6 +302,8 @@ void GurSolver::build_base(const bool HA, const bool relax_x){
 		return;
 	}
 
+	// cout << "c4" << endl;
+
 	assert(getNrRounds() % 2 == 0);
 
 	int nrH = getNrRounds() / 2;
@@ -303,7 +312,7 @@ void GurSolver::build_base(const bool HA, const bool relax_x){
 		GRBLinExpr sum_jr_H = 0;
 		// GRBLinExpr sum_jr_A = 0;
 		for (j = 0; j < getNrTeams(); ++j){
-			if (isEligible(i, j)){
+			if (/*isEligible(i, j)*/ true){
 				for (r = 0; r < getNrRounds(); ++r){
 					sum_jr_H += x[i][j][r];
 					// sum_jr_A += x[j][i][r];
@@ -313,6 +322,8 @@ void GurSolver::build_base(const bool HA, const bool relax_x){
 		model.addConstr(sum_jr_H == nrH, "c_3H");
 		// model.addConstr(sum_jr_A == nrA, "c_3A");
 	}
+
+	// cout << "base done" << endl;
 }
 
 void GurSolver::build_league(const bool HA, const bool relax_x){

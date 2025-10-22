@@ -45,6 +45,7 @@ class Solution: public Input{
         bool IsMatchFeasible2RR(const int h, const int a, const int r);
 
         int ComputeTotalCost();
+        int ComputeTotalCostMiaoHockey();
         int ComputeTotalHACost();
         int ComputeCapacityClubRound(const int c, const int r);
         int ComputeCostCapacities();

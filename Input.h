@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <assert.h>
 
+enum class Setting{Miao,Hockey,CM,TTP};
 enum class InstanceSetCM{Karel, Jasper, Uthus}; // Instances Cost Minimization
 enum class HAP_requirement_name{NoThreeConsecutive, NoBreakBeginningEnd, BreakLimit, QuarterBalanced};
 enum class MiaoInstance{S, U13, U15, U17, U21, M, Tiny}; // Instances paper Miao
@@ -60,11 +61,13 @@ class Input
         vector<vector<vector<int>>>CostMatchRound;
 
         int CostTTPViolation = 0;
+
+        Setting Setting_;
         
     public:
         Input();
         ~Input();
-        int read_TTP(const std::string file_path);
+        int read_TTP(const std::string file_path, const int nrRounds);
         int read_CostMinimization(const string file_path, InstanceSetCM inst);
         int read_CostMinimizationJasper(const string file_path);
         int read_Miao_Hockey(const string file_path, const bool Miao);
@@ -130,6 +133,8 @@ class Input
         void setHAPIndexTeam(const int i, const int h){TeamsHAP[i] = h;};
         int getHAPIndexTeam(const int i)const{return TeamsHAP[i];};
         int getComplementIndexHAP(const int h)const{return ComplementHAP[h];};
+
+        Setting getSetting()const{return Setting_;};
 
         MiaoInstance getMiaoInstance();
 

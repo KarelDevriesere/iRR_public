@@ -440,7 +440,7 @@ int Solution::ComputeTotalHACost(){
     return cost;
 }
 
-int Solution::ComputeTotalCost(){
+int Solution::ComputeTotalCostMiaoHockey(){
     // cout << "Compute total cost" << endl;
     int travel_cost = ComputeTravelCost();
     // cout << "Travel cost = " << travel_cost << endl;
@@ -483,7 +483,7 @@ int Solution::ComputeTTPViolations(const int i){
             nrA++;
             nrH = 0;
         }
-        if (nrH > 3 || nrH > 3){
+        if (nrH > 3 || nrA > 3){
             nrV++;
         }
     }
@@ -509,6 +509,22 @@ int Solution::ComputeCostGeneralMatrix(){
         }
     }
     return cost;
+}
+
+int Solution::ComputeTotalCost(){
+    if (getSetting() == Setting::TTP){
+        return ComputeTotalCostTTP();
+    }
+    else if (getSetting() == Setting::CM){
+        return ComputeCostGeneralMatrix();
+    }
+    else if (getSetting() == Setting::Miao || getSetting() == Setting::Hockey){
+        return ComputeTotalCostMiaoHockey();
+    }
+    else{
+        std::cerr << "Unknown setting" << std::endl;
+        return -1;
+    }
 }
 
 bool Solution::validate(){

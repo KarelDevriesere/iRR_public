@@ -130,7 +130,7 @@ class GurSolver : public Input
             for (auto&[TimeStamp, Solution]: TimeStampSolutionOuter){
                 output_file << TimeStamp << "," << Solution << "\n";
             }
-            output_file << "Final, " << getBestObjValue() << "\n" << endl;
+            output_file << "Final, " << getBestObjValue() << "," << getBestBound() << "\n" << endl;
             output_file.close();
         }
 };

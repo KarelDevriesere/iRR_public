@@ -52,18 +52,18 @@ void Heuristic_CM::SelectTS_CM(Solution& sol){ // use TS for perturbation move!!
     int i = pair.first, j = pair.second; 
     int cost_before;
 #ifndef NDEBUG
-        cost_before = sol.ComputeCostGeneralMatrix();
+        cost_before = sol.ComputeTotalCost();
 #endif
     TS(sol, i, j);
     assert(sol.IsTeamBalanced(i));
     assert(sol.IsTeamBalanced(j));
-    if (!Update(sol, sol.ComputeCostGeneralMatrix())){
+    if (!Update(sol, sol.ComputeTotalCost())){
         // ResetOrientations(sol, OrientationsCopy); // can be outcommented when not repairing haps in veto_haps() // TODO not efficient
         // ResetMatchColorCopy(sol, MatchColorCopy); // can be outcommented when not repairing haps in veto_haps()
         // ResetTeamColorOpp(sol, TeamColorOppCopy); // can be outcommented when not repairing haps in veto_haps()
         TS(sol, i, j); // put puck when other things are outcommented to go back to original
 #ifndef NDEBUG
-        assert(sol.ComputeCostGeneralMatrix() == cost_before);
+        assert(sol.ComputeTotalCost() == cost_before);
 #endif
     }
     else{
@@ -98,7 +98,7 @@ void Heuristic_CM::SelectPTS_CM(Solution& sol){
     // cout << "i : " << i << " and j = " << j << endl;
 
 #ifndef NDEBUG
-    int cost_before = sol.ComputeCostGeneralMatrix();
+    int cost_before = sol.ComputeTotalCost();
 #endif
 
     // int cost_before = current_obj;
@@ -128,13 +128,13 @@ void Heuristic_CM::SelectPTS_CM(Solution& sol){
         assert(sol.IsTeamBalanced(i));
     }
 #endif
-    if (!Update(sol, sol.ComputeCostGeneralMatrix())){
+    if (!Update(sol, sol.ComputeTotalCost())){
         // first, set back all orientations
         ResetOrientations_CM(sol, OrientationsCopy);
         // Then, swap back the colors
         SwapColorsLantarn(sol, lantarn);
 #ifndef NDEBUG
-        assert(sol.ComputeCostGeneralMatrix() == cost_before);
+        assert(sol.ComputeTotalCost() == cost_before);
 #endif
 
         /*
@@ -153,13 +153,13 @@ void Heuristic_CM::SelectRS_CM(Solution& sol){
     int r = pair.first, s = pair.second;
     int cost_before;
 #ifndef NDEBUG
-        cost_before = sol.ComputeCostGeneralMatrix();
+        cost_before = sol.ComputeTotalCost();
 #endif
     RS(sol, r, s);
-    if (!Update(sol, sol.ComputeCostGeneralMatrix())){
+    if (!Update(sol, sol.ComputeTotalCost())){
         RS(sol, r, s); // should be put back if other things are outcommented for going back to original
 #ifndef NDEBUG
-        assert(sol.ComputeCostGeneralMatrix() == cost_before);
+        assert(sol.ComputeTotalCost() == cost_before);
 #endif
     }
     return;
@@ -172,13 +172,13 @@ void Heuristic_CM::SelectPRS_CM(Solution& sol){
     const int StartNode = RandomIntegerNumber(0,sol.getNrTeams()-1);
     int cost_before;
 #ifndef NDEBUG
-        cost_before = sol.ComputeCostGeneralMatrix();
+        cost_before = sol.ComputeTotalCost();
 #endif
     PRS(sol, r, s, StartNode);
-    if (!Update(sol, sol.ComputeCostGeneralMatrix())){
+    if (!Update(sol, sol.ComputeTotalCost())){
         PRS(sol, r, s, StartNode); // should be put back if other things are outcommented for going back to original
 #ifndef NDEBUG
-        assert(sol.ComputeCostGeneralMatrix() == cost_before);
+        assert(sol.ComputeTotalCost() == cost_before);
 #endif
     }
     return;
@@ -233,7 +233,7 @@ void Heuristic_CM::SelectMatching_CM(Solution& sol, const bool bipartite){
         // cout << "AlternatingCycle found!!" << endl;
         // a_cycle contains only initially uncoloured edges!!!
 #ifndef NDEBUG
-        int cost_before = sol.ComputeCostGeneralMatrix();
+        int cost_before = sol.ComputeTotalCost();
 #endif
         delta = 0;  
         vector<vector<array<int,3>>>Paths = EvaluateAlternatingCycleWithPaths(sol, AlternatingCycle, r, bipartite, CM, delta, gen, MinCostP);
@@ -242,9 +242,11 @@ void Heuristic_CM::SelectMatching_CM(Solution& sol, const bool bipartite){
             assert(sol.IsTeamBalanced(i));
         }
         // cout << cost_before << "+" << delta << " == " << sol.ComputeCostGeneralMatrix() << endl;
-        assert(cost_before+delta == sol.ComputeCostGeneralMatrix());
+        if (sol.getSetting() == Setting::CM){
+            assert(cost_before+delta == sol.ComputeTotalCost());
+        }
 #endif
-        if (!Update(sol, current_obj+delta)){
+        if (!Update(sol, sol.ComputeTotalCost())){
             // reverse paths again
             /*
             IMPORTANT: first reverse the paths
@@ -257,7 +259,7 @@ void Heuristic_CM::SelectMatching_CM(Solution& sol, const bool bipartite){
             // take back the old matching
             GoBackToOldCycle(sol, AlternatingCycle, r);
 #ifndef NDEBUG
-            assert(cost_before == sol.ComputeCostGeneralMatrix());
+            assert(cost_before == sol.ComputeTotalCost());
 #endif
         }
     }
@@ -275,7 +277,7 @@ void Heuristic_CM::SelectBalancedCycle_CM(Solution& sol){
     }
     int cost_before;
 #ifndef NDEBUG
-    cost_before = sol.ComputeCostGeneralMatrix();
+    cost_before = sol.ComputeTotalCost();
 #endif
 
     assert(Cycle[0][0] == Cycle[(int)Cycle.size()-1][1]);
@@ -283,11 +285,11 @@ void Heuristic_CM::SelectBalancedCycle_CM(Solution& sol){
     ReversePath(sol, Cycle);
     // cout << "done" << endl;
 
-    if (!Update(sol, sol.ComputeCostGeneralMatrix())){
+    if (!Update(sol, sol.ComputeTotalCost())){
         // If not better: reverse the cycle again as if nothing happened
         ReversePath(sol, Cycle);
 #ifndef NDEBUG
-        assert(sol.ComputeCostGeneralMatrix() == cost_before);
+        assert(sol.ComputeTotalCost() == cost_before);
 #endif
     }
     return;
@@ -319,15 +321,11 @@ void Heuristic_CM::Move(Solution& sol){
         // Ik weet niet of dit heel goed werkt.. lijkt enkel te werken als je random matchings neemt 
         // en niet enkel de beste qua travel distance
         // Komt misschien ook omdat teveel paden moeten reversed worden!!
-        const bool MinCostM = true;
-        const bool MinCostP = true;
         bipartite = false;
         SelectMatching_CM(sol, bipartite);
     }
     else if (CurrentMove == move_name_CM::BM){
         bipartite = true;
-        const bool MinCostM = true;
-        const bool MinCostP = true;
         SelectMatching_CM(sol, bipartite);
     }
     else{
@@ -345,7 +343,7 @@ void Heuristic_CM::solve(Input& in, Solution& sol){
     cout << "start solve" << endl;
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
     setStartTime(start_time);
-    best_obj = sol.ComputeCostGeneralMatrix();
+    best_obj = sol.ComputeTotalCost();
     current_obj = best_obj;
     UpdateBestSolution(sol);
     cout << "updated best solution" << endl;

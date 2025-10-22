@@ -43,6 +43,13 @@ message(STATUS "Gurobi Include Dir: ${GUROBI_INCLUDE_DIRS}")
 message(STATUS "Gurobi Library: ${GUROBI_LIBRARY}")
 message(STATUS "Gurobi CXX Library: ${GUROBI_CXX_LIBRARY}")
 
+# RapidXML -> add after executable test is made
+# header only so this is the only thing we need
+# target_include_directories(test PRIVATE "C:/rapidxml_1_13")
+
+set(RAPIDXML_DIR "${CMAKE_SOURCE_DIR}/rapidxml")
+target_include_directories(test PRIVATE ${RAPIDXML_DIR})
+
 # to compile in debug mode:
 # cmake --build build --config Debug
 # .\build\Debug\test.exe
