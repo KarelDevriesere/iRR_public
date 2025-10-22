@@ -41,6 +41,82 @@ void GurSolver::WarmStart(Solution& sol){
 	}
 }
 
+pair<vector<vector<int>>,vector<int>>GurSolver::GenerateTrips(const int t, const vector<int>& TeamsList){
+	const int N = getNrTeams();
+	vector<vector<vector<int>>>TripleSeen(N, vector<vector<int>>(N, vector<int>(N, false)));
+	vector<vector<int>>Trips;
+	vector<int>CostTrips;
+	int i,j,k,dist; 
+	for (i = 0; i < N-1; ++i) {
+        for (j = i+1; j < N-1; ++j) {
+            for (k = 0; k < N-1; ++k) {
+                if (k == i || k == j){
+					continue;
+				}
+				Trips.push_back({TeamsList[i], TeamsList[k], TeamsList[j]});
+				dist = getDistanceTeams(t,TeamsList[i]) + getDistanceTeams(TeamsList[i],TeamsList[k]) + getDistanceTeams(TeamsList[k],TeamsList[j]) + getDistanceTeams(TeamsList[j],t);
+				CostTrips.push_back(dist);
+			}
+			Trips.push_back({TeamsList[i], TeamsList[j]});
+			dist = getDistanceTeams(t,TeamsList[i]) + getDistanceTeams(TeamsList[i],TeamsList[j]) + getDistanceTeams(TeamsList[j],t);
+			CostTrips.push_back(dist);
+        }
+		Trips.push_back({TeamsList[i]});
+		dist = 2*getDistanceTeams(t,TeamsList[i]);
+		CostTrips.push_back(dist);
+    }
+	assert(Trips.size() == (N-1) + ((N-1)*(N-2))/2 + ((N-1)*(N-2)*(N-3))/2);
+	return {Trips,CostTrips};
+}
+
+void GurSolver::BoundTTP(const int t){
+
+	const int N = getNrTeams();
+
+	vector<int>TeamsList(N-1);
+	int i,j,r;
+	for (i = 0, j = -1; i < N; ++i){
+		if (i != t){
+			TeamsList[++j] = i;
+		}
+	}
+
+	pair<vector<vector<int>>,vector<int>>Trips_CostTrips = GenerateTrips(t, TeamsList);
+	vector<vector<int>>Trips = Trips_CostTrips.first;
+	vector<int>CostTrips = Trips_CostTrips.second;
+	const int NrTrips = CostTrips.size();
+
+	vector<GRBVar>z_r = vector<GRBVar>(NrTrips);
+	for (r = 0; r < NrTrips; ++r){
+		z_r[r] = model.addVar(0, 1, 0.0, GRB_BINARY);
+	}
+
+	vector<GRBVar>y_i = vector<GRBVar>(NrTrips);
+	for (i = 0; i < N-1; ++i){
+		y_i[i] = model.addVar(0, 1, 0.0, GRB_BINARY);
+	}
+
+	GRBLinExpr sum_i = 0;
+	for (i = 0; i < N-1; ++i){
+		sum_i += y_i[i];
+		GRBLinExpr sum_r = 0;
+		for (r = 0; r < NrTrips; ++r){
+			auto it = std::find(Trips[r].begin(), Trips[r].end(), TeamsList[i]);
+			if (it != Trips[r].end()){
+				sum_r += z_r[r];
+			}
+		}
+		model.addConstr(sum_r == y_i[i]);
+	}
+	model.addConstr(sum_i == getNrRounds()/2);
+
+	Objective = 0;
+	for (r = 0; r < NrTrips; ++r){
+		Objective += CostTrips[r]*z_r[r];
+	}
+	model.setObjective(Objective, GRB_MINIMIZE);
+}
+
 void GurSolver::iTTP(){
 
 	if (getNrRounds() < 4){
@@ -126,7 +202,7 @@ void GurSolver::iTTP(){
 			GRBLinExpr sum_kj = 0;
 			for (int k = r; k < r+4; ++k){
 				for (j = 0; j < getNrTeams(); ++j){
-					if (t == k){
+					if (t == j){
 						continue;
 					}
 					sum_kj += x[j][t][k];

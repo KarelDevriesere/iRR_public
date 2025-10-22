@@ -64,6 +64,7 @@ class Solution: public Input{
         int ComputeTTPViolations(const int i);
         int ComputeTotalCostTTP();
         int ComputeTotalCostTTPViolations();
+        int ComputeTravelCostTTP();
 
         int ComputeCostGeneralMatrix();
 

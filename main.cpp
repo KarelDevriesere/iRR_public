@@ -15,15 +15,10 @@
 
 int main(int argc, const char* argv[]){
     int case_ = 0;
-    /*
-    const string FilePath = "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP) + "N16.xml";
-    Input in;
-    if (!in.read_TTP(FilePath)){
-        cout << "Could not read " << FilePath << endl;
-        return 0;
-    }
-    return 0;
-    */
+    
+    // BoundsTTP();
+    // return 1;
+
     if (case_ == 0){
 
         int seed = 0;
@@ -128,7 +123,8 @@ int main(int argc, const char* argv[]){
             }
             else if (arg == "--InstanceTTP"){ // TTP
                 Instance = argv[++i];
-                if (Instance != "BRA24" && Instance != "CIRC40" && Instance != "CON40" && Instance != "GAL40" && Instance != "INCR40" && Instance != "LINE40" && Instance != "N16" && Instance != "NFL32"){
+                auto it = std::find(InstancesTTP.begin(), InstancesTTP.end(), Instance);
+                if (it == InstancesTTP.end()){
                     std::cerr << "Incorrect TTP instance name" << endl;
                     return 1;
                 }

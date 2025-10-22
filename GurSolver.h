@@ -123,16 +123,17 @@ class GurSolver : public Input
             TimeStampsOuter = TS;
         }
 
-        void SaveSolutionsTimeStamps(const string FilePath, const string config){ // duplicate in SA.h
-            cout << "Save file as " << FilePath << endl;
-            std::ofstream output_file(FilePath);
-            output_file << config << "\n";
+        void SaveSolutionsTimeStamps(std::ofstream& output_file){ // duplicate in SA.h
+            output_file << "Time,Value \n";
             for (auto&[TimeStamp, Solution]: TimeStampSolutionOuter){
                 output_file << TimeStamp << "," << Solution << "\n";
             }
             output_file << "Final, " << getBestObjValue() << "," << getBestBound() << "\n" << endl;
-            output_file.close();
         }
+
+        // For TTP bounds:
+        pair<vector<vector<int>>,vector<int>>GenerateTrips(const int t, const vector<int>& TeamsList);
+        void BoundTTP(const int t);
 };
 
 #endif

@@ -8,6 +8,16 @@
 
 #include <filesystem>
 
+const vector<string>InstancesTTP = {"BRA24", "CIRC40", "CON40", "GAL40", "INCR40", "LINE40", "N16", "NFL32"};
+
+inline std::string FolderPathTTP() {
+    return "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP);
+}
+
+inline std::string FolderPathCM() {
+    return "Instances" + std::string(PATHSEP) + "CostMinimization" + std::string(PATHSEP) + "Karel" + std::string(PATHSEP) + "0_100" + std::string(PATHSEP); 
+}
+
 namespace fs = std::filesystem;
 
 unordered_map<move_name_CM, double> WeightsMap(const unordered_map<string, double>& InputWeights){
@@ -39,6 +49,26 @@ unordered_map<move_name_CM, double> WeightsMap(const unordered_map<string, doubl
     return Weights;
 }
 
+void SaveSolution(std::ofstream& output_file, Solution& sol){
+    int i,j,r;
+    output_file << "Round,H_team,A_team \n";
+    for (r = 0; r < sol.getNrRounds(); ++r){
+        vector<bool>NodeSeen(sol.getNrTeams(), false);
+        for (i = 0; i < sol.getNrTeams(); ++i){
+            if (!NodeSeen[i]){
+                j = sol.TeamColorOpp[i][r];
+                if (sol.Orientation[i][r] == HA::H){
+                    output_file << r << "," << i << "," << j << "\n";
+                }
+                else{
+                    output_file << r << "," << j << "," << i << "\n";
+                }
+                NodeSeen[j] = true;
+            }
+        }
+    }
+}
+
 void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int HistoryLength, const int TimeLimit, const int MaxIt, vector<int>& TimeStamps, const string Instance, const unordered_map<string, double>& InputWeights, const string FolderPath){
     // Find initial solution with Vizing
     Solution sol(in);
@@ -54,6 +84,10 @@ void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int H
     algo.SetMaxIt(MaxIt);
     algo.SetTimeStamps(TimeStamps);
     algo.solve(in, sol);
+    algo.SaveBestSolution(sol);
+    sol.validate();
+    cout << "Final solution = " << sol.ComputeTotalCost() << endl;
+
     string FilePath = FolderPath + "Results" + std::string(PATHSEP) + "Heuristic" + std::string(PATHSEP);
     if (MinCostNB){
         FilePath += "MinCost";
@@ -61,11 +95,18 @@ void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int H
     else{
         FilePath += "NoMinCost";
     }
-    FilePath += std::string(PATHSEP) + Instance + "_" + "s" + to_string(seed) + "_HL" + to_string(HistoryLength) + ".txt";
+    FilePath += std::string(PATHSEP) + Instance + "_" + "s" + to_string(seed) + "_HL" + to_string(HistoryLength) + "_" + to_string(in.getNrRounds()) + ".txt";
     const string config = to_string(seed) + ",Heuristic," + to_string(MinCostNB) + "," + to_string(HistoryLength);
-    algo.SaveSolutionsTimeStamps(FilePath, config);
-    assert(sol.validate());
-    cout << "Final solution = " << sol.ComputeTotalCost() << endl;
+
+    cout << "Save file as " << FilePath << endl;
+    std::ofstream output_file(FilePath);
+    output_file << config << "\n";
+    algo.SaveSolutionsTimeStamps(output_file);
+    SaveSolution(output_file, sol);
+
+    output_file.close();
+
+
     return;
 }
 
@@ -85,12 +126,20 @@ void SolveIP(Input& in, const int seed, const int TimeLimit, vector<int>& TimeSt
     gur.setTimeLimit(TimeLimit);
     gur.SetTimeStamps(TimeStamps);
     gur.solve();
-    const string FilePath = FolderPath + "Results" + std::string(PATHSEP) + "IP" + std::string(PATHSEP) + Instance + ".txt";
-    const string config = to_string(seed) + ",IP";
-    gur.SaveSolutionsTimeStamps(FilePath, config);
     gur.SaveSolution(sol);
     sol.validate();
     cout << "Final solution = " << sol.ComputeTotalCost() << endl;
+
+    const string FilePath = FolderPath + "Results" + std::string(PATHSEP) + "IP" + std::string(PATHSEP) + Instance + "_" + to_string(in.getNrRounds()) + ".txt";
+    const string config = to_string(seed) + ",IP";
+    cout << "Save file as " << FilePath << endl;
+    std::ofstream output_file(FilePath);
+    output_file << config << "\n";
+    gur.SaveSolutionsTimeStamps(output_file);
+    SaveSolution(output_file, sol);
+    
+    output_file.close();
+
     // cin.get();
     return;
 }
@@ -108,11 +157,11 @@ void TestCostMinimization(const int seed, const string Instance, const bool CM, 
     string FilePath;
     string FolderPath;
     if (CM){
-        FolderPath = "Instances" + std::string(PATHSEP) + "CostMinimization" + std::string(PATHSEP) + "Karel" + std::string(PATHSEP) + "0_100" + std::string(PATHSEP); 
+        FolderPath = FolderPathCM();
         FilePath = FolderPath + Instance + ".txt";
     }
     else{
-        FolderPath = "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP); 
+        FolderPath = FolderPathTTP();
         FilePath = FolderPath + Instance + ".xml";
     }
     cout << "FilePath: " << FilePath << endl;
@@ -135,6 +184,47 @@ void TestCostMinimization(const int seed, const string Instance, const bool CM, 
     else{
         SolveIP(in,seed,TimeLimit,TimeStamps, Instance, FolderPath);
     }
+}
+
+void BoundsTTP(){
+    const string OutputFilePath = "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP) + "Bounds.txt";
+    cout << "Save file as " << OutputFilePath << endl;
+    std::ofstream output_file(OutputFilePath);
+
+    for (string Instance: InstancesTTP){
+        Input in;
+        string FilePath = FolderPathTTP() + Instance + ".xml";
+
+        vector<int>Rounds = {10,20,30};
+        if (Instance == "N16"){
+            Rounds = {4,8,12};
+        }
+        else if (Instance == "BRA24"){
+            Rounds = {6,12,18};
+        }
+        else if (Instance == "NFL32"){
+            Rounds = {8,16,24};
+        }
+
+        for (int NrRoundsTTP: Rounds){
+            if (!in.read_TTP(FilePath, NrRoundsTTP)){
+                cout << "could not read " << FilePath << endl;
+                return;
+            }
+
+            GurSolver gur(in);
+            Solution sol(in);
+            int sum = 0;
+            for (int t = 0; t < in.getNrTeams(); ++t){
+                gur.BoundTTP(t);
+                sum += gur.solve();
+            }
+            output_file << Instance << "," << sum << "," << NrRoundsTTP << "\n";
+            cout << "Bound of " << Instance << " with " << NrRoundsTTP << " = " << sum << endl;
+        }
+    }
+
+    output_file.close();
 }
 
 #endif

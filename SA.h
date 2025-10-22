@@ -292,32 +292,12 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
             MAX_IT = limit;
         }
 
-        void SaveSolutionsTimeStamps(const string FilePath, const string config){
-            cout << "Save file as " << FilePath << endl;
-            std::ofstream output_file(FilePath);
-            output_file << config << "\n";
-            /*
-            output_file << "Name,NrChosen,NrAccepted,NrImprove,AvgReward,MinT,MaxT,AvgT \n";
-            for (const auto& [move, string_name]: this->Moves){
-                if (string_name == "Initial"){
-                    continue;
-                }
-                output_file << string_name << ",";
-                output_file << this->NrChosen.at(move) << ",";
-                output_file << this->NrAccepted.at(move) << ",";
-                output_file << (double) this->NrImprov.at(move) << ",";
-                output_file << (double) this->Reward.at(move) / (double) this->NrImprov.at(move) << ",";
-                array<std::chrono::microseconds,3>MinMaxMean = this->MinMaxMeanExecutionTime(move);
-                output_file << MinMaxMean[0].count() << ",";
-                output_file << MinMaxMean[1].count() << ",";
-                output_file << MinMaxMean[2].count() << "\n";
-            }
-            */
+        void SaveSolutionsTimeStamps(std::ofstream& output_file){
+            output_file << "Time,Value \n";
             for (auto&[TimeStamp, Solution]: TimeStampSolution){
                 output_file << TimeStamp << "," << Solution << "\n";
             }
             output_file << "Final, " << this->best_obj << "\n" << endl;
-            output_file.close();
         }
 
         bool Update(Solution& sol, const int obj) override {

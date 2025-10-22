@@ -458,18 +458,6 @@ int Solution::ComputeTotalCostMiaoHockey(){
     return travel_cost + HA_cost + opp_cost + same_club_cost + DRR_cost;
 }
 
-int Solution::ComputeTotalCostTTP(){
-    return ComputeTravelCost()+ComputeTotalCostTTPViolations();
-}
-
-int Solution::ComputeTotalCostTTPViolations(){
-    int sum = 0;
-    for (int i = 0; i < getNrTeams(); ++i){
-        sum += ComputeTTPViolations(i);
-    }
-    return sum*getCostTTPViolation();
-}
-
 int Solution::ComputeTTPViolations(const int i){
     int nrH = 0, nrA = 0; // nr of consecutive H or A
     int nrV = 0; // nr of violations
@@ -488,6 +476,46 @@ int Solution::ComputeTTPViolations(const int i){
         }
     }
     return nrV;
+}
+
+int Solution::ComputeTotalCostTTPViolations(){
+    int sum = 0;
+    for (int i = 0; i < getNrTeams(); ++i){
+        sum += ComputeTTPViolations(i);
+    }
+    return sum*getCostTTPViolation();
+}
+
+int Solution::ComputeTravelCostTTP(){
+    int CostOfTrips = 0;
+    int t,r,i,j;
+    for (t = 0; t < getNrTeams(); ++t){
+        for (r = 1; r < getNrRounds(); ++r){
+            i = TeamColorOpp[t][r-1], j = TeamColorOpp[t][r];
+            if (Orientation[t][r-1] == HA::H && Orientation[t][r] == HA::A){
+                CostOfTrips += getDistanceTeams(t,j);
+            }
+            else if (Orientation[t][r-1] == HA::A && Orientation[t][r] == HA::H){
+                CostOfTrips += getDistanceTeams(t,i);
+            }
+            else if (Orientation[t][r-1] == HA::A && Orientation[t][r] == HA::A){
+                CostOfTrips += getDistanceTeams(i,j);
+            }
+        }
+        if (Orientation[t][0] == HA::A){
+            CostOfTrips += getDistanceTeams(t,TeamColorOpp[t][0]); // if it plays A in first round, it must also travel to that team (not accounted for in sum above)
+        }
+        if (Orientation[t][getNrRounds()-1] == HA::A){
+            CostOfTrips += getDistanceTeams(t,TeamColorOpp[t][getNrRounds()-1]); // similar for last round
+        }
+    }
+    return CostOfTrips;
+}
+
+int Solution::ComputeTotalCostTTP(){
+    cout << "Travel cost = " << ComputeTravelCostTTP() << endl;
+    cout << "TTP cost = " << ComputeTotalCostTTPViolations() << endl;
+    return ComputeTravelCostTTP()+ComputeTotalCostTTPViolations();
 }
 
 int Solution::ComputeCostGeneralMatrix(){
