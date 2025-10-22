@@ -29,7 +29,7 @@ for NrTeams in 36; do
         for i in 0; do
             for heuristic in 0 1; do
                 if [ $heuristic -eq 1 ]; then
-                    for MiNCostNB in 0; do
+                    for MinCostNB in 0; do
                         for HL in 1; do
                              sbatch --time=$walltime job_script_CM.sh $seed $NrTeams $k $i $heuristic $MinCostNB $HL $TL
                         done
