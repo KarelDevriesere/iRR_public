@@ -349,7 +349,7 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
                 HistoricValues.at(v) = obj;
             }
 
-            if ((int)this->getTimeDiff() > TimeStamps.at(CurrentTimeStampIndex)){
+            if (!TimeStamps.empty() && (int)this->getTimeDiff() > TimeStamps.at(CurrentTimeStampIndex)){
                 TimeStampSolution[TimeStamps.at(CurrentTimeStampIndex)] = this->best_obj;
                 if (CurrentTimeStampIndex+1 < TimeStamps.size()){
                     CurrentTimeStampIndex++;
