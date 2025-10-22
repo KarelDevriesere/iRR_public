@@ -458,6 +458,38 @@ int Solution::ComputeTotalCost(){
     return travel_cost + HA_cost + opp_cost + same_club_cost + DRR_cost;
 }
 
+int Solution::ComputeTotalCostTTP(){
+    return ComputeTravelCost()+ComputeTotalCostTTPViolations();
+}
+
+int Solution::ComputeTotalCostTTPViolations(){
+    int sum = 0;
+    for (int i = 0; i < getNrTeams(); ++i){
+        sum += ComputeTTPViolations(i);
+    }
+    return sum*getCostTTPViolation();
+}
+
+int Solution::ComputeTTPViolations(const int i){
+    int nrH = 0, nrA = 0; // nr of consecutive H or A
+    int nrV = 0; // nr of violations
+    for (int r = 0; r < getNrRounds(); ++r){
+        if (Orientation[i][r] == HA::H){
+            nrH++;
+            nrA = 0;
+        }
+        else{
+            assert(Orientation[i][r] == HA::A);
+            nrA++;
+            nrH = 0;
+        }
+        if (nrH > 3 || nrH > 3){
+            nrV++;
+        }
+    }
+    return nrV;
+}
+
 int Solution::ComputeCostGeneralMatrix(){
     int cost = 0;
     int j;

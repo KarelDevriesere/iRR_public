@@ -60,6 +60,10 @@ class Solution: public Input{
         int ComputeCostBreakBeginningEnd();
         int ComputeCostQuarterBalanced();
 
+        int ComputeTTPViolations(const int i);
+        int ComputeTotalCostTTP();
+        int ComputeTotalCostTTPViolations();
+
         int ComputeCostGeneralMatrix();
 
         int getNrSameClub(const int i);

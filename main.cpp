@@ -15,6 +15,15 @@
 
 int main(int argc, const char* argv[]){
     int case_ = 0;
+    /*
+    const string FilePath = "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP) + "N16.xml";
+    Input in;
+    if (!in.read_TTP(FilePath)){
+        cout << "Could not read " << FilePath << endl;
+        return 0;
+    }
+    return 0;
+    */
     if (case_ == 0){
 
         int seed = 0;

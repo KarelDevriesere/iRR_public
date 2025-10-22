@@ -6,8 +6,102 @@
 #include <cmath>
 #include <numeric> // for iota
 
+#include "rapidxml.hpp"
+#include "rapidxml_utils.hpp"
+#include "rapidxml_print.hpp"
+
+using namespace rapidxml;
+
 Input::Input(){}
 Input::~Input(){}
+
+void Input::SetDefault(const int NrTeams){
+    // All teams same strength, every team has its own club, no dummy teams, all teams in same league
+    // In solution: modify everything such that instead of travel cost, we compute the costs
+
+    Teams = vector<int>(NrTeams);
+    iota(Teams.begin(), Teams.end(), 0);
+    TeamStrength = vector<int>(NrTeams, 1);
+    TeamLeague = vector<int>(NrTeams, 1);
+    TeamClub = vector<int>(NrTeams);
+    iota(TeamClub.begin(), TeamClub.end(), 0);
+
+    NrLeagues = 1;
+    LeagueTeams = vector<vector<int>>(1);
+    iota(LeagueTeams[0].begin(), LeagueTeams[0].end(), 0);
+
+    NrClubs = NrTeams;
+    ClubTeams = vector<vector<int>>(NrTeams);
+    for (int i = 0; i < NrTeams; ++i){
+        ClubTeams.at(i) = {i};
+    }
+    ClubCapacity = vector<vector<int>>(NrClubs, vector<int>(NrRounds, 1));
+    
+    Eligible = vector<vector<bool>>(getNrTeams(), vector<bool>(getNrTeams(), true));
+    TeamLeagueIndex = vector<int>(NrTeams); // index of the team in its league
+    iota(TeamLeagueIndex.begin(), TeamLeagueIndex.end(), 0);
+    IsTeamDummy = vector<bool>(NrTeams, false);
+}
+
+int Input::read_TTP(const std::string file_path){
+    cout << "Read TTP files" << endl;
+    file<> xmlFile(file_path.c_str()); // replace with your file path
+    xml_document<> doc;
+    doc.parse<0>(xmlFile.data());
+
+    // Get root node <Instance>
+    xml_node<> *root = doc.first_node("Instance");
+    if (!root) {
+        std::cerr << "No <Instance> node found!" << std::endl;
+        return 1;
+    }
+
+    // ---- Read MetaData ----
+    xml_node<> *meta = root->first_node("MetaData");
+    if (meta) {
+        std::string instanceName = meta->first_node("InstanceName")->value();
+        std::string dataType = meta->first_node("DataType")->value();
+        std::string contributor = meta->first_node("Contributor")->value();
+
+        xml_node<> *dateNode = meta->first_node("Date");
+        int day = std::stoi(dateNode->first_attribute("day")->value());
+        int month = std::stoi(dateNode->first_attribute("month")->value());
+        int year = std::stoi(dateNode->first_attribute("year")->value());
+
+        std::cout << "Instance: " << instanceName << ", Type: " << dataType
+                  << ", Contributor: " << contributor << std::endl;
+        std::cout << "Date: " << day << "/" << month << "/" << year << std::endl;
+    }
+
+    // ---- Read Teams ----
+    int NrTeams = 0;
+    xml_node<> *teamsNode = root->first_node("Resources")->first_node("Teams");
+    if (teamsNode) {
+        for (xml_node<> *team = teamsNode->first_node("team"); team; team = team->next_sibling("team")) {
+            int id = std::stoi(team->first_attribute("id")->value());
+            std::string name = team->first_attribute("name")->value();
+            int league = std::stoi(team->first_attribute("league")->value());
+            std::cout << "Team " << id << ": " << name << " (League " << league << ")" << std::endl;
+            NrTeams++;
+        }
+    }
+
+    // ---- Read Distances ----
+    DistanceClubs = vector<vector<int>>(NrTeams, vector<int>(NrTeams, 0));
+    xml_node<> *distancesNode = root->first_node("Data")->first_node("Distances");
+    if (distancesNode) {
+        for (xml_node<> *dist = distancesNode->first_node("distance"); dist; dist = dist->next_sibling("distance")) {
+            int t1 = std::stoi(dist->first_attribute("team1")->value());
+            int t2 = std::stoi(dist->first_attribute("team2")->value());
+            DistanceClubs[t1][t2] = std::stoi(dist->first_attribute("dist")->value());
+            std::cout << "Distance between team " << t1 << " and " << t2 << " = " << DistanceClubs[t1][t2] << std::endl;
+        }
+    }
+
+    SetDefault(NrTeams);
+
+    return 1;
+}
 
 int Input::read_CostMinimization(const std::string file_path, InstanceSetCM inst){
     cout << "This function is intended ONLY for cost minimization!!" << endl;
@@ -61,32 +155,8 @@ int Input::read_CostMinimization(const std::string file_path, InstanceSetCM inst
             }
         }
     }
-    // All teams same strength, every team has its own club, no dummy teams, all teams in same league
-    // In solution: modify everything such that instead of travel cost, we compute the costs
-    // BUT: before we do all this, check with IP how well this solves!!
-    Teams = vector<int>(NrTeams);
-    iota(Teams.begin(), Teams.end(), 0);
-    TeamStrength = vector<int>(NrTeams, 1);
-    TeamLeague = vector<int>(NrTeams, 1);
-    TeamClub = vector<int>(NrTeams);
-    iota(TeamClub.begin(), TeamClub.end(), 0);
-
-    NrLeagues = 1;
-    LeagueTeams = vector<vector<int>>(1);
-    iota(LeagueTeams[0].begin(), LeagueTeams[0].end(), 0);
-
-    NrClubs = NrTeams;
-    ClubTeams = vector<vector<int>>(NrTeams);
-    for (int i = 0; i < NrTeams; ++i){
-        ClubTeams.at(i) = {i};
-    }
-    ClubCapacity = vector<vector<int>>(NrClubs, vector<int>(NrRounds, 1));
     
-    Eligible = vector<vector<bool>>(getNrTeams(), vector<bool>(getNrTeams(), true));
-    TeamLeagueIndex = vector<int>(NrTeams); // index of the team in its league
-    iota(TeamLeagueIndex.begin(), TeamLeagueIndex.end(), 0);
-    IsTeamDummy = vector<bool>(NrTeams, false);
-
+    SetDefault(NrTeams);
     return 1;
 }
 
