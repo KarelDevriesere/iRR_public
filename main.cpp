@@ -63,8 +63,8 @@ int main(int argc, const char* argv[]){
             }
             else if (arg == "--HistoryLength"){
                 HistoryLength = std::stoi(argv[++i]); 
-                if (HistoryLength < 0){
-                    std::cerr << "HistoryLength should be positive" << endl;
+                if (HistoryLength <= 0){
+                    std::cerr << "HistoryLength should be strictly positive" << endl;
                     return 1;
                 }
             }
