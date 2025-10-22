@@ -58,10 +58,13 @@ class Input
             {MiaoInstance::U17, {144,14}}, {MiaoInstance::U21, {64,6}}, {MiaoInstance::M, {608,87}}, {MiaoInstance::Tiny, {16,1}}};
 
         vector<vector<vector<int>>>CostMatchRound;
+
+        int CostTTPViolation = 0;
         
     public:
         Input();
         ~Input();
+        int read_TTP(const std::string file_path);
         int read_CostMinimization(const string file_path, InstanceSetCM inst);
         int read_CostMinimizationJasper(const string file_path);
         int read_Miao_Hockey(const string file_path, const bool Miao);
@@ -130,7 +133,11 @@ class Input
 
         MiaoInstance getMiaoInstance();
 
+        void SetDefault(const int NrTeams);
+
         int getCostMatchRound(const int i, const int j, const int r)const{return CostMatchRound[i][j][r];};
+
+        int getCostTTPViolation()const{return CostTTPViolation;};
 };
 
 #endif

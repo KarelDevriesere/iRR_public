@@ -41,6 +41,117 @@ void GurSolver::WarmStart(Solution& sol){
 	}
 }
 
+void GurSolver::iTTP(){
+
+	if (getNrRounds() < 4){
+		cout << "iTTP not possible because NrRounds is " << getNrRounds() << endl;
+		return;
+	}
+
+	int t,i,j,r;
+	const bool HA = true;
+	const bool relax_x = false;
+	build_base(HA, relax_x); // all base constraints
+
+	// z_tij = 1 if t travels from the home venue of i to that of j
+	z = vector<vector<vector<GRBVar>>>(getNrTeams(), vector<vector<GRBVar>>(getNrTeams(), vector<GRBVar>(getNrTeams())));
+	for (t = 0; t < getNrTeams(); ++t){
+		for (i = 0; i < getNrTeams(); ++i){
+			for (j = 0; j < getNrTeams(); ++j){
+				std::string varName = "z_" + std::to_string(t) + "_" + std::to_string(i) + "_" + std::to_string(j);
+				z[t][i][j] = model.addVar(0, 1, 0.0, GRB_BINARY, varName);	   
+			}
+		}
+    }
+
+	// C1: link x-variables with z variable
+	// t travels from i to j in r if it played A vs i in r-1 and A vs j in r
+	for (t = 0; t < getNrTeams(); ++t){
+		for (i = 0; i < getNrTeams(); ++i){
+			for (j = 0; j < getNrTeams(); ++j){
+				for (r = 1; r < getNrRounds(); ++r){
+					model.addConstr(z[t][i][j] >= x[i][t][r-1] + x[j][t][r] - 1);
+				}
+			}
+		}
+	}
+
+	// C2: Team t travels from i to its own venue in r if it plays A vs i in r-1 but H in round r
+
+	for (t = 0; t < getNrTeams(); ++t){
+		for (i = 0; i < getNrTeams(); ++i){
+			for (r = 1; r < getNrRounds(); ++r){
+				GRBLinExpr sum_j = 0;;
+				for (j = 0; j < getNrTeams(); ++j){
+					if (j == t){
+						continue;
+					}
+					sum_j += x[t][j][r];
+				}
+				model.addConstr(z[t][i][t] >= x[i][t][r-1] + sum_j - 1);
+			}
+		}
+	}
+
+	// C3: opposite to that of C2, a team t travels from its own location to i in r if it played H in r-1 but away against i in r
+
+	for (t = 0; t < getNrTeams(); ++t){
+		for (i = 0; i < getNrTeams(); ++i){
+			for (r = 1; r < getNrRounds(); ++r){
+				GRBLinExpr sum_j = 0;;
+				for (j = 0; j < getNrTeams(); ++j){
+					if (j == t){
+						continue;
+					}
+					sum_j += x[t][j][r-1];
+				}
+				model.addConstr(z[t][t][i] >= x[i][t][r] + sum_j - 1);
+			}
+		}
+	}
+
+	// C4 and C5: control first and last rounds 
+
+	for (t = 0; t < getNrTeams(); ++t){
+		for (i = 0; i < getNrTeams(); ++i){
+			model.addConstr(z[t][t][i] >= x[i][t][0]);
+			model.addConstr(z[t][i][t] >= x[i][t][getNrRounds()-1]);
+		}
+	}
+
+	// C6 and C7: In any 4 consecutive time slots, a team cannot play more than 3 A games or less than 1 H game
+
+	for (t = 0; t < getNrTeams(); ++t){
+		for (r = 0; r < getNrRounds()-4; ++r){
+			GRBLinExpr sum_kj = 0;
+			for (int k = r; k < r+4; ++k){
+				for (j = 0; j < getNrTeams(); ++j){
+					if (t == k){
+						continue;
+					}
+					sum_kj += x[j][t][k];
+				}
+			}
+			model.addConstr(sum_kj <= 3);
+			model.addConstr(sum_kj >= 1);
+		}
+	}
+
+	// Objective function:
+	Objective = 0;
+	for (t = 0; t < getNrTeams(); ++t){
+		for (i = 0; i < getNrTeams(); ++i){
+			for (j = 0; j < getNrTeams(); ++j){
+				if (i == j){
+					continue;
+				}
+				Objective += getDistanceTeams(i,j)*z[t][i][j];
+			}
+		}
+	}
+	model.setObjective(Objective, GRB_MINIMIZE);
+}
+
 void GurSolver::FixHAP(Solution& sol){
 	// cout << "Fix haps" << endl;
 	const int Half = getNrRounds()/2;
@@ -152,9 +263,9 @@ void GurSolver::build_base(const bool HA, const bool relax_x){
 			std::string consName = "c2_" + std::to_string(i) + "_" + std::to_string(r);
 			 GRBLinExpr sum_j = 0;
 			 for (j = 0; j < getNrTeams(); ++j){
-			   // if (isEligible(i, j)){
-				   sum_j += (x[i][j][r] + x[j][i][r]);
-			   // }
+				if (i != j /*isEligible(i, j)*/){
+					sum_j += (x[i][j][r] + x[j][i][r]);
+				}
 			 }
 			 // Each team plays exactly once in each round
 			 model.addConstr(sum_j == 1, consName);
@@ -206,7 +317,6 @@ void GurSolver::build_base(const bool HA, const bool relax_x){
 
 void GurSolver::build_league(const bool HA, const bool relax_x){
 
-	const bool iRR = true;
 	build_base(HA, relax_x);
 
 	int i,j,r;
@@ -459,6 +569,7 @@ void GurSolver::addCallbackToTrackTime() {
 }
 
 int GurSolver::solve(){
+
 
 	if (TrackTimeBestSolution){
 		addCallbackToTrackTime();

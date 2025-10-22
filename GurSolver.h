@@ -27,6 +27,7 @@ class GurSolver : public Input
         vector<vector<GRBVar>>v;
         vector<vector<GRBVar>>b;
         vector<vector<GRBVar>>y;
+        vector<vector<vector<GRBVar>>>z; // for TTP
         vector<vector<HA>>Orientation;
 
         vector<vector<vector<GRBConstr>>>Constraints_fixed_variables; // per team per round
@@ -46,12 +47,14 @@ class GurSolver : public Input
                         if (where == GRB_CB_MIPSOL) { // check whether a new MIP incumbent is found
                             auto time_diff = std::chrono::high_resolution_clock::now() - StartTimeGurSolver;
                             TimeTillBestSolutionGurSolver = std::chrono::duration_cast<std::chrono::seconds>(time_diff).count();
-
-                            if (TimeTillBestSolutionGurSolver > TimeStamps.at(CurrentTimeStampIndex)){
-                                TimeStampSolution[TimeStamps.at(CurrentTimeStampIndex)] = getDoubleInfo(GRB_CB_MIPSOL_OBJ); // retrieve objective value
-                                std::cout << "Callback triggered at t = " << TimeTillBestSolutionGurSolver << " (Current TS = " << TimeStamps.at(CurrentTimeStampIndex) << ")\n";
-                                if (CurrentTimeStampIndex+1 < TimeStamps.size()){
-                                    CurrentTimeStampIndex++;
+                            
+                            if (!TimeStamps.empty()){
+                                if (TimeTillBestSolutionGurSolver > TimeStamps.at(CurrentTimeStampIndex)){
+                                    TimeStampSolution[TimeStamps.at(CurrentTimeStampIndex)] = getDoubleInfo(GRB_CB_MIPSOL_OBJ); // retrieve objective value
+                                    std::cout << "Callback triggered at t = " << TimeTillBestSolutionGurSolver << " (Current TS = " << TimeStamps.at(CurrentTimeStampIndex) << ")\n";
+                                    if (CurrentTimeStampIndex+1 < TimeStamps.size()){
+                                        CurrentTimeStampIndex++;
+                                    }
                                 }
                             }
                         }
@@ -103,6 +106,7 @@ class GurSolver : public Input
         void AssignHAPsToTeams(Solution& sol); // For Miao's algorithm
         void StoreHAPs(Solution& sol);
         void AddMiaoSymmetryConstraint();
+        void iTTP();
         
         bool TrackTimeBestSolution = true;
         void addCallbackToTrackTime();
