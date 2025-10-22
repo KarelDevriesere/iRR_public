@@ -125,7 +125,7 @@ int main(int argc, const char* argv[]){
                 Instance = argv[++i];
                 auto it = std::find(InstancesTTP.begin(), InstancesTTP.end(), Instance);
                 if (it == InstancesTTP.end()){
-                    std::cerr << "Incorrect TTP instance name" << endl;
+                    std::cerr << "Incorrect TTP instance name, name given = " << Instance << endl;
                     return 1;
                 }
                 TTP = true;

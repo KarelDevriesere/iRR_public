@@ -101,8 +101,15 @@ void GurSolver::BoundTTP(const int t){
 		sum_i += y_i[i];
 		GRBLinExpr sum_r = 0;
 		for (r = 0; r < NrTrips; ++r){
-			auto it = std::find(Trips[r].begin(), Trips[r].end(), TeamsList[i]);
-			if (it != Trips[r].end()){
+			// auto it = std::find(Trips[r].begin(), Trips[r].end(), TeamsList[i]);
+			bool TeamFound = false;
+			for (auto& opp: Trips[r]){
+				if (opp == TeamsList[i]){
+					TeamFound = true;
+					break;
+				}
+			}
+			if (TeamFound){
 				sum_r += z_r[r];
 			}
 		}

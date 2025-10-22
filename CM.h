@@ -139,6 +139,7 @@ void SolveIP(Input& in, const int seed, const int TimeLimit, vector<int>& TimeSt
     SaveSolution(output_file, sol);
     
     output_file.close();
+    cout << "Close file" << endl;
 
     // cin.get();
     return;
