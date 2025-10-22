@@ -39,7 +39,7 @@ unordered_map<move_name_CM, double> WeightsMap(const unordered_map<string, doubl
     return Weights;
 }
 
-void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int HistoryLength, const int TimeLimit, const int MaxIt, vector<int>& TimeStamps, const string Instance, const unordered_map<string, double>& InputWeights){
+void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int HistoryLength, const int TimeLimit, const int MaxIt, vector<int>& TimeStamps, const string Instance, const unordered_map<string, double>& InputWeights, const string FolderPath){
     // Find initial solution with Vizing
     Solution sol(in);
     cout << "Solve Vizing" << endl;
@@ -54,7 +54,7 @@ void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int H
     algo.SetMaxIt(MaxIt);
     algo.SetTimeStamps(TimeStamps);
     algo.solve(in, sol);
-    string FilePath = "Instances" + std::string(PATHSEP) + "CostMinimization" + std::string(PATHSEP) + "Karel" + std::string(PATHSEP) + "0_100" + std::string(PATHSEP) + "Results" + std::string(PATHSEP) + "Heuristic" + std::string(PATHSEP);
+    string FilePath = FolderPath + "Results" + std::string(PATHSEP) + "Heuristic" + std::string(PATHSEP);
     if (MinCostNB){
         FilePath += "MinCost";
     }
@@ -69,7 +69,7 @@ void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int H
     return;
 }
 
-void SolveIP(Input& in, const int seed, const int TimeLimit, vector<int>& TimeStamps, const string Instance){
+void SolveIP(Input& in, const int seed, const int TimeLimit, vector<int>& TimeStamps, const string Instance, const string FolderPath){
     GurSolver gur(in);
     Solution sol(in);
     bool HA = true;
@@ -81,26 +81,37 @@ void SolveIP(Input& in, const int seed, const int TimeLimit, vector<int>& TimeSt
     gur.setTimeLimit(TimeLimit);
     gur.SetTimeStamps(TimeStamps);
     gur.solve();
-    const string FilePath = "Instances" + std::string(PATHSEP) + "CostMinimization" + std::string(PATHSEP) + "Karel" + std::string(PATHSEP) + "0_100" + std::string(PATHSEP) + "Results" + std::string(PATHSEP) + "IP" + std::string(PATHSEP) + Instance + ".txt";
+    const string FilePath = FolderPath + "Results" + std::string(PATHSEP) + "IP" + std::string(PATHSEP) + Instance + ".txt";
     const string config = to_string(seed) + ",IP";
     gur.SaveSolutionsTimeStamps(FilePath, config);
-    // gur.SaveSolution(sol);
-    // sol.validate();
+    gur.SaveSolution(sol);
+    sol.validate();
+    cout << "Final solution = " << sol.ComputeCostGeneralMatrix() << endl;
     // cin.get();
     return;
 }
 
-void TestCostMinimization(const int seed, const string Instance, const bool Heuristic, const bool MinCostNB, const int HistoryLength, const int TimeLimit, const int MaxIt, const unordered_map<string, double>& InputWeights){
+void TestCostMinimization(const int seed, const string Instance, const bool CM, const bool TTP, const bool Heuristic, const bool MinCostNB, const int HistoryLength, const int TimeLimit, const int MaxIt, const unordered_map<string, double>& InputWeights){
 
     vector<int>TimeStamps;
-    int TimeStamp = 30;
+    int TimeStamp = 0;
     int Incrementor = 30;
     while (TimeStamp <= TimeLimit){
         TimeStamps.push_back(TimeStamp);
         TimeStamp += Incrementor;
     }
 
-    const string FilePath = "Instances" + std::string(PATHSEP) + "CostMinimization" + std::string(PATHSEP) + "Karel" + std::string(PATHSEP) + "0_100" + std::string(PATHSEP) + Instance + ".txt";
+    string FilePath;
+    string FolderPath;
+    if (CM){
+        FolderPath = "Instances" + std::string(PATHSEP) + "CostMinimization" + std::string(PATHSEP) + "Karel" + std::string(PATHSEP) + "0_100" + std::string(PATHSEP); 
+        FilePath = FolderPath + Instance + ".txt";
+    }
+    else{
+        FolderPath = "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP); 
+        FilePath = FolderPath + Instance + ".xml";
+    }
+    cout << "FilePath: " << FilePath << endl;
 
     Input in;
     if (!in.read_CostMinimization(FilePath, InstanceSetCM::Karel)){
@@ -111,10 +122,10 @@ void TestCostMinimization(const int seed, const string Instance, const bool Heur
     in.SRR = true;
     
     if (Heuristic){
-        SolveHeuristic(in, seed, MinCostNB, HistoryLength, TimeLimit, MaxIt, TimeStamps, Instance, InputWeights);
+        SolveHeuristic(in, seed, MinCostNB, HistoryLength, TimeLimit, MaxIt, TimeStamps, Instance, InputWeights, FolderPath);
     }
     else{
-        SolveIP(in,seed,TimeLimit,TimeStamps, Instance);
+        SolveIP(in,seed,TimeLimit,TimeStamps, Instance, FolderPath);
     }
 }
 

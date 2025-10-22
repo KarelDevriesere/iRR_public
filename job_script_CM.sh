@@ -8,7 +8,6 @@
 #PBS -l mem=64GB # request memory
 
 # parameters:
-$seed $NrTeams $k $i $heuristic $MinCostNB $HL $TL
 seed=$1
 NrTeams=$2
 k=$3
@@ -22,11 +21,11 @@ cd $PBS_O_WORKDIR
 
 echo "Seed = $seed"
 echo "Heuristic = $heuristic"
-echo "MinCostNB = $MiNCostNB"
+echo "MinCostNB = $MinCostNB"
 echo "HistoryLength = $HL"
 echo "NrTeams = $NrTeams"
 echo "k = $k"
 echo "i = $i"
 echo "TimeLimit = $TL"
 
-./irr --Seed $seed --Heuristic $heuristic --MinCostNB $MiNCostNB --HistoryLength $HL --NrTeams $NrTeams --k $k --i $i --TimeLimit $TL
+./irr --Seed $seed --Heuristic $heuristic --MinCostNB $MinCostNB --HistoryLength $HL --NrTeams $NrTeams --k $k --i $i --TimeLimit $TL

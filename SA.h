@@ -143,7 +143,11 @@ class MetaBase{ // Everything that can be used for all metaheuristics
             assert(best_obj <= current_obj);
             if (obj < best_obj){
                 best_obj = obj;
+#ifdef PRINT
+#if PRINT == 1
                 cout << "NEW BEST SOLUTION = " << best_obj << endl;
+#endif
+#endif
                 NrImprovBestObj.at(CurrentMove)++;
                 UpdateBestSolution(sol); // We need to store the best solution somewhere
                 TimeTillBestSolution = (int)getTimeDiff();
@@ -312,6 +316,7 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
             for (auto&[TimeStamp, Solution]: TimeStampSolution){
                 output_file << TimeStamp << "," << Solution << "\n";
             }
+            output_file << "Final, " << this->best_obj << "\n" << endl;
             output_file.close();
         }
 

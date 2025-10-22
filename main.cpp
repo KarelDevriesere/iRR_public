@@ -35,8 +35,16 @@ int main(int argc, const char* argv[]){
         int k = 5;
         int inst = 0;
         int TL = 60;
-        int MaxIt = 10000000;
-        string Instance = to_string(NrTeams) + "_" + to_string(NrRounds) + "_" + "k" + to_string(k) + "_" + to_string(inst);
+        int MaxIt = 1000000;
+        bool CM = true;
+        bool TTP = false;
+        string Instance;
+        if (CM){
+            Instance = to_string(NrTeams) + "_" + to_string(NrRounds) + "_" + "k" + to_string(k) + "_" + to_string(inst);
+        }
+        else {
+            Instance = "N16.xml";
+        }
 
         unordered_map<string, double>InputWeights = {{"TS", 0.0}, {"PTS", 0.0}, {"RS", 0.0}, {"PRS", 0.0},{"M", 0.0}, {"BM", 0.0}, {"C", 0.0}};
         unordered_map<string, bool>MoveSeen = {{"TS", false}, {"PTS", false}, {"RS", false}, {"PRS", false},{"M", false}, {"BM", false}, {"C", false}};
@@ -68,7 +76,21 @@ int main(int argc, const char* argv[]){
                     return 1;
                 }
             }
-            else if (arg == "--NrTeams"){
+            else if (arg == "--CM"){
+                CM = std::stoi(argv[++i]);
+                if (CM != 0 && CM != 1){
+                    std::cerr << "CM should be 0 or 1" << endl;
+                    return 1;
+                }
+            }
+            else if (arg == "--TTP"){
+                TTP = std::stoi(argv[++i]);
+                if (TTP != 0 && TTP != 1){
+                    std::cerr << "TTP should be 0 or 1" << endl;
+                    return 1;
+                }
+            }
+            else if (arg == "--NrTeams"){ // CM
                 NrTeams = std::stoi(argv[++i]);
                 if (NrTeams != 36 && NrTeams != 100 && NrTeams != 250){
                     std::cerr << "NrTeams must be 36 or 100 or 250" << endl;
@@ -84,17 +106,32 @@ int main(int argc, const char* argv[]){
                     NrRounds = 30;
                 }
             }
-            else if (arg == "--k"){
+            else if (arg == "--k"){ // CM
                 k = std::stoi(argv[++i]);
                 if (k != 0 && k != 1 && k != 5 && k != 10){
                     std::cerr << "k must be 0, 1, 5 or 10!" << endl;
                     return 1;
                 }
             }
-            else if (arg == "--i"){
+            else if (arg == "--i"){ // CM
                 inst = std::stoi(argv[++i]);
                 if (inst != 0 && inst != 1 && inst != 2 && inst != 3 && inst != 4){
                     std::cerr << "i must be 0,1,2,3 or 4" << endl;
+                    return 1;
+                }
+            }
+            else if (arg == "--InstanceTTP"){ // TTP
+                Instance = argv[++i];
+                if (Instance != "BRA24" && Instance != "CIRC40" && Instance != "CON40" && Instance != "GAL40" && Instance != "INCR40" && Instance != "LINE40" && Instance != "N16" && Instance != "NFL32"){
+                    std::cerr << "Incorrect TTP instance name" << endl;
+                    return 1;
+                }
+                Instance += ".xml";
+            }
+            else if (arg == "--NrRounds"){ // TTP
+                NrRounds = std::stoi(argv[++i]);
+                if (NrRounds <= 0){
+                    std::cerr << "NrRounds must be strictly positive!" << endl;
                     return 1;
                 }
             }
@@ -169,7 +206,9 @@ int main(int argc, const char* argv[]){
                 }
             }
             else if (arg == "--help"){
-                cout << "Usage: " << argv[0] << "--Seed <int> --Heuristic <0/1> -- MinCostNB <0/1> --HistoryLength <+int> --NrTeams <36/100> --k <0/1/5/10> --i <0/1/2/3/4> --TimeLimit <+int> --MaxIt <+int> --TSw <[0,1]> --PTSw <[0,1]> --RSw <[0,1]> --PRSw <[0,1]> --Mw <[0,1]> --BMw <[0,1]> --Cw <[0,1]>" << endl;
+                cout << "Usage: " << argv[0] << "--Seed <int> --Heuristic <0/1> -- MinCostNB <0/1> --HistoryLength <+int> -- CM <0/1> --NrTeams <36/100>* --k <0/1/5/10>* --i <0/1/2/3/4>* --TimeLimit <+int> --MaxIt <+int> --TSw <[0,1]> --PTSw <[0,1]> --RSw <[0,1]> --PRSw <[0,1]> --Mw <[0,1]> --BMw <[0,1]> --Cw <[0,1]>" << endl;
+                cout << "*: For CostMinimization instances" << endl;
+                cout << "For TTP instances, specify --TTP 1 --InstanceTTP <BRA24/CIRC40/CON40/GAL40/INCR40/LINE40/N16/NFL32> --NrRounds<+int>" << endl;
                 return 1;
             }
             else {
@@ -205,9 +244,10 @@ int main(int argc, const char* argv[]){
         cout << "MinCostNB = " << MinCostNB << endl;
         cout << "TimeLimit = " << TL << endl;
         cout << "Max iterations = " << MaxIt << endl;
-        Instance = to_string(NrTeams) + "_" + to_string(NrRounds) + "_" + "k" + to_string(k) + "_" + to_string(inst);
-        cout << "Instance: " << Instance << endl;
-        TestCostMinimization(seed, Instance, Heuristic, MinCostNB, HistoryLength, TL, MaxIt, InputWeights);
+        if (CM){
+            Instance = to_string(NrTeams) + "_" + to_string(NrRounds) + "_" + "k" + to_string(k) + "_" + to_string(inst);
+        }
+        TestCostMinimization(seed, Instance, CM, TTP, Heuristic, MinCostNB, HistoryLength, TL, MaxIt, InputWeights);
         // GenerateCostMatrices(0);
         // cin.get();
     }

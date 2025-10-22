@@ -45,13 +45,14 @@ class GurSolver : public Input
                 void callback() override {
                     try {
                         if (where == GRB_CB_MIPSOL) { // check whether a new MIP incumbent is found
+                            // cout << "NEW INCUMBENT FOUND" << endl;
                             auto time_diff = std::chrono::high_resolution_clock::now() - StartTimeGurSolver;
                             TimeTillBestSolutionGurSolver = std::chrono::duration_cast<std::chrono::seconds>(time_diff).count();
                             
                             if (!TimeStamps.empty()){
                                 if (TimeTillBestSolutionGurSolver > TimeStamps.at(CurrentTimeStampIndex)){
                                     TimeStampSolution[TimeStamps.at(CurrentTimeStampIndex)] = getDoubleInfo(GRB_CB_MIPSOL_OBJ); // retrieve objective value
-                                    std::cout << "Callback triggered at t = " << TimeTillBestSolutionGurSolver << " (Current TS = " << TimeStamps.at(CurrentTimeStampIndex) << ")\n";
+                                    // std::cout << "Callback triggered at t = " << TimeTillBestSolutionGurSolver << " (Current TS = " << TimeStamps.at(CurrentTimeStampIndex) << ")\n";
                                     if (CurrentTimeStampIndex+1 < TimeStamps.size()){
                                         CurrentTimeStampIndex++;
                                     }
@@ -96,6 +97,7 @@ class GurSolver : public Input
         int solve();
         double getMipGap();
         int getBestBound();
+        int getBestObjValue();
         void SaveSolution(Solution& sol);
         void WarmStart(Solution& sol);
 
@@ -128,6 +130,7 @@ class GurSolver : public Input
             for (auto&[TimeStamp, Solution]: TimeStampSolutionOuter){
                 output_file << TimeStamp << "," << Solution << "\n";
             }
+            output_file << "Final, " << getBestObjValue() << "\n" << endl;
             output_file.close();
         }
 };

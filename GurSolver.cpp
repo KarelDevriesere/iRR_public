@@ -623,6 +623,10 @@ int GurSolver::solve(){
 	return std::round(model.get(GRB_DoubleAttr_ObjVal)); // In case of time limit this returns the best found objective
 }
 
+int GurSolver::getBestObjValue(){
+	return model.get(GRB_DoubleAttr_ObjVal);
+}
+
 double GurSolver::getMipGap(){
 	return model.get(GRB_DoubleAttr_MIPGap);
 }
