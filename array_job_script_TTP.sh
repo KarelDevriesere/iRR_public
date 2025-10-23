@@ -24,8 +24,8 @@ walltime="02:30:00"
 seed=0 # random seed
 TL=7260 # 4 hours
 
-for instance in "N16"; do
-    for NrRounds in 4 8 12; do
+for instance in "NFL32"; do
+    for NrRounds in 8 16 24; do
         for heuristic in 0 1; do
             if [ $heuristic -eq 1 ]; then
                 for MinCostNB in 0 1; do

@@ -523,8 +523,8 @@ int Solution::ComputeTravelCostTTP(){
 }
 
 int Solution::ComputeTotalCostTTP(){
-    cout << "Travel cost = " << ComputeTravelCostTTP() << endl;
-    cout << "TTP cost = " << ComputeTotalCostTTPViolations() << endl;
+    // cout << "Travel cost = " << ComputeTravelCostTTP() << endl;
+    // cout << "TTP cost = " << ComputeTotalCostTTPViolations() << endl;
     return ComputeTravelCostTTP()+ComputeTotalCostTTPViolations();
 }
 
