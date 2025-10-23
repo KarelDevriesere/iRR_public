@@ -1,5 +1,5 @@
-HPC   ?= 1
-DAVID ?= 0
+HPC   ?= 0
+DAVID ?= 1
 
 # TODO TODO Add a release and debug mode
 CXX      = g++
@@ -14,17 +14,18 @@ CXXFLAGS += -DPRINT=$(PRINT)
 # TODO Karel define PATHSEP as compileflag in cmake
 -DPATHSEP="\"/\""
 
+LDFLAGS += -lgurobi_c++ 
+
 ifeq ($(DAVID),1)
     GUROBI        = /opt/gurobi952/linux64
     INCLUDES     += -I$(GUROBI)/include
-    LDFLAGS      += -L$(GUROBI)/lib -lgurobi95 -lm 
+    LDFLAGS      += -lgurobi95 -L$(GUROBI)/lib -lm 
     CXXFLAGS     += -DPATHSEP="\"/\""
 else ifeq ($(HPC),1)
     LDFLAGS      += -lgurobi120 -lm 
     CXXFLAGS     += -DPATHSEP="\"/\""
 endif
 
-LDFLAGS += -lgurobi_c++ 
 
 # if make release: do not check assert statements
 release: CXXFLAGS += -DNDEBUG -O3

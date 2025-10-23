@@ -233,7 +233,7 @@ void GurSolver::iTTP(){
 	// C6 and C7: In any 4 consecutive time slots, a team cannot play more than 3 A games or less than 1 H game
 
 	for (t = 0; t < getNrTeams(); ++t){
-		for (r = 0; r < getNrRounds()-4; ++r){
+		for (r = 0; r <= getNrRounds()-4; ++r){
 			GRBLinExpr sum_kj = 0;
 			for (int k = r; k < r+4; ++k){
 				for (j = 0; j < getNrTeams(); ++j){
