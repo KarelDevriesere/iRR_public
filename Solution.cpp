@@ -465,14 +465,17 @@ int Solution::ComputeTTPViolations(const int i){
         if (Orientation[i][r] == HA::H){
             nrH++;
             nrA = 0;
+            // cout << i << "plays H in " << r << endl;
         }
         else{
             assert(Orientation[i][r] == HA::A);
             nrA++;
             nrH = 0;
+            // cout << i << "plays A in " << r << endl;
         }
         if (nrH > 3 || nrA > 3){
             nrV++;
+            // cin.get();
         }
     }
     return nrV;
@@ -490,31 +493,38 @@ int Solution::ComputeTravelCostTTP(){
     int CostOfTrips = 0;
     int t,r,i,j;
     for (t = 0; t < getNrTeams(); ++t){
+        // cout << "Cost of trips of " << t << ": " << endl;
         for (r = 1; r < getNrRounds(); ++r){
             i = TeamColorOpp[t][r-1], j = TeamColorOpp[t][r];
             if (Orientation[t][r-1] == HA::H && Orientation[t][r] == HA::A){
                 CostOfTrips += getDistanceTeams(t,j);
+                // cout << t << " -> " << j << ": " << getDistanceTeams(t,j) << endl;
             }
             else if (Orientation[t][r-1] == HA::A && Orientation[t][r] == HA::H){
                 CostOfTrips += getDistanceTeams(t,i);
+                // cout << i << " -> " << t << ": " << getDistanceTeams(i,t) << endl;
             }
             else if (Orientation[t][r-1] == HA::A && Orientation[t][r] == HA::A){
                 CostOfTrips += getDistanceTeams(i,j);
+                // cout << i << " -> " << j << ": " << getDistanceTeams(i,j) << endl;
             }
         }
         if (Orientation[t][0] == HA::A){
             CostOfTrips += getDistanceTeams(t,TeamColorOpp[t][0]); // if it plays A in first round, it must also travel to that team (not accounted for in sum above)
+            // cout << t << " -> " << TeamColorOpp[t][0] << ": " << getDistanceTeams(t,TeamColorOpp[t][0]) << endl;
         }
         if (Orientation[t][getNrRounds()-1] == HA::A){
             CostOfTrips += getDistanceTeams(t,TeamColorOpp[t][getNrRounds()-1]); // similar for last round
+            // cout << TeamColorOpp[t][getNrRounds()-1] << " -> " << t << ": " << getDistanceTeams(t,TeamColorOpp[t][getNrRounds()-1]) << endl;
         }
+        // cin.get();
     }
     return CostOfTrips;
 }
 
 int Solution::ComputeTotalCostTTP(){
-    // cout << "Travel cost = " << ComputeTravelCostTTP() << endl;
-    // cout << "TTP cost = " << ComputeTotalCostTTPViolations() << endl;
+    cout << "Travel cost = " << ComputeTravelCostTTP() << endl;
+    cout << "TTP cost = " << ComputeTotalCostTTPViolations() << endl;
     return ComputeTravelCostTTP()+ComputeTotalCostTTPViolations();
 }
 

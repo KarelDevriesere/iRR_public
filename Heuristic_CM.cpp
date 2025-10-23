@@ -13,6 +13,7 @@ Heuristic_CM::Heuristic_CM(const std::unordered_map<move_name_CM, string>& moves
             if (MinCostNB){
                 MinCostP = true;
                 MinCostM = true;
+                MinCostPTS = true;
             }
 }
 
@@ -28,6 +29,57 @@ array<int,3>Heuristic_CM::SelectTwoTeamsAndColor(Solution& sol){
     }
     assert(i != j);
     return {i,j,c};
+}
+
+array<int,3>Heuristic_CM::SelectTwoTeamsAndColorMinCost(Solution& sol){
+    int k = RandomIntegerNumber(0, sol.getNrTeams()-1);
+    int i_max = -1;
+    int c_max = -1;
+    int d_max = -1;
+    int i;
+    int cost;
+    vector<bool>TeamSeen(sol.getNrTeams(),false);
+    for (int r = 0; r < sol.getNrRounds(); ++r){
+        i = sol.TeamColorOpp[k][r];
+        if (sol.getSetting() == Setting::CM && sol.Orientation[k][r] == HA::H){
+            cost = sol.getCostMatchRound(k,i,r);
+        }
+        else if (sol.getSetting() == Setting::CM && sol.Orientation[k][r] == HA::A){
+            cost = sol.getCostMatchRound(i,k,r);
+        }
+        else{
+            assert(sol.getSetting() == Setting::TTP);
+            cost = sol.getDistanceTeams(i,k);
+        }
+        if (cost > d_max){
+            i_max = i;
+            c_max = r;
+            d_max = cost;
+        }
+        TeamSeen[i] = true;
+    }
+    int j_best = -1;
+    int j;
+    for (j = 0; j < sol.getNrTeams(); ++j){
+        if (sol.getSetting() == Setting::CM && sol.Orientation[k][c_max] == HA::H){
+            cost = sol.getCostMatchRound(k,j,c_max);
+        }
+        else if (sol.getSetting() == Setting::CM && sol.Orientation[k][c_max] == HA::A){
+            cost = sol.getCostMatchRound(j,k,c_max);
+        }
+        else{
+            assert(sol.getSetting() == Setting::TTP);
+            cost = sol.getDistanceTeams(j,k);
+        }
+        if (cost < d_max && !TeamSeen[j]){
+            j_best = j;
+            d_max = cost;
+        }
+    }
+    if (j_best == -1){
+        return SelectTwoTeamsAndColor(sol);
+    }
+    return {i_max,j_best,c_max};
 }
 
 pair<int,int>Heuristic_CM::SelectTwoTeams(Solution& sol){
@@ -93,7 +145,13 @@ void ResetOrientations_CM(Solution& sol, const vector<vector<HA>>OrientationsCop
 
 void Heuristic_CM::SelectPTS_CM(Solution& sol){
 
-    array<int,3>triple = SelectTwoTeamsAndColor(sol);
+    array<int,3>triple;
+    if (MinCostPTS){
+        triple = SelectTwoTeamsAndColorMinCost(sol);
+    }
+    else{
+        triple = SelectTwoTeamsAndColor(sol);
+    }
     int i = triple[0], j = triple[1], StartColor = triple[2];
     // cout << "i : " << i << " and j = " << j << endl;
 
@@ -246,6 +304,7 @@ void Heuristic_CM::SelectMatching_CM(Solution& sol, const bool bipartite){
             assert(cost_before+delta == sol.ComputeTotalCost());
         }
 #endif
+
         if (!Update(sol, sol.ComputeTotalCost())){
             // reverse paths again
             /*

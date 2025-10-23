@@ -122,6 +122,22 @@ void GurSolver::BoundTTP(const int t){
 		Objective += CostTrips[r]*z_r[r];
 	}
 	model.setObjective(Objective, GRB_MINIMIZE);
+
+	/*
+	model.optimize();
+
+	for (r = 0; r < NrTrips; ++r){
+		if (z_r[r].get(GRB_DoubleAttr_X) > 0.9){
+			cout << "This trip has a cost of " << CostTrips[r] << endl;
+			cout << t << " -> " << Trips[r][0] << ": " << getDistanceTeams(t,Trips[r][0]) << endl;
+			for (int k = 1; k < Trips[r].size(); ++k){
+				cout << Trips[r][k-1] << " -> " << Trips[r][k] << ": " << getDistanceTeams(Trips[r][k-1], Trips[r][k]) << endl;
+			}
+			cout << Trips[r].back() << " -> " << t << ": " << getDistanceTeams(t,Trips[r].back()) << endl;
+		}
+	}
+	cin.get();
+	*/
 }
 
 void GurSolver::iTTP(){
@@ -152,6 +168,9 @@ void GurSolver::iTTP(){
 	for (t = 0; t < getNrTeams(); ++t){
 		for (i = 0; i < getNrTeams(); ++i){
 			for (j = 0; j < getNrTeams(); ++j){
+				if (t == i || t == j || i == j){
+					continue;
+				}
 				for (r = 1; r < getNrRounds(); ++r){
 					model.addConstr(z[t][i][j] >= x[i][t][r-1] + x[j][t][r] - 1);
 				}
@@ -163,6 +182,9 @@ void GurSolver::iTTP(){
 
 	for (t = 0; t < getNrTeams(); ++t){
 		for (i = 0; i < getNrTeams(); ++i){
+			if (t == i){
+				continue;
+			}
 			for (r = 1; r < getNrRounds(); ++r){
 				GRBLinExpr sum_j = 0;;
 				for (j = 0; j < getNrTeams(); ++j){
@@ -180,6 +202,9 @@ void GurSolver::iTTP(){
 
 	for (t = 0; t < getNrTeams(); ++t){
 		for (i = 0; i < getNrTeams(); ++i){
+			if (t == i){
+				continue;
+			}
 			for (r = 1; r < getNrRounds(); ++r){
 				GRBLinExpr sum_j = 0;;
 				for (j = 0; j < getNrTeams(); ++j){
@@ -197,6 +222,9 @@ void GurSolver::iTTP(){
 
 	for (t = 0; t < getNrTeams(); ++t){
 		for (i = 0; i < getNrTeams(); ++i){
+			if (t == i){
+				continue;
+			}
 			model.addConstr(z[t][t][i] >= x[i][t][0]);
 			model.addConstr(z[t][i][t] >= x[i][t][getNrRounds()-1]);
 		}

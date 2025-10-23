@@ -137,7 +137,12 @@ void SolveIP(Input& in, const int seed, const int TimeLimit, vector<int>& TimeSt
     output_file << config << "\n";
     gur.SaveSolutionsTimeStamps(output_file);
     SaveSolution(output_file, sol);
-    
+    if (in.getSetting() == Setting::TTP){
+        // Time limit is doing really weird stuff, giving infeasible solutions
+        // Is gurobi also giving a high cost to infeasible solutions???
+        output_file << "Travel cost = " << sol.ComputeTravelCostTTP() << "\n";
+        output_file << "TTP violations cost = " << sol.ComputeTotalCostTTPViolations() << "\n";
+    }
     output_file.close();
     cout << "Close file" << endl;
 
@@ -208,6 +213,7 @@ void BoundsTTP(){
         }
 
         for (int NrRoundsTTP: Rounds){
+
             if (!in.read_TTP(FilePath, NrRoundsTTP)){
                 cout << "could not read " << FilePath << endl;
                 return;

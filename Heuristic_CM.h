@@ -17,6 +17,7 @@ const unordered_map<move_name_CM, string>Moves = {{move_name_CM::TS, "TS"}, {mov
 class Heuristic_CM: public LAHC<move_name_CM>
 {
     private:
+        array<int,3>SelectTwoTeamsAndColorMinCost(Solution& sol);
         array<int,3>SelectTwoTeamsAndColor(Solution& sol);
         pair<int,int>SelectTwoTeams(Solution& sol);
         pair<int,int>SelectTwoRounds(Solution& sol);
@@ -31,6 +32,7 @@ class Heuristic_CM: public LAHC<move_name_CM>
         bool MinCostP = false; // MinCost Path
         bool MinCostM = false; // MinCost Matching
         bool MinCostC = false; // MinCost cycle
+        bool MinCostPTS = false;
 
     public:
         Heuristic_CM(const std::unordered_map<move_name_CM, string>& moves, const std::unordered_map<move_name_CM, double>& weights, std::mt19937& g, const int HistoryLength, const int obj, const bool MinCostNB);

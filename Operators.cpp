@@ -1263,7 +1263,7 @@ bool ForbiddenEdge_CM(const int i, const int j, const int r, const bool bipartit
     return false;
 }
 
-vector<vector<pair<int,int>>> CreateAlternatingCycles(Solution& sol, const vector<int>& OpponentMatching, const int r, const bool bipartite){
+vector<vector<pair<int,int>>> CreateAlternatingCycles(Solution& sol, const vector<int>& OpponentMatching, const int r, const bool bipartite, std::mt19937& gen){
 
     vector<bool>NodeSeen(sol.getNrTeams(), false);
     vector<vector<pair<int,int>>>AlternatingCycles; // each cycle starts with edge found in the matching (so was initially uncolored)
@@ -1304,10 +1304,6 @@ vector<vector<pair<int,int>>> CreateAlternatingCycles(Solution& sol, const vecto
             }
             // cout << "-------------------" << endl;
             AlternatingCycles.push_back(AlternatingCycle);
-            if (!bipartite){
-                break; // only 1 alternating cycle in case of M+PR, because otherwise a path may use an edge from an other alternating cycle
-                // so becomes messy
-            }
         }
     }
 #ifndef NDEBUG
@@ -1320,6 +1316,11 @@ vector<vector<pair<int,int>>> CreateAlternatingCycles(Solution& sol, const vecto
         }
     }
 #endif
+
+    if (!bipartite && !AlternatingCycles.empty()){
+        shuffle(AlternatingCycles.begin(), AlternatingCycles.end(), gen);
+        AlternatingCycles = {AlternatingCycles[0]}; // only 1 alternating cycle otherwise trouble with reversing paths
+    }
     return AlternatingCycles;
 }
 
@@ -1366,7 +1367,17 @@ pair<vector<pair<int,int>>,vector<int>> MoveMWPM(Solution& sol, const int l, con
             if (MinCostM){
                 d = sol.getMaxEdgeCost()*(sol.getNrTeams()/2)+1;
                 if (CM){
-                    d -= sol.getCostMatchRound(i,j,r);
+                    if (bipartite && sol.Orientation[i][r] == HA::H){
+                        d -= sol.getCostMatchRound(i,j,r);
+                    }
+                    else if (bipartite && sol.Orientation[i][r] == HA::A){
+                        d -= sol.getCostMatchRound(j,i,r);
+                    }
+                    else{
+                        assert(!bipartite);
+                        d -= min(sol.getCostMatchRound(i,j,r), sol.getCostMatchRound(j,i,r));
+                    }
+                    
                 }
                 else{
                     d -= sol.getDistanceTeams(i,j); // - bc algorithm finds matching of MAXIMUM weight
@@ -1427,7 +1438,7 @@ vector<vector<pair<int,int>>>iPRS(Solution& sol, const int l, const int r, const
 
     pair<vector<pair<int,int>>,vector<int>>OpponentMatching_Matching = MoveMWPM(sol, l, r, bipartite, includeHAPs, CM, gen, MinCostM);
 
-    vector<vector<pair<int,int>>>AlternatingCycles = CreateAlternatingCycles(sol, OpponentMatching_Matching.second, r, bipartite); // first edge in alternating cycle: new match (so initially uncolored)
+    vector<vector<pair<int,int>>>AlternatingCycles = CreateAlternatingCycles(sol, OpponentMatching_Matching.second, r, bipartite, gen); // first edge in alternating cycle: new match (so initially uncolored)
 
     return AlternatingCycles;
 
