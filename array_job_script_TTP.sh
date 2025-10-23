@@ -18,14 +18,14 @@ module load Gurobi
 
 # compile project only once here
 make clean
-make release PRINT=0 
+make release PRINT=0
 
 walltime="02:30:00"
 seed=0 # random seed
-TL=7250 # 4 hours
+TL=7260 # 4 hours
 
-for instance in "CIRC40" "CON40" "GAL40" "INCR40" "LINE40"; do
-    for NrRounds in 10 20 30; do
+for instance in "N16"; do
+    for NrRounds in 4 8 12; do
         for heuristic in 0 1; do
             if [ $heuristic -eq 1 ]; then
                 for MinCostNB in 0 1; do
