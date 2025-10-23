@@ -1028,6 +1028,132 @@ vector<array<int,3>> CycleBalanced(Solution& sol, std::mt19937& gen){
     return Cycle;
 }
 
+int NegativeCycle(Solution& sol){
+    // See: https://www.boost.org/doc/libs/1_31_0/libs/graph/example/bellman-example.cpp
+
+    // define a source node: goes to all the nodes!!
+
+    int cost = 0; // if no negative cycle cost will be 0
+
+    typedef pair<int, int>E;
+    vector<E>edge_vector;
+    vector<int>weight;
+
+    const int N = sol.getNrTeams();
+    int SOURCE = N;
+
+    int v,w,h,a,r;
+    for (v = 0; v < N; ++v){
+        for (w = v+1; w < N; ++w){
+            r = sol.MatchColor[v][w]; // SRR
+            if (r < 0){
+                continue;
+            }
+            if (sol.Orientation[v][r] == HA::H){
+                h = v;
+                a = w;
+            }
+            else{
+                h = w;
+                a = v;
+            }
+            edge_vector.push_back(E(h,a));
+            weight.push_back(sol.getCostMatchRound(a,h,r)-sol.getCostMatchRound(h,a,r)); // improvement of reversing this edge
+        }
+    }
+    for (int v = 0; v < N; ++v){
+        edge_vector.push_back(E(SOURCE, v)); // create edges SOURCE --> v
+        weight.push_back(0); // get weight of 0
+    }
+
+    /*
+    vecS: specifies that each vertex stores outgoing vertices in a vector
+    vecS: means that the vertices themselves are also stored in a vector
+    directedS: specifies that the edges are directed
+    no_property: vertices have no extra properties (like labels, colors, ..)
+    property <boost::edge_weight_t, int>: each edge has a property called edge_weight_t, which stores an integer value
+    */
+
+    typedef boost::adjacency_list <boost::vecS, boost::vecS, boost::directedS, boost::no_property, boost::property <boost::edge_weight_t, int>>BGraph;
+
+    BGraph g(N+1); // N+1 vertices, +1 bc of source node
+
+    typedef boost::property_map<BGraph, boost::edge_weight_t>::type WeightMap;
+    WeightMap weight_map = boost::get(boost::edge_weight, g);
+    typedef boost::graph_traits<BGraph>::vertex_descriptor Vertex;
+
+    for (std::size_t j = 0; j < edge_vector.size(); ++j){
+        boost::add_edge(edge_vector[j].first, edge_vector[j].second, weight[j], g);
+    }
+
+    // C+1 because of source node!!!
+    int N = boost::num_vertices(g);
+    vector<double> distance(N, std::numeric_limits<double>::max());
+    vector<Vertex> predecessor(N, boost::graph_traits<BGraph>::null_vertex());
+
+    distance[SOURCE] = 0; // arbitrary start node
+
+    // cout << "start BF" << endl;
+
+    // bool r = boost::bellman_ford_shortest_paths(g, C+1, weight_pmap, &parent[0], &distance[0], boost::closed_plus<int>(), std::less<int>(), boost::default_bellman_visitor());
+
+    bool r = boost::bellman_ford_shortest_paths(g, N, boost::weight_map(get(boost::edge_weight, g)).distance_map(&distance[0]).predecessor_map(&predecessor[0]));
+
+     
+    if (!r)
+    {
+        // Find a vertex that is part of a negative cycle
+        Vertex cycle_vertex = boost::graph_traits<BGraph>::null_vertex();
+ 
+        for (int i = 0; i < N; ++i)
+        {
+            for (auto e : make_iterator_range(edges(g)))
+            {
+                Vertex u = source(e, g), v = target(e, g);
+                double weight = get(boost::edge_weight, g, e);
+ 
+                // If we can still relax an edge, then v is part of a negative cycle
+                if (distance[u] + weight < distance[v])
+                {
+                    cycle_vertex = v;
+                    break;
+                }
+            }
+            if (cycle_vertex != boost::graph_traits<BGraph>::null_vertex())
+                break;
+        }
+ 
+        // Recover the negative cycle
+        cout << "Negative cycle found: " << endl;
+        vector<array<int,3>>Cycle;
+        Cycle.reserve(N);
+        if (cycle_vertex != boost::graph_traits<BGraph>::null_vertex())
+        {
+            Vertex current = cycle_vertex;
+            for (int i = 0; i < N; ++i) // Move `N` steps to guarantee being inside the cycle
+                current = predecessor[current];
+ 
+            // Track the cycle
+            Vertex cycle_start = current;
+            Vertex next;
+            while (current != cycle_start){
+                next = predecessor[current];
+                r = sol.MatchColor[current][next];
+                Cycle.emplace_back(current,next,r);
+                current = next;
+            };
+
+            cin.get();
+        }
+    }
+    else{
+        cout << "No negative cycle found!" << endl;
+    }
+
+    return cost;
+
+}
+
 void SwapMatchings(Solution& sol, vector<pair<int,int>>Matching, const int l, const int r, const bool bipartite){
     // cout << "SWAP MATCHINGS" << endl;
     const int N = sol.getNrTeams();

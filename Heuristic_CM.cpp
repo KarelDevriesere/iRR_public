@@ -146,7 +146,7 @@ void ResetOrientations_CM(Solution& sol, const vector<vector<HA>>OrientationsCop
 void Heuristic_CM::SelectPTS_CM(Solution& sol){
 
     array<int,3>triple;
-    if (MinCostPTS){
+    if (/*MinCostPTS*/ false){ // at first sight, does not seem to work
         triple = SelectTwoTeamsAndColorMinCost(sol);
     }
     else{
@@ -285,6 +285,11 @@ void Heuristic_CM::SelectMatching_CM(Solution& sol, const bool bipartite){
     const bool CM = true;
     // I only do 1 alternating cycle in case of M+PR, because path can use edge of other cycle, did not want to deal with this
     vector<vector<pair<int,int>>>AlternatingCycles = iPRS(sol, l, r, bipartite, includeHAPs, CM, gen, MinCostM);
+
+    if (MinCostM && AlternatingCycles.empty()){
+        // if empty, no new matching could be found -> repeat but now random matching (otherwise matchings will prematurely become useless)
+        AlternatingCycles = iPRS(sol, l, r, bipartite, includeHAPs, CM, gen, false);
+    }
     
     int delta;
     for (auto& AlternatingCycle: AlternatingCycles){

@@ -613,7 +613,7 @@ void GurSolver::AddObjGeneralCosts(){
 	Objective = 0;
 	for (int i = 0; i < getNrTeams(); ++i){
 		for (int j = 0; j < getNrTeams(); ++j){
-			if (isEligible(i, j)){
+			if (/*isEligible(i, j)*/ true){
 				for (int r = 0; r < getNrRounds(); ++r){
 					Objective += getCostMatchRound(i,j,r)*x[i][j][r];
 				}
