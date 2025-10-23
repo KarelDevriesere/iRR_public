@@ -137,6 +137,10 @@ int main(int argc, const char* argv[]){
                     std::cerr << "NrRounds must be strictly positive!" << endl;
                     return 1;
                 }
+                if (NrRounds %2 != 0){
+                    std::cerr << "NrRounds must be even!" << endl;
+                    return 1;
+                }
                 TTP = true;
                 CM = false;
             }
