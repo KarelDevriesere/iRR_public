@@ -120,7 +120,7 @@ int UpdateCycleBF(vector<int>& Cycle, Solution& sol);
 
 int MinimizeBreaksCycleBoost(Solution& sol);
 
-int NegativeCycleBoost(Solution& sol);
+vector<array<int,3>> NegativeCycle(Solution& sol);
 
 void SwapMatchings(Solution& sol, vector<pair<int,int>>Matching, const int l, const int r, const bool bipartite);
 
@@ -133,8 +133,6 @@ vector<vector<array<int,3>>>EvaluateAlternatingCycleWithPaths(Solution& sol, vec
 void GoBackToOldCycle(Solution& sol, vector<pair<int,int>>& AlternatingCycle, const int r);
 
 int PTS_infeasible_coloring(Solution& sol, int &i, const int j, const int startColor, bool& evaluate_cost, const bool swap);
-
-int NegativeCycle(Solution& sol);
 
 void ReverseCycle(vector<int>& Cycle, Solution& sol);
 

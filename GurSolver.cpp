@@ -142,15 +142,16 @@ void GurSolver::BoundTTP(const int t){
 
 void GurSolver::iTTP(){
 
-	if (getNrRounds() < 4){
-		cout << "iTTP not possible because NrRounds is " << getNrRounds() << endl;
-		return;
-	}
-
 	int t,i,j,r;
 	const bool HA = true;
 	const bool relax_x = false;
 	build_base(HA, relax_x); // all base constraints
+
+	if (getNrRounds() < 4){
+		cout << "WARNING: iTTP constraints not needed because NrRounds is " << getNrRounds() << endl;
+		AddObj(true, false);
+		return;
+	}
 
 	// z_tij = 1 if t travels from the home venue of i to that of j
 	z = vector<vector<vector<GRBVar>>>(getNrTeams(), vector<vector<GRBVar>>(getNrTeams(), vector<GRBVar>(getNrTeams())));

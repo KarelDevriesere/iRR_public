@@ -1028,7 +1028,7 @@ vector<array<int,3>> CycleBalanced(Solution& sol, std::mt19937& gen){
     return Cycle;
 }
 
-int NegativeCycle(Solution& sol){
+vector<array<int,3>> NegativeCycle(Solution& sol){
     // See: https://www.boost.org/doc/libs/1_31_0/libs/graph/example/bellman-example.cpp
 
     // define a source node: goes to all the nodes!!
@@ -1061,6 +1061,7 @@ int NegativeCycle(Solution& sol){
             weight.push_back(sol.getCostMatchRound(a,h,r)-sol.getCostMatchRound(h,a,r)); // improvement of reversing this edge
         }
     }
+
     for (int v = 0; v < N; ++v){
         edge_vector.push_back(E(SOURCE, v)); // create edges SOURCE --> v
         weight.push_back(0); // get weight of 0
@@ -1087,9 +1088,9 @@ int NegativeCycle(Solution& sol){
     }
 
     // C+1 because of source node!!!
-    int N = boost::num_vertices(g);
-    vector<double> distance(N, std::numeric_limits<double>::max());
-    vector<Vertex> predecessor(N, boost::graph_traits<BGraph>::null_vertex());
+    assert(boost::num_vertices(g) == N+1);
+    vector<double> distance(N+1, std::numeric_limits<double>::max());
+    vector<Vertex> predecessor(N+1, boost::graph_traits<BGraph>::null_vertex());
 
     distance[SOURCE] = 0; // arbitrary start node
 
@@ -1097,15 +1098,16 @@ int NegativeCycle(Solution& sol){
 
     // bool r = boost::bellman_ford_shortest_paths(g, C+1, weight_pmap, &parent[0], &distance[0], boost::closed_plus<int>(), std::less<int>(), boost::default_bellman_visitor());
 
-    bool r = boost::bellman_ford_shortest_paths(g, N, boost::weight_map(get(boost::edge_weight, g)).distance_map(&distance[0]).predecessor_map(&predecessor[0]));
+    bool NC = boost::bellman_ford_shortest_paths(g, N+1, boost::weight_map(get(boost::edge_weight, g)).distance_map(&distance[0]).predecessor_map(&predecessor[0]));
 
+    vector<array<int,3>>Cycle;
+    Cycle.reserve(N);
      
-    if (!r)
+    if (!NC)
     {
-        // Find a vertex that is part of a negative cycle
         Vertex cycle_vertex = boost::graph_traits<BGraph>::null_vertex();
  
-        for (int i = 0; i < N; ++i)
+        for (int i = 0; i < N+1; ++i)
         {
             for (auto e : make_iterator_range(edges(g)))
             {
@@ -1122,35 +1124,32 @@ int NegativeCycle(Solution& sol){
             if (cycle_vertex != boost::graph_traits<BGraph>::null_vertex())
                 break;
         }
- 
-        // Recover the negative cycle
-        cout << "Negative cycle found: " << endl;
-        vector<array<int,3>>Cycle;
-        Cycle.reserve(N);
+
+        // cout << "Negative cycle found: " << endl;
         if (cycle_vertex != boost::graph_traits<BGraph>::null_vertex())
         {
             Vertex current = cycle_vertex;
-            for (int i = 0; i < N; ++i) // Move `N` steps to guarantee being inside the cycle
+            for (int i = 0; i < N+1; ++i) // Move `N` steps to guarantee being inside the cycle
                 current = predecessor[current];
  
             // Track the cycle
             Vertex cycle_start = current;
-            Vertex next;
-            while (current != cycle_start){
-                next = predecessor[current];
-                r = sol.MatchColor[current][next];
-                Cycle.emplace_back(current,next,r);
-                current = next;
-            };
-
-            cin.get();
+            Vertex pred;
+            do {
+                pred = predecessor[current];
+                r = sol.MatchColor[current][pred];
+                Cycle.emplace_back(std::array<int, 3>{(int)current,(int)pred,r});
+                // cout << "add edge " << (int)current << "<-" << (int)pred << " (round " << r << "): " << sol.getCostMatchRound(pred,current,r)-sol.getCostMatchRound(current,pred,r) << endl;
+                current = pred;
+            }while (current != cycle_start);
         }
     }
     else{
-        cout << "No negative cycle found!" << endl;
+        // cout << "No negative cycle found!" << endl;
+        assert(Cycle.empty());
     }
 
-    return cost;
+    return Cycle;
 
 }
 

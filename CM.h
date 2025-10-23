@@ -77,9 +77,10 @@ void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int H
     assert(sol.validate());
     const int obj = sol.ComputeTotalCost();
     cout << "Cost initial solution = " << obj << endl;
+
     std::mt19937 gen(seed);
     unordered_map<move_name_CM, double>Weights = WeightsMap(InputWeights);
-    Heuristic_CM algo(Moves, Weights, gen, HistoryLength, obj, MinCostNB);
+    Heuristic_CM algo(Moves, Weights, gen, 10, obj, MinCostNB);
     algo.setTimeLimit_meta(TimeLimit);
     algo.SetMaxIt(MaxIt);
     algo.SetTimeStamps(TimeStamps);
@@ -95,8 +96,12 @@ void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int H
     else{
         FilePath += "NoMinCost";
     }
-    FilePath += std::string(PATHSEP) + Instance + "_" + "s" + to_string(seed) + "_HL" + to_string(HistoryLength) + "_" + to_string(in.getNrRounds()) + ".txt";
-    const string config = to_string(seed) + ",Heuristic," + to_string(MinCostNB) + "," + to_string(HistoryLength);
+    FilePath += std::string(PATHSEP) + Instance;
+    if (in.getSetting() == Setting::TTP){
+        FilePath += "_" + to_string(in.getNrRounds());
+    }
+    FilePath += "_s" + to_string(seed) + "_HL" + to_string(HistoryLength) + ".txt";
+    const string config = to_string(seed) + ",Heuristic," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds()) + "," + to_string(MinCostNB) + "," + to_string(HistoryLength);
 
     cout << "Save file as " << FilePath << endl;
     std::ofstream output_file(FilePath);
@@ -105,8 +110,6 @@ void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int H
     SaveSolution(output_file, sol);
 
     output_file.close();
-
-
     return;
 }
 
@@ -131,7 +134,7 @@ void SolveIP(Input& in, const int seed, const int TimeLimit, vector<int>& TimeSt
     cout << "Final solution = " << sol.ComputeTotalCost() << endl;
 
     const string FilePath = FolderPath + "Results" + std::string(PATHSEP) + "IP" + std::string(PATHSEP) + Instance + "_" + to_string(in.getNrRounds()) + ".txt";
-    const string config = to_string(seed) + ",IP";
+    const string config = to_string(seed) + ",IP," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
     cout << "Save file as " << FilePath << endl;
     std::ofstream output_file(FilePath);
     output_file << config << "\n";

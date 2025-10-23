@@ -14,6 +14,7 @@ Heuristic_CM::Heuristic_CM(const std::unordered_map<move_name_CM, string>& moves
                 MinCostP = true;
                 MinCostM = true;
                 MinCostPTS = true;
+                MinCostC = true;
             }
 }
 
@@ -334,9 +335,15 @@ void Heuristic_CM::SelectMatching_CM(Solution& sol, const bool bipartite){
 
 void Heuristic_CM::SelectBalancedCycle_CM(Solution& sol){
 
-    assert(!MinCostC);
+    bool NegativeCycleFound = false;
     vector<array<int,3>>Cycle;
-    if (!MinCostC){
+    if (MinCostC){
+        Cycle = NegativeCycle(sol);
+        if (!Cycle.empty()){
+            NegativeCycleFound = true;
+        }
+    }    
+    if (!MinCostC || !NegativeCycleFound){
         Cycle = CycleBalanced(sol, gen);
     }
     int cost_before;
@@ -354,8 +361,14 @@ void Heuristic_CM::SelectBalancedCycle_CM(Solution& sol){
         ReversePath(sol, Cycle);
 #ifndef NDEBUG
         assert(sol.ComputeTotalCost() == cost_before);
+        assert(!(MinCostC && NegativeCycleFound)); // If a negative cycle was found, it cannot be that we not accept the solution
 #endif
     }
+#ifndef NDEBUG
+    if (NegativeCycleFound){
+        assert(cost_before > sol.ComputeTotalCost());
+    }
+#endif
     return;
 }
 
