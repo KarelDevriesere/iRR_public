@@ -8,7 +8,7 @@ RoundSet40 = [10,20,30]
 RoundSet32 = [8,16,24]
 RoundSet24 = [6,12,18]
 RoundSet16 = [4,8,12]
-NrRoundsTTP = {"BRA24": RoundSet24, "CIRC40": RoundSet40, "CON40": RoundSet40, "GAL40": RoundSet40, "INCR40": RoundSet40, "LINE40": RoundSet40, "N16": RoundSet16, "NFL32": : RoundSet32}
+NrRoundsTTP = {"BRA24": RoundSet24, "CIRC40": RoundSet40, "CON40": RoundSet40, "GAL40": RoundSet40, "INCR40": RoundSet40, "LINE40": RoundSet40, "N16": RoundSet16, "NFL32": RoundSet32}
 ListLengths = [1,10,50,100,500,5000] # list lengths
 
 
@@ -106,7 +106,7 @@ def Analyze(CM,TTP,FolderPathIP, FolderPathHeuristicMinCost, FolderPathHeuristic
         OutputPath = os.path.join(os.path.join("Results", "TTP"), "BestValues.txt")
     print(f"Save results in {OutputPath}")
     WriteOutput(CM,TTP,FolderPathIP, FolderPathHeuristicMinCost, FolderPathHeuristicNoMinCost,OutputPath)
-                
+                        
 
 if __name__ == "__main__":
     CM = False
@@ -119,6 +119,7 @@ if __name__ == "__main__":
             FolderPath = os.path.join(FolderPath, subfolder)
     elif sys.argv[1] == "TTP":
         TTP = True
+        FolderPath = os.path.join(FolderPath, "TTP")
         print("Analyze results TTP")
     else:
         print("Specify CM or TTP")
@@ -133,3 +134,35 @@ if __name__ == "__main__":
     FolderPathHeuristicNoMinCost = os.path.join(os.path.join(FolderPath, "Heuristic"), "NoMinCost")
 
     Analyze(CM,TTP,FolderPathIP, FolderPathHeuristicMinCost, FolderPathHeuristicNoMinCost)
+
+
+'''
+import re
+
+def RenameFiles(FolderPathHeuristicMinCost, FolderPathHeuristicNoMinCost):
+    for directory in [FolderPathHeuristicMinCost, FolderPathHeuristicNoMinCost]:
+        for file_index, filename in enumerate(os.listdir(directory)):
+            for inst in ["CIRC40", "CON40", "GAL40", "INCR40", "LINE40", "N16"]:
+                if inst in filename:
+                    # match = re.match(f"({inst})_([\w_]+)_(\d+)\.txt", filename)
+                    # if match:
+                    # instance, middle, number = match.groups()
+                    # new_name = f"{instance}_{number}_{middle}.txt"
+                    old_path = os.path.join(directory, filename)
+                    # new_path = os.path.join(directory, new_name)
+                    # os.rename(old_path, new_path)
+                    
+                    # read all lines
+                    with open(old_path, "r") as f:
+                        lines = f.readlines()
+
+                    # modify only the first line
+                    if lines:
+                        parts = lines[0].strip().split(",")
+                        parts = parts[:2] + parts[4:] + parts[2:4]
+                        lines[0] = ",".join(parts) + "\n"
+
+                    # write everything back
+                    with open(old_path, "w") as f:
+                        f.writelines(lines)
+'''
