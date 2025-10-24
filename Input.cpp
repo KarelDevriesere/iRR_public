@@ -20,6 +20,8 @@ void Input::setBaseAlgo(){
     BaseAlgo = true;
     NrRoundsBaseAlgo = NrRounds;
     NrRounds = NrTeams-1;
+    cout << "NrRounds = " << NrRounds << endl;
+    cout << "NrRoundsBaseAlgo = " << NrRoundsBaseAlgo << endl;
 }
 
 void Input::SetDefault(const int NrTeams){

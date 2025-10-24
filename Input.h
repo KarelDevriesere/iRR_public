@@ -5,6 +5,7 @@
 #include <vector>
 #include <unordered_map>
 #include <assert.h>
+#include <limits.h>
 
 enum class Setting{Miao,Hockey,CM,TTP};
 enum class InstanceSetCM{Karel, Jasper, Uthus}; // Instances Cost Minimization
@@ -61,7 +62,7 @@ class Input
         vector<vector<vector<int>>>CostMatchRound;
 
         int CostTTPViolation = 0;
-        int CostImbalance = INT_MAX;
+        int CostImbalance = 100000;
 
         Setting Setting_;
         

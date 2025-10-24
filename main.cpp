@@ -239,6 +239,7 @@ int main(int argc, const char* argv[]){
         }
 
         double sum = 0;
+        double sum_weights = 0;
         cout << "------ Weights ------" << endl;
         bool NoMoveSeen = true;
         for (const auto& [move, weight]: InputWeights){
@@ -250,29 +251,31 @@ int main(int argc, const char* argv[]){
         for (const auto& [move, weight]: InputWeights){
             if (MoveSeen.at(move)){
                 InputWeights.at(move) /= sum;
+                sum_weights += InputWeights.at(move);
+                cout << move << ": " << InputWeights.at(move) << endl;
             }
-            cout << move << ": " << InputWeights.at(move) << endl;
         }
         if (NoMoveSeen){
             assert(sum == 0);
             for (const auto& [move, weight]: InputWeights){
-                if (Base && (move == "BM" || Move == "M")){
+                if (Base && (move == "BM" || move == "M")){
                     continue;
                 }
                 sum += 1.0;
             }
             for (const auto& [move, weight]: InputWeights){
-                if (Base && (move == "BM" || Move == "M")){
+                if (Base && (move == "BM" || move == "M")){
                     InputWeights.at(move) = 0.0;
                 }
                 else{
                     InputWeights.at(move) = 1.0 / sum;
                 }
+                sum_weights += InputWeights.at(move);
                 cout << move << ": " << InputWeights.at(move) << endl;
             }
         }
-        if (sum <= 0.99 || sum >= 1.01){
-            cout << "Sum of the weights should be equal to 1.0 but is now" << sum << endl;
+        if (sum_weights <= 0.99 || sum_weights >= 1.01){
+            cout << "Sum of the weights should be equal to 1.0 but is now" << sum_weights << endl;
             return 1;
         }
         cout << "---------------------" << endl;

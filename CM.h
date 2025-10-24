@@ -114,11 +114,12 @@ void SaveSolution(std::ofstream& output_file, Solution& sol){
     }
 }
 
-void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int HistoryLength, const int TimeLimit, const int MaxIt, vector<int>& TimeStamps, const string Instance, const unordered_map<string, double>& InputWeights, const string FolderPath){
+void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int HistoryLength, const int TimeLimit, const int MaxIt, vector<int>& TimeStamps, const string Instance, const unordered_map<string, double>& InputWeights, const string FolderPath, const bool BaseAlgo){
     // Find initial solution with Vizing
     Solution sol(in);
     cout << "Solve Vizing" << endl;
     VizingConstruction(sol, seed);
+    cout << "Found initial solution" << endl;
     assert(sol.validate());
     const int obj = sol.ComputeTotalCost();
     cout << "Cost initial solution = " << obj << endl;
@@ -134,19 +135,32 @@ void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int H
     sol.validate();
     cout << "Final solution = " << sol.ComputeTotalCost() << endl;
 
-    string FilePath = FolderPath + "Results" + std::string(PATHSEP) + "Heuristic" + std::string(PATHSEP);
-    if (MinCostNB){
-        FilePath += "MinCost";
+    string FilePath = FolderPath + "Results" + std::string(PATHSEP);
+    if (BaseAlgo){
+        FilePath += "Base" + std::string(PATHSEP);
     }
     else{
-        FilePath += "NoMinCost";
+        FilePath += "Heuristic" + std::string(PATHSEP);
+        if (MinCostNB){
+            FilePath += "MinCost";
+        }
+        else{
+            FilePath += "NoMinCost";
+        }
     }
     FilePath += std::string(PATHSEP) + Instance;
     if (in.getSetting() == Setting::TTP){
         FilePath += "_" + to_string(in.getNrRounds());
     }
     FilePath += "_s" + to_string(seed) + "_HL" + to_string(HistoryLength) + ".txt";
-    const string config = to_string(seed) + ",Heuristic," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds()) + "," + to_string(MinCostNB) + "," + to_string(HistoryLength);
+    config = to_string(seed);
+    if (BaseAlgo){
+        config += ",BaseAlgo,";
+    }
+    else{
+        config += ",Heuristic,";
+    }
+    config += to_string(MinCostNB) + "," + to_string(HistoryLength) + "," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
 
     cout << "Save file as " << FilePath << endl;
     std::ofstream output_file(FilePath);
@@ -247,7 +261,7 @@ void TestCostMinimization(const int seed, const string Instance, const bool CM, 
     in.SRR = true;
     
     if (Heuristic){
-        SolveHeuristic(in, seed, MinCostNB, HistoryLength, TimeLimit, MaxIt, TimeStamps, Instance, InputWeights, FolderPath);
+        SolveHeuristic(in, seed, MinCostNB, HistoryLength, TimeLimit, MaxIt, TimeStamps, Instance, InputWeights, FolderPath, BaseAlgo);
     }
     else{
         SolveIP(in,seed,TimeLimit,TimeStamps, Instance, FolderPath);

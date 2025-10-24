@@ -79,28 +79,31 @@ void RepairBalanceHA(Solution& sol){
 	*/
 	int c1 = 0;
 	int c2;
-	while (c1 < sol.getNrRounds()){
+	int R = sol.getNrRounds();
+	if (R % 2 != 0){
+		R -= 1;
+	}
+	while (c1 < R){
 		c2 = c1+1;
 		setHaps(c1, c2, sol);
 		c1 += 2;
 	}
 	// Leave the last round as it is
 
-	/*
-	THIS WAS ONLY FOR IF WE WERE USING ALL COLORS
-
-	c1 = G.NrColors-1;
-	vector<bool>NodeSeen(G.NrNodes, false);
-	for (int i = 0; i < G.NrNodes; ++i){
-		if (!NodeSeen[i]){
-			int j = G.TeamColorOpp[i][c1];
-			G.Orientation[i][c1] = HA::H;
-			G.Orientation[j][c1] = HA::A;
-			NodeSeen[i] = true;
-			NodeSeen[j] = true;
+	if (R != sol.getNrRounds()){
+		assert(R == sol.getNrRounds()-1);
+		c1 = R;
+		vector<bool>NodeSeen(sol.getNrTeams(), false);
+		for (int i = 0; i < sol.getNrTeams(); ++i){
+			if (!NodeSeen[i]){
+				int j = sol.TeamColorOpp[i][c1];
+				sol.Orientation[i][c1] = HA::H;
+				sol.Orientation[j][c1] = HA::A;
+				NodeSeen[i] = true;
+				NodeSeen[j] = true;
+			}
 		}
 	}
-		*/
 }
 
 void CircleMethod(vector<int>& Teams, Solution& sol){
@@ -248,6 +251,7 @@ void VizingConstruction(Solution& sol, const int seed){
 	for (i = 0; i < N-1; ++i){
 		c = 0;
 		while (!ColorLeft[i][c]){
+			cout << c << endl;
 			++c;
 		}
 		if (c < sol.getNrRounds()){
