@@ -12,11 +12,18 @@ Solution::Solution(const Input& in) : Input(in) {
     TeamColorOpp = vector<vector<int>>(N, vector<int>(R, -1));
     WeightsBF = vector<vector<int>>(N+1, vector<int>(N+1, N+1)); // N+1 bc of extra source node!!
     Orientation = vector<vector<HA>>(N, vector<HA>(R, HA::BYE));
+
+    if (IsBaseAlgo()){
+        NrColouredRounds = getNrRoundsBaseAlgo();
+    }
+    else{
+        NrColouredRounds = getNrRounds();
+    }
 }
 Solution::~Solution(){}
 
 void Solution::PrintAllRoundsLeague(const int l){
-    for (int r = 0; r < getNrRounds(); ++r){
+    for (int r = 0; r < NrColouredRounds; ++r){
         cout << "ROUND " << r << endl;
         cout << "--------" << endl;
         vector<bool>TeamSeen(getNrTeams(), false);
@@ -55,7 +62,7 @@ int Solution::getNrBreaks(const int i){
 
 int Solution::getNrHomeTeam(const int i){
     int nr_H = 0;
-    for (int r = 0; r < getNrRounds(); ++r){
+    for (int r = 0; r < NrColouredRounds; ++r){
         if (Orientation[i][r] == HA::H){
             nr_H++;
         }
@@ -65,7 +72,7 @@ int Solution::getNrHomeTeam(const int i){
 
 bool Solution::IsTeamBalanced(const int i){
     int nr_H = 0, nr_A = 0;
-    for (int r = 0; r < getNrRounds(); ++r){
+    for (int r = 0; r < NrColouredRounds; ++r){
         if (Orientation[i][r] == HA::H){
             nr_H++;
         }
@@ -82,7 +89,7 @@ bool Solution::IsTeamBalanced(const int i){
     }
     nr_H = 0, nr_A = 0;
     if (!SRR){
-        for (int r = 0; r < getNrRounds(); ++r){
+        for (int r = 0; r < NrColouredRounds; ++r){
             int j = TeamColorOpp[i][r];
             if (MatchColor[i][j] == r){
                 assert(Orientation[i][r] == HA::H);
@@ -154,7 +161,7 @@ int Solution::getNrBreaksBeginningEnd(const int i){
     if (Orientation[i][0] == Orientation[i][1]){
         NrBreaks++;
     }
-    if (Orientation[i][getNrRounds()-1] == Orientation[i][getNrRounds()-2]){
+    if (Orientation[i][NrColouredRounds-1] == Orientation[i][NrColouredRounds-2]){
         NrBreaks++;
     }
     return NrBreaks;
@@ -163,8 +170,8 @@ int Solution::getNrBreaksBeginningEnd(const int i){
 int Solution::getImbalanceHalf(const int i){
     int cost = 0;
     int NrH_half;
-    const int Half = getNrRounds()/2;
-    const vector<pair<int,int>>Halves = {{0, Half}, {Half, getNrRounds()}};
+    const int Half = NrColouredRounds/2;
+    const vector<pair<int,int>>Halves = {{0, Half}, {Half, NrColouredRounds}};
     const int lb = std::floor((double)Half/2.0);
     const int ub = lb+1;
     for (const auto&[Start, End]: Halves){
@@ -187,7 +194,7 @@ int Solution::getImbalanceHalf(const int i){
 int Solution::getNrSameClub(const int i){
     int j;
     int nr = 0;
-    for (int r = 0; r < getNrRounds(); ++r){
+    for (int r = 0; r < NrColouredRounds; ++r){
         j = TeamColorOpp[i][r];
         if (j != -1 && getTeamClub(j) == getTeamClub(i)){
             ++nr;
@@ -197,7 +204,7 @@ int Solution::getNrSameClub(const int i){
 }
 
 int Solution::ComputeCost2RRConstraint(){
-    int H = getNrRounds()/2;
+    int H = NrColouredRounds/2;
     int cost = 0;
     for (int i = 0; i < getNrTeams(); ++i){
         vector<int>NodeSeenH1(getNrTeams(), false);
@@ -212,7 +219,7 @@ int Solution::ComputeCost2RRConstraint(){
                 NodeSeenA1[TeamColorOpp[i][r]]++;
             }
         }
-        for (int r = H; r < getNrRounds(); ++r){
+        for (int r = H; r < NrColouredRounds; ++r){
             if (Orientation[i][r] == HA::H){
                 NodeSeenH2[TeamColorOpp[i][r]]++;
             }
@@ -236,7 +243,7 @@ int Solution::ComputeCost2RRConstraint(){
 
 int Solution::ComputeCostNonEligibleOpponents(){
     int cost = 0;
-    for (int c = 0; c < getNrRounds(); c++){
+    for (int c = 0; c < NrColouredRounds; c++){
         vector<bool>TeamSeen(getNrTeams(), false);
         for (int i = 0; i < getNrTeams(); i++){
             if (TeamSeen[i]){
@@ -262,7 +269,7 @@ int Solution::ComputeCostSameClub(){
 
 int Solution::ComputeTravelCost(){
     int cost = 0;
-    for (int c = 0; c < getNrRounds(); c++){
+    for (int c = 0; c < NrColouredRounds; c++){
         /*
         cout << "------------" << endl;
         cout << "Round " << c << endl;
@@ -323,7 +330,7 @@ int Solution::ComputeCostCapacities(){
     int cost = 0;
     int cap;
     for (int c = 0; c < getNrClubs(); ++c){
-        for (int r = 0; r < getNrRounds(); ++r){
+        for (int r = 0; r < NrColouredRounds; ++r){
             cap = ComputeCapacityClubRound(c, r);
             cost += max(0, cap - getCapacityClub(c,r));
             /*
@@ -461,7 +468,7 @@ int Solution::ComputeTotalCostMiaoHockey(){
 int Solution::ComputeTTPViolations(const int i){
     int nrH = 0, nrA = 0; // nr of consecutive H or A
     int nrV = 0; // nr of violations
-    for (int r = 0; r < getNrRounds(); ++r){
+    for (int r = 0; r < NrColouredRounds; ++r){
         if (Orientation[i][r] == HA::H){
             nrH++;
             nrA = 0;
@@ -494,7 +501,7 @@ int Solution::ComputeTravelCostTTP(){
     int t,r,i,j;
     for (t = 0; t < getNrTeams(); ++t){
         // cout << "Cost of trips of " << t << ": " << endl;
-        for (r = 1; r < getNrRounds(); ++r){
+        for (r = 1; r < NrColouredRounds; ++r){
             i = TeamColorOpp[t][r-1], j = TeamColorOpp[t][r];
             if (Orientation[t][r-1] == HA::H && Orientation[t][r] == HA::A){
                 CostOfTrips += getDistanceTeams(t,j);
@@ -513,9 +520,9 @@ int Solution::ComputeTravelCostTTP(){
             CostOfTrips += getDistanceTeams(t,TeamColorOpp[t][0]); // if it plays A in first round, it must also travel to that team (not accounted for in sum above)
             // cout << t << " -> " << TeamColorOpp[t][0] << ": " << getDistanceTeams(t,TeamColorOpp[t][0]) << endl;
         }
-        if (Orientation[t][getNrRounds()-1] == HA::A){
-            CostOfTrips += getDistanceTeams(t,TeamColorOpp[t][getNrRounds()-1]); // similar for last round
-            // cout << TeamColorOpp[t][getNrRounds()-1] << " -> " << t << ": " << getDistanceTeams(t,TeamColorOpp[t][getNrRounds()-1]) << endl;
+        if (Orientation[t][NrColouredRounds-1] == HA::A){
+            CostOfTrips += getDistanceTeams(t,TeamColorOpp[t][NrColouredRounds-1]); // similar for last round
+            // cout << TeamColorOpp[t][NrColouredRounds-1] << " -> " << t << ": " << getDistanceTeams(t,TeamColorOpp[t][NrColouredRounds-1]) << endl;
         }
         // cin.get();
     }
@@ -531,7 +538,7 @@ int Solution::ComputeTotalCostTTP(){
 int Solution::ComputeCostGeneralMatrix(){
     int cost = 0;
     int j;
-    for (int r = 0; r < getNrRounds(); ++r){
+    for (int r = 0; r < NrColouredRounds; ++r){
         vector<bool>NodeSeen(getNrTeams(), false);
         for (int i = 0; i < getNrTeams(); ++i){
             if (!NodeSeen[i]){
@@ -550,27 +557,36 @@ int Solution::ComputeCostGeneralMatrix(){
 }
 
 int Solution::ComputeTotalCost(){
+    int cost;
     if (getSetting() == Setting::TTP){
-        return ComputeTotalCostTTP();
+        cost = ComputeTotalCostTTP();
     }
     else if (getSetting() == Setting::CM){
-        return ComputeCostGeneralMatrix();
+        cost = ComputeCostGeneralMatrix();
     }
     else if (getSetting() == Setting::Miao || getSetting() == Setting::Hockey){
-        return ComputeTotalCostMiaoHockey();
+        cost = ComputeTotalCostMiaoHockey();
     }
     else{
         std::cerr << "Unknown setting" << std::endl;
         return -1;
     }
+    if (IsBaseAlgo()){
+        for (int i = 0; i < getNrTeams(); ++i){
+            if (!IsTeamBalanced(i)){
+                cost += getImbalanceCost();
+            }
+        }
+    }
+    return cost;
 }
 
 bool Solution::validate(){
     // cout << "Validate solution" << endl;
     int cap_viol = 0;
     vector<int>HomeGamesTeam(getNrTeams(), 0); // counts the nr of H games
-    vector<vector<int>>Opponent(getNrTeams(), vector<int>(getNrRounds(), -1));
-    for (int r = 0; r < getNrRounds(); ++r){
+    vector<vector<int>>Opponent(getNrTeams(), vector<int>(NrColouredRounds, -1));
+    for (int r = 0; r < NrColouredRounds; ++r){
         vector<int>CapacityClub(getNrClubs(), 0);
         vector<bool>NodeSeen(getNrTeams(), false);
         for (int i = 0; i < getNrTeams(); ++i){
@@ -634,7 +650,7 @@ bool Solution::validate(){
         vector<int>NrTeamSeenA(getNrTeams(), 0);
         int nr_same_club = 0;
         int j;
-        for (int r = 0; r < getNrRounds(); ++r){
+        for (int r = 0; r < NrColouredRounds; ++r){
             j = Opponent[i][r];
             assert(j != -1); // each team plays once in every slot
             assert(j != i);
@@ -667,10 +683,10 @@ bool Solution::validate(){
 
     for (int i = 0; i < getNrTeams(); ++i){
         // cout << "Home games of " <<i << " = " << HomeGamesTeam[i] << endl;
-        if (HomeGamesTeam[i] != getNrRounds()/2){
+        if (HomeGamesTeam[i] != NrColouredRounds/2){
             cout << i << " has " << HomeGamesTeam[i] << " home games" << endl;
         }
-        assert(HomeGamesTeam[i] == getNrRounds()/2);
+        assert(HomeGamesTeam[i] == NrColouredRounds/2);
     }
     if (!ViolationHAP_allowed){
         assert(ComputeTotalHACost() == 0);

@@ -12,6 +12,8 @@ class Solution: public Input{
 
     public:
 
+        int NrColouredRounds;
+
         bool ViolationHAP_allowed = false; // whether we allow solutions that violate the HAP constraints (at a high cost)
         bool ViolationEligibleOpponents_allowed = false; // whether we allow solutions where non-eligible opponents play vs each other (at a high cost)
         // We only allow this in TS and PTS because in the matchings wo do not create those edges

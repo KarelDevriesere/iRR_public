@@ -204,7 +204,7 @@ void SolveIP(Input& in, const int seed, const int TimeLimit, vector<int>& TimeSt
     return;
 }
 
-void TestCostMinimization(const int seed, const string Instance, const bool CM, const bool TTP, const bool Heuristic, const bool MinCostNB, const int HistoryLength, const int TimeLimit, const int MaxIt, const unordered_map<string, double>& InputWeights, const int NrRoundsTTP){
+void TestCostMinimization(const int seed, const string Instance, const bool CM, const bool TTP, const bool Heuristic, const bool MinCostNB, const int HistoryLength, const int TimeLimit, const int MaxIt, const unordered_map<string, double>& InputWeights, const int NrRoundsTTP, const bool BaseAlgo){
 
     vector<int>TimeStamps;
     int TimeStamp = 0;
@@ -234,6 +234,14 @@ void TestCostMinimization(const int seed, const string Instance, const bool CM, 
     else if (TTP && !in.read_TTP(FilePath, NrRoundsTTP)){
         cout << "could not read " << FilePath << endl;
         return;
+    }
+    if (BaseAlgo){
+        if (!Heuristic){
+            cout << "Base algo but IP: do not change NrRounds!!!" << endl;
+        }
+        else{
+            in.setBaseAlgo();
+        }
     }
     in.setHAP_requirements(false, false, false, true, in.getNrRounds());
     in.SRR = true;

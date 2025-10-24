@@ -61,6 +61,7 @@ class Input
         vector<vector<vector<int>>>CostMatchRound;
 
         int CostTTPViolation = 0;
+        int CostImbalance = INT_MAX;
 
         Setting Setting_;
         
@@ -143,6 +144,13 @@ class Input
         int getCostMatchRound(const int i, const int j, const int r)const{return CostMatchRound[i][j][r];};
 
         int getCostTTPViolation()const{return CostTTPViolation;};
+        int getCostImbalance()const{return CostImbalance;};
+
+        void setBaseAlgo();
+        bool BaseAlgo = false;
+        int NrRoundsBaseAlgo = -1;
+        bool IsBaseAlgo()const{return BaseAlgo;};
+        int getNrRoundsBaseAlgo()const{return NrRoundsBaseAlgo;};
 };
 
 #endif

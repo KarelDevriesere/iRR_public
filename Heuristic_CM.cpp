@@ -108,8 +108,10 @@ void Heuristic_CM::SelectTS_CM(Solution& sol){ // use TS for perturbation move!!
         cost_before = sol.ComputeTotalCost();
 #endif
     TS(sol, i, j);
-    assert(sol.IsTeamBalanced(i));
-    assert(sol.IsTeamBalanced(j));
+    if (!sol.IsBaseAlgo()){
+        assert(sol.IsTeamBalanced(i));
+        assert(sol.IsTeamBalanced(j));
+    }
     if (!Update(sol, sol.ComputeTotalCost())){
         // ResetOrientations(sol, OrientationsCopy); // can be outcommented when not repairing haps in veto_haps() // TODO not efficient
         // ResetMatchColorCopy(sol, MatchColorCopy); // can be outcommented when not repairing haps in veto_haps()

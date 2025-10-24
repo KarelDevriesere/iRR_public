@@ -15,6 +15,13 @@ using namespace rapidxml;
 Input::Input(){}
 Input::~Input(){}
 
+void Input::setBaseAlgo(){
+    // Base setting: consider whole SRR but take only costs of first NrRounds into account!!
+    BaseAlgo = true;
+    NrRoundsBaseAlgo = NrRounds;
+    NrRounds = NrTeams-1;
+}
+
 void Input::SetDefault(const int NrTeams){
     // All teams same strength, every team has its own club, no dummy teams, all teams in same league
     // In solution: modify everything such that instead of travel cost, we compute the costs
