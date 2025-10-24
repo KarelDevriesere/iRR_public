@@ -49,6 +49,51 @@ unordered_map<move_name_CM, double> WeightsMap(const unordered_map<string, doubl
     return Weights;
 }
 
+void SaveSolutionXML(std::ofstream& output_file, Solution& sol){
+	// Ugly printing to get the RobinX solution file format
+
+	output_file << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+	output_file << "<Solution>\n";
+
+	// --- MetaData section (you can make these parameters if needed) ---
+	output_file << "    <MetaData>\n";
+	output_file << "        <InstanceName>LINE6</InstanceName>\n";
+	output_file << "        <Contributor>Devriesere, Karel</Contributor>\n";
+	output_file << "        <Date year=\"2025\" month=\"\" day=\"\"/>\n";
+	output_file << "        <ObjectiveValue infeasibility=\"" << sol.ComputeTotalCostTTPViolations() << "\" objective=\"" << sol.ComputeTravelCostTTP() << "\"/>\n";
+	output_file << "        <Remarks/>\n";
+	output_file << "    </MetaData>\n";
+
+	// --- Games section ---
+	output_file << "    <Games>\n";
+
+	int nrRounds = sol.getNrRounds();
+	int nrTeams  = sol.getNrTeams();
+
+	for (int r = 0; r < nrRounds; ++r) {
+		std::vector<bool> NodeSeen(nrTeams, false);
+		for (int i = 0; i < nrTeams; ++i) {
+			if (!NodeSeen[i]) {
+				int j = sol.TeamColorOpp[i][r];
+				if (sol.Orientation[i][r] == HA::H) {
+					output_file << "        <ScheduledMatch home=\"" << i
+						<< "\" away=\"" << j
+						<< "\" slot=\"" << r << "\"/>\n";
+				} else {
+					output_file << "        <ScheduledMatch home=\"" << j
+						<< "\" away=\"" << i
+						<< "\" slot=\"" << r << "\"/>\n";
+				}
+				NodeSeen[j] = true;
+			}
+		}
+	}
+
+    output_file << "    </Games>\n";
+    output_file << "</Solution>\n";
+}
+
+
 void SaveSolution(std::ofstream& output_file, Solution& sol){
     int i,j,r;
     output_file << "Round,H_team,A_team \n";
@@ -108,6 +153,12 @@ void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int H
     output_file << config << "\n";
     algo.SaveSolutionsTimeStamps(output_file);
     SaveSolution(output_file, sol);
+
+    // Replace txt extension with XML
+    FilePath.replace(FilePath.size() - 4, 4, ".xml");
+    cout << "Save XML file as " << FilePath << endl;
+    std::ofstream output_fileXML(FilePath);
+    SaveSolutionXML(output_fileXML, sol);
 
     output_file.close();
     return;
