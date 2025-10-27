@@ -243,6 +243,7 @@ int main(int argc, const char* argv[]){
         if (data.CM){
             data.Instance = to_string(data.NrTeams) + "_" + to_string(data.NrRounds) + "_" + "k" + to_string(data.k) + "_" + to_string(data.inst);
         }
+        cin.get();
         TestCostMinimization(data);
         // GenerateCostMatrices(0);
         // cin.get();

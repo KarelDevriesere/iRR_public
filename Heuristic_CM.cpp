@@ -437,6 +437,12 @@ void Heuristic_CM::DoMove(Solution& sol){
     ExecutionTimes.at(CurrentMove).push_back(dur);
     NrChosen.at(CurrentMove)++;
     assert(sol.validate());
+    for (int i = 0; i < sol.getNrTeams(); ++i){
+        if (!sol.IsTeamBalanced(i)){
+            cout << "Team " << i << " not balanced after doing move " << Moves.at(CurrentMove) << endl;
+            return;
+        }
+    }
 }
 
 void Heuristic_CM::solve(Input& in, Solution& sol){
