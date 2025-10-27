@@ -124,9 +124,9 @@ vector<array<int,3>> NegativeCycle(Solution& sol);
 
 void SwapMatchings(Solution& sol, vector<pair<int,int>>Matching, const int l, const int r, const bool bipartite);
 
-pair<vector<pair<int,int>>,vector<int>>MoveMWPM(Solution& sol, const int l, const int r, const bool bipartite, const bool includeHAPs, const bool CM, std::mt19937& gen, const bool MinCostM);
+pair<vector<pair<int,int>>,vector<int>>MoveMWPM(Solution& sol, const int r, const bool bipartite, const bool includeHAPs, const bool CM, std::mt19937& gen, const bool MinCostM);
 
-vector<vector<pair<int,int>>>iPRS(Solution& sol, const int l, const int r, const bool bipartite, const bool includeHAPs, const bool CM, std::mt19937& gen, const bool MinCostM);
+vector<vector<pair<int,int>>>iPRS(Solution& sol, const int r, const bool bipartite, const bool includeHAPs, const bool CM, std::mt19937& gen, const bool MinCostM);
 
 vector<vector<array<int,3>>>EvaluateAlternatingCycleWithPaths(Solution& sol, vector<pair<int,int>>& AlternatingCycle, const int r, const bool bipartite, const bool CM, int& delta, std::mt19937& gen, const bool MinCostP);
 
@@ -170,14 +170,12 @@ void KeepOrientationsAllEdgesLantarn(Solution& sol, Lantarn& lantarn, const vect
 
 bool RepairOrientationsEdgesLantarn_CM(Solution& sol, Lantarn& lantarn, const vector<vector<HA>>& OrientationsCopy, vector<array<int,3>>& path, const bool MinCostP, const bool CM);
 
-bool SetOrientationsEdgesLantarn(Solution& sol, Lantarn& lantarn, const vector<vector<HA>>& OrientationsCopy, vector<array<int,3>>& path, const bool MinCostP, const bool CM);
-
 bool RepairHAPsWithNegativeCycles(Solution& sol, const int l);
 
 bool FindNormalPathOneLeague(const int source, const int sink, Solution& sol, vector<array<int,3>>& path, int& delta, const bool MinCostP);
 
-void ReversePathLineGraph(Solution& sol, const vector<int>& path, const vector<Edge>& Nodes);
+bool FindPathLineGraphOneLeague(const int source, const int sink, Solution& sol, vector<array<int,3>>& path);
 
-tuple<vector<Edge>,vector<Edge>,vector<int>> MakeLineGraphOnlyZeroWeightEdges(Solution& sol, const int source, const int sink, const int source_nb, const int sink_nb);
+tuple<vector<Edge>,vector<Edge>,vector<int>> MakeLineGraph(Solution& sol, const int source, const int sink);
 
 #endif

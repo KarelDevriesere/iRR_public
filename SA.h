@@ -59,7 +59,7 @@ class MetaBase{ // Everything that can be used for all metaheuristics
                 sum += weight;
                 WeightsCumul[sum] = move;
 
-                cout << Moves.at(WeightsCumul[sum]) << ": " << sum << endl;
+                cout << "Cumulative weight of " << Moves.at(WeightsCumul.at(sum)) << " = " << sum << endl;
                 
                 NrImprov[move] = 0;
                 NrChosen[move] = 0;

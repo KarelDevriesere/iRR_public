@@ -5,10 +5,11 @@
 #include "GurSolver.h"
 #include "Heuristic_CM.h"
 #include "Algo.h"
+#include "Input.h"
 
 #include <filesystem>
 
-const vector<string>InstancesTTP = {"BRA24", "CIRC40", "CON40", "GAL40", "INCR40", "LINE40", "N16", "NFL32"};
+const vector<string>InstancesTTP = {"BRA24", "CIRC40", "CON40", "GAL40", "INCR40", "LINE40", "N16", "NFL32", "SUP8", "CIRC8"};
 
 inline std::string FolderPathTTP() {
     return "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP);
@@ -19,35 +20,6 @@ inline std::string FolderPathCM() {
 }
 
 namespace fs = std::filesystem;
-
-unordered_map<move_name_CM, double> WeightsMap(const unordered_map<string, double>& InputWeights){
-    // Weights: see Heuristic_CM.h
-    unordered_map<move_name_CM, double>Weights;
-    for (const auto& [move, weight]: InputWeights){
-        if (move == "TS" && weight > 0.0){
-            Weights[move_name_CM::TS] = weight;
-        }
-        else if (move == "PTS" && weight > 0.0){
-            Weights[move_name_CM::PTS] = weight;
-        }
-        else if (move == "RS" && weight > 0.0){
-            Weights[move_name_CM::RS] = weight;
-        }
-        else if (move == "PRS" && weight > 0.0){
-            Weights[move_name_CM::PRS] = weight;
-        }
-        else if (move == "M" && weight > 0.0){
-            Weights[move_name_CM::M] = weight;
-        }
-        else if (move == "BM" && weight > 0.0){
-            Weights[move_name_CM::BM] = weight;
-        }
-        else if (move == "C" && weight > 0.0){
-            Weights[move_name_CM::C] = weight;
-        }
-    }
-    return Weights;
-}
 
 void SaveSolutionXML(std::ofstream& output_file, Solution& sol){
 	// Ugly printing to get the RobinX solution file format
@@ -114,21 +86,20 @@ void SaveSolution(std::ofstream& output_file, Solution& sol){
     }
 }
 
-void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int HistoryLength, const int TimeLimit, const int MaxIt, vector<int>& TimeStamps, const string Instance, const unordered_map<string, double>& InputWeights, const string FolderPath, const bool BaseAlgo){
+void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data){
     // Find initial solution with Vizing
     Solution sol(in);
     cout << "Solve Vizing" << endl;
-    VizingConstruction(sol, seed);
+    VizingConstruction(sol, data.seed);
     cout << "Found initial solution" << endl;
     assert(sol.validate());
     const int obj = sol.ComputeTotalCost();
     cout << "Cost initial solution = " << obj << endl;
 
-    std::mt19937 gen(seed);
-    unordered_map<move_name_CM, double>Weights = WeightsMap(InputWeights);
-    Heuristic_CM algo(Moves, Weights, gen, 10, obj, MinCostNB);
-    algo.setTimeLimit_meta(TimeLimit);
-    algo.SetMaxIt(MaxIt);
+    std::mt19937 gen(data.seed);
+    Heuristic_CM algo(data.Moves, data.InputWeights, gen, 10, obj);
+    algo.setTimeLimit_meta(data.TimeLimit);
+    algo.SetMaxIt(data.MaxIt);
     algo.SetTimeStamps(TimeStamps);
     algo.solve(in, sol);
     algo.SaveBestSolution(sol);
@@ -136,31 +107,25 @@ void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int H
     cout << "Final solution = " << sol.ComputeTotalCost() << endl;
 
     string FilePath = FolderPath + "Results" + std::string(PATHSEP);
-    if (BaseAlgo){
+    if (data.Base){
         FilePath += "Base" + std::string(PATHSEP);
     }
     else{
-        FilePath += "Heuristic" + std::string(PATHSEP);
-        if (MinCostNB){
-            FilePath += "MinCost";
-        }
-        else{
-            FilePath += "NoMinCost";
-        }
+        FilePath += "Heuristic";
     }
-    FilePath += std::string(PATHSEP) + Instance;
+    FilePath += std::string(PATHSEP) + data.Instance;
     if (in.getSetting() == Setting::TTP){
         FilePath += "_" + to_string(in.getNrRounds());
     }
-    FilePath += "_s" + to_string(seed) + "_HL" + to_string(HistoryLength) + ".txt";
-    config = to_string(seed);
-    if (BaseAlgo){
+    FilePath += "_s" + to_string(data.seed) + "_HL" + to_string(data.HistoryLength) + ".txt";
+    string config = to_string(data.seed);
+    if (data.Base){
         config += ",BaseAlgo,";
     }
     else{
         config += ",Heuristic,";
     }
-    config += to_string(MinCostNB) + "," + to_string(HistoryLength) + "," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
+    config += to_string(data.MinCostNB) + "," + to_string(data.HistoryLength) + "," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
 
     cout << "Save file as " << FilePath << endl;
     std::ofstream output_file(FilePath);
@@ -178,7 +143,7 @@ void SolveHeuristic(Input& in, const int seed, const bool MinCostNB, const int H
     return;
 }
 
-void SolveIP(Input& in, const int seed, const int TimeLimit, vector<int>& TimeStamps, const string Instance, const string FolderPath){
+void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data){
     GurSolver gur(in);
     Solution sol(in);
     bool HA = true;
@@ -191,15 +156,15 @@ void SolveIP(Input& in, const int seed, const int TimeLimit, vector<int>& TimeSt
         assert(in.getSetting() == Setting::TTP);
         gur.iTTP();
     }
-    gur.setTimeLimit(TimeLimit);
+    gur.setTimeLimit(data.TimeLimit);
     gur.SetTimeStamps(TimeStamps);
     gur.solve();
     gur.SaveSolution(sol);
     sol.validate();
     cout << "Final solution = " << sol.ComputeTotalCost() << endl;
 
-    const string FilePath = FolderPath + "Results" + std::string(PATHSEP) + "IP" + std::string(PATHSEP) + Instance + "_" + to_string(in.getNrRounds()) + ".txt";
-    const string config = to_string(seed) + ",IP," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
+    const string FilePath = FolderPath + "Results" + std::string(PATHSEP) + "IP" + std::string(PATHSEP) + data.Instance + "_" + to_string(in.getNrRounds()) + ".txt";
+    const string config = to_string(data.seed) + ",IP," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
     cout << "Save file as " << FilePath << endl;
     std::ofstream output_file(FilePath);
     output_file << config << "\n";
@@ -218,39 +183,39 @@ void SolveIP(Input& in, const int seed, const int TimeLimit, vector<int>& TimeSt
     return;
 }
 
-void TestCostMinimization(const int seed, const string Instance, const bool CM, const bool TTP, const bool Heuristic, const bool MinCostNB, const int HistoryLength, const int TimeLimit, const int MaxIt, const unordered_map<string, double>& InputWeights, const int NrRoundsTTP, const bool BaseAlgo){
+void TestCostMinimization(const InputData& data){
 
     vector<int>TimeStamps;
     int TimeStamp = 0;
     int Incrementor = 30;
-    while (TimeStamp <= TimeLimit){
+    while (TimeStamp <= data.TimeLimit){
         TimeStamps.push_back(TimeStamp);
         TimeStamp += Incrementor;
     }
 
     string FilePath;
     string FolderPath;
-    if (CM){
+    if (data.CM){
         FolderPath = FolderPathCM();
-        FilePath = FolderPath + Instance + ".txt";
+        FilePath = FolderPath + data.Instance + ".txt";
     }
     else{
         FolderPath = FolderPathTTP();
-        FilePath = FolderPath + Instance + ".xml";
+        FilePath = FolderPath + data.Instance + ".xml";
     }
     cout << "FilePath: " << FilePath << endl;
 
     Input in;
-    if (CM && !in.read_CostMinimization(FilePath, InstanceSetCM::Karel)){
+    if (data.CM && !in.read_CostMinimization(FilePath, InstanceSetCM::Karel)){
         cout << "Could not read " << FilePath << endl;
         return;
     }
-    else if (TTP && !in.read_TTP(FilePath, NrRoundsTTP)){
+    else if (data.TTP && !in.read_TTP(FilePath, data.NrRounds)){
         cout << "could not read " << FilePath << endl;
         return;
     }
-    if (BaseAlgo){
-        if (!Heuristic){
+    if (data.Base){
+        if (!data.Heuristic){
             cout << "Base algo but IP: do not change NrRounds!!!" << endl;
         }
         else{
@@ -260,11 +225,11 @@ void TestCostMinimization(const int seed, const string Instance, const bool CM, 
     in.setHAP_requirements(false, false, false, true, in.getNrRounds());
     in.SRR = true;
     
-    if (Heuristic){
-        SolveHeuristic(in, seed, MinCostNB, HistoryLength, TimeLimit, MaxIt, TimeStamps, Instance, InputWeights, FolderPath, BaseAlgo);
+    if (data.Heuristic){
+        SolveHeuristic(in,TimeStamps,FolderPath,data);
     }
     else{
-        SolveIP(in,seed,TimeLimit,TimeStamps, Instance, FolderPath);
+        SolveIP(in,TimeStamps,FolderPath,data);
     }
 }
 

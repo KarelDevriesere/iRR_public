@@ -54,7 +54,9 @@ class Solution: public Input{
         int ComputeTravelCost();
         int ComputeCostNonEligibleOpponents();
         int ComputeCostSameClub();
+        int ComputeCost2RRConstraintTeam(const int i);
         int ComputeCost2RRConstraint();
+        int ComputeCostReversingOrientationTeam(const int i, const int r1, const int r2);
         
         int ComputeHACostTeam(const int i);
 
@@ -66,6 +68,8 @@ class Solution: public Input{
         int ComputeTTPViolations(const int i);
         int ComputeTotalCostTTP();
         int ComputeTotalCostTTPViolations();
+        int ComputeCostMatchRoundTTP(const int h, const int a, const int r);
+        int ComputeTravelCostTeamTTP(const int t);
         int ComputeTravelCostTTP();
 
         int ComputeCostGeneralMatrix();

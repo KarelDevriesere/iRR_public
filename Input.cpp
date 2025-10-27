@@ -22,6 +22,12 @@ void Input::setBaseAlgo(){
     NrRounds = NrTeams-1;
     cout << "NrRounds = " << NrRounds << endl;
     cout << "NrRoundsBaseAlgo = " << NrRoundsBaseAlgo << endl;
+
+    // extend club capacity
+    ClubCapacity = vector<vector<int>>(NrClubs, vector<int>(NrRounds, 1));
+    for (auto& CapacityVector: ClubCapacity){
+        CapacityVector.insert(CapacityVector.end(), NrRounds-CapacityVector.size(), NrTeams);
+    }
 }
 
 void Input::SetDefault(const int NrTeams){

@@ -149,7 +149,21 @@ void GurSolver::iTTP(){
 
 	if (getNrRounds() < 4){
 		cout << "WARNING: iTTP constraints not needed because NrRounds is " << getNrRounds() << endl;
-		AddObj(true, false);
+
+		// Objective function:
+		Objective = 0;
+		for (i = 0; i < getNrTeams(); ++i){
+			for (j = 0; j < getNrTeams(); ++j){
+				if (i == j){
+					continue;
+				}
+				for (r = 0; r < getNrRounds(); ++r){
+					Objective += (2*getDistanceTeams(i,j))*x[i][j][r];
+				}
+			}
+		}
+		model.setObjective(Objective, GRB_MINIMIZE);
+
 		return;
 	}
 
@@ -262,6 +276,23 @@ void GurSolver::iTTP(){
 		}
 	}
 	model.setObjective(Objective, GRB_MINIMIZE);
+}
+
+void GurSolver::AddLowerBoundiTTP(const int LB){
+	GRBLinExpr sum_LB = 0;
+	int t,i,j;
+	for (t = 0; t < getNrTeams(); ++t){
+		for (i = 0; i < getNrTeams(); ++i){
+			for (j = 0; j < getNrTeams(); ++j){
+				if (i == j){
+					continue;
+				}
+				sum_LB += getDistanceTeams(i,j)*z[t][i][j];
+			}
+		}
+	}
+	model.addConstr(sum_LB >= LB);
+
 }
 
 void GurSolver::FixHAP(Solution& sol){

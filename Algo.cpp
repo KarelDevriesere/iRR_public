@@ -251,7 +251,6 @@ void VizingConstruction(Solution& sol, const int seed){
 	for (i = 0; i < N-1; ++i){
 		c = 0;
 		while (!ColorLeft[i][c]){
-			cout << c << endl;
 			++c;
 		}
 		if (c < sol.getNrRounds()){
@@ -290,7 +289,7 @@ bool CyclicConstruction(Solution& sol){
 	}
 
 	// Order the clubs
-	int p = 0;;
+	int p = 0;
 	vector<int>teams(N, -1);
 
 	int c, i,j,r, r_start, a,b;
