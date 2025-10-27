@@ -802,9 +802,6 @@ bool FindPathLineGraphOneLeague(const int source, const int sink, Solution& sol,
     
     int v_ = SINK;
     if (p[v_] == v_){
-        cout << "predecessor of " << v_ << " = " << p[v_] << endl;
-        cout << "No path found" << endl;
-        cin.get();
         return false; // this means that the vertex could not be reached
     }
 
