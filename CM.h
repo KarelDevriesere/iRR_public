@@ -234,23 +234,41 @@ void TestCostMinimization(const InputData& data){
 }
 
 void BoundsTTP(){
-    const string OutputFilePath = "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP) + "Bounds.txt";
+    bool Bounds2RR = true;
+    string OutputFilePath = "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP) + "Bounds.txt";
+    if (Bounds2RR){
+        OuputFilePath = "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP) + "Bounds_2RR.txt";
+    }
     cout << "Save file as " << OutputFilePath << endl;
     std::ofstream output_file(OutputFilePath);
 
     for (string Instance: InstancesTTP){
+        Instance = "N16";
         Input in;
         string FilePath = FolderPathTTP() + Instance + ".xml";
 
-        vector<int>Rounds = {10,20,30};
+        vector<int>Rounds;
+        Rounds = {10,20,30};
+        if (Bounds2RR){
+            Rounds = {2*39};
+        }
         if (Instance == "N16"){
             Rounds = {4,8,12};
+            if (Bounds2RR){
+                Rounds = {2*15};
+            } 
         }
         else if (Instance == "BRA24"){
             Rounds = {6,12,18};
+            if (Bounds2RR){
+                Rounds = {2*23};
+            }
         }
         else if (Instance == "NFL32"){
             Rounds = {8,16,24};
+            if (Bounds2RR){
+                Rounds = {2*31};
+            }
         }
 
         for (int NrRoundsTTP: Rounds){
@@ -268,7 +286,6 @@ void BoundsTTP(){
                 sum += gur.solve();
             }
             output_file << Instance << "," << sum << "," << NrRoundsTTP << "\n";
-            cout << "Bound of " << Instance << " with " << NrRoundsTTP << " = " << sum << endl;
         }
     }
 
