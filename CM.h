@@ -57,7 +57,7 @@ void SaveSolutionXML(std::ofstream& output_file, Solution& sol){
 
 	// --- MetaData section (you can make these parameters if needed) ---
 	output_file << "    <MetaData>\n";
-	output_file << "        <InstanceName>LINE6</InstanceName>\n";
+	output_file << "        <InstanceName>INSTANCE_NAME_TO_BE_FILLED_IN</InstanceName>\n";
 	output_file << "        <Contributor>Devriesere, Karel</Contributor>\n";
 	output_file << "        <Date year=\"2025\" month=\"\" day=\"\"/>\n";
 	output_file << "        <ObjectiveValue infeasibility=\"" << sol.ComputeTotalCostTTPViolations() << "\" objective=\"" << sol.ComputeTravelCostTTP() << "\"/>\n";
