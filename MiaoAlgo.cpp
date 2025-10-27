@@ -168,7 +168,8 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
             const bool CM = false;
             const bool keepHAP = true;
             const bool MinCostM = true;
-            pair<vector<pair<int,int>>, vector<int>>Matching_OpponentMatching = MoveMWPM(sol, l, r, bipartite, keepHAP, CM, gen, MinCostM); // in the file operators
+            assert(l == 0);
+            pair<vector<pair<int,int>>, vector<int>>Matching_OpponentMatching = MoveMWPM(sol, r, bipartite, keepHAP, CM, gen, MinCostM); // in the file operators
             vector<pair<int,int>>matching = Matching_OpponentMatching.first;
             if (matching.size() < N/2){
                 cout << "matching failed, shuffle rounds" << endl;

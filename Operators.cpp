@@ -568,8 +568,16 @@ bool RepairOrientationsEdgesLantarn_CM(Solution& sol, Lantarn& lantarn, const ve
         // Fix this by finding a path between them!
         int delta = 0; // we will not calculate delta here
         // cout << "try to find path from " << source << " to " << sink << endl;
-        if (!FindNormalPathOneLeague(source, sink, sol, path, delta, MinCostP)){
-            return false;
+        if (CM || !MinCostP){
+            if (!FindNormalPathOneLeague(source, sink, sol, path, delta, MinCostP)){
+                return false;
+            }
+        }
+        else{
+            // cout << "Find path LG" << endl;
+            if (!FindPathLineGraphOneLeague(source, sink, sol, path)){
+                return false;
+            }
         }
         // Now, everyone should be balanced!!
 #ifndef NDEBUG
@@ -581,205 +589,90 @@ bool RepairOrientationsEdgesLantarn_CM(Solution& sol, Lantarn& lantarn, const ve
     return true;
 }
 
+tuple<vector<Edge>,vector<Edge>,vector<int>> MakeLineGraph(Solution& sol, const int source, const int sink){
 
-bool SetOrientationsEdgesLantarn(Solution& sol, Lantarn& lantarn, const vector<vector<HA>>& OrientationsCopy, vector<array<int,3>>& path, const bool MinCostP, const bool CM){
-    // First, test whether lantarn can be kept balanced
-    // PrintLantarn(sol, lantarn);
-    if (!lantarn.InfeasibleColor){
-        // if not fictive color, lantarn can be kept balanced by keeping the orientations of all edges
-        KeepOrientationsAllEdgesLantarn(sol, lantarn, OrientationsCopy);
-        cout << "no fictive color" << endl;
-        cin.get();
-    }
-    else{
-        const int i = lantarn.i;
-        const int j = lantarn.j;
-        if (sol.Orientation[i][lantarn.c_[i]] == sol.Orientation[j][lantarn.c_[j]]){
-            // in this case, keeping the orientations of all edges guaranteed balancedness
-            KeepOrientationsAllEdgesLantarn(sol, lantarn, OrientationsCopy);
-            cout << "orientations fictive color same" << endl;
-            cin.get();
-        }
-        else{
-            if (CM){
-                RepairOrientationsEdgesLantarn_CM(sol, lantarn, OrientationsCopy, path, MinCostP, CM);
-            }
-            else{
-                // If not, we have to reverse another edge in the lantarn.
-                // Look if we can find such an edge
-                int MiddleTeamFound = -1;
-                int c_i, c_j;
-                for (int k = 0; k < lantarn.middle.size(); ++k){
-                    c_i = sol.MatchColor[lantarn.EdgesMatch.at(i)[k].first][lantarn.EdgesMatch.at(i)[k].second];
-                    c_j = sol.MatchColor[lantarn.EdgesMatch.at(j)[k].first][lantarn.EdgesMatch.at(j)[k].second];
-                    if (c_i < 0 || c_j < 0){
-                        continue;
-                    }
-                    else if (sol.Orientation[lantarn.middle[k]][c_i] != sol.Orientation[lantarn.middle[k]][c_j]){
-                        if (sol.Orientation[lantarn.middle[k]][c_i] == sol.Orientation[i][lantarn.c_[i]]){
-                            MiddleTeamFound = k;
-                            break;
-                        }
-                    }
-                }
-                if (MiddleTeamFound != -1){
-                    // cout << "Suitable edge found that can be reversed, do this for middle team " << MiddleTeamFound << endl;
-                    // cin.get();
-                    for (int k = 0; k < lantarn.middle.size(); ++k){
-                        if (k != MiddleTeamFound){
-                            KeepOrientation(sol, lantarn, i, k, j, OrientationsCopy);
-                        }
-                        else{
-                            SwapOrientation(sol, lantarn, i, k, j, OrientationsCopy);
-                        }
-                    }
+    // source: team with A game too much, sink: team with H too much
+    vector<Edge>Nodes; // Nodes of the line graph are edges of the original graph
+
+    // cout << "Find path between " << source << " and " << sink << endl;
+
+    int i,j,r,h,a;
+    vector<bool>NodeSeen(sol.getNrTeams(), false);
+    for (r = 0; r < sol.getNrRounds(); ++r){
+        std::fill(NodeSeen.begin(), NodeSeen.end(), false);
+        for (i = 0; i < sol.getNrTeams(); ++i){
+            if (!NodeSeen[i]){
+                j = sol.TeamColorOpp[i][r];
+                if (sol.Orientation[i][r] == HA::H){
+                    h = i, a = j;
                 }
                 else{
-                    // First try to switch edge if this exists
-                    // cout << "No suitable edge found that can be reversed within lantarn, try outside lantarn to reverse 1 edge" << endl;
-                    bool SingleEdge = true;
-                    if (!FindPath(sol, lantarn, OrientationsCopy, SingleEdge, path, MinCostP)){
-                        // cout << "No single edge switch possible" << endl;
-                        return false;
-                        /*
-                        SingleEdge = false;
-                        // PrintLantarn(sol, lantarn);
-                        if (!FindPath(sol, lantarn, OrientationsCopy, SingleEdge, path)){
-                            return false;
-                        }
-                            */
-                    }
+                    assert(sol.Orientation[i][r] == HA::A);
+                    h = j, a = i;
                 }
+                if (h != source && a != sink){ // no point in adding the edge a->SOURCE, because SOURCE always must have an outgoing edge (and SINK always an incoming edge)
+                    Nodes.push_back({a,h}); // arc goes like a->h
+                    // cout << "add the node (" << a << "," << h << ")" << endl;
+                }
+                NodeSeen[j] = true;
             }
         }
     }
-    return true;
-}
-
-int ComputeWeightLineGraph(Solution& sol, const pair<int,int>arc1, const pair<int,int>arc2, const int NrNodes, const bool OneTeamPerClub){
-    // Reverse orientations of arc1 and arc2 in their respective colors
-    assert(arc1.second == arc2.first);
-    int c, i, j;
-    int total_cost_before = sol.ComputeTotalHACost();
-    int cost_before = sol.ComputeHACostTeam(arc1.second);
-    assert(cost_before == 0);
-    int cost_after = 0, cost_cap = 0;
-
-    for (auto& arc: {arc1, arc2}){
-        j = arc.first, i = arc.second;
-        c = sol.MatchColor[i][j];
-        std::swap(sol.Orientation[i][c], sol.Orientation[j][c]);
-        if (arc1.first != arc2.second){ 
-            std::swap(sol.MatchColor[i][j], sol.MatchColor[j][i]);
-        }
-    }
-    if (arc1.first == arc2.second){ 
-        std::swap(sol.MatchColor[i][j], sol.MatchColor[j][i]);
-    }
-    cost_after = sol.ComputeHACostTeam(arc1.second);
-    cin.get();
-    for (auto& arc: {arc1, arc2}){
-        j = arc.first, i = arc.second;
-        c = sol.MatchColor[j][i];
-        std::swap(sol.Orientation[i][c], sol.Orientation[j][c]);
-        if (arc1.first != arc2.second){ 
-            std::swap(sol.MatchColor[i][j], sol.MatchColor[j][i]);
-        }
-    }
-    if (arc1.first == arc2.second){ 
-        std::swap(sol.MatchColor[i][j], sol.MatchColor[j][i]);
-    }
-    if (OneTeamPerClub){
-        cost_cap = sol.CostCapacityClubHapSwitchTeam(arc1.second, sol.MatchColor[arc1.second][arc1.first]) + sol.CostCapacityClubHapSwitchTeam(arc1.second, sol.MatchColor[arc2.second][arc2.first]);
-    }
-
-    assert(total_cost_before == sol.ComputeTotalHACost()); // check if everything went well!!!
-    if (cost_after == 0 && cost_cap <= 0){
-        return 0;
-    }
-    else{
-        return NrNodes;
-    }
-}
-
-tuple<vector<Edge>,vector<Edge>,vector<int>> MakeLineGraphOnlyZeroWeightEdges(Solution& sol, const int source, const int sink, const int source_nb, const int sink_nb){
-    const int l = sol.getLeagueTeam(source);
-    const bool OneTeamPerClub = false; // parameter, turn this on or off
-    vector<bool>ClubPresent(sol.getNrClubs(), false);
-    vector<Edge>Nodes;
-    int i,c,club_i;
-    vector<int>TeamsPresent;
-    for (int i_ = 0; i_ < sol.getNrTeamsLeague(l); ++i_){
-        i = sol.getTeamsLeague(l)[i_];
-        club_i = sol.getTeamClub(i);
-        if (OneTeamPerClub && ClubPresent[club_i]){
-            continue;
-        }
-        TeamsPresent.push_back(i);
-        ClubPresent[club_i] = true;
-    }
-
-    for (auto& i: TeamsPresent){
-        for (auto& j: TeamsPresent){
-            c = sol.MatchColor[i][j];
-            if (c >= 0){ // no point in adding the edge j->SOURCE, because SOURCE always must have an outgoing edge (and SINK always an incoming edge)
-                assert(sol.Orientation[i][c] == HA::H);
-                assert(sol.Orientation[j][c] == HA::A);
-                if (i != source && j != sink && sol.MatchColor[j][i] < 0){ // otherwise, we violate DRR constraint: then this node cannot be reversed!!
-                    Nodes.push_back({j,i}); // make for each arc a node
-                    // remember, arc is j->i, so in arc {j,i} i is the home team
-                    // cout << "add the node (" << j << "," << i << ")" << endl; // add node per round?
-                }
-            }
-        }
-    }
-    cout << "Added all the nodes" << endl;
+    // cout << "Added all the nodes" << endl;
 
     // Now, evaluate for pair of nodes what the cost will be
     vector<Edge>edge_vector;
     vector<int>weights;
 
-    int weight;
-    for (int v = 0; v < Nodes.size(); ++v){
-        for (int w = v+1; w < Nodes.size(); ++w){
+    int weight, v, w, k, r1, r2;
+    for (v = 0; v < Nodes.size(); ++v){
+        for (w = v+1; w < Nodes.size(); ++w){
             if (Nodes[v].second == Nodes[w].first){ // e.g. if (i,k) = (k,j), add the edge {(i,k),(k,j)}
-                weight = ComputeWeightLineGraph(sol, Nodes[v], Nodes[w], (int)Nodes.size(), OneTeamPerClub);
-                if (weight == 0){
-                    edge_vector.push_back(Edge(v, w));
-                    weights.push_back(weight);
-                    cout << "add the arc (" << Nodes[v].first << "," << Nodes[v].second << ") -> (" << Nodes[w].first << "," << Nodes[w].second << ")" << endl;
-                }
-                else{
-                    cout << "The arc (" << Nodes[v].first << "," << Nodes[v].second << ") -> (" << Nodes[w].first << "," << Nodes[w].second << ") has weight > 0" << endl;
-                }
-                /*
-                if (weight <= 0){
-                    cout << "give the arc (" << Nodes[v].first << "," << Nodes[v].second << ") -> (" << Nodes[w].first << "," << Nodes[w].second << ") weight " << weight << endl;
-                }
-                    */
+                i = Nodes[v].first, j = Nodes[w].second, k = Nodes[v].second;
+                h = v, a = w;
             }
-            else if (Nodes[w].second == Nodes[v].first){ // e.g. if (k,i) = (j,k), add the edge {(i,k),(k,j)}
-                weight = ComputeWeightLineGraph(sol, Nodes[w], Nodes[v], (int)Nodes.size(), OneTeamPerClub);
-                if (weight == 0){
-                    edge_vector.push_back(Edge(w, v));
-                    weights.push_back(weight);
-                    cout << "add the arc (" << Nodes[w].first << "," << Nodes[w].second << ") -> (" << Nodes[v].first << "," << Nodes[v].second << ")" << endl;
-                }
-                else{
-                    cout << "The arc (" << Nodes[w].first << "," << Nodes[w].second << ") -> (" << Nodes[v].first << "," << Nodes[v].second << ") has weight > 0" << endl;
-                }
-                /*
-                if (weight <= 0){
-                    cout << "give the arc (" << Nodes[w].first << "," << Nodes[w].second << ") -> (" << Nodes[v].first << "," << Nodes[v].second << ") weight " << weight << endl;
-                }
-                    */
+            else if (Nodes[w].second == Nodes[v].first){ 
+                i = Nodes[w].first, j = Nodes[v].second, k = Nodes[v].first;
+                h = w, a = v;
             }
-            // otherwise, edges are not incident to same node
+            else{
+                continue;
+            }
+            r1 = sol.MatchColor[k][i]; // remember, arc (i,k) = i->k, so k is the home team!
+            r2 = sol.MatchColor[j][k]; // remember, arc (k,j) = k->j, so j is the home team!
+    
+            weight = sol.ComputeCostReversingOrientationTeam(k, r1, r2);
+
+            edge_vector.push_back(Edge(h, a));
+            weights.push_back(weight);
+
+            // cout << "add the arc (" << i << "," << k << ") -> (" << k << "," << j << ")" << " with weight " << weight << endl;
         }
     }
-    cout << "added all the edges" << endl;
-    cin.get();
+    // cout << "added all the edges" << endl;
     return {Nodes, edge_vector, weights};
+}
+
+void ReversePath(Solution& sol, const vector<array<int,3>> path){
+    int i,j,c,e;
+    // cout << "New path is" << endl;
+    for (e = 0; e < path.size(); ++e){
+        // path is traversed from sink to source
+        // sink: +H, source: +A
+        i = path[e][0], j = path[e][1], c = path[e][2];
+        std::swap(sol.Orientation[i][c], sol.Orientation[j][c]);
+
+        if (!sol.SRR){
+            std::swap(sol.MatchColor[i][j], sol.MatchColor[j][i]);
+        }
+
+        if (sol.Orientation[i][c] == HA::H){
+            // cout << "(" << i << " <- " << j << ")" << endl;
+        }
+        else{
+            // cout << "(" << i << " -> " << j << ")" << endl;
+        }
+    }
 }
 
 bool FindNormalPathOneLeague(const int source, const int sink, Solution& sol, vector<array<int,3>>& path, int& delta, const bool MinCostP){ // source: A too much, sink: H too much
@@ -832,7 +725,8 @@ bool FindNormalPathOneLeague(const int source, const int sink, Solution& sol, ve
         predecessor_map(boost::make_iterator_property_map(p.begin(), 
             get(boost::vertex_index, G))).distance_map(boost::make_iterator_property_map(d.begin(), 
                 get(boost::vertex_index, G))));
-    
+
+
     int v_ = sink;
     if (p[v_] == v_){
         // cout << "No path found" << endl;
@@ -848,7 +742,7 @@ bool FindNormalPathOneLeague(const int source, const int sink, Solution& sol, ve
         path.emplace_back(std::array<int, 3>{v_, (int)p[v_], r});
         assert(sol.Orientation[v_][r] == HA::H);
         assert(sol.Orientation[p[v_]][r] == HA::A);
-        delta += (sol.getCostMatchRound(p[v_], v_, r) - sol.getCostMatchRound(v_, p[v_], r));
+        // delta += (sol.getCostMatchRound(p[v_], v_, r) - sol.getCostMatchRound(v_, p[v_], r));
         // cout << "Reverse " << v_ << "<-" << p[v_] << " to " << v_ << "->" << p[v_] << " in " << r << " : " << (sol.getCostMatchRound(p[v_], v_, r) - sol.getCostMatchRound(v_, p[v_], r)) << endl;
         if (source == p[v_]){
             break;
@@ -857,18 +751,21 @@ bool FindNormalPathOneLeague(const int source, const int sink, Solution& sol, ve
             v_ = p[v_];
         }
     }
-
+    
     ReversePath(sol, path);
 
     return true;
 }
 
-bool FindZeroCostPathLineGraph(const int source, const int sink, const int source_nb, const int sink_nb, const int l, Solution& sol){ // source: team with A too much, sink: team with H too much
+bool FindPathLineGraphOneLeague(const int source, const int sink, Solution& sol, vector<array<int,3>>& path){ // source: team with A too much, sink: team with H too much
 
-    auto [Nodes,edge_vector,weights] = MakeLineGraphOnlyZeroWeightEdges(sol, source, sink, source_nb, sink_nb);
+    auto [Nodes,edge_vector,weights] = MakeLineGraph(sol, source, sink);
 
     // Now, create the real source and sink nodes
     // In line graph, nodes are of the form ({j,k}), with j->k
+    // Suppose the cheapest path is sink->source. Because every edge in the line graph is the combination of 2 edges, if 
+    // we do not add an extra source and sink, this single edge will never be taken as the cheapest path!!
+    // But now, we have SOURCE->(sink,source)->SINK as an option
 
     int SOURCE = Nodes.size();
     int SINK = Nodes.size()+1;
@@ -876,10 +773,12 @@ bool FindZeroCostPathLineGraph(const int source, const int sink, const int sourc
         if (Nodes[v].first == source){
             edge_vector.push_back(Edge(SOURCE, v)); // create edges SOURCE --> v
             weights.push_back(0); // get weight of 0
+            // cout << "add " << SOURCE << " -> " << "(" << Nodes[v].first << "," << Nodes[v].second << ")" << endl;
         }
         else if (Nodes[v].second == sink){
-            edge_vector.push_back(Edge(v, SINK)); // create edges SOURCE --> v
+            edge_vector.push_back(Edge(v, SINK)); // create edges v --> SINK
             weights.push_back(0); // get weight of 0
+            // cout << "(" << Nodes[v].first << "," << Nodes[v].second << ")" << " -> " << SINK << endl;
         }
     }
 
@@ -900,69 +799,40 @@ bool FindZeroCostPathLineGraph(const int source, const int sink, const int sourc
             get(boost::vertex_index, G))).distance_map(boost::make_iterator_property_map(d.begin(), 
                 get(boost::vertex_index, G))));
 
-    vector<int>path;
     
     int v_ = SINK;
     if (p[v_] == v_){
-        cout << "No positive path found" << endl;
+        cout << "predecessor of " << v_ << " = " << p[v_] << endl;
+        cout << "No path found" << endl;
+        cin.get();
         return false; // this means that the vertex could not be reached
     }
-    else { // because line graph only contains edges of cost 0
-        assert(d[v_] == 0);
+
+    // cout << "path found:" << endl;
+    Edge e;
+    int i,j,k,r;
+    while (true){
+        if (v_ != SOURCE && v_ != SINK){
+            e = Nodes[v_];
+            i = e.first, k = e.second; // (i,k) = i->k
+            r = sol.MatchColor[k][i];
+
+            // cout << "add " << k << " <- " << i << endl;
+            path.emplace_back(std::array<int, 3>{k, i, r});
+            assert(sol.Orientation[k][r] == HA::H);
+            assert(sol.Orientation[i][r] == HA::A);
+        }
+        if (SOURCE == p[v_]){
+            break;
+        }
+        else{
+            v_ = p[v_];
+        }
     }
 
-    path.push_back(v_);
-    while (SOURCE != p[v_]){
-        path.push_back(p[v_]);
-        v_ = p[v_];
-    }
-    path.push_back(SOURCE);
-
-    ReversePathLineGraph(sol, path, Nodes);
+    ReversePath(sol, path);
 
     return true;
-}
-
-void ReversePathLineGraph(Solution& sol, const vector<int>& path, const vector<Edge>& Nodes){
-    Edge e;
-    int i,j,c;
-    // cout << "path is" << endl;
-    assert(path.size() > 2); // must at least be SOURCE->v->SINK, with v representing 2 edges incident to same vertex
-    assert(path.front() == Nodes.size());
-    assert(path.back() == Nodes.size()+1);
-    for (int v = 1; v < path.size()-1; ++v){
-        // path is traversed from sink to source (excluding the SOURCE and the SINK)
-        // sink: +A, source: +H
-        for (auto& w: {v,v+1}){
-            e = Nodes[path[w]];
-            i = e.second, j = e.first;
-            c = sol.MatchColor[i][j];
-            // the assert below does not work for balanced cycle, I do not understand why..
-            // cout << "swap orientation of " << i << "<-" << j << endl;
-            assert(sol.Orientation[i][c] == HA::H && sol.Orientation[j][c] == HA::A);
-            std::swap(sol.Orientation[i][c], sol.Orientation[j][c]);
-        }
-        // cout << i << " <- ";
-    }
-    // cout << path[path.size()-1] << endl;
-}
-
-void ReversePath(Solution& sol, const vector<array<int,3>> path){
-    int i,j,c;
-    // cout << "path is" << endl;
-    for (int e = 0; e < path.size(); ++e){
-        // path is traversed from sink to source
-        // sink: +H, source: +A
-        i = path[e][0], j = path[e][1], c = path[e][2];
-        std::swap(sol.Orientation[i][c], sol.Orientation[j][c]);
-
-        if (!sol.SRR){
-            std::swap(sol.MatchColor[i][j], sol.MatchColor[j][i]);
-        }
-
-        // cout << i << " <- ";
-    }
-    // cout << path.back() << endl;
 }
 
 
@@ -1449,15 +1319,57 @@ vector<vector<pair<int,int>>> CreateAlternatingCycles(Solution& sol, const vecto
     return AlternatingCycles;
 }
 
-pair<vector<pair<int,int>>,vector<int>> MoveMWPM(Solution& sol, const int l, const int r, const bool bipartite, const bool includeHAPs, const bool CM, std::mt19937& gen, const bool MinCostM){
+int ComputeEdgeWeightM(const int i, const int j, const int c, const bool MinCostM, const bool bipartite, Solution& sol){
+    int d;
+    if (sol.getSetting() == Setting::CM){
+        if (bipartite && sol.Orientation[i][c] == HA::H){
+            d = sol.getCostMatchRound(i,j,c);
+        }
+        else if (bipartite && sol.Orientation[i][c] == HA::A){
+            d = sol.getCostMatchRound(j,i,c);
+        }
+        else{
+            assert(!bipartite);
+            d = min(sol.getCostMatchRound(i,j,c), sol.getCostMatchRound(j,i,c));
+        }
+    }
+    else if (sol.getSetting() == Setting::TTP){
+        int Opp_i = sol.TeamColorOpp[i][c];
+        int Opp_j = sol.TeamColorOpp[j][c];
+        sol.TeamColorOpp[i][c] = j;
+        sol.TeamColorOpp[j][c] = i;
+        if (bipartite){
+            d = (sol.ComputeTravelCostTeamTTP(i)+sol.ComputeTravelCostTeamTTP(j));
+        }
+        else{
+            if (sol.Orientation[i][c] != sol.Orientation[j][c]){
+                d = (sol.ComputeTravelCostTeamTTP(i)+sol.ComputeTravelCostTeamTTP(j));
+            }
+            else{
+                HA Orientation_i = sol.Orientation[i][c];
+                HA Orientation_j = sol.Orientation[j][c];
+                sol.Orientation[i][c] = HA::H, sol.Orientation[j][c] = HA::A;
+                int d1 = (sol.ComputeTravelCostTeamTTP(i)+sol.ComputeTravelCostTeamTTP(j)+sol.ComputeTTPViolations(i)+sol.ComputeTTPViolations(j));
+                sol.Orientation[i][c] = HA::A, sol.Orientation[j][c] = HA::H;
+                int d2 = (sol.ComputeTravelCostTeamTTP(i)+sol.ComputeTravelCostTeamTTP(j)+sol.ComputeTTPViolations(i)+sol.ComputeTTPViolations(j));
+                d = std::min(d1,d2);
+                sol.Orientation[i][c] = Orientation_i;
+                sol.Orientation[j][c] = Orientation_j;
+            }
+        }
+        sol.TeamColorOpp[i][c] = Opp_i;
+        sol.TeamColorOpp[j][c] = Opp_j;
+    }
+    else if (sol.getSetting() == Setting::Miao){
+        assert(false); // TODO
+    }
 
-    int N;
-    if (CM){
-        N = sol.getNrTeams();
-    }
-    else{
-        N = sol.getNrTeamsLeague(l);
-    }
+    return d;
+}
+
+pair<vector<pair<int,int>>,vector<int>> MoveMWPM(Solution& sol, const int r, const bool bipartite, const bool includeHAPs, const bool CM, std::mt19937& gen, const bool MinCostM){
+
+    int N = sol.getNrTeams();
     int R = sol.getNrRounds();
     int SizeMatching = N/2;
     vector<bool>TeamSelected(sol.getNrTeams(), true);
@@ -1472,17 +1384,32 @@ pair<vector<pair<int,int>>,vector<int>> MoveMWPM(Solution& sol, const int l, con
     int UB_random = 100;
     std::uniform_int_distribution<>dist_int = std::uniform_int_distribution<>(0,UB_random); 
 
-    int i_,j_, i, j;
+    int i, j;
     // vector<vector<bool>>ForbiddenEdge(sol.getNrTeams(), vector<bool>(sol.getNrTeams(), false));
     // forbidden edges: all edges in the current schedule (coloring of the current schedule must remain feasible)
-    for (i_ = 0; i_ < N; ++i_){
-        for (j_ = i_+1; j_ < N; ++j_){
-            if (CM){
-                i = i_, j = j_;
+    int MaxWeight = 0;
+    // each edge randomly gets a cost of 0 and 1, in a perfect matching there are N/2 edges so max cost should be N/2+1
+    int Weight = 0;
+    if (MinCostM){
+        for (i = 0; i < N; ++i){
+            for (j = i+1; j < N; ++j){
+                if (ForbiddenEdge_CM(i,j,r,bipartite,TeamSelected,sol)){
+                    continue;
+                }
+                Weight = ComputeEdgeWeightM(i, j, r, MinCostM, bipartite, sol);
+                if (Weight > MaxWeight){
+                    MaxWeight = Weight;
+                }
             }
-            else{
-                i = sol.getTeamsLeague(l)[i_], j = sol.getTeamsLeague(l)[j_];
-            }
+        }
+        MaxWeight = MaxWeight*(N/2)+1;
+    }
+    else{
+        MaxWeight = UB_random*(sol.getNrTeams()/2)+1;
+    }
+
+    for (i = 0; i < N; ++i){
+        for (j = i+1; j < N; ++j){
             if (ForbiddenEdge_CM(i,j,r,bipartite,TeamSelected,sol)){
                 continue;
             }
@@ -1490,30 +1417,13 @@ pair<vector<pair<int,int>>,vector<int>> MoveMWPM(Solution& sol, const int l, con
             
             int d;
             if (MinCostM){
-                d = sol.getMaxEdgeCost()*(sol.getNrTeams()/2)+1;
-                if (CM){
-                    if (bipartite && sol.Orientation[i][r] == HA::H){
-                        d -= sol.getCostMatchRound(i,j,r);
-                    }
-                    else if (bipartite && sol.Orientation[i][r] == HA::A){
-                        d -= sol.getCostMatchRound(j,i,r);
-                    }
-                    else{
-                        assert(!bipartite);
-                        d -= min(sol.getCostMatchRound(i,j,r), sol.getCostMatchRound(j,i,r));
-                    }
-                    
-                }
-                else{
-                    d -= sol.getDistanceTeams(i,j); // - bc algorithm finds matching of MAXIMUM weight
-                }
+                d = MaxWeight - ComputeEdgeWeightM(i, j, r, MinCostM, bipartite, sol);
             }
             else{
-                d = UB_random*(sol.getNrTeams()/2)+1; // each edge randomly gets a cost of 0 and 1, in a perfect matching there are N/2 edges so max cost should be N/2+1
-                d -= dist_int(gen);
+                d = MaxWeight - dist_int(gen);
             }
             assert(d >= 0);
-            boost::add_edge(i_, j_, EdgeProperty(d), g);
+            boost::add_edge(i, j, EdgeProperty(d), g);
         }
     }
 
@@ -1524,23 +1434,17 @@ pair<vector<pair<int,int>>,vector<int>> MoveMWPM(Solution& sol, const int l, con
     assert(boost::num_edges(g) > 0); // graph cannot be empty
 
     std::vector< boost::graph_traits< BGraph >::vertex_descriptor > mate1(N);
-    // cout << "do maximum weighted matching" << endl;
     assert(mate1.size() == num_vertices(g));
     boost::maximum_weighted_matching(g, &mate1[0]);
-    // cout << "maximum weighted matching done" << endl;
 
     vector<pair<int,int>>Matching(sol.getNrTeams()/2);
     vector<int>OpponentMatching(sol.getNrTeams(), -1); // i.e. OpponentMatching[i] = j, then the opponent of i in the matching is j
 
-    // std::cout << "The new matching is:" << std::endl;
     int m = 0;
     for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi){
         if (mate1[*vi] != boost::graph_traits< BGraph >::null_vertex() && *vi < mate1[*vi]){
             // std::cout << "{" << *vi << ", " << mate1[*vi] << "}" << std::endl;
             i = *vi, j = mate1[*vi];
-            if (!CM){
-                i = sol.getTeamsLeague(l)[i], j = sol.getTeamsLeague(l)[j];
-            }
             OpponentMatching[i] = j;
             OpponentMatching[j] = i;
             Matching[m++] = {i,j};
@@ -1551,7 +1455,7 @@ pair<vector<pair<int,int>>,vector<int>> MoveMWPM(Solution& sol, const int l, con
     return {Matching, OpponentMatching}; // for Miao's algo: Matching, for my algo: OpponentMatching (bc I do no want full matching but alternating cycles instead)
 }
 
-vector<vector<pair<int,int>>>iPRS(Solution& sol, const int l, const int r, const bool bipartite, const bool includeHAPs, const bool CM, std::mt19937& gen, const bool MinCostM){
+vector<vector<pair<int,int>>>iPRS(Solution& sol, const int r, const bool bipartite, const bool includeHAPs, const bool CM, std::mt19937& gen, const bool MinCostM){
 
     /*
     The difference with Miao is that she really starts from 0, while I already have to take into account the matches in the other rounds
@@ -1561,7 +1465,7 @@ vector<vector<pair<int,int>>>iPRS(Solution& sol, const int l, const int r, const
 
     // cout << "Start iPRS" << endl;
 
-    pair<vector<pair<int,int>>,vector<int>>OpponentMatching_Matching = MoveMWPM(sol, l, r, bipartite, includeHAPs, CM, gen, MinCostM);
+    pair<vector<pair<int,int>>,vector<int>>OpponentMatching_Matching = MoveMWPM(sol, r, bipartite, includeHAPs, CM, gen, MinCostM);
 
     vector<vector<pair<int,int>>>AlternatingCycles = CreateAlternatingCycles(sol, OpponentMatching_Matching.second, r, bipartite, gen); // first edge in alternating cycle: new match (so initially uncolored)
 
@@ -1653,15 +1557,31 @@ vector<vector<array<int,3>>>EvaluateAlternatingCycleWithPaths(Solution& sol, vec
         assert(H_teams.size() == A_teams.size());
         shuffle(H_teams.begin(), H_teams.end(), gen);
         shuffle(A_teams.begin(), A_teams.end(), gen);
+        int a;
         for (int k = 0; k < H_teams.size(); ++k){
             // path is shortest in distance, but does not take into account the costs
+            // It can be that not path exists between the teams because they are in different disconnected components!
+            bool PathFound = false;
             vector<array<int,3>>path;
-            bool PathFound = FindNormalPathOneLeague(A_teams[k], H_teams[k], sol, path, delta, MinCostP);
+            a = -1;
+            do{
+                ++a;
+                if (CM || !MinCostP){
+                    PathFound = FindNormalPathOneLeague(A_teams[k+a], H_teams[k], sol, path, delta, MinCostP);
+                }
+                else{
+                    PathFound = FindPathLineGraphOneLeague(A_teams[k+a], H_teams[k], sol, path);
+                }
+            }
+            while(k+a+1 < A_teams.size() && !PathFound);
+
             if (!PathFound){
-                throw std::runtime_error("No path found that can repair imbalance caused by M");
+                cout << "No path found in M+PR" << endl;
+                throw std::runtime_error("Error!!!");
             }
             // path is reversed in function!!
             Paths.push_back(path);
+            std::swap(A_teams[k], A_teams[k+a]);
         }
     }
         

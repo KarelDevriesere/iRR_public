@@ -134,6 +134,8 @@ class GurSolver : public Input
         // For TTP bounds:
         pair<vector<vector<int>>,vector<int>>GenerateTrips(const int t, const vector<int>& TeamsList);
         void BoundTTP(const int t);
+        // Add LB to the model
+        void AddLowerBoundiTTP(const int LB);
 };
 
 #endif

@@ -10,6 +10,7 @@
 #include <sstream>
 #include <filesystem>
 
+#include "Input.h"
 #include "CM.h"
 #include "InstanceGenerator.h"
 
@@ -19,207 +20,158 @@ int main(int argc, const char* argv[]){
     // BoundsTTP();
     // return 1;
 
-    if (case_ == 0){
+    InputData data;
 
-        int seed = 0;
-        bool Heuristic = 1;
-        bool MinCostNB = 0;
-        int HistoryLength = 1;
-        int NrTeams = 36;
-        int NrRounds = 8;
-        int k = 5;
-        int inst = 0;
-        int TL = 60;
-        int MaxIt = 1000000;
-        bool CM = true;
-        bool TTP = false;
-        bool Base = false;
-        string Instance;
-        if (CM){
-            Instance = to_string(NrTeams) + "_" + to_string(NrRounds) + "_" + "k" + to_string(k) + "_" + to_string(inst);
+    if (case_ == 0){
+        if (data.CM){
+            data.Instance = to_string(data.NrTeams) + "_" + to_string(data.NrRounds) + "_" + "k" + to_string(data.k) + "_" + to_string(data.inst);
         }
         else {
-            Instance = "N16.xml";
+            data.Instance = "N16.xml";
         }
-
-        unordered_map<string, double>InputWeights = {{"TS", 0.0}, {"PTS", 0.0}, {"RS", 0.0}, {"PRS", 0.0},{"M", 0.0}, {"BM", 0.0}, {"C", 0.0}};
-        unordered_map<string, bool>MoveSeen = {{"TS", false}, {"PTS", false}, {"RS", false}, {"PRS", false},{"M", false}, {"BM", false}, {"C", false}};
 
         // Parse command-line arguments
         for (int i = 1; i < argc; ++i) {
             std::string arg = argv[i];
             if (arg == "--Seed"){
-                seed = std::stoi(argv[++i]);
+                data.seed = std::stoi(argv[++i]);
             }
             else if (arg == "--Heuristic"){
-                Heuristic = std::stoi(argv[++i]);
-                if (Heuristic != 0 && Heuristic != 1){
+                data.Heuristic = std::stoi(argv[++i]);
+                if (data.Heuristic != 0 && data.Heuristic != 1){
                     std::cerr << "Heuristic should be 0 or 1" << endl;
                     return 1;
                 }
             }
-            else if (arg == "--MinCostNB"){
-                MinCostNB = std::stoi(argv[++i]);
-                if (MinCostNB != 0 && MinCostNB != 1){
-                    std::cerr << "MinCostNB should be 0 or 1" << endl;
-                    return 1;
-                }
-            }
             else if (arg == "--HistoryLength"){
-                HistoryLength = std::stoi(argv[++i]); 
-                if (HistoryLength <= 0){
+                data.HistoryLength = std::stoi(argv[++i]); 
+                if (data.HistoryLength <= 0){
                     std::cerr << "HistoryLength should be strictly positive" << endl;
                     return 1;
                 }
             }
             else if (arg == "--CM"){
-                CM = std::stoi(argv[++i]);
-                if (CM != 0 && CM != 1){
+                data.CM = std::stoi(argv[++i]);
+                if (data.CM != 0 && data.CM != 1){
                     std::cerr << "CM should be 0 or 1" << endl;
                     return 1;
                 }
             }
             else if (arg == "--TTP"){
-                TTP = std::stoi(argv[++i]);
-                if (TTP != 0 && TTP != 1){
+                data.TTP = std::stoi(argv[++i]);
+                if (data.TTP != 0 && data.TTP != 1){
                     std::cerr << "TTP should be 0 or 1" << endl;
                     return 1;
                 }
             }
             else if (arg == "--NrTeams"){ // CM
-                NrTeams = std::stoi(argv[++i]);
-                if (NrTeams != 36 && NrTeams != 100 && NrTeams != 250){
+                data.NrTeams = std::stoi(argv[++i]);
+                if (data.NrTeams != 36 && data.NrTeams != 100 && data.NrTeams != 250){
                     std::cerr << "NrTeams must be 36 or 100 or 250" << endl;
                     return 1;
                 }
-                if (NrTeams == 36){
-                    NrRounds = 8;
+                if (data.NrTeams == 36){
+                    data.NrRounds = 8;
                 }
-                else if (NrTeams == 100){
-                    NrRounds = 16;
+                else if (data.NrTeams == 100){
+                    data.NrRounds = 16;
                 }
                 else{
-                    NrRounds = 30;
+                    data.NrRounds = 30;
                 }
-                CM = true;
-                TTP = false;
+                data.CM = true;
+                data.TTP = false;
             }
             else if (arg == "--k"){ // CM
-                k = std::stoi(argv[++i]);
-                if (k != 0 && k != 1 && k != 5 && k != 10){
+                data.k = std::stoi(argv[++i]);
+                if (data.k != 0 && data.k != 1 && data.k != 5 && data.k != 10){
                     std::cerr << "k must be 0, 1, 5 or 10!" << endl;
                     return 1;
                 }
-                CM = true;
-                TTP = false;
+                data.CM = true;
+                data.TTP = false;
             }
             else if (arg == "--i"){ // CM
-                inst = std::stoi(argv[++i]);
-                if (inst != 0 && inst != 1 && inst != 2 && inst != 3 && inst != 4){
+                data.inst = std::stoi(argv[++i]);
+                if (data.inst != 0 && data.inst != 1 && data.inst != 2 && data.inst != 3 && data.inst != 4){
                     std::cerr << "i must be 0,1,2,3 or 4" << endl;
                     return 1;
                 }
-                CM = true;
-                TTP = false;
+                data.CM = true;
+                data.TTP = false;
             }
             else if (arg == "--InstanceTTP"){ // TTP
-                Instance = argv[++i];
-                auto it = std::find(InstancesTTP.begin(), InstancesTTP.end(), Instance);
+                data.Instance = argv[++i];
+                auto it = std::find(InstancesTTP.begin(), InstancesTTP.end(), data.Instance);
                 if (it == InstancesTTP.end()){
-                    std::cerr << "Incorrect TTP instance name, name given = " << Instance << endl;
+                    std::cerr << "Incorrect TTP instance name, name given = " << data.Instance << endl;
                     return 1;
                 }
-                TTP = true;
-                CM = false;
+                data.TTP = true;
+                data.CM = false;
             }
             else if (arg == "--NrRounds"){ // TTP
-                NrRounds = std::stoi(argv[++i]);
-                if (NrRounds <= 0){
+                data.NrRounds = std::stoi(argv[++i]);
+                if (data.NrRounds <= 0){
                     std::cerr << "NrRounds must be strictly positive!" << endl;
                     return 1;
                 }
-                if (NrRounds %2 != 0){
+                if (data.NrRounds %2 != 0){
                     std::cerr << "NrRounds must be even!" << endl;
                     return 1;
                 }
-                TTP = true;
-                CM = false;
+                data.TTP = true;
+                data.CM = false;
             }
             else if (arg == "--TimeLimit"){
-                TL = std::stoi(argv[++i]);
-                if (TL < 0){
+                data.TimeLimit = std::stoi(argv[++i]);
+                if (data.TimeLimit < 0){
                     std::cerr << "TimeLimit should be positive" << endl;
                     return 1;
                 }
             }
             else if (arg == "--MaxIt"){
-                MaxIt = std::stoi(argv[++i]);
-                if (MaxIt < 0){
+                data.MaxIt = std::stoi(argv[++i]);
+                if (data.MaxIt < 0){
                     std::cerr << "Max no iterations should be positive" << endl;
                     return 1;
                 }
             }
-            else if (arg == "--TSw"){
-                InputWeights.at("TS") = std::stod(argv[++i]);
-                MoveSeen.at("TS") = true;
-                if (InputWeights.at("TS") < 0.0){
-                    std::cerr << "TSw should be positive!" << endl;
+            else if (arg == "--Weight"){
+                string MoveName = argv[++i];
+                bool NameFound = false;
+                for (auto& [move, name]: data.Moves){
+                    if (name == MoveName){
+                        NameFound = true;
+                        data.InputWeights[move] = std::stod(argv[++i]);
+                        if (data.InputWeights.at(move) < 0.0){
+                            std::cerr << MoveName << " should be positive!" << endl;
+                            return 1;
+                        }
+                    }
+                }
+                if (!NameFound){
+                    cout << "Could not find " << MoveName << ", please choose one of the following moves: " << endl;
+                    for (auto& [move, name]: data.Moves){
+                        cout << name << endl;
+                    }
                     return 1;
                 }
             }
-            else if (arg == "--PTSw"){
-                InputWeights.at("PTS") = std::stod(argv[++i]);
-                MoveSeen.at("PTS") = true;
-                if (InputWeights.at("PTS") < 0.0){
-                    std::cerr << "PTSw should be positive!" << endl;
+            else if (arg == "--ConstrViolationCost"){
+                // 1 cost for violating all types of hard constraints
+                data.ConstrViolationCost = std::stol(argv[++i]);
+                if (data.ConstrViolationCost < 0){
+                    std::cerr << "ConstrViolationCost should be positive!" << endl;
                     return 1;
                 }
-            }
-            else if (arg == "--RSw"){
-                InputWeights.at("RS") = std::stod(argv[++i]);
-                MoveSeen.at("RS") = true;
-                if (InputWeights.at("RS") < 0.0){
-                    std::cerr << "RSw should be positive!" << endl;
-                    return 1;
-                }
-            }
-            else if (arg == "--PRSw"){
-                InputWeights.at("PRS") = std::stod(argv[++i]);
-                MoveSeen.at("PRS") = true;
-                if (InputWeights.at("PRS") < 0.0){
-                    std::cerr << "PRSw should be positive!" << endl;
-                    return 1;
-                }
-            }
-            else if (arg == "--Mw"){
-                InputWeights.at("M") = std::stod(argv[++i]);
-                MoveSeen.at("M") = true;
-                if (InputWeights.at("M") < 0.0){
-                    std::cerr << "Mw should be positive!" << endl;
-                    return 1;
-                }
-            }
-            else if (arg == "--BMw"){
-                InputWeights.at("BM") = std::stod(argv[++i]);
-                MoveSeen.at("BM") = true;
-                if (InputWeights.at("BM") < 0.0){
-                    std::cerr << "BMw should be positive!" << endl;
-                    return 1;
-                }
-            }
-            else if (arg == "--Cw"){
-                InputWeights.at("C") = std::stod(argv[++i]);
-                MoveSeen.at("C") = true;
-                if (InputWeights.at("C") < 0.0){
-                    std::cerr << "BMw should be positive!" << endl;
-                    return 1;
-                }
+
             }
             else if (arg == "--Base"){
-                Base = true;
+                data.Base = true;
             }
             else if (arg == "--help"){
-                cout << "Usage: " << argv[0] << "--Seed <int> --Heuristic <0/1> -- MinCostNB <0/1> --HistoryLength <+int> -- CM <0/1> --NrTeams <36/100>* --k <0/1/5/10>* --i <0/1/2/3/4>* --TimeLimit <+int> --MaxIt <+int> --TSw <[0,1]> --PTSw <[0,1]> --RSw <[0,1]> --PRSw <[0,1]> --Mw <[0,1]> --BMw <[0,1]> --Cw <[0,1]>" << endl;
+                cout << "Usage: " << argv[0] << "--Seed <int> --Heuristic <0/1> -- MinCostNB <0/1> --HistoryLength <+int> -- CM <0/1> --NrTeams <36/100>* --k <0/1/5/10>* --i <0/1/2/3/4>* --TimeLimit <+int> --MaxIt <+int> --Weight <Move> <+int>" << endl;
                 cout << "*: For CostMinimization instances" << endl;
                 cout << "For TTP instances, specify --TTP 1 --InstanceTTP <BRA24/CIRC40/CON40/GAL40/INCR40/LINE40/N16/NFL32> --NrRounds<+int>" << endl;
                 return 1;
@@ -230,48 +182,52 @@ int main(int argc, const char* argv[]){
             }
         }
 
-        if (CM == true && TTP == true){
+        if (data.CM == true && data.TTP == true){
             cout << "Choose either CM or TTP!!" << endl;
             return 1;
         }
-        if (Base){
+        if (data.Base){
             cout << "Run base algorithm!!" << endl;
+            cout << "Note: if all pairs of rounds are Hamiltonian cycles: never non-Hamiltonian cycles with base algo.." << endl;
         }
 
         double sum = 0;
         double sum_weights = 0;
         cout << "------ Weights ------" << endl;
-        bool NoMoveSeen = true;
-        for (const auto& [move, weight]: InputWeights){
-            if (MoveSeen.at(move)){
-                sum += InputWeights.at(move);
-                NoMoveSeen = false;
+        unordered_map<Move, double>InputWeightsCopy = data.InputWeights;
+        for (const auto& [move, weight]: InputWeightsCopy){
+            if (data.Base && !data.IsMoveInBase.at(move)){
+                data.InputWeights.erase(move);
+                cout << "Base specified but " << data.Moves.at(move) << " not part of base so set this weight to 0!!" << endl;
             }
         }
-        for (const auto& [move, weight]: InputWeights){
-            if (MoveSeen.at(move)){
-                InputWeights.at(move) /= sum;
-                sum_weights += InputWeights.at(move);
-                cout << move << ": " << InputWeights.at(move) << endl;
-            }
+        bool NoMoveSeen = true;
+        for (const auto& [move, weight]: data.InputWeights){
+            sum += data.InputWeights.at(move);
+            NoMoveSeen = false;
+        }
+        for (const auto& [move, weight]: data.InputWeights){
+            data.InputWeights.at(move) /= sum;
+            sum_weights += data.InputWeights.at(move);
+            cout << data.Moves.at(move) << ": " << data.InputWeights.at(move) << endl;
         }
         if (NoMoveSeen){
             assert(sum == 0);
-            for (const auto& [move, weight]: InputWeights){
-                if (Base && (move == "BM" || move == "M")){
+            for (const auto& [move, name]: data.Moves){
+                if (data.Base && !data.IsMoveInBase.at(move)){
                     continue;
                 }
                 sum += 1.0;
             }
-            for (const auto& [move, weight]: InputWeights){
-                if (Base && (move == "BM" || move == "M")){
-                    InputWeights.at(move) = 0.0;
+            for (const auto& [move, name]: data.Moves){
+                if (data.Base && !data.IsMoveInBase.at(move)){
+                    continue;
                 }
                 else{
-                    InputWeights.at(move) = 1.0 / sum;
+                    data.InputWeights[move] = 1.0 / sum;
                 }
-                sum_weights += InputWeights.at(move);
-                cout << move << ": " << InputWeights.at(move) << endl;
+                sum_weights += data.InputWeights.at(move);
+                cout << data.Moves.at(move) << ": " << data.InputWeights.at(move) << endl;
             }
         }
         if (sum_weights <= 0.99 || sum_weights >= 1.01){
@@ -281,13 +237,13 @@ int main(int argc, const char* argv[]){
         cout << "---------------------" << endl;
 
         cout << "Test cost minimization" << endl;
-        cout << "MinCostNB = " << MinCostNB << endl;
-        cout << "TimeLimit = " << TL << endl;
-        cout << "Max iterations = " << MaxIt << endl;
-        if (CM){
-            Instance = to_string(NrTeams) + "_" + to_string(NrRounds) + "_" + "k" + to_string(k) + "_" + to_string(inst);
+        cout << "MinCostNB = " << data.MinCostNB << endl;
+        cout << "TimeLimit = " << data.TimeLimit << endl;
+        cout << "Max iterations = " << data.MaxIt << endl;
+        if (data.CM){
+            data.Instance = to_string(data.NrTeams) + "_" + to_string(data.NrRounds) + "_" + "k" + to_string(data.k) + "_" + to_string(data.inst);
         }
-        TestCostMinimization(seed, Instance, CM, TTP, Heuristic, MinCostNB, HistoryLength, TL, MaxIt, InputWeights, NrRounds, Base);
+        TestCostMinimization(data);
         // GenerateCostMatrices(0);
         // cin.get();
     }

@@ -81,8 +81,9 @@ bool Solution::IsTeamBalanced(const int i){
             nr_A++;
         }
     }
-    assert(nr_H > 0);
-    assert(nr_A > 0);
+    // For 2 rounds, the following assert can easily be violated:
+    // assert(nr_H > 0);
+    // assert(nr_A > 0);
     if (nr_H != nr_A){
         return false;
     }
@@ -202,39 +203,62 @@ int Solution::getNrSameClub(const int i){
     return nr;
 }
 
+int Solution::ComputeCostReversingOrientationTeam(const int i, const int r1, const int r2){
+    int cost = 0;
+    std::swap(Orientation[i][r1], Orientation[i][r2]);
+    // cout << "swap orientation of " << i << " in " << r1 << " and " << r2 << endl;
+    if (getSetting() == Setting::TTP){
+        cost = ComputeTTPViolations(i);
+    }
+    else if (getSetting() == Setting::Miao || getSetting() == Setting::Hockey){
+        cost = ComputeHACostTeam(i) + ComputeCost2RRConstraintTeam(i) + CostCapacityClubHapSwitchTeam(i, r1) + CostCapacityClubHapSwitchTeam(i, r2);
+    }
+    std::swap(Orientation[i][r1], Orientation[i][r2]);
+    return cost;
+}
+
+int Solution::ComputeCost2RRConstraintTeam(const int i){
+    int H = NrColouredRounds/2;
+    int cost = 0;
+
+    vector<int>NodeSeenH1(getNrTeams(), false);
+    vector<int>NodeSeenA1(getNrTeams(), false);
+    vector<int>NodeSeenH2(getNrTeams(), false);
+    vector<int>NodeSeenA2(getNrTeams(), false);
+    for (int r = 0; r < H; ++r){
+        if (Orientation[i][r] == HA::H){
+            NodeSeenH1[TeamColorOpp[i][r]]++;
+        }
+        else{
+            NodeSeenA1[TeamColorOpp[i][r]]++;
+        }
+    }
+    for (int r = H; r < NrColouredRounds; ++r){
+        if (Orientation[i][r] == HA::H){
+            NodeSeenH2[TeamColorOpp[i][r]]++;
+        }
+        else{
+            NodeSeenA2[TeamColorOpp[i][r]]++;
+        }
+    }
+    for (int j = 0; j < getNrTeams(); ++j){
+        assert(NodeSeenH1[j] + NodeSeenA1[j] + NodeSeenH2[j] + NodeSeenA2[j] <= 2);
+        // cost for seeing an opponent twice in one 1 half
+        cost += Cost2RRSameHalf*max(0, NodeSeenH1[j]+NodeSeenA1[j]-1);
+        cost += Cost2RRSameHalf*max(0, NodeSeenH2[j]+NodeSeenA2[j]-1);
+        // cost for seeing an opponent twice at H or twice A over the halfs
+        cost += Cost2RRSameMode*(max(0, NodeSeenH1[j]+NodeSeenH2[j]-1));
+        cost += Cost2RRSameMode*(max(0, NodeSeenA1[j]+NodeSeenA2[j]-1));
+    }
+
+    return cost;
+}
+
 int Solution::ComputeCost2RRConstraint(){
     int H = NrColouredRounds/2;
     int cost = 0;
     for (int i = 0; i < getNrTeams(); ++i){
-        vector<int>NodeSeenH1(getNrTeams(), false);
-        vector<int>NodeSeenA1(getNrTeams(), false);
-        vector<int>NodeSeenH2(getNrTeams(), false);
-        vector<int>NodeSeenA2(getNrTeams(), false);
-        for (int r = 0; r < H; ++r){
-            if (Orientation[i][r] == HA::H){
-                NodeSeenH1[TeamColorOpp[i][r]]++;
-            }
-            else{
-                NodeSeenA1[TeamColorOpp[i][r]]++;
-            }
-        }
-        for (int r = H; r < NrColouredRounds; ++r){
-            if (Orientation[i][r] == HA::H){
-                NodeSeenH2[TeamColorOpp[i][r]]++;
-            }
-            else{
-                NodeSeenA2[TeamColorOpp[i][r]]++;
-            }
-        }
-        for (int j = 0; j < getNrTeams(); ++j){
-            assert(NodeSeenH1[j] + NodeSeenA1[j] + NodeSeenH2[j] + NodeSeenA2[j] <= 2);
-            // cost for seeing an opponent twice in one 1 half
-            cost += Cost2RRSameHalf*max(0, NodeSeenH1[j]+NodeSeenA1[j]-1);
-            cost += Cost2RRSameHalf*max(0, NodeSeenH2[j]+NodeSeenA2[j]-1);
-            // cost for seeing an opponent twice at H or twice A over the halfs
-            cost += Cost2RRSameMode*(max(0, NodeSeenH1[j]+NodeSeenH2[j]-1));
-            cost += Cost2RRSameMode*(max(0, NodeSeenA1[j]+NodeSeenA2[j]-1));
-        }
+        cost += ComputeCost2RRConstraintTeam(i);
     }
     return cost;
 }
@@ -495,34 +519,41 @@ int Solution::ComputeTotalCostTTPViolations(){
     return sum*getCostTTPViolation();
 }
 
+
+int Solution::ComputeTravelCostTeamTTP(const int t){
+    int i,j,r;
+    int CostOfTrips = 0;
+    for (r = 1; r < NrColouredRounds; ++r){
+        i = TeamColorOpp[t][r-1], j = TeamColorOpp[t][r];
+        if (Orientation[t][r-1] == HA::H && Orientation[t][r] == HA::A){
+            CostOfTrips += getDistanceTeams(t,j);
+            // cout << t << " -> " << j << ": " << getDistanceTeams(t,j) << endl;
+        }
+        else if (Orientation[t][r-1] == HA::A && Orientation[t][r] == HA::H){
+            CostOfTrips += getDistanceTeams(t,i);
+            // cout << i << " -> " << t << ": " << getDistanceTeams(i,t) << endl;
+        }
+        else if (Orientation[t][r-1] == HA::A && Orientation[t][r] == HA::A){
+            CostOfTrips += getDistanceTeams(i,j);
+            // cout << i << " -> " << j << ": " << getDistanceTeams(i,j) << endl;
+        }
+    }
+    if (Orientation[t][0] == HA::A){
+        CostOfTrips += getDistanceTeams(t,TeamColorOpp[t][0]); // if it plays A in first round, it must also travel to that team (not accounted for in sum above)
+        // cout << t << " -> " << TeamColorOpp[t][0] << ": " << getDistanceTeams(t,TeamColorOpp[t][0]) << endl;
+    }
+    if (Orientation[t][NrColouredRounds-1] == HA::A){
+        CostOfTrips += getDistanceTeams(t,TeamColorOpp[t][NrColouredRounds-1]); // similar for last round
+        // cout << TeamColorOpp[t][NrColouredRounds-1] << " -> " << t << ": " << getDistanceTeams(t,TeamColorOpp[t][NrColouredRounds-1]) << endl;
+    }
+    return CostOfTrips;
+}
+
 int Solution::ComputeTravelCostTTP(){
     int CostOfTrips = 0;
-    int t,r,i,j;
-    for (t = 0; t < getNrTeams(); ++t){
+    for (int t = 0; t < getNrTeams(); ++t){
         // cout << "Cost of trips of " << t << ": " << endl;
-        for (r = 1; r < NrColouredRounds; ++r){
-            i = TeamColorOpp[t][r-1], j = TeamColorOpp[t][r];
-            if (Orientation[t][r-1] == HA::H && Orientation[t][r] == HA::A){
-                CostOfTrips += getDistanceTeams(t,j);
-                // cout << t << " -> " << j << ": " << getDistanceTeams(t,j) << endl;
-            }
-            else if (Orientation[t][r-1] == HA::A && Orientation[t][r] == HA::H){
-                CostOfTrips += getDistanceTeams(t,i);
-                // cout << i << " -> " << t << ": " << getDistanceTeams(i,t) << endl;
-            }
-            else if (Orientation[t][r-1] == HA::A && Orientation[t][r] == HA::A){
-                CostOfTrips += getDistanceTeams(i,j);
-                // cout << i << " -> " << j << ": " << getDistanceTeams(i,j) << endl;
-            }
-        }
-        if (Orientation[t][0] == HA::A){
-            CostOfTrips += getDistanceTeams(t,TeamColorOpp[t][0]); // if it plays A in first round, it must also travel to that team (not accounted for in sum above)
-            // cout << t << " -> " << TeamColorOpp[t][0] << ": " << getDistanceTeams(t,TeamColorOpp[t][0]) << endl;
-        }
-        if (Orientation[t][NrColouredRounds-1] == HA::A){
-            CostOfTrips += getDistanceTeams(t,TeamColorOpp[t][NrColouredRounds-1]); // similar for last round
-            // cout << TeamColorOpp[t][NrColouredRounds-1] << " -> " << t << ": " << getDistanceTeams(t,TeamColorOpp[t][NrColouredRounds-1]) << endl;
-        }
+        CostOfTrips += ComputeTravelCostTeamTTP(t);
         // cin.get();
     }
     return CostOfTrips;

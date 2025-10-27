@@ -6,16 +6,10 @@
 #include "Heuristic_CM.h"
 #include "Operators.h"
 
-Heuristic_CM::Heuristic_CM(const std::unordered_map<move_name_CM, string>& moves, // moves, weights and in are defined in main
-           const std::unordered_map<move_name_CM, double>& weights, std::mt19937& g, const int HistoryLength, const int obj, const bool MinCostNB): LAHC<move_name_CM>(moves, weights, g){
+Heuristic_CM::Heuristic_CM(const std::unordered_map<Move, string>& moves, // moves, weights and in are defined in main
+           const std::unordered_map<Move, double>& weights, std::mt19937& g, const int HistoryLength, const int obj): LAHC<Move>(moves, weights, g){
             SetHistoryLength(HistoryLength);
             InitializeHistoricValues(obj);
-            if (MinCostNB){
-                MinCostP = true;
-                MinCostM = true;
-                MinCostPTS = true;
-                MinCostC = true;
-            }
 }
 
 Heuristic_CM::~Heuristic_CM(){}
@@ -97,7 +91,7 @@ pair<int,int>Heuristic_CM::SelectTwoRounds(Solution& sol){
     return {r,s};
 }
 
-void Heuristic_CM::SelectTS_CM(Solution& sol){ // use TS for perturbation move!!
+void Heuristic_CM::SelectTS(Solution& sol){ // use TS for perturbation move!!
     // Andrea doet TS net zoals mij, dus enkel de HAPs van i en j veranderen!!
     // I do not use Eligible opponents since teams i and j do not necessarily need to be eligible..
     // For example, i can be of strength 1 and j of strength 3 if they share opponents of only strength 2..
@@ -146,7 +140,7 @@ void ResetOrientations_CM(Solution& sol, const vector<vector<HA>>OrientationsCop
     }
 }
 
-void Heuristic_CM::SelectPTS_CM(Solution& sol){
+void Heuristic_CM::SelectPTS(Solution& sol){
 
     array<int,3>triple;
     if (/*MinCostPTS*/ false){ // at first sight, does not seem to work
@@ -179,8 +173,7 @@ void Heuristic_CM::SelectPTS_CM(Solution& sol){
     if (!sol.IsBaseAlgo()){ // do not do path reversals in base algo: this is a contribution of ourse while base algo is state of the art!!
         // Repair Orientations
         vector<array<int,3>>path; // always try to find a path between i and j!! 
-        const bool CM = true;
-        bool BalanceRepaired = RepairOrientationsEdgesLantarn_CM(sol, lantarn, OrientationsCopy, path, MinCostP, CM);
+        bool BalanceRepaired = RepairOrientationsEdgesLantarn_CM(sol, lantarn, OrientationsCopy, path, MinCostPR, CM);
         if (!BalanceRepaired){
             throw std::runtime_error("Could not repair imbalance in PTS!");
         }
@@ -211,7 +204,7 @@ void Heuristic_CM::SelectPTS_CM(Solution& sol){
     return;
 }
 
-void Heuristic_CM::SelectRS_CM(Solution& sol){
+void Heuristic_CM::SelectRS(Solution& sol){
     // rounds in current schedule
     pair<int,int>pair = SelectTwoRounds(sol);
     int r = pair.first, s = pair.second;
@@ -229,7 +222,7 @@ void Heuristic_CM::SelectRS_CM(Solution& sol){
     return;
 }
 
-void Heuristic_CM::SelectPRS_CM(Solution& sol){
+void Heuristic_CM::SelectPRS(Solution& sol){
     // rounds in current schedule
     pair<int,int>pair = SelectTwoRounds(sol);
     int r = pair.first, s = pair.second;
@@ -248,7 +241,7 @@ void Heuristic_CM::SelectPRS_CM(Solution& sol){
     return;
 }
 
-void Heuristic_CM::SelectMatching_CM(Solution& sol, const bool bipartite){
+void Heuristic_CM::SelectMatching(Solution& sol, const bool bipartite){
 
     // Matching only of one league
     // bipartite matching: throw away the matching in round r but keep orientations of the teams. Then, find a new matching
@@ -287,15 +280,8 @@ void Heuristic_CM::SelectMatching_CM(Solution& sol, const bool bipartite){
     // sol.PrintAllRoundsLeague(l);
 
     // cout << "do MoveMWPM" << endl;
-    int l = 0; // All teams in first league!!
-    const bool CM = true;
     // I only do 1 alternating cycle in case of M+PR, because path can use edge of other cycle, did not want to deal with this
-    vector<vector<pair<int,int>>>AlternatingCycles = iPRS(sol, l, r, bipartite, includeHAPs, CM, gen, MinCostM);
-
-    if (MinCostM && AlternatingCycles.empty()){
-        // if empty, no new matching could be found -> repeat but now random matching (otherwise matchings will prematurely become useless)
-        AlternatingCycles = iPRS(sol, l, r, bipartite, includeHAPs, CM, gen, false);
-    }
+    vector<vector<pair<int,int>>>AlternatingCycles = iPRS(sol, r, bipartite, includeHAPs, CM, gen, MinCostM);
     
     int delta;
     for (auto& AlternatingCycle: AlternatingCycles){
@@ -305,14 +291,13 @@ void Heuristic_CM::SelectMatching_CM(Solution& sol, const bool bipartite){
         int cost_before = sol.ComputeTotalCost();
 #endif
         delta = 0;  
-        vector<vector<array<int,3>>>Paths = EvaluateAlternatingCycleWithPaths(sol, AlternatingCycle, r, bipartite, CM, delta, gen, MinCostP);
+        vector<vector<array<int,3>>>Paths = EvaluateAlternatingCycleWithPaths(sol, AlternatingCycle, r, bipartite, CM, delta, gen, MinCostPR);
 #ifndef NDEBUG
         for (int i = 0; i < sol.getNrTeams(); ++i){
             assert(sol.IsTeamBalanced(i));
         }
-        // cout << cost_before << "+" << delta << " == " << sol.ComputeCostGeneralMatrix() << endl;
-        if (sol.getSetting() == Setting::CM){
-            assert(cost_before+delta == sol.ComputeTotalCost());
+        if (MinCostM && bipartite){
+            assert(cost_before >= sol.ComputeTotalCost());
         }
 #endif
 
@@ -338,22 +323,23 @@ void Heuristic_CM::SelectMatching_CM(Solution& sol, const bool bipartite){
     return;
 } 
 
-void Heuristic_CM::SelectBalancedCycle_CM(Solution& sol){
+void Heuristic_CM::SelectBalancedCycle(Solution& sol){
 
     bool NegativeCycleFound = false;
-    /*
+
     vector<array<int,3>>Cycle;
     if (MinCostC){
         Cycle = NegativeCycle(sol);
-        if (!Cycle.empty()){
-            NegativeCycleFound = true;
-        }
     }    
-    if (!MinCostC || !NegativeCycleFound){
+    else {
         Cycle = CycleBalanced(sol, gen);
     }
-    */
-    vector<array<int,3>>Cycle = CycleBalanced(sol, gen); // NegativeCycle does not work with infeasible space..    
+    
+    if (Cycle.empty()){
+        assert(MinCostC);
+        return;
+    }
+ 
     int cost_before;
 #ifndef NDEBUG
     cost_before = sol.ComputeTotalCost();
@@ -380,7 +366,7 @@ void Heuristic_CM::SelectBalancedCycle_CM(Solution& sol){
     return;
 }
 
-void Heuristic_CM::Move(Solution& sol){
+void Heuristic_CM::DoMove(Solution& sol){
     bool bipartite;
     double rnd = RandomDoubleNumber(0.0, 1.0);
     auto iterator = WeightsCumul.upper_bound(rnd);
@@ -389,33 +375,62 @@ void Heuristic_CM::Move(Solution& sol){
 #ifndef NDEBUG
     // cout << "Select " << Moves.at(CurrentMove) << endl; 
 #endif
-    if (CurrentMove == move_name_CM::TS){
-        SelectTS_CM(sol);
+    if (CurrentMove == Move::TS){
+        SelectTS(sol);
     }
-    else if (CurrentMove == move_name_CM::PTS){
-        const bool MinCostP = true;
-        SelectPTS_CM(sol);
+    else if (CurrentMove == Move::PTS){
+        MinCostPR = false;
+        SelectPTS(sol);
     }
-    else if (CurrentMove == move_name_CM::RS){
-        SelectRS_CM(sol);
+    else if (CurrentMove == Move::PTS_MinCost_PR){
+        MinCostPR = true;
+        SelectPTS(sol);
     }
-    else if (CurrentMove == move_name_CM::PRS){
-        SelectPRS_CM(sol);
+    else if (CurrentMove == Move::PTS_Random_PR){
+        MinCostPR = false;
+        SelectPTS(sol);
     }
-    else if (CurrentMove == move_name_CM::M){
-        // Ik weet niet of dit heel goed werkt.. lijkt enkel te werken als je random matchings neemt 
-        // en niet enkel de beste qua travel distance
-        // Komt misschien ook omdat teveel paden moeten reversed worden!!
+    else if (CurrentMove == Move::RS){
+        SelectRS(sol);
+    }
+    else if (CurrentMove == Move::PRS){
+        SelectPRS(sol);
+    }
+    else if (CurrentMove == Move::MinCost_M_MinCost_PR){
+        MinCostPR = true;
+        MinCostM = true;
         bipartite = false;
-        SelectMatching_CM(sol, bipartite);
+        SelectMatching(sol, bipartite);
     }
-    else if (CurrentMove == move_name_CM::BM){
+    else if (CurrentMove == Move::MinCost_M_Random_PR){
+        MinCostPR = false;
+        MinCostM = true;
+        bipartite = false;
+        SelectMatching(sol, bipartite);
+    }
+    else if (CurrentMove == Move::Random_M_MinCost_PR){
+        MinCostPR = true;
+        MinCostM = false;
+        bipartite = false;
+        SelectMatching(sol, bipartite);
+    }
+    else if (CurrentMove == Move::Random_M_Random_PR){
+        MinCostPR = false;
+        MinCostM = false;
+        bipartite = false;
+        SelectMatching(sol, bipartite);
+    }   
+    else if (CurrentMove == Move::MinCost_BM || CurrentMove == Move::Random_BM){
         bipartite = true;
-        SelectMatching_CM(sol, bipartite);
+        SelectMatching(sol, bipartite);
+    }
+    else if (CurrentMove == Move::NC) {
+        MinCostC = false; // TODO: NC in line graph for TTP!!
+        SelectBalancedCycle(sol);
     }
     else{
-        const bool MinCostC = false; // MinCost cycles not supported yet (only negative cycles)
-        SelectBalancedCycle_CM(sol);
+        MinCostC = false;
+        SelectBalancedCycle(sol);
     }
     auto end = std::chrono::high_resolution_clock::now();
     auto dur = std::chrono::duration_cast<std::chrono::microseconds>(end - beg);
@@ -433,10 +448,15 @@ void Heuristic_CM::solve(Input& in, Solution& sol){
     UpdateBestSolution(sol);
     cout << "updated best solution" << endl;
 
+    if (sol.getSetting() == Setting::CM){
+        cout << "Cost Minimization!!" << endl;
+        CM = true;
+    }
+
     // cout << "Start" << endl;
 
     do {
-        Move(sol); // do random move
+        DoMove(sol); // do random move
     }
     while(!STOP);
     SaveBestSolution(sol);

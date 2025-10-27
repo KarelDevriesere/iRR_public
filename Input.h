@@ -7,6 +7,13 @@
 #include <assert.h>
 #include <limits.h>
 
+using namespace std;
+
+enum class Move{TS,PTS,RS,PRS,C,NC,
+    MinCost_BM, Random_BM,
+    PTS_MinCost_PR, PTS_Random_PR,
+    MinCost_M_MinCost_PR, MinCost_M_Random_PR, Random_M_MinCost_PR, Random_M_Random_PR}; 
+
 enum class Setting{Miao,Hockey,CM,TTP};
 enum class InstanceSetCM{Karel, Jasper, Uthus}; // Instances Cost Minimization
 enum class HAP_requirement_name{NoThreeConsecutive, NoBreakBeginningEnd, BreakLimit, QuarterBalanced};
@@ -14,7 +21,57 @@ enum class MiaoInstance{S, U13, U15, U17, U21, M, Tiny}; // Instances paper Miao
 
 enum class HA{H, A, BYE};
 
-using namespace std;
+struct InputData{
+    // All input that we get from the command line
+    // If nothing specified, we get the default value
+    const unordered_map<Move,bool>IsMoveInBase = {{Move::TS, true}, 
+    {Move::PTS, true}, 
+    {Move::RS, true}, 
+    {Move::PRS, true}, 
+    {Move::C, true}, 
+    {Move::NC, false},
+    {Move::MinCost_BM, false}, 
+    {Move::Random_BM, false}, 
+    {Move::PTS_MinCost_PR, false}, 
+    {Move::PTS_Random_PR, false}, 
+    {Move::MinCost_M_MinCost_PR, false}, 
+    {Move::MinCost_M_Random_PR, false},
+    {Move::Random_M_MinCost_PR, false}, 
+    {Move::Random_M_Random_PR, false}};
+
+    const unordered_map<Move,string>Moves = {{Move::TS, "TS"}, 
+    {Move::PTS, "PTS"}, 
+    {Move::RS, "RS"}, 
+    {Move::PRS, "PRS"}, 
+    {Move::C, "C"}, 
+    {Move::NC, "NC"},
+    {Move::MinCost_BM, "MinCost_BM"}, 
+    {Move::Random_BM, "Random_BM"}, 
+    {Move::PTS_MinCost_PR, "PTS_MinCost_PR"}, 
+    {Move::PTS_Random_PR, "PTS_Random_PR"}, 
+    {Move::MinCost_M_MinCost_PR, "MinCost_M_MinCost_PR"}, 
+    {Move::MinCost_M_Random_PR, "MinCost_M_Random_PR"},
+    {Move::Random_M_MinCost_PR, "Random_M_MinCost_PR"}, 
+    {Move::Random_M_Random_PR, "Random_M_Random_PR"}}; 
+
+    string Instance;
+    int seed = 0;
+    bool Heuristic = 1;
+    bool MinCostNB = 0;
+    int HistoryLength = 1;
+    int NrTeams = 36;
+    int NrRounds = 8;
+    int k = 5;
+    int inst = 0;
+    int TimeLimit = 60;
+    int MaxIt = 1000000;
+    bool CM = true;
+    bool TTP = false;
+    bool Base = false;
+    long ConstrViolationCost = 100000;
+    unordered_map<Move, double>InputWeights;
+    unordered_map<Move, bool>MoveSeen;
+};
 
 class Input
 {
