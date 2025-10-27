@@ -33,6 +33,7 @@ int main(int argc, const char* argv[]){
         int MaxIt = 1000000;
         bool CM = true;
         bool TTP = false;
+        bool Base = false;
         string Instance;
         if (CM){
             Instance = to_string(NrTeams) + "_" + to_string(NrRounds) + "_" + "k" + to_string(k) + "_" + to_string(inst);
@@ -161,58 +162,61 @@ int main(int argc, const char* argv[]){
             else if (arg == "--TSw"){
                 InputWeights.at("TS") = std::stod(argv[++i]);
                 MoveSeen.at("TS") = true;
-                if (!(InputWeights.at("TS") >= 0.0 && InputWeights.at("TS") <= 1.0)){
-                    std::cerr << "TSw should be between 0.0 and 1.0" << endl;
+                if (InputWeights.at("TS") < 0.0){
+                    std::cerr << "TSw should be positive!" << endl;
                     return 1;
                 }
             }
             else if (arg == "--PTSw"){
                 InputWeights.at("PTS") = std::stod(argv[++i]);
                 MoveSeen.at("PTS") = true;
-                if (!(InputWeights.at("PTS") >= 0.0 && InputWeights.at("PTS") <= 1.0)){
-                    std::cerr << "PTSw should be between 0.0 and 1.0" << endl;
+                if (InputWeights.at("PTS") < 0.0){
+                    std::cerr << "PTSw should be positive!" << endl;
                     return 1;
                 }
             }
             else if (arg == "--RSw"){
                 InputWeights.at("RS") = std::stod(argv[++i]);
                 MoveSeen.at("RS") = true;
-                if (!(InputWeights.at("RS") >= 0.0 && InputWeights.at("RS") <= 1.0)){
-                    std::cerr << "RSw should be between 0.0 and 1.0" << endl;
+                if (InputWeights.at("RS") < 0.0){
+                    std::cerr << "RSw should be positive!" << endl;
                     return 1;
                 }
             }
             else if (arg == "--PRSw"){
                 InputWeights.at("PRS") = std::stod(argv[++i]);
                 MoveSeen.at("PRS") = true;
-                if (!(InputWeights.at("PRS") >= 0.0 && InputWeights.at("PRS") <= 1.0)){
-                    std::cerr << "PRSw should be between 0.0 and 1.0" << endl;
+                if (InputWeights.at("PRS") < 0.0){
+                    std::cerr << "PRSw should be positive!" << endl;
                     return 1;
                 }
             }
             else if (arg == "--Mw"){
                 InputWeights.at("M") = std::stod(argv[++i]);
                 MoveSeen.at("M") = true;
-                if (!(InputWeights.at("M") >= 0.0 && InputWeights.at("M") <= 1.0)){
-                    std::cerr << "Mw should be between 0.0 and 1.0" << endl;
+                if (InputWeights.at("M") < 0.0){
+                    std::cerr << "Mw should be positive!" << endl;
                     return 1;
                 }
             }
             else if (arg == "--BMw"){
                 InputWeights.at("BM") = std::stod(argv[++i]);
                 MoveSeen.at("BM") = true;
-                if (!(InputWeights.at("BM") >= 0.0 && InputWeights.at("BM") <= 1.0)){
-                    std::cerr << "BMw should be between 0.0 and 1.0" << endl;
+                if (InputWeights.at("BM") < 0.0){
+                    std::cerr << "BMw should be positive!" << endl;
                     return 1;
                 }
             }
             else if (arg == "--Cw"){
                 InputWeights.at("C") = std::stod(argv[++i]);
                 MoveSeen.at("C") = true;
-                if (!(InputWeights.at("C") >= 0.0 && InputWeights.at("C") <= 1.0)){
-                    std::cerr << "BMw should be between 0.0 and 1.0" << endl;
+                if (InputWeights.at("C") < 0.0){
+                    std::cerr << "BMw should be positive!" << endl;
                     return 1;
                 }
+            }
+            else if (arg == "--Base"){
+                Base = true;
             }
             else if (arg == "--help"){
                 cout << "Usage: " << argv[0] << "--Seed <int> --Heuristic <0/1> -- MinCostNB <0/1> --HistoryLength <+int> -- CM <0/1> --NrTeams <36/100>* --k <0/1/5/10>* --i <0/1/2/3/4>* --TimeLimit <+int> --MaxIt <+int> --TSw <[0,1]> --PTSw <[0,1]> --RSw <[0,1]> --PRSw <[0,1]> --Mw <[0,1]> --BMw <[0,1]> --Cw <[0,1]>" << endl;
@@ -230,8 +234,12 @@ int main(int argc, const char* argv[]){
             cout << "Choose either CM or TTP!!" << endl;
             return 1;
         }
+        if (Base){
+            cout << "Run base algorithm!!" << endl;
+        }
 
         double sum = 0;
+        double sum_weights = 0;
         cout << "------ Weights ------" << endl;
         bool NoMoveSeen = true;
         for (const auto& [move, weight]: InputWeights){
@@ -239,17 +247,35 @@ int main(int argc, const char* argv[]){
                 sum += InputWeights.at(move);
                 NoMoveSeen = false;
             }
-            cout << move << ": " << InputWeights.at(move) << endl;
         }
-        if (NoMoveSeen){
-            for (const auto& [move, weight]: InputWeights){
-                InputWeights.at(move) = 1.0 / (double)InputWeights.size();
-                sum += InputWeights.at(move);
+        for (const auto& [move, weight]: InputWeights){
+            if (MoveSeen.at(move)){
+                InputWeights.at(move) /= sum;
+                sum_weights += InputWeights.at(move);
                 cout << move << ": " << InputWeights.at(move) << endl;
             }
         }
-        if (sum <= 0.99 || sum >= 1.01){
-            cout << "Sum of the weights should be equal to 1.0 but is now" << sum << endl;
+        if (NoMoveSeen){
+            assert(sum == 0);
+            for (const auto& [move, weight]: InputWeights){
+                if (Base && (move == "BM" || move == "M")){
+                    continue;
+                }
+                sum += 1.0;
+            }
+            for (const auto& [move, weight]: InputWeights){
+                if (Base && (move == "BM" || move == "M")){
+                    InputWeights.at(move) = 0.0;
+                }
+                else{
+                    InputWeights.at(move) = 1.0 / sum;
+                }
+                sum_weights += InputWeights.at(move);
+                cout << move << ": " << InputWeights.at(move) << endl;
+            }
+        }
+        if (sum_weights <= 0.99 || sum_weights >= 1.01){
+            cout << "Sum of the weights should be equal to 1.0 but is now" << sum_weights << endl;
             return 1;
         }
         cout << "---------------------" << endl;
@@ -261,7 +287,7 @@ int main(int argc, const char* argv[]){
         if (CM){
             Instance = to_string(NrTeams) + "_" + to_string(NrRounds) + "_" + "k" + to_string(k) + "_" + to_string(inst);
         }
-        TestCostMinimization(seed, Instance, CM, TTP, Heuristic, MinCostNB, HistoryLength, TL, MaxIt, InputWeights, NrRounds);
+        TestCostMinimization(seed, Instance, CM, TTP, Heuristic, MinCostNB, HistoryLength, TL, MaxIt, InputWeights, NrRounds, Base);
         // GenerateCostMatrices(0);
         // cin.get();
     }

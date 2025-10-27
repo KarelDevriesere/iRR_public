@@ -108,8 +108,10 @@ void Heuristic_CM::SelectTS_CM(Solution& sol){ // use TS for perturbation move!!
         cost_before = sol.ComputeTotalCost();
 #endif
     TS(sol, i, j);
-    assert(sol.IsTeamBalanced(i));
-    assert(sol.IsTeamBalanced(j));
+    if (!sol.IsBaseAlgo()){
+        assert(sol.IsTeamBalanced(i));
+        assert(sol.IsTeamBalanced(j));
+    }
     if (!Update(sol, sol.ComputeTotalCost())){
         // ResetOrientations(sol, OrientationsCopy); // can be outcommented when not repairing haps in veto_haps() // TODO not efficient
         // ResetMatchColorCopy(sol, MatchColorCopy); // can be outcommented when not repairing haps in veto_haps()
@@ -174,19 +176,22 @@ void Heuristic_CM::SelectPTS_CM(Solution& sol){
     // cout << "New lantarn: " << endl;
     // PrintLantarn(sol, lantarn);
 
-    vector<array<int,3>>path; // always try to find a path between i and j!! 
-    const bool CM = true;
-    // Repair Orientations
-    bool BalanceRepaired = RepairOrientationsEdgesLantarn_CM(sol, lantarn, OrientationsCopy, path, MinCostP, CM);
-    if (!BalanceRepaired){
-        throw std::runtime_error("Could not repair imbalance in PTS!");
-    }
+    if (!sol.IsBaseAlgo()){ // do not do path reversals in base algo: this is a contribution of ourse while base algo is state of the art!!
+        // Repair Orientations
+        vector<array<int,3>>path; // always try to find a path between i and j!! 
+        const bool CM = true;
+        bool BalanceRepaired = RepairOrientationsEdgesLantarn_CM(sol, lantarn, OrientationsCopy, path, MinCostP, CM);
+        if (!BalanceRepaired){
+            throw std::runtime_error("Could not repair imbalance in PTS!");
+        }
 
 #ifndef NDEBUG
-    for (int i = 0; i < sol.getNrTeams(); ++i){
-        assert(sol.IsTeamBalanced(i));
-    }
+        for (int i = 0; i < sol.getNrTeams(); ++i){
+            assert(sol.IsTeamBalanced(i));
+        }
 #endif
+    }
+    
     if (!Update(sol, sol.ComputeTotalCost())){
         // first, set back all orientations
         ResetOrientations_CM(sol, OrientationsCopy);
@@ -336,6 +341,7 @@ void Heuristic_CM::SelectMatching_CM(Solution& sol, const bool bipartite){
 void Heuristic_CM::SelectBalancedCycle_CM(Solution& sol){
 
     bool NegativeCycleFound = false;
+    /*
     vector<array<int,3>>Cycle;
     if (MinCostC){
         Cycle = NegativeCycle(sol);
@@ -346,6 +352,8 @@ void Heuristic_CM::SelectBalancedCycle_CM(Solution& sol){
     if (!MinCostC || !NegativeCycleFound){
         Cycle = CycleBalanced(sol, gen);
     }
+    */
+    vector<array<int,3>>Cycle = CycleBalanced(sol, gen); // NegativeCycle does not work with infeasible space..    
     int cost_before;
 #ifndef NDEBUG
     cost_before = sol.ComputeTotalCost();
