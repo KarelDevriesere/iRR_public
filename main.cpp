@@ -218,7 +218,7 @@ int main(int argc, const char* argv[]){
 
             }
             else if (arg == "--Base"){
-                data.Base = true;
+                data.Base = std::stoi(argv[++i]);
             }
             else if (arg == "--help"){
                 cout << "Usage: " << argv[0] << "--Seed <int> --Heuristic <0/1> -- MinCostNB <0/1> --HistoryLength <+int> -- CM <0/1> --NrTeams <36/100>* --k <0/1/5/10>* --i <0/1/2/3/4>* --TimeLimit <+int> --MaxIt <+int> --Weight <Move> <+int>" << endl;
@@ -287,13 +287,11 @@ int main(int argc, const char* argv[]){
         cout << "---------------------" << endl;
 
         cout << "Test cost minimization" << endl;
-        cout << "MinCostNB = " << data.MinCostNB << endl;
         cout << "TimeLimit = " << data.TimeLimit << endl;
         cout << "Max iterations = " << data.MaxIt << endl;
         if (data.CM){
             data.Instance = to_string(data.NrTeams) + "_" + to_string(data.NrRounds) + "_" + "k" + to_string(data.k) + "_" + to_string(data.inst);
         }
-        cin.get();
         TestCostMinimization(data);
         // GenerateCostMatrices(0);
         // cin.get();

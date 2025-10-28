@@ -126,7 +126,7 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
 
     string FilePath = FolderPath + "Results" + std::string(PATHSEP);
     if (data.Base){
-        FilePath += "Base" + std::string(PATHSEP);
+        FilePath += "Base";
     }
     else{
         FilePath += "Heuristic";
@@ -143,7 +143,7 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     else{
         config += ",Heuristic,";
     }
-    config += to_string(data.MinCostNB) + "," + to_string(data.HistoryLength) + "," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
+    config += to_string(data.MaxIt) + "," + to_string(data.TimeLimit) + "," + to_string(data.HistoryLength) + "," + to_string(data.ConstrViolationCost) + "," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
 
     cout << "Save file as " << FilePath << endl;
     std::ofstream output_file(FilePath);

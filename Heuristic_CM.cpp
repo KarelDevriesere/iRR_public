@@ -17,7 +17,7 @@ Heuristic_CM::~Heuristic_CM(){}
 array<int,3>Heuristic_CM::SelectTwoTeamsAndColor(Solution& sol){
     int i = RandomIntegerNumber(0, sol.getNrTeams()-1);
     int j = ((i+1)+(RandomIntegerNumber(0,sol.getNrTeams()-2)))%sol.getNrTeams(); 
-    int C = sol.getNrRounds();
+    int C = sol.getNrColouredRounds();
     int c = RandomIntegerNumber(0, C-1);
     while (c == sol.MatchColor[i][j] || c == sol.MatchColor[j][i]){
         c = (c+1)%C;
@@ -34,7 +34,7 @@ array<int,3>Heuristic_CM::SelectTwoTeamsAndColorMinCost(Solution& sol){
     int i;
     int cost;
     vector<bool>TeamSeen(sol.getNrTeams(),false);
-    for (int r = 0; r < sol.getNrRounds(); ++r){
+    for (int r = 0; r < sol.getNrColouredRounds(); ++r){
         i = sol.TeamColorOpp[k][r];
         if (sol.getSetting() == Setting::CM && sol.Orientation[k][r] == HA::H){
             cost = sol.getCostMatchRound(k,i,r);
@@ -85,8 +85,8 @@ pair<int,int>Heuristic_CM::SelectTwoTeams(Solution& sol){
 }
 
 pair<int,int>Heuristic_CM::SelectTwoRounds(Solution& sol){
-    const int r = RandomIntegerNumber(0,sol.getNrRounds()-1);
-    const int s = ((r+1)+(RandomIntegerNumber(0,sol.getNrRounds()-2)))%sol.getNrRounds();
+    const int r = RandomIntegerNumber(0,sol.getNrColouredRounds()-1);
+    const int s = ((r+1)+(RandomIntegerNumber(0,sol.getNrColouredRounds()-2)))%sol.getNrColouredRounds();
     assert(r != s);
     return {r,s};
 }
@@ -147,7 +147,7 @@ void Heuristic_CM::SelectPTS(Solution& sol){
         triple = SelectTwoTeamsAndColor(sol);
     }
     int i = triple[0], j = triple[1], StartColor = triple[2];
-    // cout << "i : " << i << " and j = " << j << endl;
+    // cout << "i : " << i << " and j = " << j << ", start color = " << StartColor << endl;
 
 #ifndef NDEBUG
     int cost_before = sol.ComputeTotalCost();
@@ -169,6 +169,7 @@ void Heuristic_CM::SelectPTS(Solution& sol){
 
     if (!sol.IsBaseAlgo()){ // do not do path reversals in base algo: this is a contribution of ourse while base algo is state of the art!!
         // Repair Orientations
+        // cout << "Repair orientations!!" << endl;
         vector<array<int,3>>path; // always try to find a path between i and j!! 
         bool BalanceRepaired = RepairOrientationsEdgesLantarn_CM(sol, lantarn, OrientationsCopy, path, MinCostPR, CM);
         if (!BalanceRepaired){
@@ -369,8 +370,9 @@ void Heuristic_CM::DoMove(Solution& sol){
     auto iterator = WeightsCumul.upper_bound(rnd);
     CurrentMove = iterator->second;
     auto beg = std::chrono::high_resolution_clock::now();
-#ifndef NDEBUG
     // cout << "Select " << Moves.at(CurrentMove) << endl; 
+#ifndef NDEBUG
+    cout << "Select " << Moves.at(CurrentMove) << endl; 
 #endif
     if (CurrentMove == Move::TS){
         SelectTS(sol);

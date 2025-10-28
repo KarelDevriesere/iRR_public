@@ -1324,6 +1324,7 @@ vector<vector<pair<int,int>>> CreateAlternatingCycles(Solution& sol, const vecto
 int ComputeEdgeWeightM(const int i, const int j, const int c, const bool MinCostM, const bool bipartite, Solution& sol){
     int d;
     if (sol.getSetting() == Setting::CM){
+        // cout << "Setting == CM" << endl;
         if (bipartite && sol.Orientation[i][c] == HA::H){
             d = sol.getCostMatchRound(i,j,c);
         }
@@ -1336,6 +1337,7 @@ int ComputeEdgeWeightM(const int i, const int j, const int c, const bool MinCost
         }
     }
     else if (sol.getSetting() == Setting::TTP){
+        // cout << "setting = TTP" << endl;
         int Opp_i = sol.TeamColorOpp[i][c];
         int Opp_j = sol.TeamColorOpp[j][c];
         sol.TeamColorOpp[i][c] = j;
@@ -1357,6 +1359,7 @@ int ComputeEdgeWeightM(const int i, const int j, const int c, const bool MinCost
         sol.TeamColorOpp[j][c] = Opp_j;
     }
     else if (sol.getSetting() == Setting::Miao){
+        // cout << "Compute edge weight according to miao setting" << endl;
         int Opp_i = sol.TeamColorOpp[i][c];
         int Opp_j = sol.TeamColorOpp[j][c];
         sol.TeamColorOpp[i][c] = j;

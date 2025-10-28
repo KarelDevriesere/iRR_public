@@ -12,6 +12,10 @@ fi
 
 cd $PBS_O_WORKDIR
 
+walltime="0:01:00"
+seed=0 # random seed
+TL=30 # 4 hours
+
 # modules to load:
 module load Boost/1.83.0-GCC-13.2.0
 module load Gurobi
@@ -20,21 +24,17 @@ module load Gurobi
 make clean
 make release PRINT=0
 
-walltime="02:30:00"
-seed=0 # random seed
-TL=7260 # 4 hours
-
-for instance in "NFL32"; do
-    for NrRounds in 8 16 24; do
-        for heuristic in 0 1; do
+for instance in "CIRC40" "CON40" "GAL40" "INCR40" "LINE40"; do
+    for NrRounds in 10 20 30; do
+        for heuristic in 1; do
             if [ $heuristic -eq 1 ]; then
-                for MinCostNB in 0 1; do
-                    for HL in 1 10 50 500 5000; do
-                            sbatch --time=$walltime job_script_TTP.sh $seed $instance $NrRounds $heuristic $MinCostNB $HL $TL
+                for HL in 1 10 50 500 5000; do
+                    for Base in 0 1; do
+                        sbatch --time=$walltime job_script_TTP.sh $seed $instance $NrRounds $heuristic $HL $TL $Base
                     done
                 done
             else
-                    sbatch --time=$walltime job_script_TTP.sh $seed $instance $NrRounds $heuristic 1 1 $TL #last 2 parameters not relevant when doing IP
+                sbatch --time=$walltime job_script_TTP.sh $seed $instance $NrRounds $heuristic 1 1 $TL #last 2 parameters not relevant when doing IP
             fi
         done
     done

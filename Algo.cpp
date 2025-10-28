@@ -93,7 +93,6 @@ void RepairBalanceHA(Solution& sol){
 	}
 	while (c1 < R){
 		c2 = c1+1;
-		cout << "c1 = " << c1 << " and " << c2 << endl;
 		setHaps(c1, c2, sol);
 		c1 += 2;
 	}

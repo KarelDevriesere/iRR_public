@@ -76,6 +76,7 @@ class Solution: public Input{
         int ComputeCostGeneralMatrix();
 
         int getNrSameClub(const int i);
+        int getNrColouredRounds()const{return NrColouredRounds;};
 
         void clear();
         bool validate();
