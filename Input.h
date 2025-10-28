@@ -59,18 +59,23 @@ struct InputData{
     bool Heuristic = 1;
     bool MinCostNB = 0;
     int HistoryLength = 1;
-    int NrTeams = 36;
-    int NrRounds = 8;
-    int k = 5;
-    int inst = 0;
+    int NrTeams = 36; // CM
+    int NrRounds = 8; // TTP
+    int k = 5; // CM
+    int inst = 0; // CM
     int TimeLimit = 60;
     int MaxIt = 1000000;
-    bool CM = true;
-    bool TTP = false;
+    bool CM = true; // CM
+    bool TTP = false; // TTP
     bool Base = false;
     long ConstrViolationCost = 100000;
     unordered_map<Move, double>InputWeights;
     unordered_map<Move, bool>MoveSeen;
+
+    bool Miao = false; // Miao
+    bool ConstantCapacity = true; // Miao
+    int MaxNrBreaks = 0; // Miao
+    int CapacitySetting = 1; // Miao
 };
 
 class Input

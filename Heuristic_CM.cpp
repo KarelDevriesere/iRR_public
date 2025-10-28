@@ -107,9 +107,6 @@ void Heuristic_CM::SelectTS(Solution& sol){ // use TS for perturbation move!!
         assert(sol.IsTeamBalanced(j));
     }
     if (!Update(sol, sol.ComputeTotalCost())){
-        // ResetOrientations(sol, OrientationsCopy); // can be outcommented when not repairing haps in veto_haps() // TODO not efficient
-        // ResetMatchColorCopy(sol, MatchColorCopy); // can be outcommented when not repairing haps in veto_haps()
-        // ResetTeamColorOpp(sol, TeamColorOppCopy); // can be outcommented when not repairing haps in veto_haps()
         TS(sol, i, j); // put puck when other things are outcommented to go back to original
 #ifndef NDEBUG
         assert(sol.ComputeTotalCost() == cost_before);

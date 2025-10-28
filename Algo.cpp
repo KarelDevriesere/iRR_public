@@ -45,11 +45,19 @@ void setHaps(const int c1, const int c2, Solution& sol){
 			j = sol.TeamColorOpp[i][c1];
 			sol.Orientation[i][c1] = HA::H;
 			sol.Orientation[j][c1] = HA::A;
+			sol.MatchColor[i][j] = c1;
+			if (sol.SRR){
+				sol.MatchColor[j][i] = c1;
+			}
 			i = j;
 			NodeSeen[i] = true;
 			j = sol.TeamColorOpp[i][c2];
 			sol.Orientation[i][c2] = HA::H;
 			sol.Orientation[j][c2] = HA::A;
+			sol.MatchColor[i][j] = c2;
+			if (sol.SRR){
+				sol.MatchColor[j][i] = c2;
+			}
 			i = j;
 		}
 		while (i != StartNode);
@@ -85,6 +93,7 @@ void RepairBalanceHA(Solution& sol){
 	}
 	while (c1 < R){
 		c2 = c1+1;
+		cout << "c1 = " << c1 << " and " << c2 << endl;
 		setHaps(c1, c2, sol);
 		c1 += 2;
 	}
@@ -242,7 +251,8 @@ void VizingConstruction(Solution& sol, const int seed){
 		ColorLeft[i][c] = false;
 		ColorLeft[j][c] = false;
 		if (c < sol.getNrRounds()){
-			SetValueCircleMethod(i, j, c, sol);
+			sol.TeamColorOpp[i][c] = j;
+    		sol.TeamColorOpp[j][c] = i;
 		}
     }
 
@@ -254,9 +264,13 @@ void VizingConstruction(Solution& sol, const int seed){
 			++c;
 		}
 		if (c < sol.getNrRounds()){
-			SetValueCircleMethod(i, LastNode, c, sol);
+			sol.TeamColorOpp[i][c] = LastNode;
+    		sol.TeamColorOpp[LastNode][c] = i;
 		}
 	}
+
+	// set MatchColors in repair balance!!
+
 	RepairBalanceHA(sol);
 
 	return;

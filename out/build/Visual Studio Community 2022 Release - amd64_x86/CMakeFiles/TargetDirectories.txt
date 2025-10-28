@@ -1,3 +1,0 @@
-C:/Users/kardvrie/C++/VSprojects/iRR/out/build/Visual Studio Community 2022 Release - amd64_x86/CMakeFiles/test.dir
-C:/Users/kardvrie/C++/VSprojects/iRR/out/build/Visual Studio Community 2022 Release - amd64_x86/CMakeFiles/ALL_BUILD.dir
-C:/Users/kardvrie/C++/VSprojects/iRR/out/build/Visual Studio Community 2022 Release - amd64_x86/CMakeFiles/ZERO_CHECK.dir

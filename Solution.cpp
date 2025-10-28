@@ -705,9 +705,11 @@ bool Solution::validate(){
                 nr_same_club++;
             }
         }
-        if (nr_same_club > getMaxSameClub()){
+        if (!ViolationSameClubAllowed){
+            if (nr_same_club > getMaxSameClub()){
             // cout << i << " plays more against same club than allowed!!" << endl;
-            assert(nr_same_club <= getMaxSameClub());
+                assert(nr_same_club <= getMaxSameClub());
+            }
         }
     }
 

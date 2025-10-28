@@ -682,15 +682,21 @@ bool FindNormalPathOneLeague(const int source, const int sink, Solution& sol, ve
     // cout << "source = " << source << endl;
     // cout << "sink = " << sink << endl;
 
-    int cost = 0;
+    int cost = 1;
     for (i = 0; i < sol.getNrTeams(); ++i){
         for (j = i+1; j < sol.getNrTeams(); ++j){
             if (!sol.SRR){
                 if (sol.MatchColor[i][j] >= 0 && sol.MatchColor[j][i] < 0){
+                    if (MinCostP){
+                        cost = sol.getCostMatchRound(i,j,sol.MatchColor[j][i]);
+                    }
                     boost::add_edge(j, i, 1, G); // remember, edge goes like j->i
                     // cout << "add edge " << i << "<-" << j << endl;
                 }
                 if (sol.MatchColor[j][i] >= 0 && sol.MatchColor[i][j] < 0){
+                    if (MinCostP){
+                        cost = sol.getCostMatchRound(j,i,sol.MatchColor[i][j]);
+                    }
                     boost::add_edge(i, j, 1, G);
                     // cout << "add edge " << i << "->" << j << endl;
                 }
@@ -699,7 +705,6 @@ bool FindNormalPathOneLeague(const int source, const int sink, Solution& sol, ve
                 r = sol.MatchColor[i][j];
                 assert(sol.MatchColor[j][i] == r);
                 if (r >= 0){
-                    cost = 1;
                     if (sol.Orientation[i][r] == HA::H){
                         if (MinCostP){
                             cost = sol.getCostMatchRound(j,i,r); // on edge i<-j we stick the cost of doing i->j
@@ -1335,30 +1340,57 @@ int ComputeEdgeWeightM(const int i, const int j, const int c, const bool MinCost
         int Opp_j = sol.TeamColorOpp[j][c];
         sol.TeamColorOpp[i][c] = j;
         sol.TeamColorOpp[j][c] = i;
-        if (bipartite){
-            d = (sol.ComputeTravelCostTeamTTP(i)+sol.ComputeTravelCostTeamTTP(j));
-        }
-        else{
-            if (sol.Orientation[i][c] != sol.Orientation[j][c]){
-                d = (sol.ComputeTravelCostTeamTTP(i)+sol.ComputeTravelCostTeamTTP(j));
-            }
-            else{
-                HA Orientation_i = sol.Orientation[i][c];
-                HA Orientation_j = sol.Orientation[j][c];
-                sol.Orientation[i][c] = HA::H, sol.Orientation[j][c] = HA::A;
-                int d1 = (sol.ComputeTravelCostTeamTTP(i)+sol.ComputeTravelCostTeamTTP(j)+sol.ComputeTTPViolations(i)+sol.ComputeTTPViolations(j));
-                sol.Orientation[i][c] = HA::A, sol.Orientation[j][c] = HA::H;
-                int d2 = (sol.ComputeTravelCostTeamTTP(i)+sol.ComputeTravelCostTeamTTP(j)+sol.ComputeTTPViolations(i)+sol.ComputeTTPViolations(j));
-                d = std::min(d1,d2);
-                sol.Orientation[i][c] = Orientation_i;
-                sol.Orientation[j][c] = Orientation_j;
-            }
+        d = (sol.ComputeTravelCostTeamTTP(i)+sol.ComputeTravelCostTeamTTP(j));
+        if (sol.Orientation[i][c] == sol.Orientation[j][c]){
+            assert(!bipartite);
+            HA Orientation_i = sol.Orientation[i][c];
+            HA Orientation_j = sol.Orientation[j][c];
+            sol.Orientation[i][c] = HA::H, sol.Orientation[j][c] = HA::A;
+            int d1 = sol.ComputeTTPViolations(i)+sol.ComputeTTPViolations(j);
+            sol.Orientation[i][c] = HA::A, sol.Orientation[j][c] = HA::H;
+            int d2 = sol.ComputeTTPViolations(i)+sol.ComputeTTPViolations(j);
+            d += std::min(d1,d2);
+            sol.Orientation[i][c] = Orientation_i;
+            sol.Orientation[j][c] = Orientation_j;
         }
         sol.TeamColorOpp[i][c] = Opp_i;
         sol.TeamColorOpp[j][c] = Opp_j;
     }
     else if (sol.getSetting() == Setting::Miao){
-        assert(false); // TODO
+        int Opp_i = sol.TeamColorOpp[i][c];
+        int Opp_j = sol.TeamColorOpp[j][c];
+        sol.TeamColorOpp[i][c] = j;
+        sol.TeamColorOpp[j][c] = i;
+        d = (sol.getDistanceTeams(i,j)+sol.ComputeCost2RRConstraintTeam(i)+sol.CostSameClub*sol.getNrSameClub(i));
+        if (!sol.isEligible(i,j)){
+            d += sol.NonEligibleCost;
+        }
+        if (sol.Orientation[i][c] == sol.Orientation[j][c]){
+            assert(!bipartite);
+            HA Orientation_i = sol.Orientation[i][c];
+            HA Orientation_j = sol.Orientation[j][c];
+            sol.Orientation[i][c] = HA::H, sol.Orientation[j][c] = HA::A;
+            int d1 = sol.ComputeHACostTeam(i)+sol.ComputeHACostTeam(j);
+            if (sol.Orientation[i][c] != Orientation_i){
+                d1 += sol.CostCapacityClubHapSwitchTeam(i, c);
+            }
+            if (sol.Orientation[j][c] != Orientation_j){
+                d1 += sol.CostCapacityClubHapSwitchTeam(j, c);
+            }
+            sol.Orientation[i][c] = HA::A, sol.Orientation[j][c] = HA::H;
+            int d2 = sol.ComputeHACostTeam(i)+sol.ComputeHACostTeam(j);
+            if (sol.Orientation[i][c] != Orientation_i){
+                d2 += sol.CostCapacityClubHapSwitchTeam(i, c);
+            }
+            if (sol.Orientation[j][c] != Orientation_j){
+                d2 += sol.CostCapacityClubHapSwitchTeam(j, c);
+            }
+            d += std::min(d1,d2);
+            sol.Orientation[i][c] = Orientation_i;
+            sol.Orientation[j][c] = Orientation_j;
+        }
+        sol.TeamColorOpp[i][c] = Opp_i;
+        sol.TeamColorOpp[j][c] = Opp_j;
     }
 
     return d;
