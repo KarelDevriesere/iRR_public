@@ -11,12 +11,30 @@
 
 const vector<string>InstancesTTP = {"BRA24", "CIRC40", "CON40", "GAL40", "INCR40", "LINE40", "N16", "NFL32", "SUP8", "CIRC8"};
 
-inline std::string FolderPathTTP() {
-    return "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP);
-}
-
-inline std::string FolderPathCM() {
-    return "Instances" + std::string(PATHSEP) + "CostMinimization" + std::string(PATHSEP) + "Karel" + std::string(PATHSEP) + "0_100" + std::string(PATHSEP); 
+inline std::string FolderPath(const InputData& data) {
+    string folder_path;
+    if (data.TTP){
+        folder_path =  "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP);
+    }
+    else if (data.CM){
+        folder_path = "Instances" + std::string(PATHSEP) + "CostMinimization" + std::string(PATHSEP) + "Karel" + std::string(PATHSEP) + "0_100" + std::string(PATHSEP);
+    }
+    else {
+        folder_path = "Instances" + std::string(PATHSEP) + "Miao"  + std::string(PATHSEP);
+        if (data.ConstantCapacity){
+            folder_path += ("ConstantCapacity" + std::string(PATHSEP));
+        }
+        else{
+            folder_path += ("VariableCapacity" + std::string(PATHSEP));
+            if (data.CapacitySetting == 1){
+                folder_path += ("Setting1" + std::string(PATHSEP));
+            }
+            else{
+                folder_path += ("Setting2" + std::string(PATHSEP));
+            }
+        }
+    }
+    return folder_path;
 }
 
 namespace fs = std::filesystem;
@@ -193,25 +211,27 @@ void TestCostMinimization(const InputData& data){
         TimeStamp += Incrementor;
     }
 
-    string FilePath;
-    string FolderPath;
-    if (data.CM){
-        FolderPath = FolderPathCM();
-        FilePath = FolderPath + data.Instance + ".txt";
+    string folder_path = FolderPath(data);
+    cout << "FolderPath: " << folder_path << endl;
+    string file_path;
+    if (data.TTP){
+        file_path = folder_path + data.Instance + ".xml";
     }
     else{
-        FolderPath = FolderPathTTP();
-        FilePath = FolderPath + data.Instance + ".xml";
+        file_path = folder_path + data.Instance + ".txt";
     }
-    cout << "FilePath: " << FilePath << endl;
 
     Input in;
-    if (data.CM && !in.read_CostMinimization(FilePath, InstanceSetCM::Karel)){
-        cout << "Could not read " << FilePath << endl;
+    if (data.CM && !in.read_CostMinimization(file_path, InstanceSetCM::Karel)){
+        cout << "Could not read " << file_path << endl;
         return;
     }
-    else if (data.TTP && !in.read_TTP(FilePath, data.NrRounds)){
-        cout << "could not read " << FilePath << endl;
+    else if (data.TTP && !in.read_TTP(file_path, data.NrRounds)){
+        cout << "could not read " << file_path << endl;
+        return;
+    }
+    else if (data.Miao && !in.read_Miao_Hockey(file_path, data.Miao)){
+        cout << "could not read " << file_path << endl;
         return;
     }
     if (data.Base){
@@ -222,14 +242,25 @@ void TestCostMinimization(const InputData& data){
             in.setBaseAlgo();
         }
     }
-    in.setHAP_requirements(false, false, false, true, in.getNrRounds());
-    in.SRR = true;
-    
-    if (data.Heuristic){
-        SolveHeuristic(in,TimeStamps,FolderPath,data);
+    if (!data.Miao){
+        in.setHAP_requirements(false, false, false, false, in.getNrRounds());
+        in.SRR = true;
     }
     else{
-        SolveIP(in,TimeStamps,FolderPath,data);
+        in.setHAP_requirements(true, true, true, true, data.MaxNrBreaks);
+        in.setMaxSameClub(2);
+        in.SRR = false;
+        if (!data.ConstantCapacity){
+            in.setMiaoHAPSetting(data.CapacitySetting);
+        }
+        in.setAllowedNrCapacityViolations();
+    }
+    
+    if (data.Heuristic){
+        SolveHeuristic(in,TimeStamps,folder_path,data);
+    }
+    else{
+        SolveIP(in,TimeStamps,folder_path,data);
     }
 }
 
@@ -237,7 +268,7 @@ void BoundsTTP(){
     bool Bounds2RR = true;
     string OutputFilePath = "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP) + "Bounds.txt";
     if (Bounds2RR){
-        OuputFilePath = "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP) + "Bounds_2RR.txt";
+        OutputFilePath = "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP) + "Bounds_2RR.txt";
     }
     cout << "Save file as " << OutputFilePath << endl;
     std::ofstream output_file(OutputFilePath);
@@ -245,7 +276,9 @@ void BoundsTTP(){
     for (string Instance: InstancesTTP){
         Instance = "N16";
         Input in;
-        string FilePath = FolderPathTTP() + Instance + ".xml";
+        InputData data;
+        data.TTP = true;
+        string FilePath = FolderPath(data) + Instance + ".xml";
 
         vector<int>Rounds;
         Rounds = {10,20,30};

@@ -81,6 +81,7 @@ int main(int argc, const char* argv[]){
                 }
                 data.CM = true;
                 data.TTP = false;
+                data.Miao = false;
             }
             else if (arg == "--k"){ // CM
                 data.k = std::stoi(argv[++i]);
@@ -90,6 +91,7 @@ int main(int argc, const char* argv[]){
                 }
                 data.CM = true;
                 data.TTP = false;
+                data.Miao = false;
             }
             else if (arg == "--i"){ // CM
                 data.inst = std::stoi(argv[++i]);
@@ -99,6 +101,7 @@ int main(int argc, const char* argv[]){
                 }
                 data.CM = true;
                 data.TTP = false;
+                data.Miao = false;
             }
             else if (arg == "--InstanceTTP"){ // TTP
                 data.Instance = argv[++i];
@@ -109,6 +112,7 @@ int main(int argc, const char* argv[]){
                 }
                 data.TTP = true;
                 data.CM = false;
+                data.Miao = false;
             }
             else if (arg == "--NrRounds"){ // TTP
                 data.NrRounds = std::stoi(argv[++i]);
@@ -122,6 +126,52 @@ int main(int argc, const char* argv[]){
                 }
                 data.TTP = true;
                 data.CM = false;
+                data.Miao = false;
+            }
+            else if (arg == "--Miao"){ // Miao
+                data.Miao = true;
+                data.TTP = false;
+                data.CM = false;
+            }
+            else if (arg == "--Capacity"){ // Miao
+                // 0: Constant, 1: Variable
+                data.ConstantCapacity = std::stoi(argv[++i]);
+                data.Miao = true;
+                data.TTP = false;
+                data.CM = false;
+            }
+            else if (arg == "--CapacitySetting"){ // Miao
+                data.CapacitySetting = std::stoi(argv[++i]);
+                data.Miao = true;
+                data.TTP = false;
+                data.CM = false;
+                if (data.CapacitySetting != 1 && data.CapacitySetting != 2){
+                    std::cerr << "Capacity setting must be 1 or 2!" << endl;
+                    return 1;
+                }
+            }
+            else if (arg == "--MaxNrBreaks"){ // Miao
+                data.MaxNrBreaks = std::stoi(argv[++i]);
+                data.Miao = true;
+                data.TTP = false;
+                data.CM = false;
+                if (data.MaxNrBreaks != 0 && data.MaxNrBreaks != 1 && data.MaxNrBreaks != 2 && data.MaxNrBreaks != 3){
+                    std::cerr << "MaxNrBreaks must be 0,1,2 or 3!!" << endl;
+                    return 1;
+                }
+            }
+            else if (arg == "--MiaoInstance"){ // Miao
+                int miao_i = std::stoi(argv[++i]);
+                data.Miao = true;
+                data.TTP = false;
+                data.CM = false;
+                if (miao_i < 0 || miao_i > 6){
+                    std::cerr << "MiaoInstance must be 1,2,3,4,5 or 6!!" << endl;
+                    return 1;
+                }
+                else{
+                    data.Instance = "i0" + to_string(miao_i);
+                }
             }
             else if (arg == "--TimeLimit"){
                 data.TimeLimit = std::stoi(argv[++i]);
@@ -182,8 +232,8 @@ int main(int argc, const char* argv[]){
             }
         }
 
-        if (data.CM == true && data.TTP == true){
-            cout << "Choose either CM or TTP!!" << endl;
+        if ((data.CM == true && data.TTP == true) || (data.TTP == true && data.Miao == true) || (data.CM == true && data.Miao == true)){
+            cout << "Choose either CM, TTP or Miao!!" << endl;
             return 1;
         }
         if (data.Base){
@@ -250,6 +300,7 @@ int main(int argc, const char* argv[]){
     }
     else{
         // TODO: paper about algorithms for Hockey and Miao instances
+
     }
     return 1;
 }

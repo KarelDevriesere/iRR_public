@@ -1,3 +1,0 @@
-C:/Users/kardvrie/C++/VSprojects/iRR/build/CMakeFiles/test.dir
-C:/Users/kardvrie/C++/VSprojects/iRR/build/CMakeFiles/ALL_BUILD.dir
-C:/Users/kardvrie/C++/VSprojects/iRR/build/CMakeFiles/ZERO_CHECK.dir

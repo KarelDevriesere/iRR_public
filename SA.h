@@ -95,7 +95,9 @@ class MetaBase{ // Everything that can be used for all metaheuristics
                         continue;
                     }
                     j = sol.TeamColorOpp[i][r];
-                    assert(sol.isEligible(i,j));
+                    if (!sol.ViolationEligibleOpponents_allowed){
+                        assert(sol.isEligible(i,j));
+                    }
                     if (sol.Orientation[i][r] == HA::H){
                         assert(sol.Orientation[j][r] == HA::A);
                         h = i, a = j;
