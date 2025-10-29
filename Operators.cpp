@@ -885,11 +885,15 @@ vector<array<int,3>> CycleBalanced(Solution& sol, std::mt19937& gen){
         NodeVisited[i] = true;
         c = dist_colour(gen);
         int start_color = c;
-        while (sol.Orientation[i][c] != HA::H){
-            assert(sol.Orientation[i][c] == HA::A);
+        while (sol.Orientation[i][c] != HA::H || (!sol.SRR && sol.MatchColor[sol.TeamColorOpp[i][c]][i] >= 0)){
             c = (c + 1)%C;
             if (c == start_color){
-                throw std::runtime_error("Infinite loop in CycleBalanced!!"); 
+                if (sol.SRR){
+                    throw std::runtime_error("Infinite loop in CycleBalanced!!"); 
+                }
+                else{
+                    return {};
+                }
             }
         }
         j = sol.TeamColorOpp[i][c];
