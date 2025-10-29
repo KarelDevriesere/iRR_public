@@ -3,6 +3,8 @@ import os
 import csv
 import pandas as pd
 
+# HPC: module load SciPy-bundle/2023.11-gfbf-2023b
+
 NrRoundsCM = {36: 8, 100: 16, 250: 30}
 RoundSet40 = [10,20,30]
 RoundSet32 = [8,16,24]
@@ -13,7 +15,7 @@ ListLengths = [1,10,50,100,500,5000] # list lengths
 
 
 def MakePlot(Paths):
-    row_table = {"IP": -1, "MinCost": {l: -1 for l in ListLengths}, "NoMinCost": {l: -1 for l in ListLengths}}
+    row_table = {"IP": -1, "Heuristic": {l: -1 for l in ListLengths}, "BaseAlgo": {l: -1 for l in ListLengths}}
     for path in Paths:
         if not os.path.exists(path):
             raise FileNotFoundError(f"The file '{path}' does not exist.")
@@ -23,19 +25,19 @@ def MakePlot(Paths):
             for i, row in enumerate(reader):
                 if i == 0:
                     method = row[1]
+                    print(f'{method}')
                     seed = row[0]
-                    if method == "Heuristic":
-                        if int(row[2]) == 0:
-                            MinCost = "NoMinCost"
-                        else:
-                            MinCost = "MinCost"
-                        ListLength = int(row[3])
+                    if method != "IP":
+                        MaxIt = int(row[2])
+                        TimeLimit = int(row[3])
+                        ListLength = int(row[4])
+                        ConstrViolationCost = int(row[5])
                 elif row[0] == "Final":
                     value = int(float(row[1]))
                     if method == "IP":
                         row_table[method] = value
                     else:
-                        row_table[MinCost][ListLength] = value
+                        row_table[method][ListLength] = value
                     break
     return row_table
 
@@ -59,10 +61,10 @@ def InstancesTTP():
     return Instances
 
 
-def WriteOutput(CM,TTP,FolderPathIP, FolderPathHeuristicMinCost, FolderPathHeuristicNoMinCost,OutputPath):
+def WriteOutput(CM,TTP,FolderPathIP, FolderPathHeuristic, FolderPathBase,OutputPath):
     with open(OutputPath, "w") as output_file:
         table = []
-        columns = ["Instance", "IP"] + ["MinCost_" + "L" + str(l) for l in ListLengths] + ["NoMinCost_" + "L" + str(l) for l in ListLengths]
+        columns = ["Instance", "IP"] + ["Heuristic_" + "L" + str(l) for l in ListLengths] + ["Base_" + "L" + str(l) for l in ListLengths]
         for c, col in enumerate(columns):
             output_file.write(col)
             if c < len(columns):
@@ -77,9 +79,9 @@ def WriteOutput(CM,TTP,FolderPathIP, FolderPathHeuristicMinCost, FolderPathHeuri
             # print(Instance)
             # Now, search through all the files and see if Instance is in the name of the file
             Paths = []
-            for directory in [FolderPathIP, FolderPathHeuristicMinCost, FolderPathHeuristicNoMinCost]:
+            for directory in [FolderPathIP, FolderPathHeuristic, FolderPathBase]:
                 for file_index, filename in enumerate(os.listdir(directory)):
-                    if Instance in filename:
+                    if Instance in filename and filename.endswith(".txt"):
                         Paths.append(os.path.join(directory,filename))
 
             if len(Paths) == 0:
@@ -88,7 +90,7 @@ def WriteOutput(CM,TTP,FolderPathIP, FolderPathHeuristicMinCost, FolderPathHeuri
             else:
                 # print(f"Make plot of instance {Instance}")
                 row_dict = MakePlot(Paths)
-                row = [Instance, row_dict["IP"]] + [row_dict["MinCost"][l] for l in ListLengths] + [row_dict["NoMinCost"][l] for l in ListLengths]
+                row = [Instance, row_dict["IP"]] + [row_dict["Heuristic"][l] for l in ListLengths] + [row_dict["BaseAlgo"][l] for l in ListLengths]
                 table.append(row)
                 for v, val in enumerate(row):
                     output_file.write(str(val))
@@ -99,13 +101,13 @@ def WriteOutput(CM,TTP,FolderPathIP, FolderPathHeuristicMinCost, FolderPathHeuri
         print(df)
 
 
-def Analyze(CM,TTP,FolderPathIP, FolderPathHeuristicMinCost, FolderPathHeuristicNoMinCost):
+def Analyze(CM,TTP,FolderPathIP, FolderPathHeuristic, FolderPathBase):
     if CM:
         OutputPath = os.path.join(os.path.join("Results", "CM"), "BestValues.txt")
     else:
         OutputPath = os.path.join(os.path.join("Results", "TTP"), "BestValues.txt")
     print(f"Save results in {OutputPath}")
-    WriteOutput(CM,TTP,FolderPathIP, FolderPathHeuristicMinCost, FolderPathHeuristicNoMinCost,OutputPath)
+    WriteOutput(CM,TTP,FolderPathIP, FolderPathHeuristic, FolderPathBase,OutputPath)
                         
 
 if __name__ == "__main__":
@@ -121,6 +123,9 @@ if __name__ == "__main__":
         TTP = True
         FolderPath = os.path.join(FolderPath, "TTP")
         print("Analyze results TTP")
+    elif sys.argv[1] == "Miao":
+        Miao = True
+        FolderPath = os.path.join(FolderPath, "Miao")
     else:
         print("Specify CM or TTP")
     FolderPath = os.path.join(FolderPath, "Results")
@@ -130,10 +135,10 @@ if __name__ == "__main__":
         print(f"The folder {FolderPath} does not exists")
     
     FolderPathIP = os.path.join(FolderPath, "IP")
-    FolderPathHeuristicMinCost = os.path.join(os.path.join(FolderPath, "Heuristic"), "MinCost")
-    FolderPathHeuristicNoMinCost = os.path.join(os.path.join(FolderPath, "Heuristic"), "NoMinCost")
+    FolderPathHeuristic = os.path.join(FolderPath, "Heuristic")
+    FolderPathBase = os.path.join(FolderPath, "Base")
 
-    Analyze(CM,TTP,FolderPathIP, FolderPathHeuristicMinCost, FolderPathHeuristicNoMinCost)
+    Analyze(CM,TTP,FolderPathIP, FolderPathHeuristic, FolderPathBase)
 
 
 '''
