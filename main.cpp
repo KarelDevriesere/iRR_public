@@ -34,6 +34,9 @@ int main(int argc, const char* argv[]){
         bool M_chosen = false;
         bool BM_chosen = false;
         bool PTS_chosen = false;
+        int M_weight = 0;
+        int BM_weight = 0;
+        int PTS_weight = 0;
 
         // Parse command-line arguments
         for (int i = 1; i < argc; ++i) {
@@ -206,15 +209,18 @@ int main(int argc, const char* argv[]){
                         }
                         if (MoveName == "PTS"){
                             PTS_chosen = true;
+                            PTS_weight = Weight;
                         }
                     }
                 }
                 if (!NameFound){
                     if (MoveName == "M"){
                         M_chosen = true;
+                        M_weight = Weight;
                     }
                     else if (MoveName == "BM"){
                         BM_chosen = true;
+                        BM_weight = Weight;
                     }
                     else{
                         cout << "Could not find " << MoveName << ", please choose one of the following moves: " << endl;
@@ -265,6 +271,61 @@ int main(int argc, const char* argv[]){
             cout << "Note: if all pairs of rounds are Hamiltonian cycles: never non-Hamiltonian cycles with base algo.." << endl;
         }
         // First, check if BM or M or PTS is chosen
+        if (PTS_chosen){
+            if (!data.Base && MinCostSpecified && !data.MinCost){
+                data.InputWeights[Move::PTS_Random_PR] = PTS_weight;
+                data.InputWeights.erase(Move::PTS_MinCost_PR);
+                data.InputWeights.erase(Move::PTS);
+            }
+            else if (!data.Base && MinCostSpecified && data.MinCost){
+                data.InputWeights[Move::PTS_MinCost_PR] = PTS_weight;
+                data.InputWeights.erase(Move::PTS_Random_PR);
+                data.InputWeights.erase(Move::PTS);
+            }
+            else if (!data.Base){
+                cout << "distribute weight PTS over " << data.Moves.at(Move::PTS_MinCost_PR) << " and " << data.Moves.at(Move::PTS_Random_PR) << endl;
+                data.InputWeights[Move::PTS_Random_PR] = PTS_weight/2.0;
+                data.InputWeights[Move::PTS_MinCost_PR] = PTS_weight/2.0;
+                data.InputWeights.erase(Move::PTS);
+            }
+        }
+        if (BM_chosen){
+            if (MinCostSpecified && !data.MinCost){
+                data.InputWeights[Move::Random_BM] = BM_weight;
+                data.InputWeights.erase(Move::MinCost_BM);
+            }
+            else if (MinCostSpecified && data.MinCost){
+                data.InputWeights[Move::MinCost_BM] = BM_weight;
+                data.InputWeights.erase(Move::Random_BM);
+            }
+            else if (!data.Base){
+                cout << "distribute weight BM over " << data.Moves.at(Move::MinCost_BM) << " and " << data.Moves.at(Move::Random_BM) << endl;
+                data.InputWeights[Move::Random_BM] = BM_weight/2.0;
+                data.InputWeights[Move::MinCost_BM] = BM_weight/2.0;
+            }
+        }
+        if (M_chosen){
+            if (MinCostSpecified && !data.MinCost){
+                data.InputWeights[Move::Random_M_Random_PR] = M_weight;
+                data.InputWeights.erase(Move::MinCost_M_MinCost_PR);
+                data.InputWeights.erase(Move::MinCost_M_Random_PR);
+                data.InputWeights.erase(Move::Random_M_MinCost_PR);
+            }
+            else if (MinCostSpecified && data.MinCost){
+                data.InputWeights[Move::MinCost_M_MinCost_PR] = M_weight;
+                data.InputWeights.erase(Move::Random_M_Random_PR);
+                data.InputWeights.erase(Move::MinCost_M_Random_PR);
+                data.InputWeights.erase(Move::Random_M_Random_PR);
+            }
+            else if (!data.Base){
+                cout << "distribute weight M over " << data.Moves.at(Move::MinCost_M_MinCost_PR) << " and " << data.Moves.at(Move::Random_M_Random_PR) << " and " << data.Moves.at(Move::Random_M_MinCost_PR) << " and " << data.Moves.at(Move::MinCost_M_Random_PR) << endl;
+                data.InputWeights[Move::MinCost_M_MinCost_PR] = M_weight/4.0;
+                data.InputWeights[Move::Random_M_MinCost_PR] = M_weight/4.0;
+                data.InputWeights[Move::MinCost_M_Random_PR] = M_weight/4.0;
+                data.InputWeights[Move::Random_M_Random_PR] = M_weight/4.0;
+            }
+        }   
+    
         unordered_map<Move, double>InputWeightsCopy = data.InputWeights;
 
         double sum = 0;
@@ -319,6 +380,7 @@ int main(int argc, const char* argv[]){
         if (data.CM){
             data.Instance = to_string(data.NrTeams) + "_" + to_string(data.NrRounds) + "_" + "k" + to_string(data.k) + "_" + to_string(data.inst);
         }
+        cin.get();
         TestCostMinimization(data);
         // GenerateCostMatrices(0);
         // cin.get();
