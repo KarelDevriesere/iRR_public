@@ -3,7 +3,7 @@
 std::string FolderPath(const InputData& data) {
     string folder_path;
     if (data.TTP){
-        folder_path =  "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP) + "Original" + std::string(PATHSEP);
+        folder_path =  "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP);
     }
     else if (data.CM){
         folder_path = "Instances" + std::string(PATHSEP) + "CostMinimization" + std::string(PATHSEP) + "Karel" + std::string(PATHSEP) + "0_100" + std::string(PATHSEP);
@@ -202,7 +202,7 @@ void TestCostMinimization(const InputData& data){
     cout << "FolderPath: " << folder_path << endl;
     string file_path;
     if (data.TTP){
-        file_path = folder_path + data.Instance + ".xml";
+        file_path = folder_path + std::string(PATHSEP) + "Original" + std::string(PATHSEP) + data.Instance + ".xml";
     }
     else{
         file_path = folder_path + data.Instance + ".txt";
@@ -253,15 +253,14 @@ void TestCostMinimization(const InputData& data){
 
 void BoundsTTP(){
     bool Bounds2RR = true;
-    string OutputFilePath = "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP) + "Original" + std::string(PATHSEP) + "Bounds.txt";
+    string OutputFilePath = "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP) + "Bounds.txt";
     if (Bounds2RR){
-        OutputFilePath = "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP) + "Original" + std::string(PATHSEP) + "Bounds_2RR.txt";
+        OutputFilePath = "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP) + "Bounds_2RR.txt";
     }
     cout << "Save file as " << OutputFilePath << endl;
     std::ofstream output_file(OutputFilePath);
 
     for (string Instance: InstancesTTP){
-        Instance = "N16";
         Input in;
         InputData data;
         data.TTP = true;
@@ -288,6 +287,12 @@ void BoundsTTP(){
             Rounds = {8,16,24};
             if (Bounds2RR){
                 Rounds = {2*31};
+            }
+        }
+        else if (Instance == "SUP12"){
+            Rounds = {4,6,8};
+            if (Bounds2RR){
+                Rounds = {2*11};
             }
         }
 

@@ -9,7 +9,7 @@
 
 #include <filesystem>
 
-const vector<string>InstancesTTP = {"BRA24", "CIRC40", "CON40", "GAL40", "INCR40", "LINE40", "N16", "NFL32", "SUP8", "CIRC8"};
+const vector<string>InstancesTTP = {"BRA24", "CIRC40", "CON40", "GAL40", "INCR40", "LINE40", "N16", "NFL32", "SUP12"};
 
 std::string FolderPath(const InputData& data);
 
