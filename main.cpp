@@ -30,6 +30,14 @@ int main(int argc, const char* argv[]){
             data.Instance = "N16.xml";
         }
 
+        bool MinCostSpecified = false;
+        bool M_chosen = false;
+        bool BM_chosen = false;
+        bool PTS_chosen = false;
+        double M_weight = 0.0;
+        double BM_weight = 0.0;
+        double PTS_weight = 0.0;
+
         // Parse command-line arguments
         for (int i = 1; i < argc; ++i) {
             std::string arg = argv[i];
@@ -189,23 +197,40 @@ int main(int argc, const char* argv[]){
             }
             else if (arg == "--Weight"){
                 string MoveName = argv[++i];
+                double Weight = std::stod(argv[++i]);
                 bool NameFound = false;
                 for (auto& [move, name]: data.Moves){
                     if (name == MoveName){
                         NameFound = true;
-                        data.InputWeights[move] = std::stod(argv[++i]);
+                        data.InputWeights[move] = Weight;
                         if (data.InputWeights.at(move) < 0.0){
                             std::cerr << MoveName << " should be positive!" << endl;
                             return 1;
                         }
+                        if (MoveName == "PTS"){
+                            PTS_chosen = true;
+                            PTS_weight = Weight;
+                        }
                     }
                 }
                 if (!NameFound){
-                    cout << "Could not find " << MoveName << ", please choose one of the following moves: " << endl;
-                    for (auto& [move, name]: data.Moves){
-                        cout << name << endl;
+                    if (MoveName == "M"){
+                        M_chosen = true;
+                        M_weight = Weight;
                     }
-                    return 1;
+                    else if (MoveName == "BM"){
+                        BM_chosen = true;
+                        BM_weight = Weight;
+                    }
+                    else{
+                        cout << "Could not find " << MoveName << ", please choose one of the following moves: " << endl;
+                        for (auto& [move, name]: data.Moves){
+                            cout << name << endl;
+                        }
+                        cout << "BM" << endl;
+                        cout << "M" << endl;
+                        return 1;
+                    }
                 }
             }
             else if (arg == "--ConstrViolationCost"){
@@ -216,6 +241,10 @@ int main(int argc, const char* argv[]){
                     return 1;
                 }
 
+            }
+            else if (arg == "--MinCost"){
+                data.MinCost = std::stoi(argv[++i]);
+                MinCostSpecified = true;
             }
             else if (arg == "--Base"){
                 data.Base = std::stoi(argv[++i]);
@@ -240,11 +269,68 @@ int main(int argc, const char* argv[]){
             cout << "Run base algorithm!!" << endl;
             cout << "Note: if all pairs of rounds are Hamiltonian cycles: never non-Hamiltonian cycles with base algo.." << endl;
         }
-
-        double sum = 0;
-        double sum_weights = 0;
-        cout << "------ Weights ------" << endl;
+        // First, check if BM or M or PTS is chosen
+        if (PTS_chosen && !data.Base){
+            if (MinCostSpecified && !data.MinCost){
+                data.InputWeights[Move::PTS_Random_PR] = PTS_weight;
+                data.InputWeights.erase(Move::PTS_MinCost_PR);
+                data.InputWeights.erase(Move::PTS);
+            }
+            else if (MinCostSpecified && data.MinCost){
+                data.InputWeights[Move::PTS_MinCost_PR] = PTS_weight;
+                data.InputWeights.erase(Move::PTS_Random_PR);
+                data.InputWeights.erase(Move::PTS);
+            }
+            else {
+                cout << "distribute weight PTS over " << data.Moves.at(Move::PTS_MinCost_PR) << " and " << data.Moves.at(Move::PTS_Random_PR) << endl;
+                data.InputWeights[Move::PTS_Random_PR] = PTS_weight/2.0;
+                data.InputWeights[Move::PTS_MinCost_PR] = PTS_weight/2.0;
+                data.InputWeights.erase(Move::PTS);
+            }
+        }
+        if (BM_chosen && !data.Base){
+            if (MinCostSpecified && !data.MinCost){
+                data.InputWeights[Move::Random_BM] = BM_weight;
+                data.InputWeights.erase(Move::MinCost_BM);
+            }
+            else if (MinCostSpecified && data.MinCost){
+                data.InputWeights[Move::MinCost_BM] = BM_weight;
+                data.InputWeights.erase(Move::Random_BM);
+            }
+            else {
+                cout << "distribute weight BM over " << data.Moves.at(Move::MinCost_BM) << " and " << data.Moves.at(Move::Random_BM) << endl;
+                data.InputWeights[Move::Random_BM] = BM_weight/2.0;
+                data.InputWeights[Move::MinCost_BM] = BM_weight/2.0;
+            }
+        }
+        if (M_chosen && !data.Base){
+            if (MinCostSpecified && !data.MinCost){
+                data.InputWeights[Move::Random_M_Random_PR] = M_weight;
+                data.InputWeights.erase(Move::MinCost_M_MinCost_PR);
+                data.InputWeights.erase(Move::MinCost_M_Random_PR);
+                data.InputWeights.erase(Move::Random_M_MinCost_PR);
+            }
+            else if (MinCostSpecified && data.MinCost){
+                data.InputWeights[Move::MinCost_M_MinCost_PR] = M_weight;
+                data.InputWeights.erase(Move::Random_M_Random_PR);
+                data.InputWeights.erase(Move::MinCost_M_Random_PR);
+                data.InputWeights.erase(Move::Random_M_Random_PR);
+            }
+            else {
+                cout << "distribute weight M over " << data.Moves.at(Move::MinCost_M_MinCost_PR) << " and " << data.Moves.at(Move::Random_M_Random_PR) << " and " << data.Moves.at(Move::Random_M_MinCost_PR) << " and " << data.Moves.at(Move::MinCost_M_Random_PR) << endl;
+                data.InputWeights[Move::MinCost_M_MinCost_PR] = M_weight/4.0;
+                data.InputWeights[Move::Random_M_MinCost_PR] = M_weight/4.0;
+                data.InputWeights[Move::MinCost_M_Random_PR] = M_weight/4.0;
+                data.InputWeights[Move::Random_M_Random_PR] = M_weight/4.0;
+            }
+        }   
+    
         unordered_map<Move, double>InputWeightsCopy = data.InputWeights;
+
+        double sum = 0.0;
+        double sum_weights = 0.0;
+        cout << "------ Weights ------" << endl;
+        InputWeightsCopy = data.InputWeights;
         for (const auto& [move, weight]: InputWeightsCopy){
             if (data.Base && !data.IsMoveInBase.at(move)){
                 data.InputWeights.erase(move);
@@ -267,10 +353,22 @@ int main(int argc, const char* argv[]){
                 if (data.Base && !data.IsMoveInBase.at(move)){
                     continue;
                 }
+                else if (MinCostSpecified && data.MinCost && name.find("Random") != std::string::npos){
+                    continue;
+                }
+                else if (MinCostSpecified && !data.MinCost && name.find("MinCost") != std::string::npos){
+                    continue;
+                }
                 sum += 1.0;
             }
             for (const auto& [move, name]: data.Moves){
                 if (data.Base && !data.IsMoveInBase.at(move)){
+                    continue;
+                }
+                else if (MinCostSpecified && data.MinCost && name.find("Random") != std::string::npos){
+                    continue;
+                }
+                else if (MinCostSpecified && !data.MinCost && name.find("MinCost") != std::string::npos){
                     continue;
                 }
                 else{
@@ -289,9 +387,11 @@ int main(int argc, const char* argv[]){
         cout << "Test cost minimization" << endl;
         cout << "TimeLimit = " << data.TimeLimit << endl;
         cout << "Max iterations = " << data.MaxIt << endl;
+        cout << "HistoryLength = " << data.HistoryLength << endl;
         if (data.CM){
             data.Instance = to_string(data.NrTeams) + "_" + to_string(data.NrRounds) + "_" + "k" + to_string(data.k) + "_" + to_string(data.inst);
         }
+        // cin.get();
         TestCostMinimization(data);
         // GenerateCostMatrices(0);
         // cin.get();

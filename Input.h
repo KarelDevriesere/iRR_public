@@ -29,7 +29,7 @@ struct InputData{
     {Move::RS, true}, 
     {Move::PRS, true}, 
     {Move::C, true}, 
-    {Move::NC, false},
+    /*{Move::NC, false},*/
     {Move::MinCost_BM, false}, 
     {Move::Random_BM, false}, 
     {Move::PTS_MinCost_PR, false}, 
@@ -44,7 +44,7 @@ struct InputData{
     {Move::RS, "RS"}, 
     {Move::PRS, "PRS"}, 
     {Move::C, "C"}, 
-    {Move::NC, "NC"},
+    /*{Move::NC, "NC"},*/
     {Move::MinCost_BM, "MinCost_BM"}, 
     {Move::Random_BM, "Random_BM"}, 
     {Move::PTS_MinCost_PR, "PTS_MinCost_PR"}, 
@@ -75,6 +75,8 @@ struct InputData{
     bool ConstantCapacity = true; // Miao
     int MaxNrBreaks = 0; // Miao
     int CapacitySetting = 1; // Miao
+
+    bool MinCost = false;
 };
 
 class Input
