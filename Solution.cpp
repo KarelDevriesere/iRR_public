@@ -102,8 +102,8 @@ bool Solution::IsTeamBalanced(const int i){
                 nr_A++;
             }
         }
-        assert(nr_H > 0);
-        assert(nr_A > 0);
+        // assert(nr_H > 0);
+        // assert(nr_A > 0);
         if (nr_H == nr_A){
             return true;
         }
@@ -211,7 +211,8 @@ int Solution::ComputeCostReversingOrientationTeam(const int i, const int r1, con
         cost = ComputeTTPViolations(i);
     }
     else if (getSetting() == Setting::Miao || getSetting() == Setting::Hockey){
-        cost = ComputeHACostTeam(i) + ComputeCost2RRConstraintTeam(i) + CostCapacityClubHapSwitchTeam(i, r1) + CostCapacityClubHapSwitchTeam(i, r2);
+        cost = ComputeHACostTeam(i) + ComputeCost2RRConstraintTeam(i); //  not possible to take capacity violations into account because multiple teams in same club!!
+        // Also, then we get negative costs which is not allowed for dijkstra shortest paths
     }
     std::swap(Orientation[i][r1], Orientation[i][r2]);
     return cost;

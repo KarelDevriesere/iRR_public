@@ -115,7 +115,7 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     cout << "Cost initial solution = " << obj << endl;
 
     std::mt19937 gen(data.seed);
-    Heuristic_CM algo(data.Moves, data.InputWeights, gen, 10, obj);
+    Heuristic_CM algo(data.Moves, data.InputWeights, gen, data.HistoryLength, obj);
     algo.setTimeLimit_meta(data.TimeLimit);
     algo.SetMaxIt(data.MaxIt);
     algo.SetTimeStamps(TimeStamps);

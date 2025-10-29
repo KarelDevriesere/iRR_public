@@ -30,6 +30,11 @@ int main(int argc, const char* argv[]){
             data.Instance = "N16.xml";
         }
 
+        bool MinCostSpecified = false;
+        bool M_chosen = false;
+        bool BM_chosen = false;
+        bool PTS_chosen = false;
+
         // Parse command-line arguments
         for (int i = 1; i < argc; ++i) {
             std::string arg = argv[i];
@@ -189,23 +194,38 @@ int main(int argc, const char* argv[]){
             }
             else if (arg == "--Weight"){
                 string MoveName = argv[++i];
+                double Weight = std::stod(argv[++i]);
                 bool NameFound = false;
                 for (auto& [move, name]: data.Moves){
                     if (name == MoveName){
                         NameFound = true;
-                        data.InputWeights[move] = std::stod(argv[++i]);
+                        data.InputWeights[move] = Weight;
                         if (data.InputWeights.at(move) < 0.0){
                             std::cerr << MoveName << " should be positive!" << endl;
                             return 1;
                         }
+                        if (MoveName == "PTS"){
+                            PTS_chosen = true;
+                        }
                     }
                 }
                 if (!NameFound){
-                    cout << "Could not find " << MoveName << ", please choose one of the following moves: " << endl;
-                    for (auto& [move, name]: data.Moves){
-                        cout << name << endl;
+                    if (MoveName == "M"){
+                        M_chosen = true;
                     }
-                    return 1;
+                    else if (MoveName == "BM"){
+                        BM_chosen = true;
+                    }
+                    else{
+                        cout << "Could not find " << MoveName << ", please choose one of the following moves: " << endl;
+                        for (auto& [move, name]: data.Moves){
+                            cout << name << endl;
+                        }
+                        cout << "BM" << endl;
+                        cout << "M" << endl;
+                        cout << "PTS" << endl;
+                        return 1;
+                    }
                 }
             }
             else if (arg == "--ConstrViolationCost"){
@@ -216,6 +236,10 @@ int main(int argc, const char* argv[]){
                     return 1;
                 }
 
+            }
+            else if (arg == "--MinCost"){
+                data.MinCost = std::stoi(argv[++i]);
+                MinCostSpecified = true;
             }
             else if (arg == "--Base"){
                 data.Base = std::stoi(argv[++i]);
@@ -240,11 +264,13 @@ int main(int argc, const char* argv[]){
             cout << "Run base algorithm!!" << endl;
             cout << "Note: if all pairs of rounds are Hamiltonian cycles: never non-Hamiltonian cycles with base algo.." << endl;
         }
+        // First, check if BM or M or PTS is chosen
+        unordered_map<Move, double>InputWeightsCopy = data.InputWeights;
 
         double sum = 0;
         double sum_weights = 0;
         cout << "------ Weights ------" << endl;
-        unordered_map<Move, double>InputWeightsCopy = data.InputWeights;
+        InputWeightsCopy = data.InputWeights;
         for (const auto& [move, weight]: InputWeightsCopy){
             if (data.Base && !data.IsMoveInBase.at(move)){
                 data.InputWeights.erase(move);
@@ -289,6 +315,7 @@ int main(int argc, const char* argv[]){
         cout << "Test cost minimization" << endl;
         cout << "TimeLimit = " << data.TimeLimit << endl;
         cout << "Max iterations = " << data.MaxIt << endl;
+        cout << "HistoryLength = " << data.HistoryLength << endl;
         if (data.CM){
             data.Instance = to_string(data.NrTeams) + "_" + to_string(data.NrRounds) + "_" + "k" + to_string(data.k) + "_" + to_string(data.inst);
         }

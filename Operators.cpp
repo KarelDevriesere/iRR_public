@@ -196,7 +196,10 @@ void TS(Solution& sol, const int i, const int j){
         }
         std::swap(sol.MatchColor[i][k], sol.MatchColor[j][k]);
         std::swap(sol.MatchColor[k][i], sol.MatchColor[k][j]);
-        assert(sol.ComputeHACostTeam(k) == 0); // test assumption that the HAPs of the middle teams does not change
+        if (sol.getSetting() != Setting::Miao){
+            assert(sol.ComputeHACostTeam(k) == 0); // test assumption that the HAPs of the middle teams do not change
+            // For Miao instances, we do allow HAP violations
+        }
     }
     std::swap(sol.MatchColor[i][j], sol.MatchColor[j][i]); // do this to make the HAPs of i and j balanced!
 }
@@ -384,10 +387,29 @@ Lantarn CreateLantarn(Solution& sol, const int i, const int j, const int StartCo
     lantarn.EdgesMatch[i] = vector<pair<int,int>>();
     lantarn.EdgesMatch[j] = vector<pair<int,int>>();
     ReplenishLantarn(sol, i, j, StartColor, lantarn);
-    if (lantarn.InfeasibleColor && !lantarn.InfeasibleOpponents){
-        ReplenishLantarn(sol, j, i, StartColor, lantarn);
+    if (lantarn.InfeasibleColor /*&& !lantarn.InfeasibleOpponents*/){
+        if (sol.ViolationEligibleOpponents_allowed || !lantarn.InfeasibleOpponents){
+            ReplenishLantarn(sol, j, i, StartColor, lantarn);
+        }
     }
     return lantarn;
+}
+
+bool Check2RRConstraintsPTS(Solution& sol, Lantarn& lantarn){
+    const int i = lantarn.i;
+    if (sol.ComputeCost2RRConstraintTeam(i) > 0){
+        return false;
+    }
+    const int j = lantarn.j;
+    if (sol.ComputeCost2RRConstraintTeam(j) > 0){
+        return false;
+    }
+    for (int k = 0; k < lantarn.middle.size(); ++k){
+        if (sol.ComputeCost2RRConstraintTeam(lantarn.middle[k]) > 0){
+            return false;
+        }
+    }
+    return true;
 }
 
 bool MaxSameClubViolated(Solution& sol, Lantarn& lantarn){
@@ -437,7 +459,6 @@ bool MaxSameClubViolated(Solution& sol, Lantarn& lantarn){
     }
     return false;
 }
-
 
 int ComputeCostLantarn(Solution& sol, Lantarn& lantarn, vector<int>& path){
     const int i = lantarn.i;
@@ -574,7 +595,6 @@ bool RepairOrientationsEdgesLantarn_CM(Solution& sol, Lantarn& lantarn, const ve
             }
         }
         else{
-            // cout << "Find path LG" << endl;
             if (!FindPathLineGraphOneLeague(source, sink, sol, path)){
                 return false;
             }
@@ -609,6 +629,10 @@ tuple<vector<Edge>,vector<Edge>,vector<int>> MakeLineGraph(Solution& sol, const 
                 else{
                     assert(sol.Orientation[i][r] == HA::A);
                     h = j, a = i;
+                }
+                if (!sol.SRR && sol.MatchColor[a][h] >= 0){
+                    // then we cannot reverse the orientation (unless both their orientations are reversed, but this cannot happen in a path)!!
+                    continue;
                 }
                 if (h != source && a != sink){ // no point in adding the edge a->SOURCE, because SOURCE always must have an outgoing edge (and SINK always an incoming edge)
                     Nodes.push_back({a,h}); // arc goes like a->h
@@ -790,6 +814,7 @@ bool FindPathLineGraphOneLeague(const int source, const int sink, Solution& sol,
     BGraph G(Nodes.size()+2); // Nodes.size()+2 vertices, +2 bc of extra SOURCE and SINK node
 
     for (std::size_t j = 0; j < edge_vector.size(); ++j){
+        assert(weights[j] >= 0);
         boost::add_edge(edge_vector[j].first, edge_vector[j].second, weights[j], G);
     }
 
@@ -803,10 +828,10 @@ bool FindPathLineGraphOneLeague(const int source, const int sink, Solution& sol,
         predecessor_map(boost::make_iterator_property_map(p.begin(), 
             get(boost::vertex_index, G))).distance_map(boost::make_iterator_property_map(d.begin(), 
                 get(boost::vertex_index, G))));
-
     
     int v_ = SINK;
     if (p[v_] == v_){
+        // cout << "vertex could not be reached" << endl;
         return false; // this means that the vertex could not be reached
     }
 
@@ -1246,11 +1271,9 @@ bool ForbiddenEdge(const int i, const int j, const int r, const bool bipartite, 
 bool ForbiddenEdge_CM(const int i, const int j, const int r, const bool bipartite, const vector<bool>& TeamSelected, Solution& sol){
     if (sol.MatchColor[i][j] >= 0 && sol.MatchColor[i][j] != r){
         return true;
-        // ForbiddenEdge[i][j] = true;
     }
     else if (sol.MatchColor[j][i] >= 0 && sol.MatchColor[j][i] != r){
         return true;
-        // ForbiddenEdge[i][j] = true;
     }
     if (bipartite){
         if (sol.Orientation[i][r] == sol.Orientation[j][r]){
@@ -1495,8 +1518,6 @@ vector<vector<pair<int,int>>>iPRS(Solution& sol, const int r, const bool biparti
     Then, evaluate the cycles separately
     */
 
-    // cout << "Start iPRS" << endl;
-
     pair<vector<pair<int,int>>,vector<int>>OpponentMatching_Matching = MoveMWPM(sol, r, bipartite, includeHAPs, CM, gen, MinCostM);
 
     vector<vector<pair<int,int>>>AlternatingCycles = CreateAlternatingCycles(sol, OpponentMatching_Matching.second, r, bipartite, gen); // first edge in alternating cycle: new match (so initially uncolored)
@@ -1506,12 +1527,14 @@ vector<vector<pair<int,int>>>iPRS(Solution& sol, const int r, const bool biparti
 }
 
 
-vector<vector<array<int,3>>>EvaluateAlternatingCycleWithPaths(Solution& sol, vector<pair<int,int>>& AlternatingCycle, const int r, const bool bipartite, const bool CM, int& delta, std::mt19937& gen, const bool MinCostP){
+vector<vector<array<int,3>>>EvaluateAlternatingCycleWithPaths(Solution& sol, vector<pair<int,int>>& AlternatingCycle, const int r, const bool bipartite, const bool CM, int& delta, std::mt19937& gen, const bool MinCostP, bool NoPathDueTo2RRConstraint){
 
     vector<int>H_teams;
     vector<int>A_teams;
 
     vector<vector<array<int,3>>>Paths;
+
+    std::uniform_real_distribution<> dist(0.0,1.0);
 
     // cout << "Evaluate alternating cycle" << endl;
 
@@ -1544,22 +1567,42 @@ vector<vector<array<int,3>>>EvaluateAlternatingCycleWithPaths(Solution& sol, vec
         i = AlternatingCycle[e].first, j = AlternatingCycle[e].second;
         if (sol.Orientation[i][r] == sol.Orientation[j][r] && sol.Orientation[i][r] == HA::H){
             assert(!bipartite);
-            if (sol.getCostMatchRound(i,j,r) <= sol.getCostMatchRound(j,i,r)){
+            if (sol.MatchColor[j][i] >= 0){
                 A_teams.push_back(j);
             }
-            else{
+            else if (sol.MatchColor[i][j] >= 0){
                 A_teams.push_back(i);
                 std::swap(i,j);
+            }
+            else{
+                int x = dist(gen);
+                if (x < 0.5){
+                    A_teams.push_back(j);
+                }
+                else{
+                    A_teams.push_back(i);
+                    std::swap(i,j);
+                }
             }
         }
         else if (sol.Orientation[i][r] == sol.Orientation[j][r] && sol.Orientation[i][r] == HA::A){
             assert(!bipartite);
-            if (sol.getCostMatchRound(i,j,r) <= sol.getCostMatchRound(j,i,r)){
+            if (sol.MatchColor[j][i] >= 0){
                 H_teams.push_back(i);
             }
-            else{
+            else if (sol.MatchColor[i][j] >= 0){
                 H_teams.push_back(j);
                 std::swap(i,j);
+            }
+            else{
+                int x = dist(gen);
+                if (x < 0.5){
+                    H_teams.push_back(i);
+                }
+                else{
+                    H_teams.push_back(j);
+                    std::swap(i,j);
+                }
             }
         }
         else{
@@ -1607,9 +1650,15 @@ vector<vector<array<int,3>>>EvaluateAlternatingCycleWithPaths(Solution& sol, vec
             }
             while(k+a+1 < A_teams.size() && !PathFound);
 
-            if (!PathFound){
+            if (sol.SRR && !PathFound){
                 cout << "No path found in M+PR" << endl;
                 throw std::runtime_error("Error!!!");
+            }
+            else if (!sol.SRR && !PathFound){
+                // This can happen because 2RR violations are forbidden->these edges are not made
+                // In this case, return empty path
+                NoPathDueTo2RRConstraint = true;
+                return {};
             }
             // path is reversed in function!!
             Paths.push_back(path);
