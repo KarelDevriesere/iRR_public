@@ -19,6 +19,8 @@ void Input::setBaseAlgo(){
     // Base setting: consider whole SRR but take only costs of first NrRounds into account!!
     BaseAlgo = true;
     NrRoundsBaseAlgo = NrRounds;
+    // Eerste idee van Base: niet doen!!
+    /*
     NrRounds = NrTeams-1;
     cout << "NrRounds = " << NrRounds << endl;
     cout << "NrRoundsBaseAlgo = " << NrRoundsBaseAlgo << endl;
@@ -28,6 +30,7 @@ void Input::setBaseAlgo(){
     for (auto& CapacityVector: ClubCapacity){
         CapacityVector.insert(CapacityVector.end(), NrRounds-CapacityVector.size(), NrTeams);
     }
+        */
 }
 
 void Input::SetDefault(const int NrTeams){

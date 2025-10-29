@@ -75,6 +75,8 @@ struct InputData{
     bool ConstantCapacity = true; // Miao
     int MaxNrBreaks = 0; // Miao
     int CapacitySetting = 1; // Miao
+
+    bool MinCost = false;
 };
 
 class Input

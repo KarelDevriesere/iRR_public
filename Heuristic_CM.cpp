@@ -159,29 +159,37 @@ void Heuristic_CM::SelectPTS(Solution& sol){
     // cout << "lantarn created" << endl;
     // PrintLantarn(sol, lantarn);
 
+    if (sol.IsBaseAlgo() && lantarn.InfeasibleColor){
+        return; // In base algo: PTS only if feasible colours!!
+    }
+
     vector<vector<HA>>OrientationsCopy = MakeOrientationsCopy_CM(sol);
     KeepOrientationsAllEdgesLantarn(sol, lantarn, OrientationsCopy);
+
+    // Check if 2RR constraint is satisfied in 2RR, if not, return
+    if (!sol.SRR && !Check2RRConstraintsPTS(sol, lantarn)){
+        ResetOrientations_CM(sol, OrientationsCopy);
+        return;
+    }
 
     // First swap colors because path may use an edge in the lantern
     SwapColorsLantarn(sol, lantarn);
     // cout << "New lantarn: " << endl;
     // PrintLantarn(sol, lantarn);
 
-    if (!sol.IsBaseAlgo()){ // do not do path reversals in base algo: this is a contribution of ourse while base algo is state of the art!!
-        // Repair Orientations
-        // cout << "Repair orientations!!" << endl;
-        vector<array<int,3>>path; // always try to find a path between i and j!! 
-        bool BalanceRepaired = RepairOrientationsEdgesLantarn_CM(sol, lantarn, OrientationsCopy, path, MinCostPR, CM);
-        if (!BalanceRepaired){
-            throw std::runtime_error("Could not repair imbalance in PTS!");
-        }
+    // Repair Orientations
+    // cout << "Repair orientations!!" << endl;
+    vector<array<int,3>>path; // always try to find a path between i and j!! 
+    bool BalanceRepaired = RepairOrientationsEdgesLantarn_CM(sol, lantarn, OrientationsCopy, path, MinCostPR, CM);
+    if (!BalanceRepaired){
+        throw std::runtime_error("Could not repair imbalance in PTS!");
+    }
 
 #ifndef NDEBUG
-        for (int i = 0; i < sol.getNrTeams(); ++i){
-            assert(sol.IsTeamBalanced(i));
-        }
-#endif
+    for (int i = 0; i < sol.getNrTeams(); ++i){
+        assert(sol.IsTeamBalanced(i));
     }
+#endif
     
     if (!Update(sol, sol.ComputeTotalCost())){
         // first, set back all orientations
@@ -289,7 +297,19 @@ void Heuristic_CM::SelectMatching(Solution& sol, const bool bipartite){
         int cost_before = sol.ComputeTotalCost();
 #endif
         delta = 0;  
-        vector<vector<array<int,3>>>Paths = EvaluateAlternatingCycleWithPaths(sol, AlternatingCycle, r, bipartite, CM, delta, gen, MinCostPR);
+        bool NoPathDueTo2RRConstraint = false;
+        vector<vector<array<int,3>>>Paths = EvaluateAlternatingCycleWithPaths(sol, AlternatingCycle, r, bipartite, CM, delta, gen, MinCostPR, NoPathDueTo2RRConstraint);
+
+        if (!bipartite && NoPathDueTo2RRConstraint){
+            assert(!sol.SRR);
+            GoBackToOldCycle(sol, AlternatingCycle, r);
+#ifndef NDEBUG
+            assert(cost_before == sol.ComputeTotalCost());
+#endif
+            assert(sol.validate());
+            return;
+        }
+
 #ifndef NDEBUG
         for (int i = 0; i < sol.getNrTeams(); ++i){
             assert(sol.IsTeamBalanced(i));
@@ -372,7 +392,7 @@ void Heuristic_CM::DoMove(Solution& sol){
     auto beg = std::chrono::high_resolution_clock::now();
     // cout << "Select " << Moves.at(CurrentMove) << endl; 
 #ifndef NDEBUG
-    cout << "Select " << Moves.at(CurrentMove) << endl; 
+    // cout << "Select " << Moves.at(CurrentMove) << endl; 
 #endif
     if (CurrentMove == Move::TS){
         SelectTS(sol);
