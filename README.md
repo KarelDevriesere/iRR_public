@@ -5,7 +5,7 @@ To run in release mode, change Debug for Release
 
 To compile and run with Make:
 1) make
-2) ./irr "arguments"
+2) ./irr "Arguments"
 To run in release, do "make release"
 To print solutions, do "make PRINT=1"
 
