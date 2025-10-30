@@ -354,7 +354,7 @@ void Heuristic_CM::SelectBalancedCycle(Solution& sol){
     }
     
     if (Cycle.empty()){
-        assert(MinCostC);
+        assert(MinCostC || !sol.SRR);
         return;
     }
  

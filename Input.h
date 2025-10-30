@@ -59,11 +59,11 @@ struct InputData{
     bool Heuristic = 1;
     int HistoryLength = 1;
     int NrTeams = 36; // CM
-    int NrRounds = 8; // TTP
+    int NrRounds = 4; // TTP
     int k = 5; // CM
     int inst = 0; // CM
-    int TimeLimit = 60;
-    int MaxIt = 5000000;
+    int TimeLimit = 7200;
+    int MaxIt = 1000000;
     bool CM = true; // CM
     bool TTP = false; // TTP
     bool Base = false;

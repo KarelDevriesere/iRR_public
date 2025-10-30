@@ -136,6 +136,7 @@ int Input::read_TTP(const std::string file_path, const int nrRounds){
             }
         }
     }
+
     CostTTPViolation = MaxEdgeCost*(NrTeams/2)*NrRounds+1;
 
     cout << "NrTeams = " << NrTeams << ", NrRounds =  " << NrRounds  << endl;

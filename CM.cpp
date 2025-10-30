@@ -1,5 +1,49 @@
 #include "CM.h"
 
+string PathInitialSolutionMiao(InputData data){
+    string path = "InitialSolutions"  + string(PATHSEP)  +"Miao" + string(PATHSEP);
+    if (data.ConstantCapacity){
+        path += "ConstantCapacity" + string(PATHSEP);
+    }
+    else{
+        path += "VariableCapacity" + string(PATHSEP) + "Setting" + to_string(data.CapacitySetting) + string(PATHSEP);
+    }
+    path += "b" + to_string(data.MaxNrBreaks) + string(PATHSEP) + data.Instance + ".txt";
+    return path;
+}
+
+void ReadSolution(const string path, Solution& sol){
+
+    // cout << "read the file " << path << endl;
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        std::cerr << "Error opening the file " << path;
+        return;
+    }
+
+    std::string line;
+
+    // Skip header line
+    std::getline(file, line);
+
+    // Read the rest
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        int i, j, r, value;
+        char comma; // to consume commas
+
+        if (ss >> i >> comma >> j >> comma >> r >> comma >> value) {
+            if (value > 0.1){
+                SetValueCircleMethod(i,j,r,sol);
+                sol.Orientation[i][r] = HA::H;
+                sol.Orientation[j][r] = HA::A;
+            }
+        }
+    }
+    file.close();
+    sol.validate();
+}
+
 std::string FolderPath(const InputData& data) {
     string folder_path;
     if (data.TTP){
@@ -94,12 +138,19 @@ void SaveSolution(std::ofstream& output_file, Solution& sol){
 void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data){
     // Find initial solution with Vizing
     Solution sol(in);
-    cout << "Solve Vizing" << endl;
-    VizingConstruction(sol, data.seed);
-    cout << "Found initial solution" << endl;
+    if (sol.getSetting() != Setting::Miao){
+        cout << "Solve Vizing" << endl;
+        VizingConstruction(sol, data.seed);
+        cout << "Found initial solution" << endl;
+    }
+    else{
+        string path = PathInitialSolutionMiao(data);
+        ReadSolution(path, sol);
+    }
     assert(sol.validate());
     const int obj = sol.ComputeTotalCost();
     cout << "Cost initial solution = " << obj << endl;
+    cin.get();
 
     std::mt19937 gen(data.seed);
     Heuristic_CM algo(data.Moves, data.InputWeights, gen, data.HistoryLength, obj);
@@ -202,7 +253,7 @@ void TestCostMinimization(const InputData& data){
     cout << "FolderPath: " << folder_path << endl;
     string file_path;
     if (data.TTP){
-        file_path = folder_path + data.Instance + ".xml";
+        file_path = folder_path + std::string(PATHSEP) + "Original" + std::string(PATHSEP) + data.Instance + ".xml";
     }
     else{
         file_path = folder_path + data.Instance + ".txt";
@@ -261,7 +312,6 @@ void BoundsTTP(){
     std::ofstream output_file(OutputFilePath);
 
     for (string Instance: InstancesTTP){
-        Instance = "N16";
         Input in;
         InputData data;
         data.TTP = true;
@@ -290,6 +340,12 @@ void BoundsTTP(){
                 Rounds = {2*31};
             }
         }
+        else if (Instance == "SUP12"){
+            Rounds = {4,6,8};
+            if (Bounds2RR){
+                Rounds = {2*11};
+            }
+        }
 
         for (int NrRoundsTTP: Rounds){
 
@@ -311,4 +367,3 @@ void BoundsTTP(){
 
     output_file.close();
 }
-
