@@ -62,5 +62,5 @@ For now, tune the following parameters:
 -Weight C,
 -Weight BM,
 -Weight M,
--MinCost (if 1 or 0)
+-MinCost (1 or 0)
 
