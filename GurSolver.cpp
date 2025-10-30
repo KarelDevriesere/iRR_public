@@ -123,9 +123,9 @@ void GurSolver::BoundTTP(const int t){
 	}
 	model.setObjective(Objective, GRB_MINIMIZE);
 
-	/*
 	model.optimize();
 
+	cout << "Solution for team " << t << endl;
 	for (r = 0; r < NrTrips; ++r){
 		if (z_r[r].get(GRB_DoubleAttr_X) > 0.9){
 			cout << "This trip has a cost of " << CostTrips[r] << endl;
@@ -137,7 +137,6 @@ void GurSolver::BoundTTP(const int t){
 		}
 	}
 	cin.get();
-	*/
 }
 
 void GurSolver::iTTP(){

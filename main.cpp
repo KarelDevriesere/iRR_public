@@ -33,10 +33,10 @@ int main(int argc, const char* argv[]){
         bool MinCostSpecified = false;
         bool M_chosen = false;
         bool BM_chosen = false;
-        bool PTS_chosen = false;
+        bool iPTS_chosen = false;
         double M_weight = 0.0;
         double BM_weight = 0.0;
-        double PTS_weight = 0.0;
+        double iPTS_weight = 0.0;
 
         // Parse command-line arguments
         for (int i = 1; i < argc; ++i) {
@@ -207,10 +207,6 @@ int main(int argc, const char* argv[]){
                             std::cerr << MoveName << " should be positive!" << endl;
                             return 1;
                         }
-                        if (MoveName == "PTS"){
-                            PTS_chosen = true;
-                            PTS_weight = Weight;
-                        }
                     }
                 }
                 if (!NameFound){
@@ -221,6 +217,10 @@ int main(int argc, const char* argv[]){
                     else if (MoveName == "BM"){
                         BM_chosen = true;
                         BM_weight = Weight;
+                    }
+                    else if (MoveName == "iPTS"){
+                        iPTS_chosen = true;
+                        iPTS_weight = Weight;
                     }
                     else{
                         cout << "Could not find " << MoveName << ", please choose one of the following moves: " << endl;
@@ -249,6 +249,14 @@ int main(int argc, const char* argv[]){
             else if (arg == "--Base"){
                 data.Base = std::stoi(argv[++i]);
             }
+            else if (arg == "--OutputFolder"){
+                data.OutputFolder = argv[++i];
+                if (!std::filesystem::is_directory(data.OutputFolder)){
+                    std::cerr << "The folder " << data.OutputFolder << " does not exist, please specify existing folder (or make one first)" << endl;
+                    return 1;
+                }
+
+            }
             else if (arg == "--help"){
                 cout << "Usage: " << argv[0] << "--Seed <int> --Heuristic <0/1> -- MinCostNB <0/1> --HistoryLength <+int> -- CM <0/1> --NrTeams <36/100>* --k <0/1/5/10>* --i <0/1/2/3/4>* --TimeLimit <+int> --MaxIt <+int> --Weight <Move> <+int>" << endl;
                 cout << "*: For CostMinimization instances" << endl;
@@ -270,21 +278,21 @@ int main(int argc, const char* argv[]){
             cout << "Note: if all pairs of rounds are Hamiltonian cycles: never non-Hamiltonian cycles with base algo.." << endl;
         }
         // First, check if BM or M or PTS is chosen
-        if (PTS_chosen && !data.Base){
+        if (iPTS_chosen && !data.Base){
             if (MinCostSpecified && !data.MinCost){
-                data.InputWeights[Move::PTS_Random_PR] = PTS_weight;
+                data.InputWeights[Move::PTS_Random_PR] = iPTS_weight;
                 data.InputWeights.erase(Move::PTS_MinCost_PR);
                 data.InputWeights.erase(Move::PTS);
             }
             else if (MinCostSpecified && data.MinCost){
-                data.InputWeights[Move::PTS_MinCost_PR] = PTS_weight;
+                data.InputWeights[Move::PTS_MinCost_PR] = iPTS_weight;
                 data.InputWeights.erase(Move::PTS_Random_PR);
                 data.InputWeights.erase(Move::PTS);
             }
             else {
                 cout << "distribute weight PTS over " << data.Moves.at(Move::PTS_MinCost_PR) << " and " << data.Moves.at(Move::PTS_Random_PR) << endl;
-                data.InputWeights[Move::PTS_Random_PR] = PTS_weight/2.0;
-                data.InputWeights[Move::PTS_MinCost_PR] = PTS_weight/2.0;
+                data.InputWeights[Move::PTS_Random_PR] = iPTS_weight/2.0;
+                data.InputWeights[Move::PTS_MinCost_PR] = iPTS_weight/2.0;
                 data.InputWeights.erase(Move::PTS);
             }
         }
@@ -391,7 +399,6 @@ int main(int argc, const char* argv[]){
         if (data.CM){
             data.Instance = to_string(data.NrTeams) + "_" + to_string(data.NrRounds) + "_" + "k" + to_string(data.k) + "_" + to_string(data.inst);
         }
-        // cin.get();
         TestCostMinimization(data);
         // GenerateCostMatrices(0);
         // cin.get();

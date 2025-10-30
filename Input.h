@@ -77,6 +77,7 @@ struct InputData{
     int CapacitySetting = 1; // Miao
 
     bool MinCost = false;
+    string OutputFolder;
 };
 
 class Input
