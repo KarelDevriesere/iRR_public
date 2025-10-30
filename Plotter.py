@@ -17,6 +17,48 @@ NrRoundsTTP = {"BRA24": RoundSet24, "CIRC40": RoundSet40, "CON40": RoundSet40, "
 ListLengths = [1,10,50,500,5000] # list lengths
 
 
+def BoxPlotsAblation(FolderPathIP, FolderPathHeuristicMinCost, FolderPathHeuristicNoMinCost):
+    FilePathBounds = os.path.join(os.path.join("Instances", "TTP"), "Bounds.txt")
+    print(f'Open {FilePathBounds}')
+    Bounds = {inst: {r: 0 for r in NrRoundsTTP[inst]} for inst in NrRoundsTTP.keys()}
+    with open(FilePathBounds, 'r', newline="") as file:
+        reader = csv.reader(file)
+        for i, row in enumerate(reader):
+            inst = row[0]
+            lb = int(row[1])
+            r = int(row[2])
+            Bounds[inst][r] = lb
+            # print(f'LB of {inst} with {r} rounds  = {lb}')
+
+    # boxplots 
+    data = {"IP": [], "MinCost": [], "NoMinCost": []}
+
+    for inst in NrRoundsTTP.keys():
+        for r in NrRoundsTTP[inst]:
+            for algo, FolderPath in zip(data.keys(), [FolderPathIP, FolderPathHeuristicMinCost, FolderPathHeuristicNoMinCost]):
+                if algo == "IP":
+                    File = inst + "_" + str(r) + ".txt"
+                else:
+                    File = inst + "_s0_HL500_"  + str(r) + ".txt"
+                FilePath = os.path.join(FolderPath, File)
+                if not os.path.exists(FilePath):
+                    print(f'The file {FilePath} does not exist yet!')
+                    continue
+                with open(FilePath, 'r', newline="") as file:
+                    reader = csv.reader(file)
+                    for i, row in enumerate(reader):
+                        if row[0] == "Final":
+                            BestSolution = int(row[1])
+                            gap = (BestSolution-Bounds[inst][r])/BestSolution
+                            data[algo].append(gap)
+                            break
+
+    BoxPlots = [data["IP"], data["MinCost"], data["NoMinCost"]]
+    fig, ax = plt.subplots(figsize=(10, 7))
+    ax.boxplot(BoxPlots, labels=data.keys())
+    plt.show()
+
+
 def MakeTable(Paths):
     row_table = {"IP": -1, "Heuristic": {l: -1 for l in ListLengths}, "BaseAlgo": {l: -1 for l in ListLengths}}
     for path in Paths:
@@ -193,9 +235,12 @@ if __name__ == "__main__":
     FolderPathIP = os.path.join(FolderPath, "IP")
     FolderPathHeuristic = os.path.join(FolderPath, "Heuristic")
     FolderPathHeuristic = os.path.join(os.path.join(FolderPath, "Heuristic"), "NoMinCost") # TODo
+    FolderPathHeuristicNoMinCost = FolderPathHeuristic
+    FolderPathHeuristicMinCost = os.path.join(os.path.join(FolderPath, "Heuristic"), "MinCost")
     FolderPathBase = os.path.join(FolderPath, "Base")
 
-    MakePlotTimeListLength(FolderPathHeuristic,CM,TTP)
+    BoxPlotsAblation(FolderPathIP, FolderPathHeuristicMinCost, FolderPathHeuristicNoMinCost)
+    # MakePlotTimeListLength(FolderPathHeuristic,CM,TTP)
     # Analyze(CM,TTP,FolderPathIP, FolderPathHeuristic, FolderPathBase)
 
 
