@@ -1,0 +1,3 @@
+[submodule "RobinX-iTTPGenerator"]
+	path = RobinX-iTTPGenerator
+	url = git@github.com:davidvanbulck/RobinX-iTTPGenerator.git
