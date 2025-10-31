@@ -16,9 +16,6 @@
 
 int main(int argc, const char* argv[]){
     int case_ = 0;
-    
-    // BoundsTTP();
-    // return 1;
 
     InputData data;
 
@@ -37,6 +34,8 @@ int main(int argc, const char* argv[]){
         double M_weight = 0.0;
         double BM_weight = 0.0;
         double iPTS_weight = 0.0;
+
+        int ComputeBounds = 0;
 
         // Parse command-line arguments
         for (int i = 1; i < argc; ++i) {
@@ -249,6 +248,10 @@ int main(int argc, const char* argv[]){
             else if (arg == "--Base"){
                 data.Base = std::stoi(argv[++i]);
             }
+            else if (arg == "--Bounds"){
+                ComputeBounds = std::stoi(argv[++i]);
+                data.TTP = true;
+            }
             else if (arg == "--OutputFolder"){
                 data.OutputFolder = argv[++i];
                 if (!std::filesystem::is_directory(data.OutputFolder)){
@@ -267,6 +270,17 @@ int main(int argc, const char* argv[]){
                 std::cerr << "Unknown argument: " << arg << std::endl;
                 return 1; // Exit with an error code
             }
+        }
+
+        if (ComputeBounds == 1){
+            cout << "Compute TTP bound for " << data.Instance << "_" << data.NrRounds << " with TimeLimit " << data.TimeLimit << endl;
+            BoundsTTP_OneInstance(data);
+            return 1;
+        }
+        else if (ComputeBounds > 1){
+            cout << "Compute TTP bound for all instances with TimeLimit " << data.TimeLimit << endl;
+            BoundsTTP_All(data);
+            return 1;
         }
 
         if ((data.CM == true && data.TTP == true) || (data.TTP == true && data.Miao == true) || (data.CM == true && data.Miao == true)){

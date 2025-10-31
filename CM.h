@@ -9,7 +9,7 @@
 
 #include <filesystem>
 
-const vector<string>InstancesTTP = {/*"BRA24", "CIRC40",*/ "CON40", /*"GAL40", "INCR40", "LINE40"/*, "N16", "NFL32", "SUP12"*/};
+const vector<string>InstancesTTP = {"BRA24", "CIRC40", "CON40", "GAL40", "INCR40", "LINE40", "N16", "NFL32", "SUP12"};
 
 std::string FolderPath(const InputData& data);
 
@@ -20,5 +20,7 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
 void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data);
 void TestCostMinimization(const InputData& data);
 void BoundsTTP();
+void BoundsTTP_OneInstance(InputData& data);
+void BoundsTTP_All(const InputData& data);
 
 #endif
