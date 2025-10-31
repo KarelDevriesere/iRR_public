@@ -36,6 +36,14 @@ class Solution: public Input{
         int Cost2RRSameHalf = 1000;
         int Cost2RRSameMode = 1000;
 
+        int CostTTPViolation = 100000;
+        int CostImbalance = 100000;
+
+        int getCostTTPViolation()const{return CostTTPViolation;};
+        int getCostImbalance()const{return CostImbalance;};
+
+        void SetOneCostAllViolations(const int cost);
+
         void PrintAllRoundsLeague(const int l);
         bool IsTeamBalanced(const int i);
         int getNrHomeTeam(const int i);

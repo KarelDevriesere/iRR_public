@@ -22,6 +22,19 @@ Solution::Solution(const Input& in) : Input(in) {
 }
 Solution::~Solution(){}
 
+void Solution::SetOneCostAllViolations(const int cost){
+    NonEligibleCost = cost;
+    CostCapacityViol = cost;
+    CostSameClub = cost;
+    HighCostHAPs = cost;
+
+    Cost2RRSameHalf = cost;
+    Cost2RRSameMode = cost;
+
+    CostTTPViolation = cost;
+    CostImbalance = cost;
+}
+
 void Solution::PrintAllRoundsLeague(const int l){
     for (int r = 0; r < NrColouredRounds; ++r){
         cout << "ROUND " << r << endl;

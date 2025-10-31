@@ -17,29 +17,39 @@ NrRoundsTTP = {"BRA24": RoundSet24, "CIRC40": RoundSet40, "CON40": RoundSet40, "
 ListLengths = [1,10,50,500,5000] # list lengths
 
 
-def BoxPlotsAblation(FolderPathIP, FolderPathHeuristicMinCost, FolderPathHeuristicNoMinCost):
-    FilePathBounds = os.path.join(os.path.join("Instances", "TTP"), "Bounds.txt")
+def BoxPlotsAblation(FolderPath):
+    FolderPathIP = os.path.join(FolderPath, "IP")
+    FolderPathBase = os.path.join(FolderPath, "Base")
+    FolderPathM = os.path.join(os.path.join(FolderPath, "Heuristic"), "M_uniform")
+    FolderPathBM = os.path.join(os.path.join(FolderPath, "Heuristic"), "BM_uniform")
+    FolderPathPTS = os.path.join(os.path.join(FolderPath, "Heuristic"), "iPTS_uniform")
+    FolderPathAll = os.path.join(FolderPath, "Heuristic")
+    FolderPaths = [FolderPathIP, FolderPathBase, FolderPathM, FolderPathBM, FolderPathPTS, FolderPathAll]
+
+    FilePathBounds = os.path.join(os.path.join("Instances", "TTP"), "DVBKDB.txt")
     print(f'Open {FilePathBounds}')
     Bounds = {inst: {r: 0 for r in NrRoundsTTP[inst]} for inst in NrRoundsTTP.keys()}
     with open(FilePathBounds, 'r', newline="") as file:
         reader = csv.reader(file)
         for i, row in enumerate(reader):
             inst = row[0]
+            if inst == "SUP12":
+                continue
             lb = int(row[1])
             r = int(row[2])
             Bounds[inst][r] = lb
             # print(f'LB of {inst} with {r} rounds  = {lb}')
 
     # boxplots 
-    data = {"IP": [], "MinCost": [], "NoMinCost": []}
+    data = {"IP": [], "Base": [], "M": [], "BM": [], "iPTS": [], "All": []}
 
     for inst in NrRoundsTTP.keys():
         for r in NrRoundsTTP[inst]:
-            for algo, FolderPath in zip(data.keys(), [FolderPathIP, FolderPathHeuristicMinCost, FolderPathHeuristicNoMinCost]):
+            for algo, FolderPath in zip(data.keys(), FolderPaths):
                 if algo == "IP":
                     File = inst + "_" + str(r) + ".txt"
                 else:
-                    File = inst + "_s0_HL500_"  + str(r) + ".txt"
+                    File = inst + "_" + str(r) + "_s0_HL500" + ".txt"
                 FilePath = os.path.join(FolderPath, File)
                 if not os.path.exists(FilePath):
                     print(f'The file {FilePath} does not exist yet!')
@@ -55,9 +65,12 @@ def BoxPlotsAblation(FolderPathIP, FolderPathHeuristicMinCost, FolderPathHeurist
                             data[algo].append(gap)
                             break
 
-    BoxPlots = [data["IP"], data["MinCost"], data["NoMinCost"]]
+    BoxPlots = [data["IP"], data["Base"], data["M"], data["BM"], data["iPTS"], data["All"]]
     fig, ax = plt.subplots(figsize=(10, 7))
     ax.boxplot(BoxPlots, labels=data.keys())
+    OutputPath = os.path.join("Figures", "Ablation_test1.png")
+    print(f"Save results in {OutputPath}")
+    fig.savefig(OutputPath) 
     plt.show()
 
 
@@ -241,7 +254,7 @@ if __name__ == "__main__":
     FolderPathHeuristicMinCost = os.path.join(os.path.join(FolderPath, "Heuristic"), "MinCost")
     FolderPathBase = os.path.join(FolderPath, "Base")
 
-    BoxPlotsAblation(FolderPathIP, FolderPathHeuristicMinCost, FolderPathHeuristicNoMinCost)
+    BoxPlotsAblation(FolderPath)
     # MakePlotTimeListLength(FolderPathHeuristic,CM,TTP)
     # Analyze(CM,TTP,FolderPathIP, FolderPathHeuristic, FolderPathBase)
 

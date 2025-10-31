@@ -114,6 +114,13 @@ void GurSolver::BoundTTP_AllTeams(){
 		model.addConstr(y_ti[i][i] == 0);
 	}
 
+	// SRR constraint
+	for (i = 0; i < N; ++i){
+		for (t = i+1; t < N; ++t){
+			model.addConstr(y_ti[t][i] + y_ti[i][t] <= 1);
+		}
+	}
+
 	for (t = 0; t < N; ++t){
 		GRBLinExpr sum_ti = 0;
 		GRBLinExpr sum_it = 0;

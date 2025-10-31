@@ -138,6 +138,7 @@ void SaveSolution(std::ofstream& output_file, Solution& sol){
 void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data){
     // Find initial solution with Vizing
     Solution sol(in);
+    sol.SetOneCostAllViolations(data.ConstrViolationCost);
     if (sol.getSetting() != Setting::Miao){
         cout << "Solve Vizing" << endl;
         VizingConstruction(sol, data.seed);
@@ -308,7 +309,46 @@ void TestCostMinimization(const InputData& data){
     }
 }
 
-void BoundsTTP(){
+void BoundTTP(const int TimeLimit, const string Instance, const int NrRoundsTTP, std::ofstream& output_file){
+
+    Input in;
+    InputData data;
+    data.TTP = true;
+    string FilePath = FolderPath(data) + "Original" + std::string(PATHSEP) + Instance + ".xml";
+
+    if (!in.read_TTP(FilePath, NrRoundsTTP)){
+        cout << "could not read " << FilePath << endl;
+        return;
+    }
+
+    GurSolver gur(in);
+    Solution sol(in);
+    int sum = 0;
+    gur.setTimeLimit(TimeLimit); 
+    gur.BoundTTP_AllTeams();
+    sum += gur.solve();
+
+    /*
+    for (int t = 0; t < in.getNrTeams(); ++t){
+        gur.BoundTTP(t);
+        sum += gur.solve();
+    }
+    */
+
+    cout << "sum for instance " << Instance << " with " << NrRoundsTTP << " = " << sum << endl;
+
+    output_file << Instance << "," << sum << "," << NrRoundsTTP << "\n";
+}
+
+void BoundsTTP_OneInstance(InputData& data){
+    string OutputFilePath = "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP) + "Bound_" + data.Instance + "_" + to_string(data.NrRounds) + ".txt";
+    cout << "Save file as " << OutputFilePath << endl;
+    std::ofstream output_file(OutputFilePath);
+    BoundTTP(data.TimeLimit, data.Instance, data.NrRounds, output_file);
+    output_file.close();
+}
+
+void BoundsTTP_All(const InputData& data){
     bool Bounds2RR = false;
     string OutputFilePath = "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP) + "Bounds.txt";
     if (Bounds2RR){
@@ -318,10 +358,6 @@ void BoundsTTP(){
     std::ofstream output_file(OutputFilePath);
 
     for (string Instance: InstancesTTP){
-        Input in;
-        InputData data;
-        data.TTP = true;
-        string FilePath = FolderPath(data) + "Original" + std::string(PATHSEP) + Instance + ".xml";
 
         vector<int>Rounds;
         Rounds = {10,20,30};
@@ -354,28 +390,7 @@ void BoundsTTP(){
         }
 
         for (int NrRoundsTTP: Rounds){
-
-            if (!in.read_TTP(FilePath, NrRoundsTTP)){
-                cout << "could not read " << FilePath << endl;
-                return;
-            }
-
-            GurSolver gur(in);
-            Solution sol(in);
-            int sum = 0;
-            gur.BoundTTP_AllTeams();
-            sum += gur.solve();
-
-            /*
-            for (int t = 0; t < in.getNrTeams(); ++t){
-                gur.BoundTTP(t);
-                sum += gur.solve();
-            }
-            */
-
-            cout << "sum for instance " << Instance << " with " << NrRoundsTTP << " = " << sum << endl;
-
-            output_file << Instance << "," << sum << "," << NrRoundsTTP << "\n";
+            BoundTTP(data.TimeLimit, Instance, NrRoundsTTP, output_file);
         }
     }
 
