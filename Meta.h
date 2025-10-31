@@ -38,6 +38,7 @@ class MetaBase{ // Everything that can be used for all metaheuristics
         int it_accepted;
         int it_idle; // nr of iterations without improvement
         bool STOP = false;
+        bool StartTimeSet = false;
 
         std::mt19937& gen;
         std::uniform_real_distribution<> dist_real;
@@ -68,6 +69,15 @@ class MetaBase{ // Everything that can be used for all metaheuristics
 
         virtual bool Update(Solution& sol, const int obj) = 0; // CUSTOMIZE, acceptance function
 
+        void Reset(){
+            it = 0;
+            it_accepted = 0;
+            it_idle = 0;
+            best_obj = INT_MAX;
+            current_obj = INT_MAX;
+            STOP=false;
+        }
+
         double RandomDoubleNumber(const double a, const double b){
             dist_real = std::uniform_real_distribution<>(a,b);
             return dist_real(gen);
@@ -92,7 +102,10 @@ class MetaBase{ // Everything that can be used for all metaheuristics
         }
 
         void setStartTime(std::chrono::high_resolution_clock::time_point start_time){
-            StartTime = start_time;
+            if (!StartTimeSet){
+                StartTime = start_time;
+                StartTimeSet = true;
+            }
         }
 
         template <typename T = std::chrono::seconds>
@@ -162,7 +175,7 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
             for (auto&[TimeStamp, Solution]: TimeStampSolution){
                 output_file << TimeStamp << "," << Solution << "\n";
             }
-            output_file << "Final, " << this->best_obj << "\n" << endl;
+            output_file << "Final, " << this->best_obj << "," << (int)this->getTimeDiff() << "\n" << endl;
         }
 
         bool Update(Solution& sol, const int obj) ;

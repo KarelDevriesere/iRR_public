@@ -149,7 +149,7 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
         ReadSolution(path, sol);
     }
     assert(sol.validate());
-    const int obj = sol.ComputeTotalCost();
+    int obj = sol.ComputeTotalCost();
     cout << "Cost initial solution = " << obj << endl;
 
     std::mt19937 gen(data.seed);
@@ -158,9 +158,32 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     algo.SetMaxIt(data.MaxIt);
     algo.SetTimeStamps(TimeStamps);
     algo.solve(in, sol);
+
+    int NrViolations = 0;
+    bool HillClimbing = false;
+    if (data.TTP){
+        sol.SetOneCostAllViolations(1);
+        NrViolations = sol.ComputeTotalCostTTPViolations();
+        if (NrViolations > 0){
+            HillClimbing = true;
+            cout << "Solution not feasible, nr of violations = " << NrViolations << endl;
+            cout << "Start hill climbing" << endl;
+            // Hill climbing
+            sol.SetOneCostAllViolations(100000);
+            obj = sol.ComputeTotalCost();
+            algo.SetHistoryLength(5);
+            algo.setTimeLimit_meta(2*data.TimeLimit);
+            algo.solve(in, sol);
+            sol.SetOneCostAllViolations(1);
+            NrViolations = sol.ComputeTotalCostTTPViolations();
+            cout << "Final nr of violations = " << NrViolations << endl;
+            sol.SetOneCostAllViolations(0);
+        }
+    }
+
     algo.SaveBestSolution(sol);
     sol.validate();
-    cout << "Final solution = " << sol.ComputeTotalCost() << endl;
+    cout << "Final solution (travel cost) = " << sol.ComputeTotalCost() << endl;
 
     string FilePath;
     if (data.OutputFolder.empty()){
@@ -194,6 +217,9 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     std::ofstream output_file(FilePath);
     output_file << config << "\n";
     algo.SaveSolutionsTimeStamps(output_file);
+    if (data.TTP){
+        output_file << "NrViolations," << NrViolations << "\n";
+    }
     SaveSolution(output_file, sol);
 
     // Replace txt extension with XML

@@ -472,6 +472,7 @@ void Heuristic_CM::solve(Input& in, Solution& sol){
     current_obj = best_obj;
     UpdateBestSolution(sol);
     cout << "updated best solution" << endl;
+    Reset();
 
     if (sol.getSetting() == Setting::CM){
         cout << "Cost Minimization!!" << endl;
