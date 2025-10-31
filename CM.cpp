@@ -355,9 +355,6 @@ void BoundsTTP(){
 
         for (int NrRoundsTTP: Rounds){
 
-            Instance = "CIRC40";
-            NrRoundsTTP = 10;
-
             if (!in.read_TTP(FilePath, NrRoundsTTP)){
                 cout << "could not read " << FilePath << endl;
                 return;
@@ -366,14 +363,18 @@ void BoundsTTP(){
             GurSolver gur(in);
             Solution sol(in);
             int sum = 0;
+            gur.BoundTTP_AllTeams();
+            sum += gur.solve();
 
-
+            /*
             for (int t = 0; t < in.getNrTeams(); ++t){
                 gur.BoundTTP(t);
                 sum += gur.solve();
             }
-            cout << "DONE" << endl;
-            cin.get();
+            */
+
+            cout << "sum for instance " << Instance << " with " << NrRoundsTTP << " = " << sum << endl;
+
             output_file << Instance << "," << sum << "," << NrRoundsTTP << "\n";
         }
     }
