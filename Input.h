@@ -130,7 +130,7 @@ class Input
     public:
         Input();
         ~Input();
-        int read_TTP(const std::string file_path, const int nrRounds);
+        int read_TTP(const std::string file_path);
         int read_CostMinimization(const string file_path, InstanceSetCM inst);
         int read_CostMinimizationJasper(const string file_path);
         int read_Miao_Hockey(const string file_path, const bool Miao);
