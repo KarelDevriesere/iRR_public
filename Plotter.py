@@ -50,6 +50,8 @@ def BoxPlotsAblation(FolderPathIP, FolderPathHeuristicMinCost, FolderPathHeurist
                         if row[0] == "Final":
                             BestSolution = int(row[1])
                             gap = (BestSolution-Bounds[inst][r])/BestSolution
+                            if gap > 0.5 and algo != "IP":
+                                print(f'Instance {inst}_{r} has a gap of {round(gap,2)} (lb = {Bounds[inst][r]}), (ub = {BestSolution})')
                             data[algo].append(gap)
                             break
 

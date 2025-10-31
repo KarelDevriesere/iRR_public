@@ -150,7 +150,6 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     assert(sol.validate());
     const int obj = sol.ComputeTotalCost();
     cout << "Cost initial solution = " << obj << endl;
-    cin.get();
 
     std::mt19937 gen(data.seed);
     Heuristic_CM algo(data.Moves, data.InputWeights, gen, data.HistoryLength, obj);
@@ -162,18 +161,25 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     sol.validate();
     cout << "Final solution = " << sol.ComputeTotalCost() << endl;
 
-    string FilePath = FolderPath + "Results" + std::string(PATHSEP);
-    if (data.Base){
-        FilePath += "Base";
+    string FilePath;
+    if (data.OutputFolder.empty()){
+        FilePath = FolderPath + "Results" + std::string(PATHSEP);
+        if (data.Base){
+            FilePath += "Base";
+        }
+        else{
+            FilePath += "Heuristic";
+        }
     }
     else{
-        FilePath += "Heuristic";
+        FilePath = data.OutputFolder;
     }
     FilePath += std::string(PATHSEP) + data.Instance;
     if (in.getSetting() == Setting::TTP){
         FilePath += "_" + to_string(in.getNrRounds());
     }
     FilePath += "_s" + to_string(data.seed) + "_HL" + to_string(data.HistoryLength) + ".txt";
+
     string config = to_string(data.seed);
     if (data.Base){
         config += ",BaseAlgo,";
@@ -303,7 +309,7 @@ void TestCostMinimization(const InputData& data){
 }
 
 void BoundsTTP(){
-    bool Bounds2RR = true;
+    bool Bounds2RR = false;
     string OutputFilePath = "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP) + "Bounds.txt";
     if (Bounds2RR){
         OutputFilePath = "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP) + "Bounds_2RR.txt";
@@ -315,7 +321,7 @@ void BoundsTTP(){
         Input in;
         InputData data;
         data.TTP = true;
-        string FilePath = FolderPath(data) + Instance + ".xml";
+        string FilePath = FolderPath(data) + "Original" + std::string(PATHSEP) + Instance + ".xml";
 
         vector<int>Rounds;
         Rounds = {10,20,30};
@@ -357,10 +363,18 @@ void BoundsTTP(){
             GurSolver gur(in);
             Solution sol(in);
             int sum = 0;
+            gur.BoundTTP_AllTeams();
+            sum += gur.solve();
+
+            /*
             for (int t = 0; t < in.getNrTeams(); ++t){
                 gur.BoundTTP(t);
                 sum += gur.solve();
             }
+            */
+
+            cout << "sum for instance " << Instance << " with " << NrRoundsTTP << " = " << sum << endl;
+
             output_file << Instance << "," << sum << "," << NrRoundsTTP << "\n";
         }
     }
