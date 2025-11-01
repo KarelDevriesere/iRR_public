@@ -186,19 +186,20 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     cout << "Final solution (travel cost) = " << sol.ComputeTotalCost() << endl;
 
     string FilePath;
-    if (data.OutputFolder.empty()){
-        FilePath = FolderPath + "Results" + std::string(PATHSEP);
-        if (data.Base){
-            FilePath += "Base";
-        }
-        else{
-            FilePath += "Heuristic";
-        }
-    }
-    else{
-        FilePath = data.OutputFolder;
-    }
-    FilePath += std::string(PATHSEP) + data.Instance;
+    //if (data.OutputFolder.empty()){
+    //    FilePath = FolderPath + "Results" + std::string(PATHSEP);
+    //    if (data.Base){
+    //        FilePath += "Base";
+    //    }
+    //    else{
+    //        FilePath += "Heuristic";
+    //    }
+    //}
+    //else{
+    //    FilePath = data.OutputFolder;
+    //}
+    //FilePath += std::string(PATHSEP) + data.Instance;
+    FilePath = data.Instance;
     if (in.getSetting() == Setting::TTP){
         FilePath += "_" + to_string(in.getNrRounds());
     }
