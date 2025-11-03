@@ -1,15 +1,22 @@
-HPC   ?= 0
-DAVID ?= 1
+HPC   ?= 1
+DAVID ?= 0
 
 # TODO TODO Add a release and debug mode
 CXX      = g++
-CXXFLAGS = -O3 -Wall -g -std=c++17
+CXXFLAGS = -Wall -g -std=c++17
 LDFLAGS  =
 INCLUDES =
 
-# Printing
-PRINT ?= 0
-CXXFLAGS += -DPRINT=$(PRINT)
+# Default build mode: release
+# To compile debug: make MODE=DEBUG
+MODE ?= release
+ifeq ($(MODE),release)
+    PRINT ?= 0
+    CXXFLAGS += -O3 -DNDEBUG -DPRINT=$(PRINT)
+else ifeq ($(MODE),debug)
+    PRINT ?= 1
+    CXXFLAGS += -O0 -g -DDEBUG -DPRINT=$(PRINT)
+endif
 
 # TODO Karel define PATHSEP as compileflag in cmake
 -DPATHSEP="\"/\""
@@ -27,9 +34,6 @@ else ifeq ($(HPC),1)
 endif
 
 
-# if make release: do not check assert statements
-release: CXXFLAGS += -DNDEBUG -O3
-release: all
 
 # Sources / objects / target
 SRCS = $(wildcard *.cpp)

@@ -1,0 +1,83 @@
+inst=CIRC40
+r=30
+Compute TTP bound for CIRC40_30 with TimeLimit 21660
+Save file as Instances/TTP/Bound_CIRC40_30.txt
+Read TTP files
+Instance: CIRC40, Type: A, Contributor: Easton, Nemhauser, Trick
+Date: 0/0/2001
+NrTeams = 40, NrRounds =  30
+Set parameter TokenServer to value "licgurobi.ugent.be"
+Set parameter Threads to value 8
+Set parameter TimeLimit to value 21660
+Gurobi Optimizer version 12.0.0 build v12.0.0rc1 (linux64 - "Red Hat Enterprise Linux 9.6 (Plow)")
+
+CPU model: AMD EPYC 7552 48-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 96 physical cores, 96 logical processors, using up to 8 threads
+
+Non-default parameters:
+TimeLimit  21660
+Threads  8
+
+Optimize a model with 2500 rows, 1129480 columns and 3357280 nonzeros
+Model fingerprint: 0x6254eaa3
+Variable types: 0 continuous, 1129480 integer (1129480 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [2e+00, 8e+01]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 2e+01]
+Presolve removed 80 rows and 731160 columns
+Presolve time: 3.55s
+Presolved: 2420 rows, 398320 columns, 1163760 nonzeros
+Variable types: 0 continuous, 398320 integer (398320 binary)
+Deterministic concurrent LP optimizer: primal simplex, dual simplex, and barrier
+Showing barrier log only...
+
+Root barrier log...
+
+Ordering time: 0.00s
+
+Barrier statistics:
+ AA' NZ     : 2.100e+02
+ Factor NZ  : 2.310e+02 (roughly 1 MB of memory)
+ Factor Ops : 3.311e+03 (less than 1 second per iteration)
+ Threads    : 1
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   2.13238991e+06 -2.69130526e+04  6.72e+01 0.00e+00  7.11e+02     5s
+   1   1.27586280e+05 -8.20260838e+03  3.88e+00 1.82e-12  4.39e+01     5s
+   2   5.96890587e+03 -2.33126465e+02  2.75e-15 1.82e-12  1.90e+00     5s
+   3   5.22899201e+03  2.92330741e+03  7.11e-15 1.82e-12  7.05e-01     5s
+
+Barrier performed 3 iterations in 4.91 seconds (8.69 work units)
+Barrier solve interrupted - model solved by another algorithm
+
+Concurrent spin time: 0.00s
+
+Solved with primal simplex
+
+Use crossover to convert LP symmetric solution to basic solution...
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+     775    3.6000000e+03   0.000000e+00   0.000000e+00      5s
+
+Root relaxation: objective 3.600000e+03, 775 iterations, 0.58 seconds (0.60 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0    3600.0000000 3600.00000  0.00%     -    5s
+
+Explored 1 nodes (775 simplex iterations) in 5.09 seconds (8.76 work units)
+Thread count was 8 (of 96 available processors)
+
+Solution count 1: 3600 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 3.600000000000e+03, best bound 3.600000000000e+03, gap 0.0000%
+
+User-callback calls 1255, time in user-callback 0.00 sec
+LB for instance CIRC40 with 30 = 3600, UB = 3600, gap = 0

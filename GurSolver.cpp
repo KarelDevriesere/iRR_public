@@ -74,6 +74,9 @@ void GurSolver::BoundTTP_AllTeams(){
 	const int N = getNrTeams();
 
 	int t,r,i;
+	
+	// Nog eens nakijken of model wel klopt!!!!
+	// Trip r is verschillend voor elk team, is dit een probleem??
 
 	vector<pair<vector<vector<int>>,vector<int>>>Trips_CostTrips(N);
 	vector<vector<vector<int>>>Trips(N);
@@ -146,6 +149,16 @@ void GurSolver::BoundTTP_AllTeams(){
 		model.addConstr(sum_ti == getNrRounds()/2);
 		model.addConstr(sum_it == getNrRounds()/2);
 	}
+
+	/*
+	GRBLinExpr sum_tr = 0;
+	for (t = 0; t < N; ++t){
+		for (r = 0; r < NrTrips; ++r){
+			sum_tr += (Trips[t][r].size()+1)*z_tr[t][r];
+		}
+	}
+	model.addConstr(sum_tr >= 280);
+	*/
 
 	Objective = 0;
 	for (t = 0; t < N; ++t){

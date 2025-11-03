@@ -1,0 +1,120 @@
+inst=CON40
+r=10
+Compute TTP bound for CON40_10 with TimeLimit 21660
+Save file as Instances/TTP/Bound_CON40_10.txt
+Read TTP files
+Instance: CON40, Type: A, Contributor: Urrutia, Ribeiro
+Date: 0/0/2006
+NrTeams = 40, NrRounds =  10
+Set parameter TokenServer to value "licgurobi.ugent.be"
+Set parameter Threads to value 8
+Set parameter TimeLimit to value 21660
+Gurobi Optimizer version 12.0.0 build v12.0.0rc1 (linux64 - "Red Hat Enterprise Linux 9.6 (Plow)")
+
+CPU model: AMD EPYC 7552 48-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 96 physical cores, 96 logical processors, using up to 8 threads
+
+Non-default parameters:
+TimeLimit  21660
+Threads  8
+
+Optimize a model with 2500 rows, 1129480 columns and 3357280 nonzeros
+Model fingerprint: 0x15c67a3d
+Variable types: 0 continuous, 1129480 integer (1129480 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [2e+00, 4e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 5e+00]
+Found heuristic solution: objective 400.0000000
+Presolve removed 80 rows and 731160 columns
+Presolve time: 3.72s
+Presolved: 2420 rows, 398320 columns, 1163760 nonzeros
+Variable types: 0 continuous, 398320 integer (398320 binary)
+
+Use crossover to convert LP symmetric solution to basic solution...
+
+Root crossover log...
+
+       0 PPushes remaining with PInf 0.0000000e+00                 7s
+
+  Push phase complete: Pinf 0.0000000e+00, Dinf 7.1587181e-13      7s
+
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+  365524    2.6666667e+02   0.000000e+00   0.000000e+00      7s
+
+Root relaxation: objective 2.666667e+02, 365524 iterations, 2.96 seconds (3.94 work units)
+Total elapsed time = 11.33s (DegenMoves)
+Total elapsed time = 18.16s (DegenMoves)
+Total elapsed time = 22.84s (DegenMoves)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0  266.66667    0  209  400.00000  266.66667  33.3%     -   27s
+H    0     0                     280.0000000  266.66667  4.76%     -   27s
+     0     0  266.66667    0  405  280.00000  266.66667  4.76%     -   58s
+     0     0  266.66667    0  191  280.00000  266.66667  4.76%     -  274s
+     0     0  266.66667    0  264  280.00000  266.66667  4.76%     -  313s
+     0     0  266.66667    0  240  280.00000  266.66667  4.76%     -  335s
+     0     0  266.66667    0  296  280.00000  266.66667  4.76%     -  499s
+     0     0  266.66667    0  204  280.00000  266.66667  4.76%     -  520s
+     0     0  266.66667    0  293  280.00000  266.66667  4.76%     -  530s
+     0     0  266.66667    0  206  280.00000  266.66667  4.76%     -  556s
+     0     0  266.66667    0  178  280.00000  266.66667  4.76%     -  587s
+     0     0  266.66667    0  260  280.00000  266.66667  4.76%     -  657s
+     0     0  266.66667    0  190  280.00000  266.66667  4.76%     -  681s
+     0     0  266.66667    0  302  280.00000  266.66667  4.76%     -  934s
+     0     0  266.66667    0  204  280.00000  266.66667  4.76%     -  955s
+     0     0  266.66667    0  180  280.00000  266.66667  4.76%     - 1310s
+     0     2  266.66667    0  180  280.00000  266.66667  4.76%     - 1470s
+     1     3     cutoff    1       280.00000  266.66667  4.76% 54150 1570s
+     3     4  266.66667    2  310  280.00000  266.66667  4.76% 18407 1650s
+     5     8  266.66667    3  312  280.00000  266.66667  4.76% 11097 1718s
+     9    16  266.66667    4  314  280.00000  266.66667  4.76%  6303 1791s
+    17    32  266.66667    5  299  280.00000  266.66667  4.76%  3493 1865s
+    33    40  266.66667    7  303  280.00000  266.66667  4.76%  2070 1937s
+    41    49  266.66667    7  290  280.00000  266.66667  4.76%  1850 2018s
+    50    61  266.66667    8  305  280.00000  266.66667  4.76%  1573 2095s
+    62    76  266.66667    9  292  280.00000  266.66667  4.76%  1495 2184s
+    79   101  266.66667    9  302  280.00000  266.66667  4.76%  1612 2353s
+   110   198  266.66667   11  307  280.00000  266.66667  4.76%  2645 2533s
+   231   461  266.66667   28  233  280.00000  266.66667  4.76%  2070 2782s
+   626   695 infeasible   84       280.00000  266.66667  4.76%  2562 3068s
+  1109   855  266.66667  128  222  280.00000  266.66667  4.76%  2654 3249s
+  1594  1026 infeasible  176       280.00000  266.66667  4.76%  2399 3465s
+  2071  1121 infeasible  224       280.00000  266.66667  4.76%  2338 3601s
+  2550  1194 infeasible  269       280.00000  266.66667  4.76%  2188 3701s
+  3033  1339  266.66667  318  230  280.00000  266.66667  4.76%  2035 3841s
+  3590  1475 infeasible  362       280.00000  266.66667  4.76%  2131 3900s
+  4146  1572 infeasible  407       280.00000  266.66667  4.76%  2088 3959s
+  4701  1655 infeasible  452       280.00000  266.66667  4.76%  2015 4004s
+  5256  1712 infeasible  496       280.00000  266.66667  4.76%  1948 4049s
+  5811  1759  266.66667  535  224  280.00000  266.66667  4.76%  1887 4096s
+  6366  1805  266.66667  575  216  280.00000  266.66667  4.76%  1846 4136s
+  6922  1849  266.66667  617  219  280.00000  266.66667  4.76%  1808 4195s
+  7200  1893 infeasible  618       280.00000  266.66667  4.76%  1787 4244s
+  7707  1894  266.66667  173  302  280.00000  266.66667  4.76%  1732 4265s
+  7709  1895  266.66667   13  178  280.00000  266.66667  4.76%  1731 4334s
+  7710  1896  271.66667  167  336  280.00000  271.66667  2.98%  1731 4639s
+
+Cutting planes:
+  Gomory: 38
+  Clique: 4
+  StrongCG: 1
+  Zero half: 12
+  Relax-and-lift: 31
+
+Explored 7710 nodes (14699606 simplex iterations) in 4849.90 seconds (12154.12 work units)
+Thread count was 8 (of 96 available processors)
+
+Solution count 2: 280 400 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 2.800000000000e+02, best bound 2.800000000000e+02, gap 0.0000%
+
+User-callback calls 1653332, time in user-callback 0.12 sec
+LB for instance CON40 with 10 = 280, UB = 280, gap = 0

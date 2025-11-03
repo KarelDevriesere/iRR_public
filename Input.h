@@ -103,6 +103,7 @@ class Input
         int MaxSameClub = 2;
         int IndexDummyClub;
         int MaxEdgeCost;
+        string InstanceName;
 
         std::unordered_map<HAP_requirement_name, bool>HAP_requirements{
             {HAP_requirement_name::NoThreeConsecutive, false},
@@ -130,7 +131,7 @@ class Input
     public:
         Input();
         ~Input();
-        int read_TTP(const std::string file_path, const int nrRounds);
+        int read_TTP(const std::string file_path);
         int read_CostMinimization(const string file_path, InstanceSetCM inst);
         int read_CostMinimizationJasper(const string file_path);
         int read_Miao_Hockey(const string file_path, const bool Miao);
@@ -210,6 +211,8 @@ class Input
         int NrRoundsBaseAlgo = -1;
         bool IsBaseAlgo()const{return BaseAlgo;};
         int getNrRoundsBaseAlgo()const{return NrRoundsBaseAlgo;};
+
+        string getInstanceName()const{return InstanceName;};
 };
 
 #endif

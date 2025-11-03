@@ -13,8 +13,7 @@ Arguments:
 --Seed: <+int> # seed (default is 0)
 --Heuristic: <0/1> # 0: run IP, 1: run heuristic (default is 1)
 --HistoryLength: <+int> # Lenght of the list in late acceptancy hill climbing, default is 1 (hill climbing)
---InstanceTTP <BRA24/CIRC40/CON40/GAL40/INCR40/LINE40/N16/NFL32/SUP12> # instance (default is N16)
---NrRounds <+int> # NrRounds of iRR TODO: set this information in the instance XML file (default is 4)
+--InstanceTTP <full path to the XML file, including the number of rounds>
 --TimeLimit <+int> # Absolute TimeLimit, default is 7200s
 --MaxIt <+int> # Max nr of iterations, LAHC will stop if "it > MaxIt && it_idle > it*0.02" (default is 1 000 000)
 --Weight <move> <+int> # Specify the weight of a move (see below*)

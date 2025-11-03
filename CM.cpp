@@ -12,6 +12,33 @@ string PathInitialSolutionMiao(InputData data){
     return path;
 }
 
+const unordered_map<string,int>InstanceHL = {
+    {"I_BRA24_6",100000},
+    {"I_BRA24_12",10000},
+    {"I_BRA24_18",10000},
+    {"I_CIRC40_10",500},
+    {"I_CIRC40_20",500},
+    {"I_CIRC40_30",500},
+    {"I_CON40_10",1},
+    {"I_CON40_20",100},
+    {"I_CON40_30",1},
+    {"I_GAL40_10",1000},
+    {"I_GAL40_20",500},
+    {"I_GAL40_30",500},
+    {"I_INCR40_10",1000},
+    {"I_INCR40_20",500},
+    {"I_INCR40_30",500},
+    {"I_LINE40_10",1000},
+    {"I_LINE40_20",1000},
+    {"I_LINE40_30",500},
+    {"I_N16_4",1000},
+    {"I_N16_8",10000},
+    {"I_N16_12",10000},
+    {"I_NFL32_8",1000},
+    {"I_NFL32_16",1000},
+    {"I_NFL32_24",1000}
+};
+
 void ReadSolution(const string path, Solution& sol){
 
     // cout << "read the file " << path << endl;
@@ -186,19 +213,20 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     cout << "Final solution (travel cost) = " << sol.ComputeTotalCost() << endl;
 
     string FilePath;
-    if (data.OutputFolder.empty()){
-        FilePath = FolderPath + "Results" + std::string(PATHSEP);
-        if (data.Base){
-            FilePath += "Base";
-        }
-        else{
-            FilePath += "Heuristic";
-        }
-    }
-    else{
-        FilePath = data.OutputFolder;
-    }
-    FilePath += std::string(PATHSEP) + data.Instance;
+    //if (data.OutputFolder.empty()){
+    //    FilePath = FolderPath + "Results" + std::string(PATHSEP);
+    //    if (data.Base){
+    //        FilePath += "Base";
+    //    }
+    //    else{
+    //        FilePath += "Heuristic";
+    //    }
+    //}
+    //else{
+    //    FilePath = data.OutputFolder;
+    //}
+    //FilePath += std::string(PATHSEP) + data.Instance;
+    FilePath = data.Instance;
     if (in.getSetting() == Setting::TTP){
         FilePath += "_" + to_string(in.getNrRounds());
     }
@@ -272,7 +300,7 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     return;
 }
 
-void TestCostMinimization(const InputData& data){
+void TestCostMinimization(InputData& data){
 
     vector<int>TimeStamps;
     int TimeStamp = 0;
@@ -286,7 +314,7 @@ void TestCostMinimization(const InputData& data){
     cout << "FolderPath: " << folder_path << endl;
     string file_path;
     if (data.TTP){
-        file_path = folder_path + std::string(PATHSEP) + "Original" + std::string(PATHSEP) + data.Instance + ".xml";
+        file_path = data.Instance;
     }
     else{
         file_path = folder_path + data.Instance + ".txt";
@@ -297,7 +325,7 @@ void TestCostMinimization(const InputData& data){
         cout << "Could not read " << file_path << endl;
         return;
     }
-    else if (data.TTP && !in.read_TTP(file_path, data.NrRounds)){
+    else if (data.TTP && !in.read_TTP(file_path)){
         cout << "could not read " << file_path << endl;
         return;
     }
@@ -326,6 +354,8 @@ void TestCostMinimization(const InputData& data){
         }
         in.setAllowedNrCapacityViolations();
     }
+    data.HistoryLength = InstanceHL.at(in.getInstanceName());
+    cout << "History length = " << data.HistoryLength << endl;
     
     if (data.Heuristic){
         SolveHeuristic(in,TimeStamps,folder_path,data);
@@ -340,19 +370,24 @@ void BoundTTP(const int TimeLimit, const string Instance, const int NrRoundsTTP,
     Input in;
     InputData data;
     data.TTP = true;
-    string FilePath = FolderPath(data) + "Original" + std::string(PATHSEP) + Instance + ".xml";
 
-    if (!in.read_TTP(FilePath, NrRoundsTTP)){
-        cout << "could not read " << FilePath << endl;
+    if (!in.read_TTP(Instance)){
+        cout << "could not read " << Instance << endl;
         return;
     }
 
     GurSolver gur(in);
     Solution sol(in);
-    int sum = 0;
+    int LB = 0;
+    int UB = 0;
+    double gap = 0;
     gur.setTimeLimit(TimeLimit); 
     gur.BoundTTP_AllTeams();
-    sum += gur.solve();
+    gur.solve();
+    LB = gur.getBestBound();
+    UB = gur.getBestObjValue();
+    gap = gur.getMipGap();
+
 
     /*
     for (int t = 0; t < in.getNrTeams(); ++t){
@@ -361,9 +396,9 @@ void BoundTTP(const int TimeLimit, const string Instance, const int NrRoundsTTP,
     }
     */
 
-    cout << "sum for instance " << Instance << " with " << NrRoundsTTP << " = " << sum << endl;
+    cout << "LB for instance " << Instance << " with " << NrRoundsTTP << " = " << LB << ", UB = " << UB << ", gap = " << gap << endl;
 
-    output_file << Instance << "," << sum << "," << NrRoundsTTP << "\n";
+    output_file << Instance << "," << LB << "," << UB << "," << gap << "," << NrRoundsTTP << "\n";
 }
 
 void BoundsTTP_OneInstance(InputData& data){
