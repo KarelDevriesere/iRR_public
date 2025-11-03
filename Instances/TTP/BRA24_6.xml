@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Instance>
     <MetaData>
-        <InstanceName>I_BRA24_12</InstanceName>
+        <InstanceName>I_BRA24_6</InstanceName>
         <DataType>NULL</DataType>
         <Contributor>Ribeiro and Urrutia</Contributor>
         <Date year="30" month="10" day="2025"/>
@@ -646,12 +646,6 @@
             <slot id="3" name="Slot3" slotGroup="0"/>
             <slot id="4" name="Slot4" slotGroup="0"/>
             <slot id="5" name="Slot5" slotGroup="0"/>
-            <slot id="6" name="Slot6" slotGroup="0"/>
-            <slot id="7" name="Slot7" slotGroup="0"/>
-            <slot id="8" name="Slot8" slotGroup="0"/>
-            <slot id="9" name="Slot9" slotGroup="0"/>
-            <slot id="10" name="Slot10" slotGroup="0"/>
-            <slot id="11" name="Slot11" slotGroup="0"/>
         </Slots>
     </Resources>
     <Constraints>
@@ -659,8 +653,8 @@
             <BA1 penalty="1" type="SOFT"/>
         </BasicConstraints>
         <CapacityConstraints>
-            <CA1 max="6" min="6" mode="H" penalty="1" slotGroups="0" slots="" teamGroups="0" teams="" type="HARD"/>
-            <CA1 max="6" min="6" mode="A" penalty="1" slotGroups="0" slots="" teamGroups="0" teams="" type="HARD"/>
+            <CA1 max="3" min="3" mode="H" penalty="1" slotGroups="0" slots="" teamGroups="0" teams="" type="HARD"/>
+            <CA1 max="3" min="3" mode="A" penalty="1" slotGroups="0" slots="" teamGroups="0" teams="" type="HARD"/>
             <CA3 intp="4" max="3" min="0" mode1="H" mode2="GAMES" penalty="1" teamGroups1="0" teamGroups2="0" teams1="" teams2="" type="HARD"/>
             <CA3 intp="4" max="3" min="0" mode1="A" mode2="GAMES" penalty="1" teamGroups1="0" teamGroups2="0" teams1="" teams2="" type="HARD"/>
         </CapacityConstraints>

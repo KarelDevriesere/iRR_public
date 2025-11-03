@@ -77,15 +77,6 @@ int main(int argc, const char* argv[]){
                     std::cerr << "NrTeams must be 36 or 100 or 250" << endl;
                     return 1;
                 }
-                if (data.NrTeams == 36){
-                    data.NrRounds = 8;
-                }
-                else if (data.NrTeams == 100){
-                    data.NrRounds = 16;
-                }
-                else{
-                    data.NrRounds = 30;
-                }
                 data.CM = true;
                 data.TTP = false;
                 data.Miao = false;
@@ -112,25 +103,11 @@ int main(int argc, const char* argv[]){
             }
             else if (arg == "--InstanceTTP"){ // TTP
                 data.Instance = argv[++i];
-                auto it = std::find(InstancesTTP.begin(), InstancesTTP.end(), data.Instance);
-                if (it == InstancesTTP.end()){
-                    std::cerr << "Incorrect TTP instance name, name given = " << data.Instance << endl;
-                    return 1;
-                }
-                data.TTP = true;
-                data.CM = false;
-                data.Miao = false;
-            }
-            else if (arg == "--NrRounds"){ // TTP
-                data.NrRounds = std::stoi(argv[++i]);
-                if (data.NrRounds <= 0){
-                    std::cerr << "NrRounds must be strictly positive!" << endl;
-                    return 1;
-                }
-                if (data.NrRounds %2 != 0){
-                    std::cerr << "NrRounds must be even!" << endl;
-                    return 1;
-                }
+                //auto it = std::find(InstancesTTP.begin(), InstancesTTP.end(), data.Instance);
+                //if (it == InstancesTTP.end()){
+                //    std::cerr << "Incorrect TTP instance name, name given = " << data.Instance << endl;
+                //    return 1;
+                //}
                 data.TTP = true;
                 data.CM = false;
                 data.Miao = false;
@@ -263,7 +240,7 @@ int main(int argc, const char* argv[]){
             else if (arg == "--help"){
                 cout << "Usage: " << argv[0] << "--Seed <int> --Heuristic <0/1> -- MinCostNB <0/1> --HistoryLength <+int> -- CM <0/1> --NrTeams <36/100>* --k <0/1/5/10>* --i <0/1/2/3/4>* --TimeLimit <+int> --MaxIt <+int> --Weight <Move> <+int>" << endl;
                 cout << "*: For CostMinimization instances" << endl;
-                cout << "For TTP instances, specify --TTP 1 --InstanceTTP <BRA24/CIRC40/CON40/GAL40/INCR40/LINE40/N16/NFL32> --NrRounds<+int>" << endl;
+                cout << "For TTP instances, specify --TTP 1 --InstanceTTP <BRA24/CIRC40/CON40/GAL40/INCR40/LINE40/N16/NFL32>" << endl;
                 return 1;
             }
             else {

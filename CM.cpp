@@ -186,19 +186,20 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     cout << "Final solution (travel cost) = " << sol.ComputeTotalCost() << endl;
 
     string FilePath;
-    if (data.OutputFolder.empty()){
-        FilePath = FolderPath + "Results" + std::string(PATHSEP);
-        if (data.Base){
-            FilePath += "Base";
-        }
-        else{
-            FilePath += "Heuristic";
-        }
-    }
-    else{
-        FilePath = data.OutputFolder;
-    }
-    FilePath += std::string(PATHSEP) + data.Instance;
+    //if (data.OutputFolder.empty()){
+    //    FilePath = FolderPath + "Results" + std::string(PATHSEP);
+    //    if (data.Base){
+    //        FilePath += "Base";
+    //    }
+    //    else{
+    //        FilePath += "Heuristic";
+    //    }
+    //}
+    //else{
+    //    FilePath = data.OutputFolder;
+    //}
+    //FilePath += std::string(PATHSEP) + data.Instance;
+    FilePath = data.Instance;
     if (in.getSetting() == Setting::TTP){
         FilePath += "_" + to_string(in.getNrRounds());
     }
@@ -286,7 +287,7 @@ void TestCostMinimization(const InputData& data){
     cout << "FolderPath: " << folder_path << endl;
     string file_path;
     if (data.TTP){
-        file_path = folder_path + std::string(PATHSEP) + "Original" + std::string(PATHSEP) + data.Instance + ".xml";
+        file_path = data.Instance;
     }
     else{
         file_path = folder_path + data.Instance + ".txt";
@@ -297,7 +298,7 @@ void TestCostMinimization(const InputData& data){
         cout << "Could not read " << file_path << endl;
         return;
     }
-    else if (data.TTP && !in.read_TTP(file_path, data.NrRounds)){
+    else if (data.TTP && !in.read_TTP(file_path)){
         cout << "could not read " << file_path << endl;
         return;
     }
@@ -340,10 +341,9 @@ void BoundTTP(const int TimeLimit, const string Instance, const int NrRoundsTTP,
     Input in;
     InputData data;
     data.TTP = true;
-    string FilePath = FolderPath(data) + "Original" + std::string(PATHSEP) + Instance + ".xml";
 
-    if (!in.read_TTP(FilePath, NrRoundsTTP)){
-        cout << "could not read " << FilePath << endl;
+    if (!in.read_TTP(Instance)){
+        cout << "could not read " << Instance << endl;
         return;
     }
 

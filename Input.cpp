@@ -61,13 +61,12 @@ void Input::SetDefault(const int NrTeams){
     IsTeamDummy = vector<bool>(NrTeams, false);
 }
 
-int Input::read_TTP(const std::string file_path, const int nrRounds){
+int Input::read_TTP(const std::string file_path){
     Setting_ = Setting::TTP;
     cout << "Read TTP files" << endl;
     file<> xmlFile(file_path.c_str()); // replace with your file path
     xml_document<> doc;
     doc.parse<0>(xmlFile.data());
-    NrRounds = nrRounds;
 
     // Get root node <Instance>
     xml_node<> *root = doc.first_node("Instance");
@@ -114,6 +113,21 @@ int Input::read_TTP(const std::string file_path, const int nrRounds){
             // std::cout << "Team " << id << ": " << name << " (League " << league << ")" << std::endl;
             NrTeams++;
         }
+    }
+
+    // ---- Read Rounds ----
+    NrRounds = 0;
+    xml_node<> *slotsNode = root->first_node("Resources")->first_node("Slots");
+    if (slotsNode) {
+        for (xml_node<> *slot = slotsNode->first_node("slot"); slot; slot = slot->next_sibling("slot")) {
+            //int id = std::stoi(slot->first_attribute("id")->value());
+	    //std::cout << "Id: " << id << std::endl;
+            NrRounds++;
+        }
+    }
+
+    if(NrRounds >= NrTeams){
+	    std::cout << "Too many slots: " << NrRounds << " vs. " << NrTeams <<". Impossible to play i1RR" << std::endl;
     }
 
     // ---- Read Distances ----
