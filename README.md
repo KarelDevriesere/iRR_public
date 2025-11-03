@@ -21,6 +21,7 @@ Arguments:
 --ConstrViolationCost <+int> # cost for violating hard constraints (default is 100 000)
 --MinCost <0/1> # whether the moves that can take costs into account do this yes (1) or no (0), (default is 0, but without flag both MinCost and Random moves will be included (see below*))
 --Base <0/1> # 1 for running base algorithm, default is 0
+--Bounds <0/1/2> # 0: do not compute bounds, 1: compute bound for given instance (default instance if none specified), 2: compute bound for all instances
 --help # to print instructions on terminal
 
 *The following moves are available:

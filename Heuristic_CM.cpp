@@ -107,7 +107,7 @@ void Heuristic_CM::SelectTS(Solution& sol){ // use TS for perturbation move!!
         assert(sol.IsTeamBalanced(j));
     }
     if (!Update(sol, sol.ComputeTotalCost())){
-        TS(sol, i, j); // put puck when other things are outcommented to go back to original
+        TS(sol, i, j); 
 #ifndef NDEBUG
         assert(sol.ComputeTotalCost() == cost_before);
 #endif
