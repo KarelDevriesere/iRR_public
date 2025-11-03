@@ -349,10 +349,16 @@ void BoundTTP(const int TimeLimit, const string Instance, const int NrRoundsTTP,
 
     GurSolver gur(in);
     Solution sol(in);
-    int sum = 0;
+    int LB = 0;
+    int UB = 0;
+    double gap = 0;
     gur.setTimeLimit(TimeLimit); 
     gur.BoundTTP_AllTeams();
-    sum += gur.solve();
+    gur.solve();
+    LB = gur.getBestBound();
+    UB = gur.getBestObjValue();
+    gap = gur.getMipGap();
+
 
     /*
     for (int t = 0; t < in.getNrTeams(); ++t){
@@ -361,9 +367,9 @@ void BoundTTP(const int TimeLimit, const string Instance, const int NrRoundsTTP,
     }
     */
 
-    cout << "sum for instance " << Instance << " with " << NrRoundsTTP << " = " << sum << endl;
+    cout << "LB for instance " << Instance << " with " << NrRoundsTTP << " = " << LB << ", UB = " << UB << ", gap = " << gap << endl;
 
-    output_file << Instance << "," << sum << "," << NrRoundsTTP << "\n";
+    output_file << Instance << "," << LB << "," << UB << "," << gap << "," << NrRoundsTTP << "\n";
 }
 
 void BoundsTTP_OneInstance(InputData& data){

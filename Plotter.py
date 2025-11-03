@@ -14,7 +14,137 @@ RoundSet32 = [8,16,24]
 RoundSet24 = [6,12,18]
 RoundSet16 = [4,8,12]
 NrRoundsTTP = {"BRA24": RoundSet24, "CIRC40": RoundSet40, "CON40": RoundSet40, "GAL40": RoundSet40, "INCR40": RoundSet40, "LINE40": RoundSet40, "N16": RoundSet16, "NFL32": RoundSet32}
-ListLengths = [1,10,50,500,5000] # list lengths
+ListLengths = [1,5,10,50,100,500,1000,5000,10000,50000,100000] # list lengths
+
+
+def MergeBounds():
+    OutputPath = os.path.join(os.path.join(os.path.join("Instances"), "TTP"), "Bounds.txt")
+    with open(OutputPath, "w") as output_file:
+        output_file.write(f'Instance,LB,UB,gap \n')
+        for inst in NrRoundsTTP.keys():
+            for r in NrRoundsTTP[inst]:
+                FilePath = os.path.join(os.path.join(os.path.join("Instances"), "TTP"), "Bound_" + inst + "_" + str(r) + ".txt")
+                if not os.path.exists(FilePath):
+                    print(f'The file {FilePath} does not exist yet!')
+                    continue
+                with open(FilePath, 'r', newline="") as file:
+                    print(f'Open {FilePath}')
+                    reader = csv.reader(file)
+                    for i, row in enumerate(reader):
+                        output_file.write(f'{row[0]}_{row[4]},{row[1]},{row[2]},{round(float(row[3]),2)} \n')
+    print(f'Merging bounds in file {OutputPath}')
+
+
+def TableListLengthst(FolderPathHeuristic):
+    OutputPath = os.path.join(os.path.join(os.path.join("Results"), "TTP"), "ListLengths.txt")
+    OutputPath_InstGapL = os.path.join(os.path.join(os.path.join("Results"), "TTP"), "InstGapL.txt")
+    OutputPath_InstTimeL = os.path.join(os.path.join(os.path.join("Results"), "TTP"), "InstTimeL.txt")
+    Output = {inst: {r: {l: {"Time": 0, "Value": 0} for l in ListLengths} for r in NrRoundsTTP[inst]} for inst in NrRoundsTTP.keys()}
+    Output_InstGapL = {inst: {r: {l: 0 for l in ListLengths} for r in NrRoundsTTP[inst]} for inst in NrRoundsTTP.keys()}
+    Output_InstTimeL = {inst: {r: {l: 0 for l in ListLengths} for r in NrRoundsTTP[inst]} for inst in NrRoundsTTP.keys()}
+    with open(OutputPath, "w") as output_file, open(OutputPath_InstGapL, "w") as output_file_InstGapL, open(OutputPath_InstTimeL , "w") as output_file_InstTimeL :
+        for i, l in enumerate(ListLengths):
+            if i < len(ListLengths)-1:
+                output_file.write(f'L{l}-Value,L{l}-Time,')
+            else:
+                output_file.write(f'L{l}-Value,L{l}-Time \n')
+        output_file_InstGapL.write("Instance,Gap,L\n")
+        output_file_InstTimeL.write("Instance,Time,L\n")
+        for inst in NrRoundsTTP.keys():
+            for r in NrRoundsTTP[inst]:
+                BestList = ListLengths[0]
+                BestValue = 2147483647
+                for l in ListLengths:
+                    FilePath = os.path.join(os.path.join(os.path.join(os.path.join(os.path.join("Instances"), "TTP"), "Results"), "Heuristic"), inst + "_" + str(r) + "_s0_HL" + str(l) + ".txt")
+                    if not os.path.exists(FilePath):
+                        print(f'The file {FilePath} does not exist yet!')
+                        continue
+                    with open(FilePath, 'r', newline="") as file:
+                        # print(f'Open {FilePath}')
+                        reader = csv.reader(file)
+                        for i, row in enumerate(reader):
+                            if row[0] == "Final":
+                                Output[inst][r][l]["Value"] = row[1]
+                                Output[inst][r][l]["Time"] = row[2]
+                                if int(row[1]) < BestValue :
+                                    BestList = l
+                                    BestValue = int(row[1])
+                                FilePathBound = os.path.join(os.path.join(os.path.join(os.path.join("Instances"), "TTP"), "Bounds"), "Bound_" + inst + "_" + str(r) + ".txt")
+                                with open(FilePathBound, 'r', newline="") as file2:
+                                    # print(f'Open {FilePathBound}')
+                                    reader2 = csv.reader(file2)
+                                    for i, row2 in enumerate(reader2):
+                                        Bound = int(row2[1])
+                                Output_InstGapL[inst][r][l] = str(round((int(row[1])-Bound)/int(row[1]),2))
+                                Output_InstTimeL[inst][r][l] = row[2]
+                                break
+                print(f'{inst}_{r}, {BestList}')
+        for inst in NrRoundsTTP.keys():
+            for r in NrRoundsTTP[inst]:
+                output_file.write(f'{inst}_{r},')
+                output_file.write(f'{inst}_{r},')
+                for i, l in enumerate(ListLengths):
+                    if i < len(ListLengths)-1:
+                        output_file.write(str(Output[inst][r][l]["Value"])+","+str(Output[inst][r][l]["Time"])+",")
+                    else:
+                        output_file.write(str(Output[inst][r][l]["Value"])+","+str(Output[inst][r][l]["Time"])+"\n")
+                    output_file_InstGapL.write(f"{inst}_{r},{Output_InstGapL[inst][r][l]},{l} \n")
+                    output_file_InstTimeL.write(f"{inst}_{r},{Output_InstTimeL[inst][r][l]},{l} \n")
+
+
+def MakeLinePlotInstTimeL():
+    InputPath_InstGapL = os.path.join(os.path.join(os.path.join("Results"), "TTP"), "InstTimeL.txt")
+
+    df = pd.read_csv(InputPath_InstGapL, sep=",")
+
+    # Ensure L is numeric and sort to get correct line order
+    df["L"] = pd.to_numeric(df["L"])
+    df = df.sort_values(["Instance", "L"])
+
+    fig, ax = plt.subplots(figsize=(20, 10))  # fig is the Figure, ax is the Axes
+
+    ax.set_xscale("log")
+    ax.set_xticks([l for l in ListLengths])  
+    from matplotlib.ticker import ScalarFormatter
+    ax.xaxis.set_major_formatter(ScalarFormatter())
+
+    for instance, group in df.groupby("Instance"):
+        ax.plot(group["L"], group["Time"], label=instance)
+
+    ax.set_title("Line plot")
+    ax.set_xlabel("Length")
+    ax.set_ylabel("Time")
+    ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    fig.savefig(os.path.join("Figures","TimeListLengths.png"))
+    plt.show()
+
+        
+def MakeLinePlotInstGapL():
+    InputPath_InstGapL = os.path.join(os.path.join(os.path.join("Results"), "TTP"), "InstGapL.txt")
+
+    df = pd.read_csv(InputPath_InstGapL, sep=",")
+
+    # Ensure L is numeric and sort to get correct line order
+    df["L"] = pd.to_numeric(df["L"])
+    df = df.sort_values(["Instance", "L"])
+
+    fig, ax = plt.subplots(figsize=(20, 10))  # fig is the Figure, ax is the Axes
+
+    ax.set_xscale("log")
+    ax.set_xticks([l for l in ListLengths])  
+    from matplotlib.ticker import ScalarFormatter
+    ax.xaxis.set_major_formatter(ScalarFormatter())
+
+    for instance, group in df.groupby("Instance"):
+        ax.plot(group["L"], group["Gap"], label=instance)
+
+    ax.set_title("Line plot")
+    ax.set_xlabel("Length")
+    ax.set_ylabel("Gap")
+    ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    fig.savefig(os.path.join("Figures","GapListLengths.png"))
+    plt.show()
+
 
 
 def BoxPlotsAblation(FolderPath):
@@ -224,6 +354,13 @@ def MakePlotTimeListLength(FolderPathHeuristic,CM,TTP):
                         
 
 if __name__ == "__main__":
+    '''
+    TableListLengthst("")
+    breakpoint()
+    MakeLinePlotInstGapL()
+    MakeLinePlotInstTimeL()
+    breakpoint()
+    '''
     CM = False
     TTP = False
     FolderPath = "Instances"
@@ -254,7 +391,8 @@ if __name__ == "__main__":
     FolderPathHeuristicMinCost = os.path.join(os.path.join(FolderPath, "Heuristic"), "MinCost")
     FolderPathBase = os.path.join(FolderPath, "Base")
 
-    BoxPlotsAblation(FolderPath)
+    TableListLengthst(FolderPathHeuristic)
+    # BoxPlotsAblation(FolderPath)
     # MakePlotTimeListLength(FolderPathHeuristic,CM,TTP)
     # Analyze(CM,TTP,FolderPathIP, FolderPathHeuristic, FolderPathBase)
 

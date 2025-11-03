@@ -1,0 +1,69 @@
+inst=CON40
+r=30
+Compute TTP bound for CON40_30 with TimeLimit 21660
+Save file as Instances/TTP/Bound_CON40_30.txt
+Read TTP files
+Instance: CON40, Type: A, Contributor: Urrutia, Ribeiro
+Date: 0/0/2006
+NrTeams = 40, NrRounds =  30
+Set parameter TokenServer to value "licgurobi.ugent.be"
+Set parameter Threads to value 8
+Set parameter TimeLimit to value 21660
+Gurobi Optimizer version 12.0.0 build v12.0.0rc1 (linux64 - "Red Hat Enterprise Linux 9.6 (Plow)")
+
+CPU model: AMD EPYC 7552 48-Core Processor, instruction set [SSE2|AVX|AVX2]
+Thread count: 96 physical cores, 96 logical processors, using up to 8 threads
+
+Non-default parameters:
+TimeLimit  21660
+Threads  8
+
+Optimize a model with 2500 rows, 1129480 columns and 3357280 nonzeros
+Model fingerprint: 0xf81980da
+Variable types: 0 continuous, 1129480 integer (1129480 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [2e+00, 4e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 2e+01]
+Presolve removed 80 rows and 731160 columns
+Presolve time: 3.70s
+Presolved: 2420 rows, 398320 columns, 1163760 nonzeros
+Variable types: 0 continuous, 398320 integer (398320 binary)
+
+Use crossover to convert LP symmetric solution to basic solution...
+
+Root crossover log...
+
+  365481 PPushes remaining with PInf 0.0000000e+00                 5s
+    3507 PPushes remaining with PInf 0.0000000e+00                10s
+       0 PPushes remaining with PInf 0.0000000e+00                10s
+
+  Push phase complete: Pinf 0.0000000e+00, Dinf 2.1325608e-11     10s
+
+
+Root simplex log...
+
+Iteration    Objective       Primal Inf.    Dual Inf.      Time
+  365524    8.0000000e+02   0.000000e+00   0.000000e+00     10s
+
+Root relaxation: objective 8.000000e+02, 365524 iterations, 5.54 seconds (7.77 work units)
+Total elapsed time = 18.32s (DegenMoves)
+Total elapsed time = 20.23s (DegenMoves)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+H    0     0                     800.0000000  800.00000  0.00%     -   21s
+     0     0  800.00000    0    4  800.00000  800.00000  0.00%     -   21s
+
+Explored 1 nodes (439918 simplex iterations) in 21.91 seconds (30.05 work units)
+Thread count was 8 (of 96 available processors)
+
+Solution count 1: 800 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 8.000000000000e+02, best bound 8.000000000000e+02, gap 0.0000%
+
+User-callback calls 1488, time in user-callback 0.00 sec
+LB for instance CON40 with 30 = 800, UB = 800, gap = 0
