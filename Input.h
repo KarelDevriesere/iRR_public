@@ -103,6 +103,7 @@ class Input
         int MaxSameClub = 2;
         int IndexDummyClub;
         int MaxEdgeCost;
+        string InstanceName;
 
         std::unordered_map<HAP_requirement_name, bool>HAP_requirements{
             {HAP_requirement_name::NoThreeConsecutive, false},
@@ -210,6 +211,8 @@ class Input
         int NrRoundsBaseAlgo = -1;
         bool IsBaseAlgo()const{return BaseAlgo;};
         int getNrRoundsBaseAlgo()const{return NrRoundsBaseAlgo;};
+
+        string getInstanceName()const{return InstanceName;};
 };
 
 #endif

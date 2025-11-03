@@ -78,7 +78,7 @@ int Input::read_TTP(const std::string file_path){
     // ---- Read MetaData ----
     xml_node<> *meta = root->first_node("MetaData");
     if (meta) {
-        std::string instanceName = meta->first_node("InstanceName")->value();
+        InstanceName = meta->first_node("InstanceName")->value();
         std::string dataType = meta->first_node("DataType")->value();
         std::string contributor = meta->first_node("Contributor")->value();
 
@@ -97,7 +97,7 @@ int Input::read_TTP(const std::string file_path){
             year = std::stoi(yearAttr->value());
         }
 
-        std::cout << "Instance: " << instanceName << ", Type: " << dataType
+        std::cout << "Instance: " << InstanceName << ", Type: " << dataType
                   << ", Contributor: " << contributor << std::endl;
         std::cout << "Date: " << day << "/" << month << "/" << year << std::endl;
     }

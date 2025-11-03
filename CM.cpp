@@ -12,6 +12,33 @@ string PathInitialSolutionMiao(InputData data){
     return path;
 }
 
+const unordered_map<string,int>InstanceHL = {
+    {"I_BRA24_6",100000},
+    {"I_BRA24_12",10000},
+    {"I_BRA24_18",10000},
+    {"I_CIRC40_10",500},
+    {"I_CIRC40_20",500},
+    {"I_CIRC40_30",500},
+    {"I_CON40_10",1},
+    {"I_CON40_20",100},
+    {"I_CON40_30",1},
+    {"I_GAL40_10",1000},
+    {"I_GAL40_20",500},
+    {"I_GAL40_30",500},
+    {"I_INCR40_10",1000},
+    {"I_INCR40_20",500},
+    {"I_INCR40_30",500},
+    {"I_LINE40_10",1000},
+    {"I_LINE40_20",1000},
+    {"I_LINE40_30",500},
+    {"I_N16_4",1000},
+    {"I_N16_8",10000},
+    {"I_N16_12",10000},
+    {"I_NFL32_8",1000},
+    {"I_NFL32_16",1000},
+    {"I_NFL32_24",1000}
+};
+
 void ReadSolution(const string path, Solution& sol){
 
     // cout << "read the file " << path << endl;
@@ -273,7 +300,7 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     return;
 }
 
-void TestCostMinimization(const InputData& data){
+void TestCostMinimization(InputData& data){
 
     vector<int>TimeStamps;
     int TimeStamp = 0;
@@ -327,6 +354,8 @@ void TestCostMinimization(const InputData& data){
         }
         in.setAllowedNrCapacityViolations();
     }
+    data.HistoryLength = InstanceHL.at(in.getInstanceName());
+    cout << "History length = " << data.HistoryLength << endl;
     
     if (data.Heuristic){
         SolveHeuristic(in,TimeStamps,folder_path,data);
