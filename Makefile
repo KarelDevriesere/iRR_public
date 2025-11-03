@@ -1,5 +1,5 @@
-HPC   ?= 0
-DAVID ?= 1
+HPC   ?= 1
+DAVID ?= 0
 
 # TODO TODO Add a release and debug mode
 CXX      = g++
