@@ -309,24 +309,40 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
 void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data){
     GurSolver gur(in);
     Solution sol(in);
-    // const string path = "Instances" + string(PATHSEP) + "TTP" + string(PATHSEP) + "Results" + string(PATHSEP) + "IP" + string(PATHSEP) + "N16_4.txt";
-    // ReadSolution(path, sol);
     bool HA = true;
     bool relax_x = false;
+    const bool min_travel = false, min_cap = true;
     if (in.getSetting() == Setting::CM){
         gur.build_base(HA, relax_x);
         gur.AddObjGeneralCosts();
     }
+    else if (in.getSetting() == Setting::TTP){
+        // gur.iTTP();
+        gur.iTTP_TripModel();
+        gur.Fix_x(sol);
+    }
     else{
-        assert(in.getSetting() == Setting::TTP);
-        gur.iTTP();
-        // gur.iTTP_TripModel();
-        // gur.Fix_x(sol);
+        // IP without patterns:
+        const bool relax_x = false;
+        gur.build_all(HA, relax_x);
+        // gur.setBoundCapacityViolations();
+        gur.AddObj(min_travel, min_cap);
     }
     gur.setTimeLimit(data.TimeLimit);
     gur.SetTimeStamps(TimeStamps);
     gur.solve();
     gur.SaveSolution(sol);
+    cout << "HAP cost = " << sol.ComputeTotalHACost() << endl;
+    // Save solution in file:
+    if (in.getSetting() == Setting::Miao && min_cap){
+        string FilePathVcr = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
+        FilePathVcr += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
+        std::ofstream output_file_Vcr(FilePathVcr);
+        output_file_Vcr << gur.getBestObjValue() << "\n";
+        output_file_Vcr.close();
+        cout << "Save " << gur.getBestObjValue() << " in file " << FilePathVcr << endl;
+        return;
+    } 
     sol.validate();
     cout << "Final solution = " << sol.ComputeTotalCost() << endl;
     cout << "Save solution in file?" << endl;
@@ -398,13 +414,12 @@ void TestCostMinimization(InputData& data){
         in.SRR = true;
     }
     else{
-        in.setHAP_requirements(true, true, true, true, data.MaxNrBreaks);
-        in.setMaxSameClub(2);
-        in.SRR = false;
+        in.setHAP_requirements(true, false, false, true, data.MaxNrBreaks);
+        in.SRR = true;
         if (!data.ConstantCapacity){
             in.setMiaoHAPSetting(data.CapacitySetting);
         }
-        in.setAllowedNrCapacityViolations();
+        // in.setAllowedNrCapacityViolations();
     }
 
     if (data.TTP && !data.HistoryLengthProvided){

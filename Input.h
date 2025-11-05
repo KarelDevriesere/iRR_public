@@ -74,8 +74,8 @@ struct InputData{
 
     bool Miao = false; // Miao
     bool ConstantCapacity = true; // Miao
-    int MaxNrBreaks = 0; // Miao
-    int CapacitySetting = 1; // Miao
+    int MaxNrBreaks = 100; // Miao
+    int CapacitySetting = 0; // Miao
 
     bool MinCost = false;
     string OutputFolder;
@@ -104,7 +104,8 @@ class Input
         vector<bool>IsTeamDummy;
         vector<vector<bool>>Eligible; // stores whether 2 teams are eligible to play vs each other
         int AllowedNrCapacityViolations = 0; // default TODO TODO
-        int MaxSameClub = 2;
+        bool MaxSameClubConstraint = false;
+        int MaxSameClub = 100;
         int IndexDummyClub;
         int MaxEdgeCost;
         string InstanceName;
@@ -187,10 +188,14 @@ class Input
         void setAllowedNrCapacityViolations();
         int getAllowedNrCapacityViolations()const{return AllowedNrCapacityViolations;};
         int getMaxSameClub()const{return MaxSameClub;};
-        void setMaxSameClub(const int max){MaxSameClub = max;};
+        void setMaxSameClub(const int max){
+            MaxSameClubConstraint = true;
+            MaxSameClub = max;
+        };
         bool IsCapacityConstant(){return ConstantCapacity;};
         void setMiaoHAPSetting(const int nr){assert(nr == 1 || nr == 2);MiaoHAPSetting = nr;};
         int getMiaoHAPSetting()const{return MiaoHAPSetting;};
+        bool IsMaxSameClubConstraint()const{return MaxSameClubConstraint;};
 
         bool SRR = false;
 

@@ -118,22 +118,22 @@ int main(int argc, const char* argv[]){
                 data.TTP = false;
                 data.CM = false;
             }
-            else if (arg == "--Capacity"){ // Miao
-                // 0: Constant, 1: Variable
-                data.ConstantCapacity = std::stoi(argv[++i]);
-                data.Miao = true;
-                data.TTP = false;
-                data.CM = false;
-            }
             else if (arg == "--CapacitySetting"){ // Miao
-                data.CapacitySetting = std::stoi(argv[++i]);
-                data.Miao = true;
-                data.TTP = false;
-                data.CM = false;
-                if (data.CapacitySetting != 1 && data.CapacitySetting != 2){
-                    std::cerr << "Capacity setting must be 1 or 2!" << endl;
+                int setting = std::stoi(argv[++i]);
+                if (setting == 0){
+                    data.ConstantCapacity = true;
+                }
+                else if (setting == 1 || setting == 2){
+                    data.CapacitySetting = setting;
+                    data.ConstantCapacity = false;
+                }
+                else{
+                    std::cerr << "Capacity setting must be 0 (constant), 1 or 2!" << endl;
                     return 1;
                 }
+                data.Miao = true;
+                data.TTP = false;
+                data.CM = false;
             }
             else if (arg == "--MaxNrBreaks"){ // Miao
                 data.MaxNrBreaks = std::stoi(argv[++i]);
@@ -145,7 +145,7 @@ int main(int argc, const char* argv[]){
                     return 1;
                 }
             }
-            else if (arg == "--MiaoInstance"){ // Miao
+            else if (arg == "--InstanceMiao"){ // Miao
                 int miao_i = std::stoi(argv[++i]);
                 data.Miao = true;
                 data.TTP = false;

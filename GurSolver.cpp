@@ -175,22 +175,20 @@ void GurSolver::iTTP_TripModel(){
 		}
 	}
 
+	cout << "sum_trips" << endl;
 	int L_q = 0;
 	for (t = 0; t < N; ++t){
-		for (s = 0; s < R; ++s){
-			for (r = 0; r < NrTrips; ++r){
-				GRBLinExpr sum_trips = 0;
-				L_r = (int)Trips[t][r].size();
-				sum_trips += z[t][r][s];
-				for (int q = 0; q < NrTrips; ++q){
-					if (q == r){
-						continue;
-					}
+		cout << "t = " << t << endl;
+		for (r = 0; r < NrTrips; ++r){
+			for (int q = 0; q < NrTrips; ++q){
+				if (q == r){
+					continue;
+				}
+				for (s = 0; s < R; ++s){
 					for (int k = s; k < std::min(R, s+L_r); ++k){
-						sum_trips += z[t][q][k];
+						model.addConstr(z[t][r][s]+z[t][q][k] <= 1);
 					}
 				}
-				model.addConstr(sum_trips <= 1);
 			}
 		}
 	}
@@ -750,20 +748,22 @@ void GurSolver::build_league(const bool HA, const bool relax_x){
 
 	int i,j,r;
 
-   for (i = 0; i < getNrTeams(); ++i){
-	// Each team plays a maximum nr of times against a team from the same club
-	const int c = getTeamClub(i);
-	GRBLinExpr sum_same_club = 0;
-	std::string consName = "c4_" + std::to_string(i);
-	for (auto& j: getTeamsClub(c)){
-		if (/*isEligible(i,j) && */ !isTeamDummy(j)){
-			for (r = 0; r < getNrRounds(); ++r){
-				sum_same_club += (x[i][j][r] + x[j][i][r]);
+	if (IsMaxSameClubConstraint()){
+		for (i = 0; i < getNrTeams(); ++i){
+		// Each team plays a maximum nr of times against a team from the same club
+		const int c = getTeamClub(i);
+		GRBLinExpr sum_same_club = 0;
+		std::string consName = "c4_" + std::to_string(i);
+		for (auto& j: getTeamsClub(c)){
+			if (/*isEligible(i,j) && */ !isTeamDummy(j)){
+				for (r = 0; r < getNrRounds(); ++r){
+					sum_same_club += (x[i][j][r] + x[j][i][r]);
+				}
 			}
 		}
+		model.addConstr(sum_same_club <= getMaxSameClub());
 	}
-	model.addConstr(sum_same_club <= getMaxSameClub());
-   }
+	}
 
    // if we outcomment this, check whether isEligible is put again in all the constraints!!!
    // Much faster for Tiny-Constant
@@ -788,6 +788,7 @@ void GurSolver::build_HAP_constraints(){
 	int i,j,r;
 
     if (getHAP_requirement(HAP_requirement_name::NoThreeConsecutive)){
+		cout << "Add constraint NoThreeConsecutive to model" << endl;
 		for (i = 0; i < getNrTeams(); ++i){
 			for (r = 2; r < getNrRounds(); ++r){
 				GRBLinExpr sum_H = 0, sum_A = 0;
@@ -804,6 +805,7 @@ void GurSolver::build_HAP_constraints(){
    	}
 
    if (getHAP_requirement(HAP_requirement_name::NoBreakBeginningEnd)){
+	cout << "Add constraint NoBreakBeginningEnd to model" << endl;
 	int R = getNrRounds();
 	for (i = 0; i < getNrTeams(); ++i){
 		GRBLinExpr H_break_beginning = 0, A_break_beginning = 0;
@@ -824,6 +826,7 @@ void GurSolver::build_HAP_constraints(){
    }
 
    if (getHAP_requirement(HAP_requirement_name::BreakLimit)){
+	 cout << "Add constraint BreakLimit to model with " << getBreakLimit() << " breaks" << endl;
 	 b = vector<vector<GRBVar>>(getNrTeams(), vector<GRBVar>(getNrRounds()));
 	 for (i = 0; i < getNrTeams(); ++i){
 		for (r = 0; r < getNrRounds(); ++r){
@@ -851,6 +854,7 @@ void GurSolver::build_HAP_constraints(){
    }
 
    if (getHAP_requirement(HAP_requirement_name::QuarterBalanced)){
+	cout << "Add constraint QuarterBalanced to model" << endl;
 	const int R = getNrRounds();
 	const int Half = R/2;
 	const vector<pair<int,int>>Halves = {{0, Half}, {Half, R}};
@@ -902,6 +906,7 @@ int GurSolver::build_all(const bool HA, const bool relax_x){
 						}
 					}
 				}
+				// cout << "Capacity of club " << c << " in round " << r << " = " << getCapacityClub(c, r) << endl;
 				model.addConstr(sum_tj <= getCapacityClub(c, r) + 0.1 + v[c][r], "Capacity");
 			}
 		}

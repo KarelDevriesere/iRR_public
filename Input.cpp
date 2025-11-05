@@ -245,7 +245,9 @@ MiaoInstance Input::getMiaoInstance(){
 }
 
 void Input::setAllowedNrCapacityViolations(){
-    assert(BreakLimit == 0 || BreakLimit == 1 || BreakLimit == 2 || BreakLimit == 3);
+    if (HAP_requirements.at(HAP_requirement_name::BreakLimit)){
+        assert(BreakLimit == 0 || BreakLimit == 1 || BreakLimit == 2 || BreakLimit == 3);
+    }
     if (!ConstantCapacity){
         assert(MiaoHAPSetting == 1 || MiaoHAPSetting == 2);
     }
@@ -368,6 +370,7 @@ void Input::setAllowedNrCapacityViolations(){
             }
         }
     }
+    AllowedNrCapacityViolations = 100000;
 }
 
 int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
@@ -395,7 +398,7 @@ int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
     int MaxDistanceClubs = 0;
     while (getline(file, line)){
         // std::cout << line << std::endl;
-        std::istringstream iss(line);  // 
+        std::istringstream iss(line);  
         int num;
         int j = 0;
         if (i == 0){
@@ -635,7 +638,7 @@ int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
 
     // New: eligible opponents
     int i_, j_;
-    Eligible = vector<vector<bool>>(getNrTeams(), vector<bool>(getNrTeams(), false));
+    Eligible = vector<vector<bool>>(getNrTeams(), vector<bool>(getNrTeams(), false)); // TODO
     for (l = 0; l < getNrLeagues(); ++l){
         for (i = 0; i < getNrTeamsLeague(l); ++i){ // TODO: more than 1 league
             i_ = getGlobalIndexTeam(l, i);
