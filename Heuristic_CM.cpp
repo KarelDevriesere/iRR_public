@@ -10,6 +10,9 @@ Heuristic_CM::Heuristic_CM(const std::unordered_map<Move, string>& moves, // mov
            const std::unordered_map<Move, double>& weights, std::mt19937& g, const int HistoryLength, const int obj): LAHC<Move>(moves, weights, g){
             SetHistoryLength(HistoryLength);
             InitializeHistoricValues(obj);
+
+            std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
+            setStartTime(start_time);
 }
 
 Heuristic_CM::~Heuristic_CM(){}
@@ -451,6 +454,7 @@ void Heuristic_CM::DoMove(Solution& sol){
         MinCostC = false;
         SelectBalancedCycle(sol);
     }
+    // cout << "done" << endl;
     auto end = std::chrono::high_resolution_clock::now();
     auto dur = std::chrono::duration_cast<std::chrono::microseconds>(end - beg);
     ExecutionTimes.at(CurrentMove).push_back(dur);
@@ -466,13 +470,11 @@ void Heuristic_CM::DoMove(Solution& sol){
 
 void Heuristic_CM::solve(Input& in, Solution& sol){
     cout << "start solve" << endl;
-    std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
-    setStartTime(start_time);
+    Reset();
     best_obj = sol.ComputeTotalCost();
     current_obj = best_obj;
     UpdateBestSolution(sol);
     cout << "updated best solution" << endl;
-    Reset();
 
     if (sol.getSetting() == Setting::CM){
         cout << "Cost Minimization!!" << endl;

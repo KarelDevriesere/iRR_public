@@ -71,34 +71,6 @@ void KeepOrientation(Solution& sol, Lantarn& lantarn, const int i, const int k, 
     }
 }
 
-void SwapOrientation(Solution& sol, Lantarn& lantarn, const int i, const int k, const int j, const vector<vector<HA>>& OrientationsCopy){
-    // this can be seen as swapping the colors in the lantarn with the orientations. 
-    // E.g. if we have: 
-    // i<-G-s<-B-j
-    // i<-R-t<-G-j
-    // i<-B-u<-R-j
-    // then the new lantarn will be:
-    // i->B-s-G->j
-    // i->G-t-R->j
-    // i-R->u-B->j
-    // Hence, the HAPs of the middle teams stay the same!!
-    // Similar to TS
-
-    // k: position in middle, not the team itself!!!
-    int c_i = sol.MatchColor[lantarn.EdgesMatch.at(i)[k].first][lantarn.EdgesMatch.at(i)[k].second];
-    int c_j = sol.MatchColor[lantarn.EdgesMatch.at(j)[k].first][lantarn.EdgesMatch.at(j)[k].second];
-    if (c_j >= 0){
-        sol.Orientation[i][c_j] = OrientationsCopy[j][c_j];
-    }
-    if (c_i >= 0){
-        sol.Orientation[j][c_i] = OrientationsCopy[i][c_i];
-    }
-    else{
-        std::swap(sol.Orientation[i][c_i], sol.Orientation[j][c_j]);
-    }
-    // TODO: how to orchestrate the MatchColors???
-}
-
 void setMatchColorR(Solution& sol, const int i, const int r, const int s){
     // must always go before swap!!
     int opp_r = sol.TeamColorOpp[i][r];
@@ -481,84 +453,6 @@ void KeepOrientationsAllEdgesLantarn(Solution& sol, Lantarn& lantarn, const vect
     for (int k = 0; k < lantarn.middle.size(); ++k){
         KeepOrientation(sol, lantarn, i, k, j, OrientationsCopy);
     }
-}
-
-bool FindPath(Solution& sol, Lantarn& lantarn, const vector<vector<HA>>& OrientationsCopy, const bool SingleEdge, vector<array<int,3>>& path, const bool MinCostP){
-    const int i = lantarn.i;
-    const int j = lantarn.j;
-    int h,a,h_nb,a_nb;
-    bool PathFound = false;
-    for (int option = 0; option < 1; ++option){
-        if (sol.Orientation[i][lantarn.c_[i]] == HA::H){
-            // j -- k -> i
-            // j -> l -- i
-            if (option == 0){
-                // results in
-                //      j <- k -- i
-                //      j -- l <- i
-                a = i, h = j;
-                a_nb = lantarn.fictive_nb[i], h_nb = lantarn.fictive_nb[j];
-            }
-            else{
-                // results in
-                //      j -> k -- i
-                //      j -- l -> i
-                a = lantarn.fictive_nb[j], h = lantarn.fictive_nb[i]; // fictive nb j: e.g. i <- k -- j
-            }
-        }
-        else{
-            if (option == 0){
-                a = j, h = i;
-                a_nb = lantarn.fictive_nb[j], h_nb = lantarn.fictive_nb[i];
-            }
-            else{
-                a = lantarn.fictive_nb[i], h = lantarn.fictive_nb[j];
-            }
-        }
-        if (SingleEdge && sol.MatchColor[h][a] >= 0 && sol.MatchColor[a][h] < 0){
-            // cout << "Possible to switch orientation of arc (" << h << "," << a << ") with option = " << option << endl;
-            PathFound = true;
-            path.emplace_back(std::array<int, 3>{h, a, sol.MatchColor[h][a]});
-            // Reverse h<-a to a->h
-            // All HAP costs can be computed based on orientations so only swap orientations
-            std::swap(sol.Orientation[h][sol.MatchColor[h][a]], sol.Orientation[a][sol.MatchColor[h][a]]);
-            std::swap(sol.MatchColor[h][a], sol.MatchColor[a][h]); 
-            path.reserve(3);
-        }
-        else if (!SingleEdge){
-            // cout << "try to find path from " << a << " to " << h << endl;
-            int delta = 0; // useless for now!!
-            if (/*FindZeroCostPathLineGraph(a, h, l, sol)*/FindNormalPathOneLeague(a,h,sol,path, delta, MinCostP)){
-                PathFound = true;
-            }
-            else{
-                PathFound = false;
-            }
-            // cin.get();
-        }
-        if (PathFound){
-            // Next, the lantarn arcs
-            for (int k = 0; k < lantarn.middle.size(); ++k){
-                if (k == lantarn.fictive_nb[j] && option == 1){
-                    int c_i = sol.MatchColor[lantarn.EdgesMatch.at(i)[k].first][lantarn.EdgesMatch.at(i)[k].second];
-                    sol.Orientation[j][c_i] = OrientationsCopy[i][c_i];
-                }
-                else if (k == lantarn.fictive_nb[i] && option == 1){
-                    int c_j = sol.MatchColor[lantarn.EdgesMatch.at(j)[k].first][lantarn.EdgesMatch.at(j)[k].second];
-                    sol.Orientation[i][c_j] = OrientationsCopy[j][c_j];
-                }
-                else{
-                    KeepOrientation(sol, lantarn, i, k, j, OrientationsCopy);
-                }
-            }
-            break;
-        }
-        else{
-            // cout << "color of h<-a = " << sol.MatchColor[h][a] << endl;
-            // cout << "color of a->h = " << sol.MatchColor[a][h] << endl;
-        }
-    }
-    return PathFound;
 }
 
 

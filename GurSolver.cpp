@@ -69,6 +69,144 @@ pair<vector<vector<int>>,vector<int>>GurSolver::GenerateTrips(const int t, const
 	return {Trips,CostTrips};
 }
 
+bool IsTeamInTrip(const int i, vector<int>& trip){
+	for (auto& opp: trip){
+		if (opp == i){
+			return true;
+		}
+	}
+	return false;
+}
+
+void GurSolver::iTTP_TripModel(){
+
+	const int N = getNrTeams();
+	const int R = getNrRounds();
+	int t,i,j,r,s;
+
+	vector<pair<vector<vector<int>>,vector<int>>>Trips_CostTrips(N);
+	vector<vector<vector<int>>>Trips(N);
+	vector<vector<int>>CostTrips(N);
+	int NrTrips;
+	for (t = 0; t < N; ++t){
+		vector<int>TeamsList(N-1);
+		for (i = 0, j = -1; i < N; ++i){
+			if (i != t){
+				TeamsList[++j] = i;
+			}
+		}
+		Trips_CostTrips[t] = GenerateTrips(t, TeamsList);
+		Trips[t] = Trips_CostTrips[t].first;
+		CostTrips[t] = Trips_CostTrips[t].second;
+		NrTrips = CostTrips[t].size();
+		if (t > 0){
+			assert(NrTrips ==  CostTrips[t-1].size());
+		}
+	}
+
+	z = vector<vector<vector<GRBVar>>>(N, vector<vector<GRBVar>>(NrTrips, vector<GRBVar>(R)));
+	for (t = 0; t < N; ++t){
+		for (r = 0; r < NrTrips; ++r){
+			for (s = 0; s < R; ++s){
+				z[t][r][s] = model.addVar(0, 1, 0.0, GRB_BINARY);
+			}
+		}
+	}
+
+	for (t = 0; t < N; ++t){
+		for (i = 0; i < N; ++i){
+			if (i == t){
+				continue;
+			}
+			GRBLinExpr sum_sr_t = 0;
+			GRBLinExpr sum_sr_i = 0;
+			for (s = 0; s < R; ++s){
+				for (r = 0; r < NrTrips; ++r){
+					if (IsTeamInTrip(i, Trips[t][r])){
+						sum_sr_t += z[t][r][s];
+					}
+					if (IsTeamInTrip(t, Trips[i][r])){
+						sum_sr_i += z[i][r][s];
+					}
+				}
+			}
+			model.addConstr(sum_sr_t + sum_sr_i <= 1);
+		}
+	}
+
+	int L_r = 0, L_i = 0;
+	for (t = 0; t < N; ++t){
+		GRBLinExpr sum_sr_t = 0;
+		GRBLinExpr sum_sr_i = 0;
+		for (r = 0; r < NrTrips; ++r){
+			L_r = (int)Trips[t][r].size();
+			for (s = 0; s < R; ++s){
+				sum_sr_t += (z[t][r][s]*L_r);
+				for (i = 0; i < N; ++i){
+					if (IsTeamInTrip(t, Trips[i][r])){
+						L_i = (int)Trips[i][r].size();
+						sum_sr_i += (z[i][r][s]*L_i);
+					}
+				}
+			}
+		}
+		model.addConstr(sum_sr_t == R/2);
+		model.addConstr(sum_sr_i == R/2);
+	}
+
+	for (t = 0; t < N; ++t){
+		for (s = 0; s < R-3; ++s){
+			GRBLinExpr sum_zr_t = 0;
+			GRBLinExpr sum_zr_i = 0;
+			for (int k = s; k < s+4; k++){
+				for (r = 0; r < NrTrips; ++r){
+					L_r = (int)Trips[t][r].size();
+					sum_zr_t += (z[t][r][k]*L_r);
+					for (i = 0; i < N; ++i){
+						if (IsTeamInTrip(t, Trips[i][r])){
+							L_i = (int)Trips[i][r].size();
+							sum_zr_i += (z[i][r][k]*L_i);
+						}
+					}
+				}
+			}
+			model.addConstr(sum_zr_t <= 3);
+			model.addConstr(sum_zr_i <= 3);
+		}
+	}
+
+	int L_q = 0;
+	for (t = 0; t < N; ++t){
+		for (s = 0; s < R; ++s){
+			for (r = 0; r < NrTrips; ++r){
+				GRBLinExpr sum_trips = 0;
+				L_r = (int)Trips[t][r].size();
+				sum_trips += z[t][r][s];
+				for (int q = 0; q < NrTrips; ++q){
+					if (q == r){
+						continue;
+					}
+					for (int k = s; k < std::min(R, s+L_r); ++k){
+						sum_trips += z[t][q][k];
+					}
+				}
+				model.addConstr(sum_trips <= 1);
+			}
+		}
+	}
+
+	Objective = 0;
+	for (t = 0; t < N; ++t){
+		for (r = 0; r < NrTrips; ++r){
+			for (s = 0; s < R; ++s){
+				Objective += CostTrips[t][r]*z[t][r][s];
+			}
+		}
+	}
+	model.setObjective(Objective, GRB_MINIMIZE);
+	// PRINT SOLUTION!!!
+}
+
 void GurSolver::BoundTTP_AllTeams(){
 
 	const int N = getNrTeams();
@@ -411,6 +549,25 @@ void GurSolver::AddLowerBoundiTTP(const int LB){
 	}
 	model.addConstr(sum_LB >= LB);
 
+}
+
+void GurSolver::Fix_x(Solution& sol){
+	for (int r = 0; r < getNrRounds(); ++r){
+		vector<bool>NodeSeen(getNrTeams(), false);
+		for (int i = 0; i < getNrTeams(); ++i){
+			if (NodeSeen[i]){
+				continue;
+			}
+			int j = sol.TeamColorOpp[i][r];
+			NodeSeen[j] = true; 
+			if (sol.Orientation[i][r] == HA::H){
+				model.addConstr(x[i][j][r] == 1);
+			}
+			else{
+				model.addConstr(x[j][i][r] == 1);
+			}
+		}
+	}
 }
 
 void GurSolver::FixHAP(Solution& sol){

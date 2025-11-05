@@ -179,8 +179,8 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
                 }
             }
             cout << endl;
+            cout << "Found obj = " << obj << ", current_obj = " << this->current_obj << ", it_idle = " << this->it_idle << endl;
             */
-            // cout << "Found obj = " << obj << ", current_obj = " << this->current_obj << ", it_idle = " << this->it_idle << endl;
             if (obj >= this->current_obj){
                 this->it_idle++;
             }
@@ -207,16 +207,18 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
                 }
             }
 
-            if (this->getTimeDiff() > this->TIME_LIMIT || (++this->it > MAX_IT && this->it_idle > this->it*0.02)){
+            if (this->getTimeDiff() > this->TIME_LIMIT || (++this->it > MAX_IT && this->it_idle > this->it*0.02) || (this->LowerBound >= 0 && obj <= this->LowerBoundGap*this->LowerBound)){
                 this->STOP = true;
                 if (this->getTimeDiff() > this->TIME_LIMIT){
                     cout << "Time limit hit" << endl;
+                }
+                else if (this->LowerBound >= 0 && obj <= this->LowerBoundGap*this->LowerBound){
+                    cout << "Lower bounds = " << this->LowerBound << ", current objective = " << obj << endl;
                 }
                 else{
                     cout << "max it_idle hit" << endl;
                 }
             }
-
             // cin.get();
             return SolutionAccepted;
 

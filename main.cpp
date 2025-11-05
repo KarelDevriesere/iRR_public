@@ -56,6 +56,7 @@ int main(int argc, const char* argv[]){
                     std::cerr << "HistoryLength should be strictly positive" << endl;
                     return 1;
                 }
+                data.HistoryLengthProvided = true;
             }
             else if (arg == "--CM"){
                 data.CM = std::stoi(argv[++i]);
@@ -228,6 +229,14 @@ int main(int argc, const char* argv[]){
             else if (arg == "--Bounds"){
                 ComputeBounds = std::stoi(argv[++i]);
                 data.TTP = true;
+            }
+            else if (arg == "--LowerBoundGapHillClimbing"){
+                data.HillClimbingFirst = true;
+                data.LowerBoundGap = std::stod(argv[++i]);
+                if (data.LowerBoundGap < 1.0){
+                    std::cerr << "LowerBoundGap should be >= 1.0" << endl;
+                    return 1;
+                }
             }
             else if (arg == "--OutputFolder"){
                 data.OutputFolder = argv[++i];

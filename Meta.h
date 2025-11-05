@@ -40,6 +40,9 @@ class MetaBase{ // Everything that can be used for all metaheuristics
         bool STOP = false;
         bool StartTimeSet = false;
 
+        int LowerBound = -1;
+        double LowerBoundGap;
+
         std::mt19937& gen;
         std::uniform_real_distribution<> dist_real;
         std::uniform_int_distribution<> dist_int;
@@ -130,6 +133,18 @@ class MetaBase{ // Everything that can be used for all metaheuristics
             Mean /= ExecutionTimes.at(move).size();
             return {Min, Max, Mean};
         }
+
+        void AddLowerBound(const int LB){LowerBound = LB;};
+        void AddLowerBoundStoppingCriterion(const double LowerBoundStoppingCriterion){
+            if (LowerBoundStoppingCriterion < 1.0){
+                cout << "LowerBoundStoppingCriterion should be bigger or equal to 1.0" << endl;
+                cout << "Criterion is now set to 1.0" << endl;
+                LowerBoundGap = 1.0;
+            }
+            else{
+                LowerBoundGap = LowerBoundStoppingCriterion;
+            }
+        };
 
         void SaveResultsMoves(std::string file_path_results_base, int instance, int seed);
 };

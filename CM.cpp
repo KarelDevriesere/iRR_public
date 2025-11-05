@@ -31,17 +31,44 @@ const unordered_map<string,int>InstanceHL = {
     {"I_LINE40_10",1000},
     {"I_LINE40_20",1000},
     {"I_LINE40_30",500},
-    {"I_N16_4",1000},
-    {"I_N16_8",10000},
-    {"I_N16_12",10000},
+    {"I_NL16_4",1000},
+    {"I_NL16_8",10000},
+    {"I_NL16_12",10000},
     {"I_NFL32_8",1000},
     {"I_NFL32_16",1000},
     {"I_NFL32_24",1000}
 };
 
+const unordered_map<string,int>InstanceBound = {
+    {"I_BRA24_6",38745},
+    {"I_BRA24_12",98815},
+    {"I_BRA24_18",167657},
+    {"I_CIRC40_10",560},
+    {"I_CIRC40_20",1760},
+    {"I_CIRC40_30",3600},
+    {"I_CON40_10",280},
+    {"I_CON40_20",560},
+    {"I_CON40_30",800},
+    {"I_GAL40_10",23617},
+    {"I_GAL40_20",50962},
+    {"I_GAL40_30",81661},
+    {"I_INCR40_10",13284},
+    {"I_INCR40_20",46402},
+    {"I_INCR40_30",102306},
+    {"I_LINE40_10",656},
+    {"I_LINE40_20",2322},
+    {"I_LINE40_30",5118},
+    {"I_NL16_4",23625},
+    {"I_NL16_8",57263},
+    {"I_NL16_12",92580},
+    {"I_NFL32_8",70127},
+    {"I_NFL32_16",173493},
+    {"I_NFL32_24",297068}
+};
+
 void ReadSolution(const string path, Solution& sol){
 
-    // cout << "read the file " << path << endl;
+    cout << "read the file " << path << endl;
     std::ifstream file(path);
     if (!file.is_open()) {
         std::cerr << "Error opening the file " << path;
@@ -49,26 +76,35 @@ void ReadSolution(const string path, Solution& sol){
     }
 
     std::string line;
-
-    // Skip header line
-    std::getline(file, line);
+    bool StartReading = false;
 
     // Read the rest
     while (std::getline(file, line)) {
         std::stringstream ss(line);
-        int i, j, r, value;
+        // cout << line << endl;
+
+        if (!StartReading && line.find("Round") != std::string::npos) {
+            StartReading = true;
+            continue;  // Skip the header line
+        }
+        if (!StartReading) {
+            // You can parse the first block here if you need it
+            continue;
+        }
+
+        int h, a, r;
         char comma; // to consume commas
 
-        if (ss >> i >> comma >> j >> comma >> r >> comma >> value) {
-            if (value > 0.1){
-                SetValueCircleMethod(i,j,r,sol);
-                sol.Orientation[i][r] = HA::H;
-                sol.Orientation[j][r] = HA::A;
-            }
+        if (ss >> r >> comma >> h >> comma >> a) {
+            SetValueCircleMethod(h,a,r,sol);
+            sol.Orientation[h][r] = HA::H;
+            sol.Orientation[a][r] = HA::A;
+            // cout << h << " vs " << a << " in " << r << endl;
         }
     }
     file.close();
     sol.validate();
+    cout << "Solution = " << sol.ComputeTotalCost() << endl;
 }
 
 std::string FolderPath(const InputData& data) {
@@ -180,25 +216,45 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     cout << "Cost initial solution = " << obj << endl;
 
     std::mt19937 gen(data.seed);
-    Heuristic_CM algo(data.Moves, data.InputWeights, gen, data.HistoryLength, obj);
-    algo.setTimeLimit_meta(data.TimeLimit);
+    int HL = data.HistoryLength;
+    int TL = data.TimeLimit;
+    if (data.HillClimbingFirst){
+        HL = 1;
+    }
+    Heuristic_CM algo(data.Moves, data.InputWeights, gen, HL, obj);
+    algo.setTimeLimit_meta(TL);
     algo.SetMaxIt(data.MaxIt);
     algo.SetTimeStamps(TimeStamps);
+
+    if (data.HillClimbingFirst){
+        algo.AddLowerBound(InstanceBound.at(in.getInstanceName()));
+        algo.AddLowerBoundStoppingCriterion(data.LowerBoundGap);
+        algo.solve(in, sol);
+
+        algo.SaveBestSolution(sol);
+        sol.validate();
+
+        obj = sol.ComputeTotalCost();
+        cout << "Total cost after hill climbing = " << sol.ComputeTotalCost() << endl;
+        algo.SetHistoryLength(data.HistoryLength);
+        algo.InitializeHistoricValues(obj);
+        algo.AddLowerBoundStoppingCriterion(1.0);
+    }
     algo.solve(in, sol);
 
+    cout << "Total cost = " << sol.ComputeTotalCost() << endl;
+
     int NrViolations = 0;
-    bool HillClimbing = false;
     if (data.TTP){
         sol.SetOneCostAllViolations(1);
         NrViolations = sol.ComputeTotalCostTTPViolations();
         if (NrViolations > 0){
-            HillClimbing = true;
             cout << "Solution not feasible, nr of violations = " << NrViolations << endl;
             cout << "Start hill climbing" << endl;
             // Hill climbing
             sol.SetOneCostAllViolations(100000);
             obj = sol.ComputeTotalCost();
-            algo.SetHistoryLength(5);
+            algo.SetHistoryLength(1);
             algo.setTimeLimit_meta(2*data.TimeLimit);
             algo.solve(in, sol);
             sol.SetOneCostAllViolations(1);
@@ -212,24 +268,14 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     sol.validate();
     cout << "Final solution (travel cost) = " << sol.ComputeTotalCost() << endl;
 
-    string FilePath;
-    //if (data.OutputFolder.empty()){
-    //    FilePath = FolderPath + "Results" + std::string(PATHSEP);
-    //    if (data.Base){
-    //        FilePath += "Base";
-    //    }
-    //    else{
-    //        FilePath += "Heuristic";
-    //    }
-    //}
-    //else{
-    //    FilePath = data.OutputFolder;
-    //}
-    //FilePath += std::string(PATHSEP) + data.Instance;
-    FilePath = data.Instance;
-    if (in.getSetting() == Setting::TTP){
-        FilePath += "_" + to_string(in.getNrRounds());
+    string FilePath; 
+    if (data.OutputFolder.empty()){
+        FilePath = FolderPath + "Results" + std::string(PATHSEP) + "Heuristic";
     }
+    else{
+        FilePath = data.OutputFolder;
+    }
+    FilePath += std::string(PATHSEP) + sol.getInstanceName();
     FilePath += "_s" + to_string(data.seed) + "_HL" + to_string(data.HistoryLength) + ".txt";
 
     string config = to_string(data.seed);
@@ -263,6 +309,8 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
 void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data){
     GurSolver gur(in);
     Solution sol(in);
+    // const string path = "Instances" + string(PATHSEP) + "TTP" + string(PATHSEP) + "Results" + string(PATHSEP) + "IP" + string(PATHSEP) + "N16_4.txt";
+    // ReadSolution(path, sol);
     bool HA = true;
     bool relax_x = false;
     if (in.getSetting() == Setting::CM){
@@ -272,6 +320,8 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     else{
         assert(in.getSetting() == Setting::TTP);
         gur.iTTP();
+        // gur.iTTP_TripModel();
+        // gur.Fix_x(sol);
     }
     gur.setTimeLimit(data.TimeLimit);
     gur.SetTimeStamps(TimeStamps);
@@ -279,6 +329,8 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     gur.SaveSolution(sol);
     sol.validate();
     cout << "Final solution = " << sol.ComputeTotalCost() << endl;
+    cout << "Save solution in file?" << endl;
+    cin.get();
 
     const string FilePath = FolderPath + "Results" + std::string(PATHSEP) + "IP" + std::string(PATHSEP) + data.Instance + "_" + to_string(in.getNrRounds()) + ".txt";
     const string config = to_string(data.seed) + ",IP," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
@@ -305,7 +357,7 @@ void TestCostMinimization(InputData& data){
     vector<int>TimeStamps;
     int TimeStamp = 0;
     int Incrementor = 30;
-    while (TimeStamp <= data.TimeLimit){
+    while (TimeStamp <= 2*data.TimeLimit){ // At most we do 2x the TimeLimit (because if infeasible we also do Hill Climbing)
         TimeStamps.push_back(TimeStamp);
         TimeStamp += Incrementor;
     }
@@ -354,8 +406,10 @@ void TestCostMinimization(InputData& data){
         }
         in.setAllowedNrCapacityViolations();
     }
-    data.HistoryLength = InstanceHL.at(in.getInstanceName());
-    cout << "History length = " << data.HistoryLength << endl;
+
+    if (data.TTP && !data.HistoryLengthProvided){
+        data.HistoryLength = InstanceHL.at(in.getInstanceName()); 
+    }
     
     if (data.Heuristic){
         SolveHeuristic(in,TimeStamps,folder_path,data);

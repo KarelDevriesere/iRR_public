@@ -23,6 +23,7 @@ class Solution: public Input{
         ~Solution();
 
         vector<vector<int>>MatchColor;
+        vector<vector<vector<int>>>MatchColor2RR; // In 2RR, we can have (i,j) with colour c and (i,j) with colour d!!
         vector<vector<int>>TeamColorOpp;
         vector<vector<int>>WeightsBF; // weights for the Bellman Ford
         vector<vector<HA>>Orientation;

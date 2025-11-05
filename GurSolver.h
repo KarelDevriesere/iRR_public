@@ -100,7 +100,8 @@ class GurSolver : public Input
         int getBestObjValue();
         void SaveSolution(Solution& sol);
         void WarmStart(Solution& sol);
-
+        
+        void Fix_x(Solution& sol);
         void FixHAP(Solution& sol);
         void BuildMiaoFormulation(const bool relax_x);
         void BuildPatternFormulation();
@@ -130,6 +131,8 @@ class GurSolver : public Input
             }
             output_file << "Final, " << getBestObjValue() << "," << getBestBound() << "\n" << endl;
         }
+
+        void iTTP_TripModel();
 
         // For TTP bounds:
         pair<vector<vector<int>>,vector<int>>GenerateTrips(const int t, const vector<int>& TeamsList);

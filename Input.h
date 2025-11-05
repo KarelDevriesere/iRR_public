@@ -57,6 +57,7 @@ struct InputData{
     string Instance;
     int seed = 0;
     bool Heuristic = 1;
+    bool HistoryLengthProvided = false;
     int HistoryLength = 1;
     int NrTeams = 36; // CM
     int NrRounds = 4; // TTP
@@ -78,6 +79,9 @@ struct InputData{
 
     bool MinCost = false;
     string OutputFolder;
+
+    bool HillClimbingFirst = false;
+    double LowerBoundGap = 1.0;
 };
 
 class Input
