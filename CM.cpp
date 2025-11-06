@@ -105,6 +105,8 @@ void ReadSolution(const string path, Solution& sol){
     file.close();
     sol.validate();
     cout << "Solution = " << sol.ComputeTotalCost() << endl;
+    cout << "HAP cost = " << sol.ComputeTotalHACost() << endl;
+    cin.get();
 }
 
 std::string FolderPath(const InputData& data) {
@@ -242,8 +244,6 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     }
     algo.solve(in, sol);
 
-    cout << "Total cost = " << sol.ComputeTotalCost() << endl;
-
     int NrViolations = 0;
     if (data.TTP){
         sol.SetOneCostAllViolations(1);
@@ -251,6 +251,7 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
         if (NrViolations > 0){
             cout << "Solution not feasible, nr of violations = " << NrViolations << endl;
             cout << "Start hill climbing" << endl;
+            cin.get();
             // Hill climbing
             sol.SetOneCostAllViolations(100000);
             obj = sol.ComputeTotalCost();
@@ -260,13 +261,16 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
             sol.SetOneCostAllViolations(1);
             NrViolations = sol.ComputeTotalCostTTPViolations();
             cout << "Final nr of violations = " << NrViolations << endl;
-            sol.SetOneCostAllViolations(0);
+            sol.SetOneCostAllViolations(100000);
         }
     }
 
     algo.SaveBestSolution(sol);
     sol.validate();
-    cout << "Final solution (travel cost) = " << sol.ComputeTotalCost() << endl;
+    cout << "Final cost = " << sol.ComputeTotalCost() << endl;
+    if (data.TTP){
+        cout << "Travel cost = " << sol.ComputeTravelCostTTP() << ", Cost violations = " << 10000 << " x " << NrViolations << endl;
+    }
 
     string FilePath; 
     if (data.OutputFolder.empty()){
@@ -323,14 +327,20 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     }
     else{
         // IP without patterns:
+        string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
+        path += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
+        ReadSolution(path, sol);
         const bool relax_x = false;
         gur.build_all(HA, relax_x);
         // gur.setBoundCapacityViolations();
         gur.AddObj(min_travel, min_cap);
+        gur.WarmStart(sol);
+        // gur.Fix_x(sol);
     }
     gur.setTimeLimit(data.TimeLimit);
     gur.SetTimeStamps(TimeStamps);
     gur.solve();
+    cin.get();
     gur.SaveSolution(sol);
     cout << "HAP cost = " << sol.ComputeTotalHACost() << endl;
     // Save solution in file:
@@ -416,12 +426,16 @@ void TestCostMinimization(InputData& data){
         in.SRR = true;
     }
     else{
-        in.setHAP_requirements(true, false, false, true, data.MaxNrBreaks);
+        bool SetMaxNrBreaks = true;
+        if (data.MaxNrBreaks > 3){
+            SetMaxNrBreaks = false;
+        }
+        in.setHAP_requirements(true, false, false, SetMaxNrBreaks, data.MaxNrBreaks);
         in.SRR = true;
         if (!data.ConstantCapacity){
             in.setMiaoHAPSetting(data.CapacitySetting);
         }
-        // in.setAllowedNrCapacityViolations();
+        in.setAllowedNrCapacityViolations1RR(data);
     }
 
     if (data.TTP && !data.HistoryLengthProvided){
