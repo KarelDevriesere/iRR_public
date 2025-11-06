@@ -251,7 +251,6 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
         if (NrViolations > 0){
             cout << "Solution not feasible, nr of violations = " << NrViolations << endl;
             cout << "Start hill climbing" << endl;
-            cin.get();
             // Hill climbing
             sol.SetOneCostAllViolations(100000);
             obj = sol.ComputeTotalCost();
