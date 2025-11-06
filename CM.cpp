@@ -338,7 +338,9 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
         string FilePathVcr = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
         FilePathVcr += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
         std::ofstream output_file_Vcr(FilePathVcr);
-        output_file_Vcr << gur.getBestObjValue() << "\n";
+        output_file_Vcr << "Instance,CapacitySetting,MaxNrBreaks,Vcr\n";
+        output_file_Vcr << data.Instance << "," << data.CapacitySetting << "," << data.MaxNrBreaks << "," << gur.getBestObjValue() << "\n";
+        SaveSolution(output_file_Vcr, sol);
         output_file_Vcr.close();
         cout << "Save " << gur.getBestObjValue() << " in file " << FilePathVcr << endl;
         return;
