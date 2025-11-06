@@ -106,7 +106,7 @@ class Input
         int AllowedNrCapacityViolations = 0; // default TODO TODO
         bool MaxSameClubConstraint = false;
         int MaxSameClub = 100;
-        int IndexDummyClub;
+        int IndexDummyClub = -1;
         int MaxEdgeCost;
         string InstanceName;
 

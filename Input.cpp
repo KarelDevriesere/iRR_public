@@ -416,7 +416,6 @@ int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
 
     ConstantCapacity = true;
     int i = 0, k = 0, t = 0, l = 0;
-    int IndexDummyClub;
     int MaxDistanceClubs = 0;
     while (getline(file, line)){
         // std::cout << line << std::endl;
