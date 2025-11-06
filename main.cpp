@@ -114,9 +114,11 @@ int main(int argc, const char* argv[]){
                 data.Miao = false;
             }
             else if (arg == "--Miao"){ // Miao
-                data.Miao = true;
-                data.TTP = false;
-                data.CM = false;
+                data.Miao = std::stoi(argv[++i]);
+                if (data.TTP != 0 && data.TTP != 1){
+                    std::cerr << "TTP should be 0 or 1" << endl;
+                    return 1;
+                }
             }
             else if (arg == "--CapacitySetting"){ // Miao
                 int setting = std::stoi(argv[++i]);
