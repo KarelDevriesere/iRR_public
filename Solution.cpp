@@ -435,42 +435,34 @@ int Solution::ComputeHACostTeam(const int i){
     int cost = 0;
     if (getHAP_requirement(HAP_requirement_name::NoThreeConsecutive)){
         cost += NrThreeConsecutiveHA(i);
-        /*
         if (NrThreeConsecutiveHA(i) > 0){
-            cout << "NrThreeConsecutiveHA violated" << endl;
+            cout << "NrThreeConsecutiveHA violated for " << i << endl;
         }
-            */
         // assert(NrThreeConsecutiveHA(i) == 0);
     }
     if (getHAP_requirement(HAP_requirement_name::NoBreakBeginningEnd)){
         cost += getNrBreaksBeginningEnd(i);
-        /*
         if (getNrBreaksBeginningEnd(i) > 0){
-            cout << "NrBreaksBeginningEnd violated" << endl;
+            cout << "NrBreaksBeginningEnd violated for " << i << endl;
         }
-            */
         // assert(getNrBreaksBeginningEnd(i) == 0);
     }
     if (getHAP_requirement(HAP_requirement_name::BreakLimit)){
         cost += max(0, getNrBreaks(i)-getBreakLimit());
-        /*
         if (max(0, getNrBreaks(i)-getBreakLimit()) > 0){
-            cout << "BreakLimit violated" << endl;
+            cout << "BreakLimit violated for " << i << endl;
         }
-            */
         // assert(getNrBreaks(i) <= getBreakLimit());
     }
     if (getHAP_requirement(HAP_requirement_name::QuarterBalanced)){
         cost += getImbalanceHalf(i);
-        /*
         if (getImbalanceHalf(i) > 0){
-            cout << "NrBreaksBeginningEnd violated" << endl;
+            cout << "NrBreaksBeginningEnd violated for " << i << endl;
         }
-            */
         // assert(getImbalanceHalf(i) == 0);
     }
     if (!IsTeamBalanced(i)){
-        // cout << "Not balanced!!" << endl;
+        cout << i << "Not balanced!!" << endl;
         cost++;
     }
     return HighCostHAPs*cost;
@@ -478,6 +470,7 @@ int Solution::ComputeHACostTeam(const int i){
 
 int Solution::ComputeTotalHACost(){
     int cost = ComputeCostCapacities();
+    cout << "Cost violating capacities = " << ComputeCostCapacities() << endl;
     for (int i = 0; i < getNrTeams(); ++i){
         cost += ComputeHACostTeam(i);
     }

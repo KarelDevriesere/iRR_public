@@ -27,15 +27,21 @@ GRBModel GurSolver::createModel(GRBEnv& env) {
 
 void GurSolver::WarmStart(Solution& sol){
 	assert(!x.empty());
-	for (int i = 0; i < getNrTeams(); ++i){
-		for (int j = 0; j < getNrTeams(); ++j){
-			for (int r = 0; r < getNrRounds(); ++r){
-				if (sol.MatchColor[i][j] == r){
+	for (int r = 0; r < getNrRounds(); ++r){
+		vector<bool>NodeSeen(getNrTeams(), false);
+		for (int i = 0; i < getNrTeams(); ++i){
+			if (!NodeSeen[i]){
+				int j = sol.TeamColorOpp[i][r];
+				if (sol.Orientation[i][r] == HA::H){
+					assert(sol.Orientation[j][r] == HA::A);
 					x[i][j][r].set(GRB_DoubleAttr_Start, 1.0);
 				}
 				else{
-					x[i][j][r].set(GRB_DoubleAttr_Start, 0.0);
+					assert(sol.Orientation[j][r] == HA::H);
+					assert(sol.Orientation[i][r] == HA::A);
+					x[j][i][r].set(GRB_DoubleAttr_Start, 1.0);
 				}
+				NodeSeen[j] = true;
 			}
 		}
 	}
@@ -1074,17 +1080,16 @@ void GurSolver::SaveSolution(Solution& sol){
 	for (int i = 0; i < getNrTeams(); ++i){
 		for (int r = 0; r < getNrRounds(); ++r){
 			for (int j = 0; j < getNrTeams(); ++j){
-				if (isEligible(i,j)){
-					if (x[i][j][r].get(GRB_DoubleAttr_X) > 0.9){
-						sol.TeamColorOpp[j][r] = i;
-						sol.TeamColorOpp[i][r] = j;
-						sol.MatchColor[i][j] = r;
-						if (SRR){
-							sol.MatchColor[j][i] = r;
-						}
-						sol.Orientation[i][r] = HA::H;
-						sol.Orientation[j][r] = HA::A;
+				if (x[i][j][r].get(GRB_DoubleAttr_X) > 0.9){
+					assert(isEligible(i,j));
+					sol.TeamColorOpp[j][r] = i;
+					sol.TeamColorOpp[i][r] = j;
+					sol.MatchColor[i][j] = r;
+					if (SRR){
+						sol.MatchColor[j][i] = r;
 					}
+					sol.Orientation[i][r] = HA::H;
+					sol.Orientation[j][r] = HA::A;
 				}
 			}
 		}

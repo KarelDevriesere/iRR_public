@@ -185,7 +185,8 @@ class Input
         }
 
         int getBreakLimit()const{return BreakLimit;}; // nr breaks per team
-        void setAllowedNrCapacityViolations();
+        void setAllowedNrCapacityViolations1RR(const InputData& data);
+        void setAllowedNrCapacityViolations2RR();
         int getAllowedNrCapacityViolations()const{return AllowedNrCapacityViolations;};
         int getMaxSameClub()const{return MaxSameClub;};
         void setMaxSameClub(const int max){

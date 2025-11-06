@@ -124,13 +124,13 @@ int main(int argc, const char* argv[]){
                     data.ConstantCapacity = true;
                 }
                 else if (setting == 1 || setting == 2){
-                    data.CapacitySetting = setting;
                     data.ConstantCapacity = false;
                 }
                 else{
                     std::cerr << "Capacity setting must be 0 (constant), 1 or 2!" << endl;
                     return 1;
                 }
+                data.CapacitySetting = setting;
                 data.Miao = true;
                 data.TTP = false;
                 data.CM = false;
