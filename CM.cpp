@@ -104,9 +104,6 @@ void ReadSolution(const string path, Solution& sol){
     }
     file.close();
     sol.validate();
-    cout << "Solution = " << sol.ComputeTotalCost() << endl;
-    cout << "HAP cost = " << sol.ComputeTotalHACost() << endl;
-    cin.get();
 }
 
 std::string FolderPath(const InputData& data) {
@@ -328,20 +325,22 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
         // IP without patterns:
         string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
         path += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
-        ReadSolution(path, sol);
+        if (!(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
+            ReadSolution(path, sol);
+        }
         const bool relax_x = false;
         gur.build_all(HA, relax_x);
         // gur.setBoundCapacityViolations();
         gur.AddObj(min_travel, min_cap);
-        gur.WarmStart(sol);
+        if (!(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
+            gur.WarmStart(sol);
+        }
         // gur.Fix_x(sol);
     }
     gur.setTimeLimit(data.TimeLimit);
     gur.SetTimeStamps(TimeStamps);
     gur.solve();
-    cin.get();
     gur.SaveSolution(sol);
-    cout << "HAP cost = " << sol.ComputeTotalHACost() << endl;
     // Save solution in file:
     if (in.getSetting() == Setting::Miao && min_cap){
         string FilePathVcr = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
@@ -355,9 +354,6 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
         return;
     } 
     sol.validate();
-    cout << "Final solution = " << sol.ComputeTotalCost() << endl;
-    cout << "Save solution in file?" << endl;
-    cin.get();
 
     const string FilePath = FolderPath + "Results" + std::string(PATHSEP) + "IP" + std::string(PATHSEP) + data.Instance + "_" + to_string(in.getNrRounds()) + ".txt";
     const string config = to_string(data.seed) + ",IP," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
