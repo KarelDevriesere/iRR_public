@@ -46,9 +46,18 @@ const unordered_map<string,int>InstanceBound = {
     {"I_CIRC40_10",560},
     {"I_CIRC40_20",1760},
     {"I_CIRC40_30",3600},
+    {"I_CON16_4",280},
+    {"I_CON16_8",560},
+    {"I_CON16_12",810},
+    {"I_CON24_6",96},
+    {"I_CON24_12",192},
+    {"I_CON24_18",294},
+    {"I_CON32_8",192},
+    {"I_CON32_16",352},
+    {"I_CON32_24",520},
     {"I_CON40_10",280},
     {"I_CON40_20",560},
-    {"I_CON40_30",800},
+    {"I_CON40_30",810},
     {"I_GAL40_10",23617},
     {"I_GAL40_20",50962},
     {"I_GAL40_30",81661},
@@ -466,7 +475,8 @@ void BoundTTP(const int TimeLimit, const string Instance, const int NrRoundsTTP,
     int UB = 0;
     double gap = 0;
     gur.setTimeLimit(TimeLimit); 
-    gur.BoundTTP_AllTeams();
+    // This assumes that a bound is known for the corresponding constant distance ttp instance
+    gur.BoundTTP_AllTeams(InstanceBound.at("I_CON" + std::to_string(in.getNrTeams()) + "_" + std::to_string(in.getNrRounds())));
     gur.solve();
     LB = gur.getBestBound();
     UB = gur.getBestObjValue();
