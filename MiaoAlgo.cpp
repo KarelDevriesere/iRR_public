@@ -58,10 +58,10 @@ void setHAP(Solution& sol, const int i, const int h){
     sol.setHAPIndexTeam(i, h);
 }
 
-MiaoAlgo::MiaoAlgo(const std::unordered_map<HAP_operator, string>& moves, // moves, weights and in are defined in main
-           const std::unordered_map<HAP_operator, double>& weights, Input& in, std::mt19937& g): SA<HAP_operator>(moves, weights, g){
-    Rounds = vector<int>(in.getNrRounds());
-    for (int r = 0; r < in.getNrRounds(); ++r){
+MiaoAlgo::MiaoAlgo(const std::unordered_map<Move, string>& moves, // moves, weights and in are defined in main
+           const std::unordered_map<Move, double>& weights, const int NrRounds, std::mt19937& g): SA<Move>(moves, weights, g){
+    Rounds = vector<int>(NrRounds);
+    for (int r = 0; r < NrRounds; ++r){
         Rounds[r] = r;
     }
 }
@@ -96,7 +96,7 @@ void MiaoAlgo::SaveBestSequenceMatches(Solution& sol){
 }
 
 void MiaoAlgo::ReverseMove(Solution& sol){
-    if (CurrentMove == HAP_operator::ComplementInsertion){
+    if (CurrentMove == Move::ComplementInsertion){
         setHAP(sol, team1, hap_index1);
         setHAP(sol, team2, hap_index2);
     }
@@ -130,20 +130,16 @@ void MiaoAlgo::ReAssignHAPs(Solution& sol){
         rnd = RandomDoubleNumber(0.0, 1.0);
         auto iterator = WeightsCumul.upper_bound(rnd); 
         CurrentMove = iterator->second;
-        if (CurrentMove == HAP_operator::InterClubSwap){
-            // cout << "InterClubSwap" << endl;
+        if (CurrentMove == Move::InterClubSwap){
             MoveChosen = InterClubSwap(sol);
         }
-        else if (CurrentMove == HAP_operator::IntraClubSwap){
-            // cout << "IntraClubSwap" << endl;
+        else if (CurrentMove == Move::IntraClubSwap){
             MoveChosen = IntraClubSwap(sol);
         }
-        else if (CurrentMove == HAP_operator::RandomSwap){
-            // cout << "RandomSwap" << endl;
+        else if (CurrentMove == Move::RandomSwap){
             MoveChosen = RandomSwap(sol);
         }
         else{
-            // cout << "ComplementInsertion" << endl;
             MoveChosen = ComplementInsertion(sol);
         }
         NrChosen.at(CurrentMove)++;
@@ -161,7 +157,7 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
         while (s < sol.getNrRounds()){
 
             const int r = Rounds[s];
-            cout << "Optimize round " << r << ", try: " << count << endl;
+            // cout << "Optimize round " << r << ", try: " << count << endl;
 
             // cout << "find matching" << endl;
             int delta = 0;
@@ -182,7 +178,7 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
                 }
             }
             else{
-                cout << "Matching in round " << r << ":" << endl;
+                // cout << "Matching in round " << r << ":" << endl;
                 for (auto& [i, j]: matching){
                     if (sol.Orientation[i][r] == HA::H){
                         assert(sol.Orientation[j][r] == HA::A);
@@ -193,18 +189,17 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
                         assert(sol.Orientation[j][r] == HA::H);
                         a = i, h = j;
                     }
-                    cout << h << ", " << a << endl;
+                    // cout << h << ", " << a << endl;
                     SetValueCircleMethod(h, a, r, sol);
                 }
                 ++s;
             }
         }
     }
-    // assert(sol.validate());
-    cout << "Total travel cost = " << sol.ComputeTravelCost() << endl;
-    cout << "Total cost = " << sol.ComputeTotalCost() << endl;
+    assert(sol.validate());
+    // cout << "Total travel cost = " << sol.ComputeTravelCost() << endl;
+    // cout << "Total cost = " << sol.ComputeTotalCost() << endl;
     assert(sol.ComputeTravelCost() == sol.ComputeTotalCost());
-    cin.get();
     return true;
 }
 
@@ -356,10 +351,11 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
         GurSolver gursol(in);
         // Assign HAPs such that we respect v+
         gursol.AssignHAPsToTeams(sol);
-        CurrentMove = HAP_operator::Initial;
     }
     else{
         best_obj = sol.ComputeTotalCost();
+        cout << "Cost HAPs = " << sol.ComputeTotalHACost() << endl;
+        cin.get();
         current_obj = best_obj;
         UpdateBestSolution(sol);
         ReAssignHAPs(sol); // do a HAP move

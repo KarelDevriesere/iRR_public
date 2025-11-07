@@ -28,14 +28,14 @@ class Solution: public Input{
         vector<vector<int>>WeightsBF; // weights for the Bellman Ford
         vector<vector<HA>>Orientation;
 
-        int NonEligibleCost = 1000;
-        int CostCapacityViol = 1000;
-        int CostSameClub = 1000;
-        int HighCostHAPs = 100;
+        int NonEligibleCost = 100000;
+        int CostCapacityViol = 100000;
+        int CostSameClub = 100000;
+        int HighCostHAPs = 100000;
         int TravelCost = 1;
 
-        int Cost2RRSameHalf = 1000;
-        int Cost2RRSameMode = 1000;
+        int Cost2RRSameHalf = 100000;
+        int Cost2RRSameMode = 100000;
 
         int CostTTPViolation = 100000;
         int CostImbalance = 100000;

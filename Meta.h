@@ -58,6 +58,10 @@ class MetaBase{ // Everything that can be used for all metaheuristics
 
         vector<vector<pair<int,int>>>BestSequenceMatches;
 
+        int CurrentTimeStampIndex = 0;
+        vector<int>TimeStamps;
+        unordered_map<int,int>TimeStampSolution; // Best solution after certain time (in seconds)
+
         MetaBase(const std::unordered_map<Move, string>& moves, const std::unordered_map<Move, double>& weights, std::mt19937& g);
         // pass moves and weights to the object and initialize Moves and Weights with these
         ~MetaBase(){};
@@ -147,6 +151,27 @@ class MetaBase{ // Everything that can be used for all metaheuristics
         };
 
         void SaveResultsMoves(std::string file_path_results_base, int instance, int seed);
+
+        void SetTimeStamps(vector<int>& TS){
+            TimeStamps = TS;
+        }
+
+        void UpdateTimeStamps(){
+            if (!TimeStamps.empty() && (int)getTimeDiff() > TimeStamps.at(CurrentTimeStampIndex)){
+                TimeStampSolution[TimeStamps.at(CurrentTimeStampIndex)] = best_obj;
+                if (CurrentTimeStampIndex+1 < TimeStamps.size()){
+                    CurrentTimeStampIndex++;
+                }
+            }
+        }
+
+        void SaveSolutionsTimeStamps(std::ofstream& output_file){
+            output_file << "Time,Value \n";
+            for (auto&[TimeStamp, Solution]: TimeStampSolution){
+                output_file << TimeStamp << "," << Solution << "\n";
+            }
+            output_file << "Final, " << this->best_obj << "," << (int)this->getTimeDiff() << "\n" << endl;
+        }
 };
 
 // TODO TODO Whenever you use the template for a class, iniitialize at the bottom of Meta.cpp!
@@ -158,19 +183,12 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
 
         vector<int>HistoricValues;
         int HistoryLength = 1; // default: Hill Climbing
-        int CurrentTimeStampIndex = 0;
-        vector<int>TimeStamps;
-        unordered_map<int,int>TimeStampSolution; // Best solution after certain time (in seconds)
 
         int MAX_IT = 1000000;
 
         LAHC(const std::unordered_map<Move, string>& moves, // moves, weights and in are defined in main
            const std::unordered_map<Move, double>& weights, std::mt19937& g): MetaBase<Move>(moves, weights, g){
 
-        }
-
-        void SetTimeStamps(vector<int>& TS){
-            TimeStamps = TS;
         }
 
         void SetHistoryLength(const int l){
@@ -183,14 +201,6 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
 
         void SetMaxIt(const int limit){
             MAX_IT = limit;
-        }
-
-        void SaveSolutionsTimeStamps(std::ofstream& output_file){
-            output_file << "Time,Value \n";
-            for (auto&[TimeStamp, Solution]: TimeStampSolution){
-                output_file << TimeStamp << "," << Solution << "\n";
-            }
-            output_file << "Final, " << this->best_obj << "," << (int)this->getTimeDiff() << "\n" << endl;
         }
 
         bool Update(Solution& sol, const int obj) ;

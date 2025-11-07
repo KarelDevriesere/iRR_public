@@ -200,12 +200,7 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
                 HistoricValues.at(v) = obj;
             }
 
-            if (!TimeStamps.empty() && (int)this->getTimeDiff() > TimeStamps.at(CurrentTimeStampIndex)){
-                TimeStampSolution[TimeStamps.at(CurrentTimeStampIndex)] = this->best_obj;
-                if (CurrentTimeStampIndex+1 < TimeStamps.size()){
-                    CurrentTimeStampIndex++;
-                }
-            }
+            this->UpdateTimeStamps();
 
             if (this->getTimeDiff() > this->TIME_LIMIT || (++this->it > MAX_IT && this->it_idle > this->it*0.02) || (this->LowerBound >= 0 && obj <= this->LowerBoundGap*this->LowerBound)){
                 this->STOP = true;
@@ -242,11 +237,6 @@ bool SA<Move>::Update(Solution& sol, const int obj){
                     this->current_obj = obj;
                     this->it_accepted++;
                     SolutionAccepted = true;
-#ifdef PRINT
-#if PRINT == 1
-                    this->print_solution();
-#endif
-#endif
                 }
                 else{
                     // reverse move
@@ -255,6 +245,16 @@ bool SA<Move>::Update(Solution& sol, const int obj){
                     return false; // CUSTOMIZE WHAT HAPPENS AFTERWARDS
                 }
             }
+            if (SolutionAccepted){
+#ifdef PRINT
+#if PRINT == 1
+                    this->print_solution();
+#endif
+#endif
+            }
+
+            this->UpdateTimeStamps();
+
             if (++this->it % I_temp == 0 || this->it_accepted % I_accept == 0){ 
                 T *= cooling_rate;
                 cout << "New T = " << T << endl;
@@ -277,8 +277,7 @@ bool SA<Move>::Update(Solution& sol, const int obj){
 
 // Explicit instantiations
 template class MetaBase<FO_move>;
-template class MetaBase<HAP_operator>;
 template class MetaBase<Move>;
 template class LAHC<Move>;
-template class SA<HAP_operator>;
 template class SA<FO_move>;
+template class SA<Move>;

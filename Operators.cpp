@@ -1280,17 +1280,16 @@ int ComputeEdgeWeightM(const int i, const int j, const int c, const bool MinCost
         sol.TeamColorOpp[j][c] = Opp_j;
     }
     else if (sol.getSetting() == Setting::Miao){
-        // cout << "Compute edge weight according to miao setting" << endl;
         int Opp_i = sol.TeamColorOpp[i][c];
         int Opp_j = sol.TeamColorOpp[j][c];
-        sol.TeamColorOpp[i][c] = j;
-        sol.TeamColorOpp[j][c] = i;
-        d = (sol.getDistanceTeams(i,j)+sol.ComputeCost2RRConstraintTeam(i)+sol.CostSameClub*sol.getNrSameClub(i));
+        d = sol.getDistanceTeams(i,j);
         if (!sol.isEligible(i,j)){
             d += sol.NonEligibleCost;
         }
         if (sol.Orientation[i][c] == sol.Orientation[j][c]){
             assert(!bipartite);
+            sol.TeamColorOpp[i][c] = j;
+            sol.TeamColorOpp[j][c] = i;
             HA Orientation_i = sol.Orientation[i][c];
             HA Orientation_j = sol.Orientation[j][c];
             sol.Orientation[i][c] = HA::H, sol.Orientation[j][c] = HA::A;

@@ -6,6 +6,7 @@
 #include "Heuristic_CM.h"
 #include "Algo.h"
 #include "Input.h"
+#include "MiaoAlgo.h"
 
 #include <filesystem>
 

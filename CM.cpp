@@ -113,9 +113,6 @@ void ReadSolution(const string path, Solution& sol){
     }
     file.close();
     sol.validate();
-    cout << "Solution = " << sol.ComputeTotalCost() << endl;
-    cout << "HAP cost = " << sol.ComputeTotalHACost() << endl;
-    cin.get();
 }
 
 std::string FolderPath(const InputData& data) {
@@ -209,22 +206,96 @@ void SaveSolution(std::ofstream& output_file, Solution& sol){
     }
 }
 
-void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data){
+int RF_Miao(Input& in, const int TimeLimitRF){
+
+	// This is not part of GurSolver since we cannot change the variable type once this is defined in Gurobi
+	// Instead, we should create a new model, so it's best to define this function outside GurSolver and create seperate gur objects
+
+    int dur = 0;
+    Solution sol(in);
+    GurSolver gur_relax(in);
+
+	// relax x_ijr variables:
+	bool relax_x = true;
+	gur_relax.BuildMiaoFormulation(relax_x);
+
+	const bool min_travel = true;
+	const bool min_capacity_violations = false;
+	gur_relax.AddObj(min_travel, min_capacity_violations);
+    gur_relax.setTimeLimit(TimeLimitRF);
+    gur_relax.TrackTimeBestSolution = true;
+
+    // cout << "solve model" << endl;
+	int lb = gur_relax.solve();
+    if (lb < 0){ // no solution found during assigning HAPs
+        return -1;
+    }
+    dur += gur_relax.getTimeTillBestSolution();
+    // cout << "Lower bound = " << lb << endl;
+
+    // other alternative: just find a feasible hap assignment
+    // gur_relax.AssignHAPsToTeams(sol); -> but then infeasible in next stage!
+
+    gur_relax.StoreHAPs(sol);
+
+    GurSolver gur_fix(in);
+    relax_x = false;
+    gur_fix.BuildMiaoFormulation(relax_x);
+    gur_fix.Fix_y_Patterns(sol);
+    gur_fix.AddObj(min_travel, min_capacity_violations); // turn back
+    gur_fix.setTimeLimit(TimeLimitRF);
+    gur_fix.TrackTimeBestSolution = true;
+
+    gur_fix.solve();
+    gur_fix.SaveSolution(sol);
+    dur += gur_fix.getTimeTillBestSolution();
+    // cout << "solution found!!" << endl;
+
+    return dur;
+}
+
+void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data){
     // Find initial solution with Vizing
     Solution sol(in);
-    sol.SetOneCostAllViolations(data.ConstrViolationCost);
-    if (sol.getSetting() != Setting::Miao){
-        cout << "Solve Vizing" << endl;
-        VizingConstruction(sol, data.seed);
-        cout << "Found initial solution" << endl;
-    }
-    else{
-        string path = PathInitialSolutionMiao(data);
+    string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
+    path += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
+    if (!(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
         ReadSolution(path, sol);
     }
+    std::mt19937 gen(data.seed);
+    MiaoAlgo miao_algo(MiaoMoves, MiaoWeights, in.getNrRounds(), gen);
+    miao_algo.InitialSolutionGiven = true;
+    miao_algo.setTimeLimit_meta(data.TimeLimit);
+    miao_algo.SetTimeStamps(TimeStamps);
+    miao_algo.solve(in, sol);
+    sol.validate();
+
+    const string FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
+    const string config = to_string(data.seed) + ",MiaoAlgo," + data.Instance + "," + to_string(data.CapacitySetting) + "," + to_string(data.MaxNrBreaks);
+
+    cout << "Save file as " << FilePath << endl;
+    std::ofstream output_file(FilePath);
+    output_file << config << "\n";
+    miao_algo.SaveSolutionsTimeStamps(output_file);
+    SaveSolution(output_file, sol);
+    output_file.close();
+    cout << "Close file" << endl;
+}
+
+void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data){
+    // Find initial solution with Vizing
+    cout << "Solve heuristic" << endl;
+    Solution sol(in);
+    sol.SetOneCostAllViolations(data.ConstrViolationCost);
+
+    cout << "Solve Vizing" << endl;
+    VizingConstruction(sol, data.seed);
+    cout << "Found initial solution" << endl;
+
     assert(sol.validate());
     int obj = sol.ComputeTotalCost();
     cout << "Cost initial solution = " << obj << endl;
+    cin.get();
 
     std::mt19937 gen(data.seed);
     int HL = data.HistoryLength;
@@ -323,7 +394,7 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     Solution sol(in);
     bool HA = true;
     bool relax_x = false;
-    const bool min_travel = false, min_cap = true;
+    const bool min_travel = true, min_cap = false;
     if (in.getSetting() == Setting::CM){
         gur.build_base(HA, relax_x);
         gur.AddObjGeneralCosts();
@@ -337,20 +408,22 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
         // IP without patterns:
         string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
         path += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
-        ReadSolution(path, sol);
+        if (!(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
+            ReadSolution(path, sol);
+        }
         const bool relax_x = false;
         gur.build_all(HA, relax_x);
-        // gur.setBoundCapacityViolations();
+        gur.setBoundCapacityViolations();
         gur.AddObj(min_travel, min_cap);
-        gur.WarmStart(sol);
+        if (!(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
+            gur.WarmStart(sol);
+        }
         // gur.Fix_x(sol);
     }
     gur.setTimeLimit(data.TimeLimit);
     gur.SetTimeStamps(TimeStamps);
     gur.solve();
-    cin.get();
     gur.SaveSolution(sol);
-    cout << "HAP cost = " << sol.ComputeTotalHACost() << endl;
     // Save solution in file:
     if (in.getSetting() == Setting::Miao && min_cap){
         string FilePathVcr = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
@@ -364,12 +437,18 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
         return;
     } 
     sol.validate();
-    cout << "Final solution = " << sol.ComputeTotalCost() << endl;
-    cout << "Save solution in file?" << endl;
-    cin.get();
 
-    const string FilePath = FolderPath + "Results" + std::string(PATHSEP) + "IP" + std::string(PATHSEP) + data.Instance + "_" + to_string(in.getNrRounds()) + ".txt";
-    const string config = to_string(data.seed) + ",IP," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
+    string FilePath;
+    string config;
+    
+    if (in.getSetting() == Setting::TTP){
+        FilePath = FolderPath + "Results" + std::string(PATHSEP) + "IP" + std::string(PATHSEP) + data.Instance + "_" + to_string(in.getNrRounds()) + ".txt";
+        config = to_string(data.seed) + ",IP," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
+    }
+    else if (in.getSetting() == Setting::Miao){
+        FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "IP" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
+        config = to_string(data.seed) + ",IP," + data.Instance + "," + to_string(data.CapacitySetting) + "," + to_string(data.MaxNrBreaks);
+    }
     cout << "Save file as " << FilePath << endl;
     std::ofstream output_file(FilePath);
     output_file << config << "\n";
@@ -450,8 +529,14 @@ void TestCostMinimization(InputData& data){
         data.HistoryLength = InstanceHL.at(in.getInstanceName()); 
     }
     
-    if (data.Heuristic){
+    if (data.Heuristic && !data.RunMiaoAlgo && !data.RunMiaoRF){
         SolveHeuristic(in,TimeStamps,folder_path,data);
+    }
+    else if (data.RunMiaoAlgo){
+        SolveMiaoHeuristic(in,TimeStamps,folder_path,data);
+    }
+    else if (data.RunMiaoRF){
+        RF_Miao(in, data.TimeLimit);
     }
     else{
         SolveIP(in,TimeStamps,folder_path,data);
