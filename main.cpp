@@ -160,6 +160,18 @@ int main(int argc, const char* argv[]){
                     data.Instance = "i0" + to_string(miao_i);
                 }
             }
+            else if (arg == "--MiaoAlgo"){ // Miao
+                data.RunMiaoAlgo = std::stoi(argv[++i]);
+                data.Miao = true;
+                data.TTP = false;
+                data.CM = false;
+            }
+            else if (arg == "--MiaoRF"){ // Miao
+                data.RunMiaoRF = std::stoi(argv[++i]);
+                data.Miao = true;
+                data.TTP = false;
+                data.CM = false;
+            }
             else if (arg == "--TimeLimit"){
                 data.TimeLimit = std::stoi(argv[++i]);
                 if (data.TimeLimit < 0){
