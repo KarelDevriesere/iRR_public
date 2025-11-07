@@ -1,0 +1,24 @@
+***************************************************************
+*  Code to generate solutions for the constant distance iTTP  *
+***************************************************************
+
+This code is based on the following paper:
+Van Bulck, D. & Goossens, D. A traditional Benders' approach to sports timetabling Eur. J. Oper. Res., 2023, 307, 813-826
+
+I made the following adaptions with respect to the orignal code:
+- Link between breaks and travel distance based on number of slots rather than explicity assuming a 2RR (see also paper Urrutia and Ribeiro)
+- Added a constraint stating that each team can play at most one game per round (no longer explicit by other constraints; i.e., it was
+  redundant before since in each round you needed to play either at home or away and each game could be used at most once --> if you
+  would have played > 1 game in a round, you do not have enough games left for the other rounds; this is no longer valid!)
+- Add the 1RR constraint: each game (i,j) and (j,i) can be scheduled at most once
+- Adapted the balance constraints: each plays half its games at home/away
+- Removed bounds on the number of breaks (no longer a 1RR: teams can have the same pattern!)
+- Adapted the lexico constraints: teams can have the same pattern!
+- Adapted the Makefile to use g++11 since otherwise I get errors.
+- Disabled writing to VSC_SCRATCH to experiment with somehing locally
+
+BE CAREFULL:
+
+The pattern models are merely approximations. We cannot guarantee it is suboptimal a pattern with less breaks for one team is chosen...
+
+
