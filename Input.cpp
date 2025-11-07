@@ -885,7 +885,6 @@ int Input::read_HAPs(){
     }
     TeamsHAP = vector<int>(NrTeams);
     cout << HAPs.size() << " satisfactory haps" << endl;
-    cin.get();
 
     return 1;
 

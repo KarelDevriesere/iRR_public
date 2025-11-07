@@ -404,7 +404,7 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
         }
         const bool relax_x = false;
         gur.build_all(HA, relax_x);
-        // gur.setBoundCapacityViolations();
+        gur.setBoundCapacityViolations();
         gur.AddObj(min_travel, min_cap);
         if (!(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
             gur.WarmStart(sol);
