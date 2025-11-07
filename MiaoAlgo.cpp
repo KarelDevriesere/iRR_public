@@ -288,7 +288,7 @@ bool MiaoAlgo::ComplementInsertion(Solution& sol){
     int i = rand()%sol.getNrTeams();
     int h = sol.getHAPIndexTeam(i);
     int hc = sol.getComplementIndexHAP(h);
-    // cout << "h = " << h << ", hc = " << hc << endl;
+    // cout << "i = " << i << ", h = " << h << ", hc = " << hc << endl;
     int j = 0;
     while (sol.getHAPIndexTeam(j) != hc){
         // cout << "hap of " << j << "  = " << sol.getHAPIndexTeam(j) << endl;
@@ -327,7 +327,6 @@ bool MiaoAlgo::ComplementInsertion(Solution& sol){
     // draw new haps for i and j that are complementary
     int hc_i = rand()%sol.getNrHAPs();
     int hc_j = sol.getComplementIndexHAP(hc_i);
-    // cout << "ComplementInsertaion: swap HAPs of " << i << " and " << j << " for " << hc_i << " and " << hc_j << endl;
 
     setHAP(sol, i, hc_i);
     setHAP(sol, j, hc_j);
@@ -342,21 +341,36 @@ bool MiaoAlgo::ComplementInsertion(Solution& sol){
     return true;
 }
 
+void AssignsHAPsToTeamsBasedOnSol(Input& in, Solution& sol){
+    GurSolver gursol(in);
+    const bool relax_x = false;
+    gursol.BuildMiaoFormulation(relax_x);
+    const bool min_travel = false;
+	const bool min_capacity_violations = true; // set to true!!!
+	gursol.AddObj(min_travel, min_capacity_violations);
+    gursol.Fix_x(sol);
+    int obj = gursol.solve();
+	assert(obj <= sol.getAllowedNrCapacityViolations());
+	gursol.StoreHAPs(sol);
+}
+
 void MiaoAlgo::solve(Input& in, Solution& sol){
 
     StartTime = std::chrono::high_resolution_clock::now();
     // TODO: Miao is also doing something with byes...
 
     if (!InitialSolutionGiven){
-        GurSolver gursol(in);
         // Assign HAPs such that we respect v+
+        GurSolver gursol(in);
         gursol.AssignHAPsToTeams(sol);
     }
     else{
         best_obj = sol.ComputeTotalCost();
         cout << "Cost HAPs = " << sol.ComputeTotalHACost() << endl;
-        cin.get();
         current_obj = best_obj;
+        cout << "Assign Haps to teams" << endl;
+        AssignsHAPsToTeamsBasedOnSol(in, sol);
+        cout << "done" << endl;
         UpdateBestSolution(sol);
         ReAssignHAPs(sol); // do a HAP move
         Reset(sol);

@@ -561,6 +561,7 @@ void GurSolver::Fix_x(Solution& sol){
 				continue;
 			}
 			int j = sol.TeamColorOpp[i][r];
+			assert(sol.isEligible(i,j));
 			NodeSeen[j] = true; 
 			if (sol.Orientation[i][r] == HA::H){
 				model.addConstr(x[i][j][r] == 1);
@@ -1211,10 +1212,10 @@ void GurSolver::AddMiaoSymmetryConstraint(){
 }
 
 void GurSolver::BuildMiaoFormulation(const bool relax_x){
-	const bool HA = false;
+	const bool HA = true;
 	build_all(HA, relax_x);
-	BuildPatternFormulation();
 	setBoundCapacityViolations();
+	BuildPatternFormulation();
 	// link the assigned patterns with the opponent schedule
 	for (int i = 0; i < getNrTeams(); ++i){
 		for (int r = 0; r < getNrRounds(); ++r){
@@ -1256,6 +1257,7 @@ void GurSolver::BuildMiaoFormulation(const bool relax_x){
 
 	// Limit total nr of dummy games 
 
+	/*
 	if (getNrTeams() == 216){
 		// this is the U15 instance in Miao
 		// Only instance where some leagues have more than 2 dummy teams
@@ -1271,6 +1273,7 @@ void GurSolver::BuildMiaoFormulation(const bool relax_x){
 		}
 		model.addConstr(sum_ij == 46);
 	}
+	*/
 }
 
 void GurSolver::StoreHAPs(Solution& sol){
@@ -1336,7 +1339,7 @@ void GurSolver::AssignHAPsToTeams(Solution& sol){
 	// cout << "Assign HAPs to teams" << endl;
 
 	BuildPatternFormulation();
-	// setBoundCapacityViolations(); // outcomment this constraint and add objective to find minimum violation
+	// setBoundCapacityViolations();
 	// HAP set!
 
 	const int NrHaps = getNrHAPs();
@@ -1344,6 +1347,10 @@ void GurSolver::AssignHAPsToTeams(Solution& sol){
 	const bool min_travel = false;
 	const bool min_capacity_violations = true; // set to true!!!
 	AddObj(min_travel, min_capacity_violations);
+
+	if (min_capacity_violations){
+		setBoundCapacityViolations();
+	}
 
 	int obj = solve();
 
