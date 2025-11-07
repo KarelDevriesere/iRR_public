@@ -211,7 +211,7 @@ void GurSolver::iTTP_TripModel(){
 	// PRINT SOLUTION!!!
 }
 
-void GurSolver::BoundTTP_AllTeams(){
+void GurSolver::BoundTTP_AllTeams(const int minTrips){
 
 	const int N = getNrTeams();
 
@@ -292,15 +292,13 @@ void GurSolver::BoundTTP_AllTeams(){
 		model.addConstr(sum_it == getNrRounds()/2);
 	}
 
-	/*
 	GRBLinExpr sum_tr = 0;
 	for (t = 0; t < N; ++t){
 		for (r = 0; r < NrTrips; ++r){
 			sum_tr += (Trips[t][r].size()+1)*z_tr[t][r];
 		}
 	}
-	model.addConstr(sum_tr >= 280);
-	*/
+	model.addConstr(sum_tr >= minTrips);
 
 	Objective = 0;
 	for (t = 0; t < N; ++t){
