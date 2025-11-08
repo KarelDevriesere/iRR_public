@@ -54,6 +54,7 @@ void Input::SetDefault(const int NrTeams){
         ClubTeams.at(i) = {i};
     }
     ClubCapacity = vector<vector<int>>(NrClubs, vector<int>(NrRounds, 1));
+    iota(SingleTeamClubs.begin(), SingleTeamClubs.end(), 0);
     
     Eligible = vector<vector<bool>>(getNrTeams(), vector<bool>(getNrTeams(), true));
     TeamLeagueIndex = vector<int>(NrTeams); // index of the team in its league

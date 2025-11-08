@@ -130,6 +130,7 @@ void MiaoAlgo::ReAssignHAPs(Solution& sol){
         rnd = RandomDoubleNumber(0.0, 1.0);
         auto iterator = WeightsCumul.upper_bound(rnd); 
         CurrentMove = iterator->second;
+        // cout << "Move = " << Moves.at(CurrentMove) << endl;
         if (CurrentMove == Move::InterClubSwap){
             MoveChosen = InterClubSwap(sol);
         }
@@ -152,11 +153,13 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
     const bool bipartite = true;
     const bool includeHAPs = true;
     int h, a;
+    sol.NrColouredRounds = 0; // for computing travel cost teams in TTP
     for (int l = 0; l < sol.getNrLeagues(); ++l){
         int s = 0, count = 0;
         while (s < sol.getNrRounds()){
 
             const int r = Rounds[s];
+            sol.NrColouredRounds++;
             // cout << "Optimize round " << r << ", try: " << count << endl;
 
             // cout << "find matching" << endl;
@@ -173,6 +176,7 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
                 shuffle(Rounds.begin(), Rounds.end(), default_random_engine(42));
                 Reset(sol);
                 s = 0;
+                sol.NrColouredRounds = 0;
                 if (count++ <= 100){
                     return false;
                 }
@@ -199,7 +203,12 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
     assert(sol.validate());
     // cout << "Total travel cost = " << sol.ComputeTravelCost() << endl;
     // cout << "Total cost = " << sol.ComputeTotalCost() << endl;
-    assert(sol.ComputeTravelCost() == sol.ComputeTotalCost());
+    if (sol.getSetting() == Setting::Miao){
+        assert(sol.ComputeTravelCost() == sol.ComputeTotalCost());
+    }
+    else{
+        assert(sol.ComputeTravelCostTTP() == sol.ComputeTotalCost());
+    }
     return true;
 }
 
@@ -370,10 +379,10 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
         current_obj = best_obj;
         cout << "Assign Haps to teams" << endl;
         AssignsHAPsToTeamsBasedOnSol(in, sol);
-        cout << "done" << endl;
         UpdateBestSolution(sol);
         ReAssignHAPs(sol); // do a HAP move
         Reset(sol);
+        cout << "Ready" << endl;
     }
 
     // Initial solution is infeasible for tiny!!!

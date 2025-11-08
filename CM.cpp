@@ -258,7 +258,20 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
     // Find initial solution with Vizing
     Solution sol(in);
     std::mt19937 gen(data.seed);
-    MiaoAlgo miao_algo(MiaoMoves, MiaoWeights, in.getNrRounds(), gen);
+
+    std::unordered_map<Move, string>moves;
+    std::unordered_map<Move, double>weights;
+    if (in.getSetting() == Setting::Miao){
+        moves = MiaoMoves;
+        weights = MiaoWeights;
+    }
+    else{
+        moves = MiaoMovesTTP;
+        weights = MiaoWeightsTTP; 
+    }
+
+    MiaoAlgo miao_algo(moves, weights, in.getNrRounds(), gen);
+
     if (in.getSetting() == Setting::Miao){
         string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
         path += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
@@ -272,7 +285,6 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
     miao_algo.InitialSolutionGiven = true;
     miao_algo.setTimeLimit_meta(data.TimeLimit);
     miao_algo.SetTimeStamps(TimeStamps);
-    cout << "solve miao" << endl;
     miao_algo.solve(in, sol);
     sol.validate();
 
@@ -285,13 +297,12 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
         config = to_string(data.seed) + ",MiaoAlgo," + data.Instance + "," + to_string(data.CapacitySetting) + "," + to_string(data.MaxNrBreaks);
     }
     else{
-        FilePath = "Instances" + string(PATHSEP) + "TTP" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.seed) + ".txt";
+        FilePath = "Instances" + string(PATHSEP) + "TTP" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + sol.getInstanceName() + "_s" + to_string(data.seed) + ".txt";
         
-        config = to_string(data.seed) + ",MiaoAlgo," + data.Instance + "," + to_string(data.HistoryLength);
+        config = to_string(data.seed) + ",MiaoAlgo," + sol.getInstanceName() + "," + to_string(data.HistoryLength);
     }
 
     cout << "Save file as " << FilePath << endl;
-    cin.get();
     std::ofstream output_file(FilePath);
     output_file << config << "\n";
     miao_algo.SaveSolutionsTimeStamps(output_file);

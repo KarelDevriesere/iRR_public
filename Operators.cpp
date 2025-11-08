@@ -1258,7 +1258,6 @@ int ComputeEdgeWeightM(const int i, const int j, const int c, const bool MinCost
         }
     }
     else if (sol.getSetting() == Setting::TTP){
-        // cout << "setting = TTP" << endl;
         int Opp_i = sol.TeamColorOpp[i][c];
         int Opp_j = sol.TeamColorOpp[j][c];
         sol.TeamColorOpp[i][c] = j;
