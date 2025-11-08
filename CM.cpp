@@ -46,18 +46,18 @@ const unordered_map<string,int>InstanceBound = {
     {"I_CIRC40_10",560},
     {"I_CIRC40_20",1760},
     {"I_CIRC40_30",3600},
-    {"I_CON16_4",280},
-    {"I_CON16_8",560},
-    {"I_CON16_12",810},
-    {"I_CON24_6",96},
-    {"I_CON24_12",192},
-    {"I_CON24_18",294},
-    {"I_CON32_8",192},
-    {"I_CON32_16",352},
-    {"I_CON32_24",520},
-    {"I_CON40_10",280},
-    {"I_CON40_20",560},
-    {"I_CON40_30",810},
+    {"I_CON16_4",48}, 		// Via Benders
+    {"I_CON16_8",96}, 		// Via Benders
+    {"I_CON16_12",132}, 	// Via Benders
+    {"I_CON24_6",96}, 		// Via Benders
+    {"I_CON24_12",192}, 	// Via Benders
+    {"I_CON24_18",291}, 	// Via Benders, running on HPC
+    {"I_CON32_8",192}, 		// Via Benders
+    {"I_CON32_16",352}, 	// Via Benders
+    {"I_CON32_24",516}, 	// Via Benders, running on HPC
+    {"I_CON40_10",280}, 	// Via Benders
+    {"I_CON40_20",555}, 	// Via Benders, running on HPC
+    {"I_CON40_30",803}, 	// Via Benders, running on HPC
     {"I_GAL40_10",23617},
     {"I_GAL40_20",50962},
     {"I_GAL40_30",81661},
