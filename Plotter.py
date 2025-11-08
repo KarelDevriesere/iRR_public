@@ -17,6 +17,91 @@ NrRoundsTTP = {"BRA24": RoundSet24, "CIRC40": RoundSet40, "CON40": RoundSet40, "
 ListLengths = [1,5,10,50,100,500,1000,5000,10000,50000,100000] # list lengths
 
 
+def ResultsMiaoInstances():
+    I = ["i01", "i02", "i03", "i04", "i05", "i06"]
+    S = ["0","1","2"]
+    B = ["3", "100"]
+    instances = []
+    for i in I:
+        for s in S:
+            for b in B:
+                instances.append(i+"_s"+s+"_b"+b)
+    Table = {inst: {"IP_value": -1, "IP_bound": -1, "IP_time": -1, "MiaoAlgo_Avg_value": [], "MiaoAlgo_Avg_time": [], "Heuristic_Avg_value": [], "Heuristic_Avg_time": []} for inst in instances}
+    PathRoot = os.path.join(os.path.join(os.path.join("Instances"), "Miao"), "Results")
+    PathIP = os.path.join(PathRoot, "IP")
+    PathHeuristic = os.path.join(PathRoot, "Heuristic")
+    PathMiaoAlgo = os.path.join(PathRoot, "MiaoAlgo")
+    Paths = [PathIP, PathMiaoAlgo, PathHeuristic]
+    for Path in Paths:
+        for file_index, filename in enumerate(os.listdir(Path)):
+            if not filename.endswith(".txt"):
+                continue
+            FilePath = os.path.join(Path, filename)
+            if not os.path.exists(FilePath):
+                raise FileNotFoundError(f"The file '{FilePath}' does not exist.")
+                sys.exit(0)
+            with open(FilePath, 'r', newline="") as file:
+                reader = csv.reader(file)
+                max_time = 0
+                for i, row in enumerate(reader):
+                    if i == 0:
+                        seed = str(row[0])
+                        method = row[1]
+                        inst = row[2]
+                        setting = str(row[3])
+                        nr_breaks = str(row[4])
+                        Instance = inst + "_s" + setting + "_b" + nr_breaks
+                    elif i > 1 and row[0] != "Final":
+                        if int(row[0]) > max_time:
+                            max_time = int(row[0])
+                    elif row[0] == "Final":
+                        if method == "IP":
+                            Table[Instance]["IP_value"] = row[1]
+                            Table[Instance]["IP_bound"] = row[2]
+                            if abs(int(row[1]) - int(row[2])) > 1:
+                                Table[Instance]["IP_time"] = 7200
+                            else:
+                                Table[Instance]["IP_time"] = max_time
+                        elif method == "MiaoAlgo":
+                            Table[Instance]["MiaoAlgo_Avg_value"].append(int(row[1]))
+                            Table[Instance]["MiaoAlgo_Avg_time"].append(int(row[2]))
+                        elif method == "Heuristic":
+                            Table[Instance]["Heuristic_Avg_value"].append(float(row[1]))
+                            Table[Instance]["Heuristic_Avg_time"].append(float(row[2]))
+                        else:
+                            print(f'Method = {method}')
+                            breakpoint()
+                        break
+
+    OutputPath = os.path.join(os.path.join("Results", "Miao"), "Analysis.txt")   
+    with open(OutputPath, 'w') as output_file:
+        output_file.write("Instance,IP_value,IP_bound,IP_time,MiaoAlgo_Avg_value,MiaoAlgo_Avg_time,MiaoAlgo_Best_value,MiaoAlgo_Best_time,Heuristic_Avg_value,Heuristic_Avg_time,Heuristic_Best_value,Heuristic_Best_time\n")
+        for Instance in Table.keys():
+            if len(Table[Instance]["Heuristic_Avg_value"]) == 0 or len(Table[Instance]["MiaoAlgo_Avg_value"]) == 0:
+                continue
+            Heuristic_Avg_value = sum(Table[Instance]["Heuristic_Avg_value"]) / len(Table[Instance]["Heuristic_Avg_value"])
+            Heuristic_Avg_time = sum(Table[Instance]["Heuristic_Avg_time"]) / len(Table[Instance]["Heuristic_Avg_time"])
+            MiaoAlgo_Avg_value = sum(Table[Instance]["MiaoAlgo_Avg_value"]) / len(Table[Instance]["MiaoAlgo_Avg_value"])
+            MiaoAlgo_Avg_time = sum(Table[Instance]["MiaoAlgo_Avg_time"]) / len(Table[Instance]["MiaoAlgo_Avg_time"])
+            MiaoAlgo_Best_value = Table[Instance]["MiaoAlgo_Avg_value"][0]
+            MiaoAlgo_Best_time = Table[Instance]["MiaoAlgo_Avg_time"][0]
+            Heuristic_Best_value = Table[Instance]["Heuristic_Avg_value"][0]
+            Heuristic_Best_time = Table[Instance]["Heuristic_Avg_time"][0]
+            for i in [1,2,3,4]:
+                if Table[Instance]["Heuristic_Avg_value"][i] < Heuristic_Best_value:
+                    Heuristic_Best_value = Table[Instance]["Heuristic_Avg_value"][i]
+                    Heuristic_Best_time = Table[Instance]["Heuristic_Avg_time"][i]
+                if Table[Instance]["MiaoAlgo_Avg_value"][i] < MiaoAlgo_Best_value:
+                    MiaoAlgo_Best_value = Table[Instance]["MiaoAlgo_Avg_value"][i]
+                    MiaoAlgo_Best_time = Table[Instance]["MiaoAlgo_Avg_time"][i]
+
+            line = Instance + "," + str(Table[Instance]["IP_value"]) + "," + str(Table[Instance]["IP_bound"]) + "," + str(Table[Instance]["IP_time"]) + "," + str(MiaoAlgo_Avg_value)  +"," + str(MiaoAlgo_Avg_time) + "," + str(MiaoAlgo_Best_value)  +"," + str(MiaoAlgo_Best_time) + "," + str(Heuristic_Avg_value)  +"," + str(Heuristic_Avg_time) + "," + str(Heuristic_Best_value)  +"," + str(Heuristic_Best_time) + "\n"
+            output_file.write(line)
+        
+    print(f"done")
+                        
+
+
 def MergeBounds():
     OutputPath = os.path.join(os.path.join(os.path.join("Instances"), "TTP"), "Bounds.txt")
     with open(OutputPath, "w") as output_file:
@@ -361,6 +446,8 @@ if __name__ == "__main__":
     MakeLinePlotInstTimeL()
     breakpoint()
     '''
+    ResultsMiaoInstances()
+    breakpoint()
     CM = False
     TTP = False
     FolderPath = "Instances"

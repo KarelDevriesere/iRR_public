@@ -245,25 +245,27 @@ MiaoInstance Input::getMiaoInstance(){
 }
 
 void Input::setAllowedNrCapacityViolations1RR(const InputData& data){
-    string FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
-    FilePath += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
-    std::ifstream file(FilePath);
-    if (!file.is_open()) {
-        std::cerr << "Error opening the file " << FilePath;
-        return;
-    }
-    std::string line;
-    std::getline(file, line);
+    if (data.Miao){
+        string FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
+        FilePath += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
+        std::ifstream file(FilePath);
+        if (!file.is_open()) {
+            std::cerr << "Error opening the file " << FilePath;
+            return;
+        }
+        std::string line;
+        std::getline(file, line);
 
-    // Read only first line
-    std::getline(file, line);
-    std::stringstream ss(line);
-    string i;
-    int s,b,v;
-    char comma;
-    getline(ss, i, ',');
-    if (ss >> s >> comma >> b >> comma >> v) {
-        AllowedNrCapacityViolations = v;
+        // Read only first line
+        std::getline(file, line);
+        std::stringstream ss(line);
+        string i;
+        int s,b,v;
+        char comma;
+        getline(ss, i, ',');
+        if (ss >> s >> comma >> b >> comma >> v) {
+            AllowedNrCapacityViolations = v;
+        }
     }
 }
 

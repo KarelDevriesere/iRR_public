@@ -257,23 +257,41 @@ int RF_Miao(Input& in, const int TimeLimitRF){
 void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data){
     // Find initial solution with Vizing
     Solution sol(in);
-    string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
-    path += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
-    if (!(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
-        ReadSolution(path, sol);
-    }
     std::mt19937 gen(data.seed);
     MiaoAlgo miao_algo(MiaoMoves, MiaoWeights, in.getNrRounds(), gen);
+    if (in.getSetting() == Setting::Miao){
+        string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
+        path += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
+        if (!(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
+            ReadSolution(path, sol);
+        }
+    }
+    else{
+        VizingConstruction(sol, data.seed);
+    }
     miao_algo.InitialSolutionGiven = true;
     miao_algo.setTimeLimit_meta(data.TimeLimit);
     miao_algo.SetTimeStamps(TimeStamps);
+    cout << "solve miao" << endl;
     miao_algo.solve(in, sol);
     sol.validate();
 
-    const string FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
-    const string config = to_string(data.seed) + ",MiaoAlgo," + data.Instance + "," + to_string(data.CapacitySetting) + "," + to_string(data.MaxNrBreaks);
+    string FilePath;
+    string config;
+
+    if (in.getSetting() == Setting::Miao){
+        FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + "_seed" + to_string(data.seed) + ".txt";
+        
+        config = to_string(data.seed) + ",MiaoAlgo," + data.Instance + "," + to_string(data.CapacitySetting) + "," + to_string(data.MaxNrBreaks);
+    }
+    else{
+        FilePath = "Instances" + string(PATHSEP) + "TTP" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.seed) + ".txt";
+        
+        config = to_string(data.seed) + ",MiaoAlgo," + data.Instance + "," + to_string(data.HistoryLength);
+    }
 
     cout << "Save file as " << FilePath << endl;
+    cin.get();
     std::ofstream output_file(FilePath);
     output_file << config << "\n";
     miao_algo.SaveSolutionsTimeStamps(output_file);
@@ -288,14 +306,25 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     Solution sol(in);
     sol.SetOneCostAllViolations(data.ConstrViolationCost);
 
-    cout << "Solve Vizing" << endl;
-    VizingConstruction(sol, data.seed);
-    cout << "Found initial solution" << endl;
+    if (in.getSetting() != Setting::Miao){
+        cout << "Solve Vizing" << endl;
+        VizingConstruction(sol, data.seed);
+        cout << "Found initial solution" << endl;
+    }
+    else{
+        string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
+        path += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
+        if (!(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
+            ReadSolution(path, sol);
+        }
+        else{
+            VizingConstruction(sol, data.seed); 
+        }
+    }
 
     assert(sol.validate());
     int obj = sol.ComputeTotalCost();
     cout << "Cost initial solution = " << obj << endl;
-    cin.get();
 
     std::mt19937 gen(data.seed);
     int HL = data.HistoryLength;
@@ -352,23 +381,29 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     }
 
     string FilePath; 
-    if (data.OutputFolder.empty()){
-        FilePath = FolderPath + "Results" + std::string(PATHSEP) + "Heuristic";
+    string config;
+    if (in.getSetting() == Setting::TTP){
+        if (data.OutputFolder.empty()){
+            FilePath = FolderPath + "Results" + std::string(PATHSEP) + "Heuristic";
+        }
+        else{
+            FilePath = data.OutputFolder;
+        }
+        FilePath += std::string(PATHSEP) + sol.getInstanceName();
+        FilePath += "_s" + to_string(data.seed) + "_HL" + to_string(data.HistoryLength) + ".txt";
+        config = to_string(data.seed);
+        if (data.Base){
+            config += ",BaseAlgo,";
+        }
+        else{
+            config += ",Heuristic,";
+        }
+        config += to_string(data.MaxIt) + "," + to_string(data.TimeLimit) + "," + to_string(data.HistoryLength) + "," + to_string(data.ConstrViolationCost) + "," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
     }
-    else{
-        FilePath = data.OutputFolder;
+    else if (in.getSetting() == Setting::Miao){
+        FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "Heuristic" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + "_seed" + to_string(data.seed) + "_HL" + to_string(data.HistoryLength) + ".txt";
+        config = to_string(data.seed) + ",Heuristic," + data.Instance + "," + to_string(data.CapacitySetting) + "," + to_string(data.MaxNrBreaks) + "," + to_string(data.HistoryLength);
     }
-    FilePath += std::string(PATHSEP) + sol.getInstanceName();
-    FilePath += "_s" + to_string(data.seed) + "_HL" + to_string(data.HistoryLength) + ".txt";
-
-    string config = to_string(data.seed);
-    if (data.Base){
-        config += ",BaseAlgo,";
-    }
-    else{
-        config += ",Heuristic,";
-    }
-    config += to_string(data.MaxIt) + "," + to_string(data.TimeLimit) + "," + to_string(data.HistoryLength) + "," + to_string(data.ConstrViolationCost) + "," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
 
     cout << "Save file as " << FilePath << endl;
     std::ofstream output_file(FilePath);
@@ -527,6 +562,10 @@ void TestCostMinimization(InputData& data){
 
     if (data.TTP && !data.HistoryLengthProvided){
         data.HistoryLength = InstanceHL.at(in.getInstanceName()); 
+    }
+
+    if (data.TTP && data.RunMiaoAlgo){
+        in.read_HAPs();
     }
     
     if (data.Heuristic && !data.RunMiaoAlgo && !data.RunMiaoRF){

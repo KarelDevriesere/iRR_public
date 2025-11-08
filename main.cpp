@@ -162,9 +162,6 @@ int main(int argc, const char* argv[]){
             }
             else if (arg == "--MiaoAlgo"){ // Miao
                 data.RunMiaoAlgo = std::stoi(argv[++i]);
-                data.Miao = true;
-                data.TTP = false;
-                data.CM = false;
             }
             else if (arg == "--MiaoRF"){ // Miao
                 data.RunMiaoRF = std::stoi(argv[++i]);
