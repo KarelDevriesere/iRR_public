@@ -301,8 +301,6 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
         
         config = to_string(data.seed) + ",MiaoAlgo," + sol.getInstanceName() + "," + to_string(data.HistoryLength);
     }
-
-    cout << "Save file as " << FilePath << endl;
     std::ofstream output_file(FilePath);
     output_file << config << "\n";
     miao_algo.SaveSolutionsTimeStamps(output_file);

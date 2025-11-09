@@ -151,7 +151,6 @@ void MiaoAlgo::ReAssignHAPs(Solution& sol){
 bool MiaoAlgo::SchedulePhase(Solution& sol){
     const int N = sol.getNrTeams();
     const bool bipartite = true;
-    const bool includeHAPs = true;
     int h, a;
     sol.NrColouredRounds = 0; // for computing travel cost teams in TTP
     for (int l = 0; l < sol.getNrLeagues(); ++l){
@@ -163,14 +162,13 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
             // cout << "Optimize round " << r << ", try: " << count << endl;
 
             // cout << "find matching" << endl;
-            int delta = 0;
             const bool CM = false;
             const bool keepHAP = true;
             const bool MinCostM = true;
             assert(l == 0);
             pair<vector<pair<int,int>>, vector<int>>Matching_OpponentMatching = MoveMWPM(sol, r, bipartite, keepHAP, CM, gen, MinCostM); // in the file operators
             vector<pair<int,int>>matching = Matching_OpponentMatching.first;
-            if (matching.size() < N/2){
+            if ((int)matching.size() < N/2){
                 cout << "matching failed, shuffle rounds" << endl;
                 // cin.get();
                 shuffle(Rounds.begin(), Rounds.end(), default_random_engine(42));
@@ -455,7 +453,7 @@ void MiaoAlgo::SolveGivenSeqeuence(Input& in, Solution& sol){
             ss >> i;
             ss >> h;
             
-            if (sol.getHAP(h).size() != sol.getNrRounds()){
+            if ((int)sol.getHAP(h).size() != sol.getNrRounds()){
                 cout << "HAP " << h << " has size " << sol.getHAP(h).size() << " but there are " << sol.getNrRounds() << " rounds " << endl;
             }
             assert(sol.getHAP(h).size() == sol.getNrRounds());
