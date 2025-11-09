@@ -215,12 +215,12 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
 bool MiaoAlgo::InterClubSwap(Solution& sol){
     // Must they be of the same league->yes?
     // So modify code!!!
-    int c1_ = rand()%sol.getSingleTeamClubs().size();
+    int c1_ = RandomIntegerNumber(0,sol.getSingleTeamClubs().size()-1);
     int c1 = sol.getSingleTeamClubs()[c1_];
-    int i_ = rand()%sol.getTeamsClub(c1).size();
-    int c2_ = ((c1_+1)+(rand()%(sol.getSingleTeamClubs().size()-1)))%sol.getSingleTeamClubs().size();
+    int i_ = RandomIntegerNumber(0, sol.getTeamsClub(c1).size()-1);
+    int c2_ = ((c1_+1)+(RandomIntegerNumber(0, sol.getSingleTeamClubs().size()-2)))%sol.getSingleTeamClubs().size();
     int c2 = sol.getSingleTeamClubs()[c2_];
-    int j_ = rand()%sol.getTeamsClub(c2).size();
+    int j_ = RandomIntegerNumber(0, sol.getTeamsClub(c2).size()-1);
 
     int i = sol.getTeamsClub(c1)[i_];
     int j = sol.getTeamsClub(c2)[j_];
@@ -240,11 +240,11 @@ bool MiaoAlgo::InterClubSwap(Solution& sol){
 
 bool MiaoAlgo::IntraClubSwap(Solution& sol){
     assert(sol.ComputeCostCapacities() <= 0);
-    int c_ = rand()%sol.getMultiTeamClubs().size();
+    int c_ = RandomIntegerNumber(0, sol.getMultiTeamClubs().size()-1);
     int c = sol.getMultiTeamClubs()[c_];
     assert(sol.getTeamsClub(c).size() > 1);
-    int i_ = rand()%sol.getTeamsClub(c).size();
-    int j_ = ((i_+1)+(rand()%(sol.getTeamsClub(c).size()-1)))%sol.getTeamsClub(c).size();
+    int i_ = RandomIntegerNumber(0, sol.getTeamsClub(c).size()-1);
+    int j_ = ((i_+1)+(RandomIntegerNumber(0, sol.getTeamsClub(c).size()-2)))%sol.getTeamsClub(c).size();
 
     int i = sol.getTeamsClub(c)[i_];
     int j = sol.getTeamsClub(c)[j_];
@@ -266,11 +266,11 @@ bool MiaoAlgo::IntraClubSwap(Solution& sol){
 }
 
 bool MiaoAlgo::RandomSwap(Solution& sol){
-    int c1 = rand()%sol.getNrClubs();
+    int c1 = RandomIntegerNumber(0, sol.getNrClubs()-1);
     assert(sol.getTeamsClub(c1).size() > 0);
-    int i_ = rand()%sol.getTeamsClub(c1).size();
-    int c2 = ((c1+1)+(rand()%(sol.getNrClubs()-1)))%sol.getNrClubs();
-    int j_ = rand()%sol.getTeamsClub(c2).size();
+    int i_ = RandomIntegerNumber(0, sol.getTeamsClub(c1).size()-1);
+    int c2 = ((c1+1)+(RandomIntegerNumber(0, sol.getNrClubs()-2)))%sol.getNrClubs();
+    int j_ = RandomIntegerNumber(0, sol.getTeamsClub(c2).size()-1);
     assert(sol.getTeamsClub(c2).size() > 0);
 
     int i = sol.getTeamsClub(c1)[i_];
@@ -294,7 +294,7 @@ bool MiaoAlgo::ComplementInsertion(Solution& sol){
     // Also fill TeamsHAP!!
     // Given two teams with complementary HAPs, replace their patterns with a newly chosen pair of 
     // complementary HAPs from H. 
-    int i = rand()%sol.getNrTeams();
+    int i = RandomIntegerNumber(0, sol.getNrTeams()-1);
     int h = sol.getHAPIndexTeam(i);
     int hc = sol.getComplementIndexHAP(h);
     // cout << "i = " << i << ", h = " << h << ", hc = " << hc << endl;
@@ -334,7 +334,7 @@ bool MiaoAlgo::ComplementInsertion(Solution& sol){
     hap_index1 = h; // hap_index1 and hap_index2 are needed to return to original haps when rejected by metropolis criterion
     hap_index2 = hc;
     // draw new haps for i and j that are complementary
-    int hc_i = rand()%sol.getNrHAPs();
+    int hc_i = RandomIntegerNumber(0, sol.getNrHAPs()-1);
     int hc_j = sol.getComplementIndexHAP(hc_i);
 
     setHAP(sol, i, hc_i);
