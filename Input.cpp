@@ -583,10 +583,10 @@ int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
     }
     int DummyCapacity = 0;
     for (l = 0; l < getNrLeagues(); ++l){
-        // cout << "League " << l << " has size " << LeagueTeams[l].size() << endl;
+        cout << "League " << l << " has size " << LeagueTeams[l].size() << endl;
         if ((int)LeagueTeams[l].size() % 2 != 0){
             assert(false); // All instances should have leagues of even size!!!
-            // cout << "add dummy" << endl;
+            cout << "add dummy" << endl;
             Teams.push_back(NrTeams);
             TeamStrength.push_back(l);
             TeamClub.push_back(IndexDummyClub);

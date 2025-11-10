@@ -644,7 +644,7 @@ void GurSolver::build_base(const bool HA, const bool relax_x){
 
 	for (i = 0; i < getNrTeams(); ++i){
 		for (j = 0; j < getNrTeams(); ++j){
-		   // if (isEligible(i, j)){
+		   if (isEligible(i, j)){
 			// cout << i << " and " << j << " of strength " << getStrenghtTeam(i) << " and " << getStrenghtTeam(j) << " can play vs each other" << endl;
 			   for (r = 0; r < getNrRounds(); ++r){
 				   std::string varName = "x_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(r);
@@ -656,7 +656,7 @@ void GurSolver::build_base(const bool HA, const bool relax_x){
 				   }
 				   
 			  }
-		   // }
+		   }
 		}
    }
 
@@ -664,7 +664,7 @@ void GurSolver::build_base(const bool HA, const bool relax_x){
 
    for (i = 0; i < getNrTeams(); ++i){
 		for (j = 0; j < getNrTeams(); ++j){
-		   if (/*isEligible(i, j)*/ i != j){
+		   if (isEligible(i, j)/*i != j*/){
 			   std::string consName = "c1_" + std::to_string(i) + "_" + std::to_string(j);
 			   GRBLinExpr sum_r = 0;
 			   for (r = 0; r < getNrRounds(); ++r){
@@ -689,7 +689,7 @@ void GurSolver::build_base(const bool HA, const bool relax_x){
 			std::string consName = "c2_" + std::to_string(i) + "_" + std::to_string(r);
 			 GRBLinExpr sum_j = 0;
 			 for (j = 0; j < getNrTeams(); ++j){
-				if (i != j /*isEligible(i, j)*/){
+				if (/*i != j*/ isEligible(i, j)){
 					sum_j += (x[i][j][r] + x[j][i][r]);
 				}
 			 }
@@ -733,7 +733,7 @@ void GurSolver::build_base(const bool HA, const bool relax_x){
 		GRBLinExpr sum_jr_H = 0;
 		// GRBLinExpr sum_jr_A = 0;
 		for (j = 0; j < getNrTeams(); ++j){
-			if (/*isEligible(i, j)*/ true){
+			if (isEligible(i, j) /*true*/){
 				for (r = 0; r < getNrRounds(); ++r){
 					sum_jr_H += x[i][j][r];
 					// sum_jr_A += x[j][i][r];
@@ -772,6 +772,7 @@ void GurSolver::build_league(const bool HA, const bool relax_x){
 
    // if we outcomment this, check whether isEligible is put again in all the constraints!!!
    // Much faster for Tiny-Constant
+   /*
    for (int i = 0; i < getNrTeams(); ++i){
 	for (int j = i+1; j < getNrTeams(); ++j){
 		if (!isEligible(i,j)){
@@ -782,6 +783,7 @@ void GurSolver::build_league(const bool HA, const bool relax_x){
 		}
 	}
    }
+   */
 
    if (HA){
 	build_HAP_constraints();
@@ -1211,10 +1213,12 @@ void GurSolver::AddMiaoSymmetryConstraint(){
 	// cout << "added symmetry constraint" << endl;
 }
 
-void GurSolver::BuildMiaoFormulation(const bool relax_x){
-	const bool HA = true;
+void GurSolver::BuildMiaoFormulation(const bool relax_x, const bool min_travel, const bool min_capacity_violations){
+	const bool HA = false;
 	build_all(HA, relax_x);
-	setBoundCapacityViolations();
+	if (min_travel){
+		setBoundCapacityViolations();
+	}
 	BuildPatternFormulation();
 	// link the assigned patterns with the opponent schedule
 	for (int i = 0; i < getNrTeams(); ++i){
@@ -1233,6 +1237,9 @@ void GurSolver::BuildMiaoFormulation(const bool relax_x){
 			model.addConstr(sum == 0);
 		}
 	}
+
+	AddObj(min_travel, min_capacity_violations);
+
 	// AddMiaoSymmetryConstraint(); // does not work with warm start
 	
 	// Constraint for the dummy teams:

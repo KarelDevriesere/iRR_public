@@ -351,10 +351,9 @@ bool MiaoAlgo::ComplementInsertion(Solution& sol){
 void AssignsHAPsToTeamsBasedOnSol(Input& in, Solution& sol){
     GurSolver gursol(in);
     const bool relax_x = false;
-    gursol.BuildMiaoFormulation(relax_x);
     const bool min_travel = false;
 	const bool min_capacity_violations = true; // set to true!!!
-	gursol.AddObj(min_travel, min_capacity_violations);
+	gursol.BuildMiaoFormulation(relax_x, min_travel, min_capacity_violations);
     gursol.Fix_x(sol);
     int obj = gursol.solve();
 	assert(obj <= sol.getAllowedNrCapacityViolations());

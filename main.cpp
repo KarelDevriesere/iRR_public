@@ -177,7 +177,7 @@ int main(int argc, const char* argv[]){
                 data.CM = false;
                 data.Hockey = false;
             }
-            else if (arg == "InstanceHockey"){
+            else if (arg == "--InstanceHockey"){
                 int hockey_i = std::stoi(argv[++i]);
                 data.Miao = false;
                 data.TTP = false;
@@ -188,7 +188,7 @@ int main(int argc, const char* argv[]){
                     return 1;
                 }
                 else{
-                    data.Instance = "i0" + to_string(miao_i);
+                    data.Instance = "i0" + to_string(hockey_i);
                 }
             }
             else if (arg == "--TimeLimit"){
