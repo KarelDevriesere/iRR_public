@@ -26,7 +26,7 @@ def ResultsMiaoInstances():
         for s in S:
             for b in B:
                 instances.append(i+"_s"+s+"_b"+b)
-    Table = {inst: {"IP_value": -1, "IP_bound": -1, "IP_time": -1, "MiaoAlgo_Avg_value": [], "MiaoAlgo_Avg_time": [], "Heuristic_Avg_value": [], "Heuristic_Avg_time": []} for inst in instances}
+    Table = {inst: {"IP_value": -1, "IP_bound": -1, "IP_time": -1, "MiaoAlgo_Avg_value": [], "MiaoAlgo_Avg_time": [], "Heuristic_Avg_value": [], "Heuristic_Avg_time": [], "Heuristic_HL": []} for inst in instances}
     PathRoot = os.path.join(os.path.join(os.path.join("Instances"), "Miao"), "Results")
     PathIP = os.path.join(PathRoot, "IP")
     PathHeuristic = os.path.join(PathRoot, "Heuristic")
@@ -51,12 +51,15 @@ def ResultsMiaoInstances():
                         setting = str(row[3])
                         nr_breaks = str(row[4])
                         Instance = inst + "_s" + setting + "_b" + nr_breaks
+                        if method == "Heuristic":
+                            HL = str(row[5])
+                            Table[Instance]["Heuristic_HL"].append(HL)
                     elif i > 1 and row[0] != "Final":
                         if int(row[0]) > max_time:
                             max_time = int(row[0])
                     elif row[0] == "Final":
                         if method == "IP":
-                            Table[Instance]["IP_value"] = row[1]
+                            Table[Instance]["IP_value"] = int(row[1])
                             Table[Instance]["IP_bound"] = row[2]
                             if abs(int(row[1]) - int(row[2])) > 1:
                                 Table[Instance]["IP_time"] = 7200
@@ -75,27 +78,57 @@ def ResultsMiaoInstances():
 
     OutputPath = os.path.join(os.path.join("Results", "Miao"), "Analysis.txt")   
     with open(OutputPath, 'w') as output_file:
-        output_file.write("Instance,IP_value,IP_bound,IP_time,MiaoAlgo_Avg_value,MiaoAlgo_Avg_time,MiaoAlgo_Best_value,MiaoAlgo_Best_time,Heuristic_Avg_value,Heuristic_Avg_time,Heuristic_Best_value,Heuristic_Best_time\n")
+        output_file.write("Instance & IP_v & IP_b & IP_t & Miao_{av} & Miao_{at} & Miao_{bv} & Miao_{bt} & Heur_{av} & Heur_{at} & Heur_{bv} & Heur_{bt} & Heur_{bHL}\n")
         for Instance in Table.keys():
             if len(Table[Instance]["Heuristic_Avg_value"]) == 0 or len(Table[Instance]["MiaoAlgo_Avg_value"]) == 0:
                 continue
-            Heuristic_Avg_value = sum(Table[Instance]["Heuristic_Avg_value"]) / len(Table[Instance]["Heuristic_Avg_value"])
-            Heuristic_Avg_time = sum(Table[Instance]["Heuristic_Avg_time"]) / len(Table[Instance]["Heuristic_Avg_time"])
-            MiaoAlgo_Avg_value = sum(Table[Instance]["MiaoAlgo_Avg_value"]) / len(Table[Instance]["MiaoAlgo_Avg_value"])
-            MiaoAlgo_Avg_time = sum(Table[Instance]["MiaoAlgo_Avg_time"]) / len(Table[Instance]["MiaoAlgo_Avg_time"])
+            Heuristic_Avg_value = round(sum(Table[Instance]["Heuristic_Avg_value"]) / len(Table[Instance]["Heuristic_Avg_value"]),2)
+            Heuristic_Avg_time = round(sum(Table[Instance]["Heuristic_Avg_time"]) / len(Table[Instance]["Heuristic_Avg_time"]),2)
+            MiaoAlgo_Avg_value = round(sum(Table[Instance]["MiaoAlgo_Avg_value"]) / len(Table[Instance]["MiaoAlgo_Avg_value"]),2)
+            MiaoAlgo_Avg_time = round(sum(Table[Instance]["MiaoAlgo_Avg_time"]) / len(Table[Instance]["MiaoAlgo_Avg_time"]),2)
             MiaoAlgo_Best_value = Table[Instance]["MiaoAlgo_Avg_value"][0]
             MiaoAlgo_Best_time = Table[Instance]["MiaoAlgo_Avg_time"][0]
             Heuristic_Best_value = Table[Instance]["Heuristic_Avg_value"][0]
             Heuristic_Best_time = Table[Instance]["Heuristic_Avg_time"][0]
+            Heuristic_best_HL = Table[Instance]["Heuristic_HL"][0]
             for i in [1,2,3,4]:
                 if Table[Instance]["Heuristic_Avg_value"][i] < Heuristic_Best_value:
                     Heuristic_Best_value = Table[Instance]["Heuristic_Avg_value"][i]
                     Heuristic_Best_time = Table[Instance]["Heuristic_Avg_time"][i]
+                    Heuristic_best_HL = Table[Instance]["Heuristic_HL"][i]
                 if Table[Instance]["MiaoAlgo_Avg_value"][i] < MiaoAlgo_Best_value:
                     MiaoAlgo_Best_value = Table[Instance]["MiaoAlgo_Avg_value"][i]
                     MiaoAlgo_Best_time = Table[Instance]["MiaoAlgo_Avg_time"][i]
+            
+            line = Instance + " & "
+            if Table[Instance]["IP_value"] <= MiaoAlgo_Best_value and Table[Instance]["IP_value"] <= Heuristic_Best_value:
+                line += "\\cellcolor{green!25}" + str(Table[Instance]["IP_value"]) 
+            elif Table[Instance]["IP_value"] >= MiaoAlgo_Best_value and Table[Instance]["IP_value"] >= Heuristic_Best_value:
+                line += "\\cellcolor{red!25}" + str(Table[Instance]["IP_value"])
+            else:
+                line += str(Table[Instance]["IP_value"]) 
+            
+            line += " & " + str(Table[Instance]["IP_bound"]) + " & " + str(Table[Instance]["IP_time"]) + " & " + str(MiaoAlgo_Avg_value)  +" & " + str(MiaoAlgo_Avg_time)  + " & " 
+            
+            if MiaoAlgo_Best_value <= Table[Instance]["IP_value"] and MiaoAlgo_Best_value <= Heuristic_Best_value:
+                line += "\\cellcolor{green!25}" + str(MiaoAlgo_Best_value)  
+            elif MiaoAlgo_Best_value >= Table[Instance]["IP_value"] and MiaoAlgo_Best_value >= Heuristic_Best_value:
+                line += "\\cellcolor{red!25}" + str(MiaoAlgo_Best_value)
+            else:
+                line += str(MiaoAlgo_Best_value) 
 
-            line = Instance + "," + str(Table[Instance]["IP_value"]) + "," + str(Table[Instance]["IP_bound"]) + "," + str(Table[Instance]["IP_time"]) + "," + str(MiaoAlgo_Avg_value)  +"," + str(MiaoAlgo_Avg_time) + "," + str(MiaoAlgo_Best_value)  +"," + str(MiaoAlgo_Best_time) + "," + str(Heuristic_Avg_value)  +"," + str(Heuristic_Avg_time) + "," + str(Heuristic_Best_value)  +"," + str(Heuristic_Best_time) + "\n"
+            line += " & " + str(MiaoAlgo_Best_time) + " & " + str(Heuristic_Avg_value)  +" & " + str(Heuristic_Avg_time) + " & " 
+            
+            if Heuristic_Best_value <= Table[Instance]["IP_value"] and Heuristic_Best_value <= MiaoAlgo_Best_value:
+                line += "\\cellcolor{green!25}" + str(Heuristic_Best_value)  
+            elif Heuristic_Best_value >= Table[Instance]["IP_value"] and Heuristic_Best_value >= MiaoAlgo_Best_value:
+                line += "\\cellcolor{red!25}" + str(Heuristic_Best_value)
+            else:
+                line += str(Heuristic_Best_value)  
+            
+            line += " & " + str(Heuristic_Best_time) + " & " + str(Heuristic_best_HL) + " \\\\ \n"
+
+
             output_file.write(line)
         
     print(f"done")

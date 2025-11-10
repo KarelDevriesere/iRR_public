@@ -92,6 +92,8 @@ struct InputData{
 
     bool RunMiaoAlgo = false;
     bool RunMiaoRF = false;
+
+    bool Hockey = false;
 };
 
 class Input

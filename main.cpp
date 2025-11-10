@@ -81,6 +81,7 @@ int main(int argc, const char* argv[]){
                 data.CM = true;
                 data.TTP = false;
                 data.Miao = false;
+                data.Hockey = false;
             }
             else if (arg == "--k"){ // CM
                 data.k = std::stoi(argv[++i]);
@@ -91,6 +92,7 @@ int main(int argc, const char* argv[]){
                 data.CM = true;
                 data.TTP = false;
                 data.Miao = false;
+                data.Hockey = false;
             }
             else if (arg == "--i"){ // CM
                 data.inst = std::stoi(argv[++i]);
@@ -101,6 +103,7 @@ int main(int argc, const char* argv[]){
                 data.CM = true;
                 data.TTP = false;
                 data.Miao = false;
+                data.Hockey = false;
             }
             else if (arg == "--InstanceTTP"){ // TTP
                 data.Instance = argv[++i];
@@ -112,6 +115,7 @@ int main(int argc, const char* argv[]){
                 data.TTP = true;
                 data.CM = false;
                 data.Miao = false;
+                data.Hockey = false;
             }
             else if (arg == "--Miao"){ // Miao
                 data.Miao = std::stoi(argv[++i]);
@@ -136,12 +140,14 @@ int main(int argc, const char* argv[]){
                 data.Miao = true;
                 data.TTP = false;
                 data.CM = false;
+                data.Hockey = false;
             }
             else if (arg == "--MaxNrBreaks"){ // Miao
                 data.MaxNrBreaks = std::stoi(argv[++i]);
                 data.Miao = true;
                 data.TTP = false;
                 data.CM = false;
+                data.Hockey = false;
                 if (data.MaxNrBreaks != 0 && data.MaxNrBreaks != 1 && data.MaxNrBreaks != 2 && data.MaxNrBreaks != 3){
                     std::cerr << "MaxNrBreaks must be 0,1,2 or 3!!" << endl;
                     return 1;
@@ -152,6 +158,7 @@ int main(int argc, const char* argv[]){
                 data.Miao = true;
                 data.TTP = false;
                 data.CM = false;
+                data.Hockey = false;
                 if (miao_i < 0 || miao_i > 6){
                     std::cerr << "MiaoInstance must be 1,2,3,4,5 or 6!!" << endl;
                     return 1;
@@ -168,6 +175,21 @@ int main(int argc, const char* argv[]){
                 data.Miao = true;
                 data.TTP = false;
                 data.CM = false;
+                data.Hockey = false;
+            }
+            else if (arg == "InstanceHockey"){
+                int hockey_i = std::stoi(argv[++i]);
+                data.Miao = false;
+                data.TTP = false;
+                data.CM = false;
+                data.Hockey = true;
+                if (hockey_i < 0 || hockey_i > 6){
+                    std::cerr << "MiaoInstance must be 1,2,3,4,5 or 6!!" << endl;
+                    return 1;
+                }
+                else{
+                    data.Instance = "i0" + to_string(miao_i);
+                }
             }
             else if (arg == "--TimeLimit"){
                 data.TimeLimit = std::stoi(argv[++i]);

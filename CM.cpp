@@ -123,6 +123,9 @@ std::string FolderPath(const InputData& data) {
     else if (data.CM){
         folder_path = "Instances" + std::string(PATHSEP) + "CostMinimization" + std::string(PATHSEP) + "Karel" + std::string(PATHSEP) + "0_100" + std::string(PATHSEP);
     }
+    else if (data.Hockey){
+        folder_path = "Instances" + std::string(PATHSEP) + "Hockey"  + std::string(PATHSEP);
+    }
     else {
         folder_path = "Instances" + std::string(PATHSEP) + "Miao"  + std::string(PATHSEP);
         if (data.ConstantCapacity){
@@ -540,7 +543,7 @@ void TestCostMinimization(InputData& data){
         cout << "could not read " << file_path << endl;
         return;
     }
-    else if (data.Miao && !in.read_Miao_Hockey(file_path, data.Miao)){
+    else if (data.Miao || data.Hockey && !in.read_Miao_Hockey(file_path, data.Miao)){
         cout << "could not read " << file_path << endl;
         return;
     }
