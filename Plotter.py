@@ -2,6 +2,7 @@ import sys
 import os
 import csv
 import pandas as pd
+import re
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,23 +14,34 @@ RoundSet40 = [10,20,30]
 RoundSet32 = [8,16,24]
 RoundSet24 = [6,12,18]
 RoundSet16 = [4,8,12]
-NrRoundsTTP = {"BRA24": RoundSet24, "CIRC40": RoundSet40, "CON40": RoundSet40, "GAL40": RoundSet40, "INCR40": RoundSet40, "LINE40": RoundSet40, "N16": RoundSet16, "NFL32": RoundSet32}
+NrRoundsTTP = {"BRA24": RoundSet24, "CIRC40": RoundSet40, "CON40": RoundSet40, "GAL40": RoundSet40, "INCR40": RoundSet40, "LINE40": RoundSet40, "NL16": RoundSet16, "NFL32": RoundSet32}
 ListLengths = [1,5,10,50,100,500,1000,5000,10000,50000,100000] # list lengths
+# ListLengths = [500,1000,5000,10000]
 
+TIME_LIMIT = 600
 
-def ResultsMiaoInstances():
-    I = ["i01", "i02", "i03", "i04", "i05", "i06"]
-    S = ["0","1","2"]
-    B = ["3", "100"]
+def ResultsInstances(setting):
     instances = []
-    for i in I:
-        for s in S:
-            for b in B:
-                instances.append(i+"_s"+s+"_b"+b)
+    PathRoot = "Instances"
+    if setting == "Miao":
+        PathRoot = os.path.join(PathRoot, "Miao")
+        I = ["i01", "i02", "i03", "i04", "i05", "i06"]
+        S = ["0","1","2"]
+        B = ["3", "100"]
+        for i in I:
+            for s in S:
+                for b in B:
+                    instances.append(i+"_s"+s+"_b"+b)
+    elif setting == "TTP":
+        PathRoot = os.path.join(PathRoot, "TTP")
+        for key in NrRoundsTTP.keys():
+            for r in NrRoundsTTP[key]:
+                instances.append(key + "_" + str(r))
+    PathRoot = os.path.join(PathRoot, "Results")
+
     Table = {inst: {"IP_value": -1, "IP_bound": -1, "IP_time": -1, "MiaoAlgo_Avg_value": [], "MiaoAlgo_Avg_time": [], "Heuristic_Avg_value": [], "Heuristic_Avg_time": [], "Heuristic_HL": []} for inst in instances}
-    PathRoot = os.path.join(os.path.join(os.path.join("Instances"), "Miao"), "Results")
     PathIP = os.path.join(PathRoot, "IP")
-    PathHeuristic = os.path.join(PathRoot, "Heuristic")
+    PathHeuristic = os.path.join(PathRoot, "Heuristic") # HeuristicStartingFromMiao
     PathMiaoAlgo = os.path.join(PathRoot, "MiaoAlgo")
     Paths = [PathIP, PathMiaoAlgo, PathHeuristic]
     for Path in Paths:
@@ -47,17 +59,38 @@ def ResultsMiaoInstances():
                     if i == 0:
                         seed = str(row[0])
                         method = row[1]
-                        inst = row[2]
-                        setting = str(row[3])
-                        nr_breaks = str(row[4])
-                        Instance = inst + "_s" + setting + "_b" + nr_breaks
-                        if method == "Heuristic":
-                            HL = str(row[5])
-                            Table[Instance]["Heuristic_HL"].append(HL)
+                        if setting == "Miao":
+                            inst = row[2]
+                            setting = str(row[3])
+                            nr_breaks = str(row[4])
+                            Instance = inst + "_s" + setting + "_b" + nr_breaks
+                            if method == "Heuristic": # HeuristicStartingFromMiao
+                                HL = str(row[5])
+                                Table[Instance]["Heuristic_HL"].append(HL)
+                        else:
+                            pattern = re.compile(r'(?:^|_)([A-Z]+[0-9]+_[0-9]+)(?:_|\.|$)')
+
+                            match = pattern.search(filename)
+                            if match:
+                                Instance = match.group(1)
+                                if Instance == "N16_4":
+                                    Instance = "NL16_4"
+                                elif Instance == "N16_8":
+                                    Instance = "NL16_8"
+                                elif Instance == "N16_12":
+                                    Instance = "NL16_12"
+                                # print(f'Extracted {Instance} from {filename}')
+                            else:
+                                print(f'No match for {filename} in path {FilePath}')
+                                break
+                            if method == "Heuristic": # HeuristicStartingFromMiao
+                                HL = str(row[4])
+                                Table[Instance]["Heuristic_HL"].append(HL)
+
                     elif i > 1 and row[0] != "Final":
                         if int(row[0]) > max_time:
                             max_time = int(row[0])
-                    elif row[0] == "Final":
+                    if i > 1 and (row[0] == "Final" or method == "Heuristic" and int(row[0]) == TIME_LIMIT): # row[0] == "Final"
                         if method == "IP":
                             Table[Instance]["IP_value"] = int(row[1])
                             Table[Instance]["IP_bound"] = row[2]
@@ -68,40 +101,79 @@ def ResultsMiaoInstances():
                         elif method == "MiaoAlgo":
                             Table[Instance]["MiaoAlgo_Avg_value"].append(int(row[1]))
                             Table[Instance]["MiaoAlgo_Avg_time"].append(int(row[2]))
-                        elif method == "Heuristic":
-                            Table[Instance]["Heuristic_Avg_value"].append(float(row[1]))
-                            Table[Instance]["Heuristic_Avg_time"].append(float(row[2]))
+                        elif method == "Heuristic": # HeuristicStartingFromMiao
+                            if row[0] == "Final":
+                                Table[Instance]["Heuristic_Avg_value"].append(float(row[1]))
+                                Table[Instance]["Heuristic_Avg_time"].append(float(row[2]))
+                            else:
+                                Table[Instance]["Heuristic_Avg_value"].append(float(row[1]))
+                                Table[Instance]["Heuristic_Avg_time"].append(float(row[0]))
                         else:
-                            print(f'Method = {method}')
+                            print(f'Unknown method = {method}')
                             breakpoint()
                         break
+    if setting == "Miao":
+        OutputPath = os.path.join(os.path.join("Results", "Miao"), "Analysis.txt")   
+    else:
+        OutputPath = os.path.join(os.path.join("Results", "TTP"), "Analysis.txt") 
 
-    OutputPath = os.path.join(os.path.join("Results", "Miao"), "Analysis.txt")   
+
     with open(OutputPath, 'w') as output_file:
-        output_file.write("Instance & IP_v & IP_b & IP_t & Miao_{av} & Miao_{at} & Miao_{bv} & Miao_{bt} & Heur_{av} & Heur_{at} & Heur_{bv} & Heur_{bt} & Heur_{bHL}\n")
+        if setting == "Miao":
+            output_file.write("Instance & IP_v & IP_b & IP_t & Miao_{av} & Miao_{at} & Miao_{bv} & Miao_{bt} & Heur_{av} & Heur_{at} & Heur_{bv} & Heur_{bt} & Heur_{bHL}\n")
+        else:
+            output_file.write("Instance & Bound & IP_v & IP_b & IP_t & Miao_{av} & Miao_{at} & Miao_{bv} & Miao_{bt} & Heur_{av} & Heur_{at} & Heur_{bv} & Heur_{bt} & Heur_{bHL}\n")
         for Instance in Table.keys():
-            if len(Table[Instance]["Heuristic_Avg_value"]) == 0 or len(Table[Instance]["MiaoAlgo_Avg_value"]) == 0:
-                continue
-            Heuristic_Avg_value = round(sum(Table[Instance]["Heuristic_Avg_value"]) / len(Table[Instance]["Heuristic_Avg_value"]),2)
-            Heuristic_Avg_time = round(sum(Table[Instance]["Heuristic_Avg_time"]) / len(Table[Instance]["Heuristic_Avg_time"]),2)
-            MiaoAlgo_Avg_value = round(sum(Table[Instance]["MiaoAlgo_Avg_value"]) / len(Table[Instance]["MiaoAlgo_Avg_value"]),2)
-            MiaoAlgo_Avg_time = round(sum(Table[Instance]["MiaoAlgo_Avg_time"]) / len(Table[Instance]["MiaoAlgo_Avg_time"]),2)
-            MiaoAlgo_Best_value = Table[Instance]["MiaoAlgo_Avg_value"][0]
-            MiaoAlgo_Best_time = Table[Instance]["MiaoAlgo_Avg_time"][0]
-            Heuristic_Best_value = Table[Instance]["Heuristic_Avg_value"][0]
-            Heuristic_Best_time = Table[Instance]["Heuristic_Avg_time"][0]
-            Heuristic_best_HL = Table[Instance]["Heuristic_HL"][0]
-            for i in [1,2,3,4]:
-                if Table[Instance]["Heuristic_Avg_value"][i] < Heuristic_Best_value:
-                    Heuristic_Best_value = Table[Instance]["Heuristic_Avg_value"][i]
-                    Heuristic_Best_time = Table[Instance]["Heuristic_Avg_time"][i]
-                    Heuristic_best_HL = Table[Instance]["Heuristic_HL"][i]
-                if Table[Instance]["MiaoAlgo_Avg_value"][i] < MiaoAlgo_Best_value:
-                    MiaoAlgo_Best_value = Table[Instance]["MiaoAlgo_Avg_value"][i]
-                    MiaoAlgo_Best_time = Table[Instance]["MiaoAlgo_Avg_time"][i]
+            Heuristic_Avg_value = -1
+            Heuristic_Avg_time = -1
+            MiaoAlgo_Avg_value = -1
+            MiaoAlgo_Avg_time = -1
+            MiaoAlgo_Best_value = -1
+            MiaoAlgo_Best_time = -1
+            Heuristic_Best_value = -1
+            Heuristic_Best_time = -1
+            Heuristic_best_HL = -1
+            if len(Table[Instance]["Heuristic_Avg_value"]) > 0:
+                Heuristic_Avg_value = round(sum(Table[Instance]["Heuristic_Avg_value"]) / len(Table[Instance]["Heuristic_Avg_value"]),2)
+                Heuristic_Avg_time = round(sum(Table[Instance]["Heuristic_Avg_time"]) / len(Table[Instance]["Heuristic_Avg_time"]),2)
+                Heuristic_Best_value = Table[Instance]["Heuristic_Avg_value"][0]
+                Heuristic_Best_time = Table[Instance]["Heuristic_Avg_time"][0]
+                Heuristic_best_HL = Table[Instance]["Heuristic_HL"][0]
+
+                for i in [1,2,3,4]:
+                    if Table[Instance]["Heuristic_Avg_value"][i] < Heuristic_Best_value:
+                        Heuristic_Best_value = Table[Instance]["Heuristic_Avg_value"][i]
+                        Heuristic_Best_time = Table[Instance]["Heuristic_Avg_time"][i]
+                        Heuristic_best_HL = Table[Instance]["Heuristic_HL"][i]
+                
+            if len(Table[Instance]["MiaoAlgo_Avg_value"]) > 0:
+                MiaoAlgo_Avg_value = round(sum(Table[Instance]["MiaoAlgo_Avg_value"]) / len(Table[Instance]["MiaoAlgo_Avg_value"]),2)
+                MiaoAlgo_Avg_time = round(sum(Table[Instance]["MiaoAlgo_Avg_time"]) / len(Table[Instance]["MiaoAlgo_Avg_time"]),2)
+                MiaoAlgo_Best_value = Table[Instance]["MiaoAlgo_Avg_value"][0]
+                MiaoAlgo_Best_time = Table[Instance]["MiaoAlgo_Avg_time"][0]
+    
+                for i in [1,2,3,4]:
+                    if Table[Instance]["MiaoAlgo_Avg_value"][i] < MiaoAlgo_Best_value:
+                        MiaoAlgo_Best_value = Table[Instance]["MiaoAlgo_Avg_value"][i]
+                        MiaoAlgo_Best_time = Table[Instance]["MiaoAlgo_Avg_time"][i]
             
             line = Instance + " & "
-            if Table[Instance]["IP_value"] <= MiaoAlgo_Best_value and Table[Instance]["IP_value"] <= Heuristic_Best_value:
+
+            if setting == "TTP":
+                bound = -1
+                FilePathBounds = os.path.join(os.path.join(os.path.join("Instances", "TTP"), "Bounds"), "BestBounds.txt")
+                if not os.path.exists(FilePathBounds):
+                    raise FileNotFoundError(f"The file '{FilePathBounds}' does not exist.")
+                    sys.exit(0)
+                with open(FilePathBounds, 'r', newline="") as file:
+                    reader = csv.reader(file)
+                    for i, row in enumerate(reader):
+                        if row[0] == Instance:
+                            bound = row[1]
+                            break
+                line += str(bound) + " & "
+
+            if (Table[Instance]["IP_value"] <= MiaoAlgo_Best_value or MiaoAlgo_Best_value == -1) and (Table[Instance]["IP_value"] <= Heuristic_Best_value or Heuristic_Best_value == -1) and Table[Instance]["IP_value"] != -1:
                 line += "\\cellcolor{green!25}" + str(Table[Instance]["IP_value"]) 
             elif Table[Instance]["IP_value"] >= MiaoAlgo_Best_value and Table[Instance]["IP_value"] >= Heuristic_Best_value:
                 line += "\\cellcolor{red!25}" + str(Table[Instance]["IP_value"])
@@ -110,7 +182,7 @@ def ResultsMiaoInstances():
             
             line += " & " + str(Table[Instance]["IP_bound"]) + " & " + str(Table[Instance]["IP_time"]) + " & " + str(MiaoAlgo_Avg_value)  +" & " + str(MiaoAlgo_Avg_time)  + " & " 
             
-            if MiaoAlgo_Best_value <= Table[Instance]["IP_value"] and MiaoAlgo_Best_value <= Heuristic_Best_value:
+            if (MiaoAlgo_Best_value <= Table[Instance]["IP_value"] or Table[Instance]["IP_value"] == -1) and (MiaoAlgo_Best_value <= Heuristic_Best_value or Heuristic_Best_value == -1) and MiaoAlgo_Best_value != -1:
                 line += "\\cellcolor{green!25}" + str(MiaoAlgo_Best_value)  
             elif MiaoAlgo_Best_value >= Table[Instance]["IP_value"] and MiaoAlgo_Best_value >= Heuristic_Best_value:
                 line += "\\cellcolor{red!25}" + str(MiaoAlgo_Best_value)
@@ -119,7 +191,7 @@ def ResultsMiaoInstances():
 
             line += " & " + str(MiaoAlgo_Best_time) + " & " + str(Heuristic_Avg_value)  +" & " + str(Heuristic_Avg_time) + " & " 
             
-            if Heuristic_Best_value <= Table[Instance]["IP_value"] and Heuristic_Best_value <= MiaoAlgo_Best_value:
+            if (Heuristic_Best_value <= Table[Instance]["IP_value"] or Table[Instance]["IP_value"] == -1) and (Heuristic_Best_value <= MiaoAlgo_Best_value or MiaoAlgo_Best_value == -1) and Heuristic_Best_value != -1:
                 line += "\\cellcolor{green!25}" + str(Heuristic_Best_value)  
             elif Heuristic_Best_value >= Table[Instance]["IP_value"] and Heuristic_Best_value >= MiaoAlgo_Best_value:
                 line += "\\cellcolor{red!25}" + str(Heuristic_Best_value)
@@ -479,30 +551,32 @@ if __name__ == "__main__":
     MakeLinePlotInstTimeL()
     breakpoint()
     '''
-    ResultsMiaoInstances()
-    breakpoint()
+    setting = sys.argv[1]
     CM = False
     TTP = False
     FolderPath = "Instances"
-    if sys.argv[1] == "CM":
+    if setting == "CM":
         CM = True
         print("Analyze results cost minimization")
         for subfolder in ["CostMinimization", "Karel", "0_100"]:
             FolderPath = os.path.join(FolderPath, subfolder)
-    elif sys.argv[1] == "TTP":
+    elif setting== "TTP":
         TTP = True
         FolderPath = os.path.join(FolderPath, "TTP")
         print("Analyze results TTP")
-    elif sys.argv[1] == "Miao":
+    elif setting == "Miao":
         Miao = True
         FolderPath = os.path.join(FolderPath, "Miao")
     else:
-        print("Specify CM or TTP")
+        print("Specify CM or TTP or Miao")
     FolderPath = os.path.join(FolderPath, "Results")
 
     if not os.path.exists(FolderPath):
         # Create the folder if it doesn't exist
         print(f"The folder {FolderPath} does not exists")
+
+    ResultsInstances(setting)
+    breakpoint()
     
     FolderPathIP = os.path.join(FolderPath, "IP")
     FolderPathHeuristic = os.path.join(FolderPath, "Heuristic")

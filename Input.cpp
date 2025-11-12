@@ -411,7 +411,7 @@ int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
 
     std::ifstream file(file_path);
     if (!file.is_open()) {
-        std::cerr << "Error opening the file!";
+        std::cout << "Error opening the file!" << endl;
         return 0;
     }
 

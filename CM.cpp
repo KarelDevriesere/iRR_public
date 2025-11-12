@@ -322,8 +322,12 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
         cout << "Found initial solution" << endl;
     }
     else{
-        string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
-        path += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
+        unordered_map<string, int>BestSeeds = {{"i01_s0_b3", 0}, {"i02_s0_b3", 4}, {"i03_s0_b3", 0}, {"i04_s0_b3", 2}, {"i05_s0_b3", 3}, {"i06_s0_b3", 0}, {"i01_s1_b3", 0}, {"i02_s1_b3", 2}, {"i03_s1_b3", 3}, {"i04_s1_b3", 4}, {"i05_s1_b3", 0}, {"i06_s1_b3", 0}, {"i01_s2_b3", 4}, {"i02_s2_b3", 4}, {"i03_s2_b3", 0}, {"i04_s2_b3", 2}, {"i05_s2_b3", 0}, {"i06_s2_b3", 0}};
+        // string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
+        // path += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
+        string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + string(PATHSEP);
+        string instance_full = data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks);
+        path += instance_full + "_seed" + to_string(BestSeeds.at(instance_full)) + ".txt";
         if (!(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
             ReadSolution(path, sol);
         }
@@ -411,8 +415,9 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
         config += to_string(data.MaxIt) + "," + to_string(data.TimeLimit) + "," + to_string(data.HistoryLength) + "," + to_string(data.ConstrViolationCost) + "," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
     }
     else if (in.getSetting() == Setting::Miao){
-        FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "Heuristic" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + "_seed" + to_string(data.seed) + "_HL" + to_string(data.HistoryLength) + ".txt";
-        config = to_string(data.seed) + ",Heuristic," + data.Instance + "," + to_string(data.CapacitySetting) + "," + to_string(data.MaxNrBreaks) + "," + to_string(data.HistoryLength);
+        cout << "Started from Miao solution!!!" << endl;
+        FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "HeuristicStartingFromMiao" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + "_seed" + to_string(data.seed) + "_HL" + to_string(data.HistoryLength) + ".txt";
+        config = to_string(data.seed) + ",HeuristicStartingFromMiao," + data.Instance + "," + to_string(data.CapacitySetting) + "," + to_string(data.MaxNrBreaks) + "," + to_string(data.HistoryLength);
     }
 
     cout << "Save file as " << FilePath << endl;
@@ -545,15 +550,15 @@ void TestCostMinimization(InputData& data){
 
     Input in;
     if (data.CM && !in.read_CostMinimization(file_path, InstanceSetCM::Karel)){
-        cout << "Could not read " << file_path << endl;
+        cout << "Could not read CM path " << file_path << endl;
         return;
     }
     else if (data.TTP && !in.read_TTP(file_path)){
-        cout << "could not read " << file_path << endl;
+        cout << "could not read TTP path " << file_path << endl;
         return;
     }
-    else if (data.Miao || data.Hockey && !in.read_Miao_Hockey(file_path, data.Miao)){
-        cout << "could not read " << file_path << endl;
+    else if ((data.Miao || data.Hockey) && !in.read_Miao_Hockey(file_path, data.Miao)){
+        cout << "could not read Miao or Hockey path " << file_path << endl;
         return;
     }
     if (data.Base){

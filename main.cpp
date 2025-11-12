@@ -184,7 +184,7 @@ int main(int argc, const char* argv[]){
                 data.CM = false;
                 data.Hockey = true;
                 if (hockey_i < 0 || hockey_i > 6){
-                    std::cerr << "MiaoInstance must be 1,2,3,4,5 or 6!!" << endl;
+                    std::cerr << "Hockey instance must be 1,2,3,4,5 or 6!!" << endl;
                     return 1;
                 }
                 else{
