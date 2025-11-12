@@ -12,6 +12,45 @@ string PathInitialSolutionMiao(InputData data){
     return path;
 }
 
+unordered_map<string, int>BestSeedsMiaoAlgo = { // see Plotter
+    {"i01_s0_b3",0},
+    {"i01_s0_b100",2},
+    {"i01_s1_b3",2},
+    {"i01_s1_b100",2},
+    {"i01_s2_b3",4},
+    {"i01_s2_b100",3},
+    {"i02_s0_b3",4},
+    {"i02_s0_b100",4},
+    {"i02_s1_b3",2},
+    {"i02_s1_b100",0},
+    {"i02_s2_b3",4},
+    {"i02_s2_b100",3},
+    {"i03_s0_b3",-1},
+    {"i03_s0_b100",4},
+    {"i03_s1_b3",3},
+    {"i03_s1_b100",3},
+    {"i03_s2_b3",0},
+    {"i03_s2_b100",2},
+    {"i04_s0_b3",2},
+    {"i04_s0_b100",2},
+    {"i04_s1_b3",4},
+    {"i04_s1_b100",0},
+    {"i04_s2_b3",2},
+    {"i04_s2_b100",1},
+    {"i05_s0_b3",3},
+    {"i05_s0_b100",1},
+    {"i05_s1_b3",0},
+    {"i05_s1_b100",3},
+    {"i05_s2_b3",4},
+    {"i05_s2_b100",3},
+    {"i06_s0_b3",3},
+    {"i06_s0_b100",3},
+    {"i06_s1_b3",0},
+    {"i06_s1_b100",4},
+    {"i06_s2_b3",3},
+    {"i06_s2_b100",3}
+};
+
 const unordered_map<string,int>InstanceHL = {
     {"I_BRA24_6",100000},
     {"I_BRA24_12",10000},
@@ -209,6 +248,24 @@ void SaveSolution(std::ofstream& output_file, Solution& sol){
     }
 }
 
+void SolveLeagueByLeague(Input& in){
+	const bool HA = true;
+	const bool relax_x = false;
+	const bool min_travel = false;
+	const bool min_cap = true;
+    Solution sol(in);
+	for (int l = 0; l < sol.getNrLeagues(); ++l){
+		cout << "Solve league " << l << endl;
+        GurSolver gursol(in);
+		gursol.build_base_league(HA, relax_x, l);
+        gursol.build_capacity_constraint_league(l);
+        gursol.solve();
+        gursol.SaveSolutionLeague(sol, l);
+	}
+    sol.validate();
+    cin.get();
+}
+
 int RF_Miao(Input& in, const int TimeLimitRF){
 
 	// This is not part of GurSolver since we cannot change the variable type once this is defined in Gurobi
@@ -322,12 +379,11 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
         cout << "Found initial solution" << endl;
     }
     else{
-        unordered_map<string, int>BestSeeds = {{"i01_s0_b3", 0}, {"i02_s0_b3", 4}, {"i03_s0_b3", 0}, {"i04_s0_b3", 2}, {"i05_s0_b3", 3}, {"i06_s0_b3", 0}, {"i01_s1_b3", 0}, {"i02_s1_b3", 2}, {"i03_s1_b3", 3}, {"i04_s1_b3", 4}, {"i05_s1_b3", 0}, {"i06_s1_b3", 0}, {"i01_s2_b3", 4}, {"i02_s2_b3", 4}, {"i03_s2_b3", 0}, {"i04_s2_b3", 2}, {"i05_s2_b3", 0}, {"i06_s2_b3", 0}};
         // string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
         // path += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
         string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + string(PATHSEP);
         string instance_full = data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks);
-        path += instance_full + "_seed" + to_string(BestSeeds.at(instance_full)) + ".txt";
+        path += instance_full + "_seed" + to_string(BestSeedsMiaoAlgo.at(instance_full)) + ".txt";
         if (!(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
             ReadSolution(path, sol);
         }

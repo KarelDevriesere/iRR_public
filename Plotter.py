@@ -20,10 +20,10 @@ ListLengths = [1,5,10,50,100,500,1000,5000,10000,50000,100000] # list lengths
 
 TIME_LIMIT = 600
 
-def ResultsInstances(setting):
+def ResultsInstances(InstanceSetting):
     instances = []
     PathRoot = "Instances"
-    if setting == "Miao":
+    if InstanceSetting == "Miao":
         PathRoot = os.path.join(PathRoot, "Miao")
         I = ["i01", "i02", "i03", "i04", "i05", "i06"]
         S = ["0","1","2"]
@@ -32,14 +32,14 @@ def ResultsInstances(setting):
             for s in S:
                 for b in B:
                     instances.append(i+"_s"+s+"_b"+b)
-    elif setting == "TTP":
+    elif InstanceSetting == "TTP":
         PathRoot = os.path.join(PathRoot, "TTP")
         for key in NrRoundsTTP.keys():
             for r in NrRoundsTTP[key]:
                 instances.append(key + "_" + str(r))
     PathRoot = os.path.join(PathRoot, "Results")
 
-    Table = {inst: {"IP_value": -1, "IP_bound": -1, "IP_time": -1, "MiaoAlgo_Avg_value": [], "MiaoAlgo_Avg_time": [], "Heuristic_Avg_value": [], "Heuristic_Avg_time": [], "Heuristic_HL": []} for inst in instances}
+    Table = {inst: {"IP_value": -1, "IP_bound": -1, "IP_time": -1, "MiaoAlgo_Avg_value": [], "MiaoAlgo_Avg_time": [], "MiaoAlgo_seed": [], "Heuristic_Avg_value": [], "Heuristic_Avg_time": [], "Heuristic_HL": []} for inst in instances}
     PathIP = os.path.join(PathRoot, "IP")
     PathHeuristic = os.path.join(PathRoot, "Heuristic") # HeuristicStartingFromMiao
     PathMiaoAlgo = os.path.join(PathRoot, "MiaoAlgo")
@@ -59,7 +59,7 @@ def ResultsInstances(setting):
                     if i == 0:
                         seed = str(row[0])
                         method = row[1]
-                        if setting == "Miao":
+                        if InstanceSetting == "Miao":
                             inst = row[2]
                             setting = str(row[3])
                             nr_breaks = str(row[4])
@@ -101,6 +101,7 @@ def ResultsInstances(setting):
                         elif method == "MiaoAlgo":
                             Table[Instance]["MiaoAlgo_Avg_value"].append(int(row[1]))
                             Table[Instance]["MiaoAlgo_Avg_time"].append(int(row[2]))
+                            Table[Instance]["MiaoAlgo_seed"].append(seed)
                         elif method == "Heuristic": # HeuristicStartingFromMiao
                             if row[0] == "Final":
                                 Table[Instance]["Heuristic_Avg_value"].append(float(row[1]))
@@ -112,14 +113,14 @@ def ResultsInstances(setting):
                             print(f'Unknown method = {method}')
                             breakpoint()
                         break
-    if setting == "Miao":
+    if InstanceSetting == "Miao":
         OutputPath = os.path.join(os.path.join("Results", "Miao"), "Analysis.txt")   
     else:
         OutputPath = os.path.join(os.path.join("Results", "TTP"), "Analysis.txt") 
 
 
     with open(OutputPath, 'w') as output_file:
-        if setting == "Miao":
+        if InstanceSetting == "Miao":
             output_file.write("Instance & IP_v & IP_b & IP_t & Miao_{av} & Miao_{at} & Miao_{bv} & Miao_{bt} & Heur_{av} & Heur_{at} & Heur_{bv} & Heur_{bt} & Heur_{bHL}\n")
         else:
             output_file.write("Instance & Bound & IP_v & IP_b & IP_t & Miao_{av} & Miao_{at} & Miao_{bv} & Miao_{bt} & Heur_{av} & Heur_{at} & Heur_{bv} & Heur_{bt} & Heur_{bHL}\n")
@@ -130,6 +131,7 @@ def ResultsInstances(setting):
             MiaoAlgo_Avg_time = -1
             MiaoAlgo_Best_value = -1
             MiaoAlgo_Best_time = -1
+            MiaoAlgoBestSeed = -1
             Heuristic_Best_value = -1
             Heuristic_Best_time = -1
             Heuristic_best_HL = -1
@@ -151,15 +153,19 @@ def ResultsInstances(setting):
                 MiaoAlgo_Avg_time = round(sum(Table[Instance]["MiaoAlgo_Avg_time"]) / len(Table[Instance]["MiaoAlgo_Avg_time"]),2)
                 MiaoAlgo_Best_value = Table[Instance]["MiaoAlgo_Avg_value"][0]
                 MiaoAlgo_Best_time = Table[Instance]["MiaoAlgo_Avg_time"][0]
+                MiaoAlgoBestSeed = Table[Instance]["MiaoAlgo_seed"][0]
     
                 for i in [1,2,3,4]:
                     if Table[Instance]["MiaoAlgo_Avg_value"][i] < MiaoAlgo_Best_value:
                         MiaoAlgo_Best_value = Table[Instance]["MiaoAlgo_Avg_value"][i]
                         MiaoAlgo_Best_time = Table[Instance]["MiaoAlgo_Avg_time"][i]
+                        MiaoAlgoBestSeed = Table[Instance]["MiaoAlgo_seed"][i]
+
+            print(f'{{"{Instance}",{MiaoAlgoBestSeed}}},')
             
             line = Instance + " & "
 
-            if setting == "TTP":
+            if InstanceSetting == "TTP":
                 bound = -1
                 FilePathBounds = os.path.join(os.path.join(os.path.join("Instances", "TTP"), "Bounds"), "BestBounds.txt")
                 if not os.path.exists(FilePathBounds):
