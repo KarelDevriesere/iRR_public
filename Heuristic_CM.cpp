@@ -18,7 +18,10 @@ Heuristic_CM::Heuristic_CM(const std::unordered_map<Move, string>& moves, // mov
 Heuristic_CM::~Heuristic_CM(){}
 
 pair<int,int>Heuristic_CM::SelectTwoTeams(Solution& sol){
-    int l = RandomIntegerNumber(0, sol.getNrLeagues()-1);
+    int l = 0;
+    if (sol.getNrLeagues() > 1){
+        l = RandomIntegerNumber(0, sol.getNrLeagues()-1);
+    }
     int i = RandomIntegerNumber(0, sol.getNrTeamsLeague(l)-1);
     int j = ((i+1)+(RandomIntegerNumber(0,sol.getNrTeamsLeague(l)-2)))%sol.getNrTeamsLeague(l); 
     assert(i != j);

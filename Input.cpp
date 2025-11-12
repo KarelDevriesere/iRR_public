@@ -45,7 +45,7 @@ void Input::SetDefault(const int NrTeams){
     iota(TeamClub.begin(), TeamClub.end(), 0);
 
     NrLeagues = 1;
-    LeagueTeams = vector<vector<int>>(1);
+    LeagueTeams = vector<vector<int>>(1, vector<int>(NrTeams, 0));
     iota(LeagueTeams[0].begin(), LeagueTeams[0].end(), 0);
 
     NrClubs = NrTeams;
