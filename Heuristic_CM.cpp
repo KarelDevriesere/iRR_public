@@ -17,9 +17,17 @@ Heuristic_CM::Heuristic_CM(const std::unordered_map<Move, string>& moves, // mov
 
 Heuristic_CM::~Heuristic_CM(){}
 
+pair<int,int>Heuristic_CM::SelectTwoTeams(Solution& sol){
+    int l = RandomIntegerNumber(0, sol.getNrLeagues()-1);
+    int i = RandomIntegerNumber(0, sol.getNrTeamsLeague(l)-1);
+    int j = ((i+1)+(RandomIntegerNumber(0,sol.getNrTeamsLeague(l)-2)))%sol.getNrTeamsLeague(l); 
+    assert(i != j);
+    return {sol.getGlobalIndexTeam(l, i), sol.getGlobalIndexTeam(l, j)};
+}
+
 array<int,3>Heuristic_CM::SelectTwoTeamsAndColor(Solution& sol){
-    int i = RandomIntegerNumber(0, sol.getNrTeams()-1);
-    int j = ((i+1)+(RandomIntegerNumber(0,sol.getNrTeams()-2)))%sol.getNrTeams(); 
+    pair<int,int>teams = SelectTwoTeams(sol);
+    int i = teams.first, j = teams.second;
     int C = sol.getNrColouredRounds();
     int c = RandomIntegerNumber(0, C-1);
     while (c == sol.MatchColor[i][j] || c == sol.MatchColor[j][i]){
@@ -27,64 +35,6 @@ array<int,3>Heuristic_CM::SelectTwoTeamsAndColor(Solution& sol){
     }
     assert(i != j);
     return {i,j,c};
-}
-
-array<int,3>Heuristic_CM::SelectTwoTeamsAndColorMinCost(Solution& sol){
-    int k = RandomIntegerNumber(0, sol.getNrTeams()-1);
-    int i_max = -1;
-    int c_max = -1;
-    int d_max = -1;
-    int i;
-    int cost;
-    vector<bool>TeamSeen(sol.getNrTeams(),false);
-    for (int r = 0; r < sol.getNrColouredRounds(); ++r){
-        i = sol.TeamColorOpp[k][r];
-        if (sol.getSetting() == Setting::CM && sol.Orientation[k][r] == HA::H){
-            cost = sol.getCostMatchRound(k,i,r);
-        }
-        else if (sol.getSetting() == Setting::CM && sol.Orientation[k][r] == HA::A){
-            cost = sol.getCostMatchRound(i,k,r);
-        }
-        else{
-            assert(sol.getSetting() == Setting::TTP);
-            cost = sol.getDistanceTeams(i,k);
-        }
-        if (cost > d_max){
-            i_max = i;
-            c_max = r;
-            d_max = cost;
-        }
-        TeamSeen[i] = true;
-    }
-    int j_best = -1;
-    int j;
-    for (j = 0; j < sol.getNrTeams(); ++j){
-        if (sol.getSetting() == Setting::CM && sol.Orientation[k][c_max] == HA::H){
-            cost = sol.getCostMatchRound(k,j,c_max);
-        }
-        else if (sol.getSetting() == Setting::CM && sol.Orientation[k][c_max] == HA::A){
-            cost = sol.getCostMatchRound(j,k,c_max);
-        }
-        else{
-            assert(sol.getSetting() == Setting::TTP);
-            cost = sol.getDistanceTeams(j,k);
-        }
-        if (cost < d_max && !TeamSeen[j]){
-            j_best = j;
-            d_max = cost;
-        }
-    }
-    if (j_best == -1){
-        return SelectTwoTeamsAndColor(sol);
-    }
-    return {i_max,j_best,c_max};
-}
-
-pair<int,int>Heuristic_CM::SelectTwoTeams(Solution& sol){
-    int i = RandomIntegerNumber(0, sol.getNrTeams()-1);
-    int j = ((i+1)+(RandomIntegerNumber(0,sol.getNrTeams()-2)))%sol.getNrTeams(); 
-    assert(i != j);
-    return {i,j};
 }
 
 pair<int,int>Heuristic_CM::SelectTwoRounds(Solution& sol){
@@ -142,13 +92,7 @@ void ResetOrientations_CM(Solution& sol, const vector<vector<HA>>OrientationsCop
 
 void Heuristic_CM::SelectPTS(Solution& sol){
 
-    array<int,3>triple;
-    if (/*MinCostPTS*/ false){ // at first sight, does not seem to work
-        triple = SelectTwoTeamsAndColorMinCost(sol);
-    }
-    else{
-        triple = SelectTwoTeamsAndColor(sol);
-    }
+    array<int,3>triple = SelectTwoTeamsAndColor(sol);
     int i = triple[0], j = triple[1], StartColor = triple[2];
     // cout << "i : " << i << " and j = " << j << ", start color = " << StartColor << endl;
 

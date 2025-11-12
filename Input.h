@@ -23,6 +23,9 @@ enum class MiaoInstance{S, U13, U15, U17, U21, M, Tiny}; // Instances paper Miao
 const std::unordered_map<Move, string>MiaoMoves = {{Move::InterClubSwap, "InterClubSwap"}, {Move::IntraClubSwap, "IntraClubSwap"}, {Move::RandomSwap, "RandomSwap"}, {Move::ComplementInsertion, "ComplementInsertion"}};
 const std::unordered_map<Move, double>MiaoWeights = {{Move::InterClubSwap, 1.0/3.0}, {Move::IntraClubSwap, 1.0/3.0}, {Move::RandomSwap, 1.0/6.0}, {Move::ComplementInsertion, 1.0/6.0}};
 
+const std::unordered_map<Move, string>MiaoMovesTTP = {{Move::RandomSwap, "RandomSwap"}, {Move::ComplementInsertion, "ComplementInsertion"}};
+const std::unordered_map<Move, double>MiaoWeightsTTP = {{Move::RandomSwap, 1.0/2.0}, {Move::ComplementInsertion, 1.0/2.0}};
+
 enum class HA{H, A, BYE};
 
 struct InputData{
@@ -89,6 +92,8 @@ struct InputData{
 
     bool RunMiaoAlgo = false;
     bool RunMiaoRF = false;
+
+    bool Hockey = false;
 };
 
 class Input

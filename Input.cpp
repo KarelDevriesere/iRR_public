@@ -54,6 +54,7 @@ void Input::SetDefault(const int NrTeams){
         ClubTeams.at(i) = {i};
     }
     ClubCapacity = vector<vector<int>>(NrClubs, vector<int>(NrRounds, 1));
+    iota(SingleTeamClubs.begin(), SingleTeamClubs.end(), 0);
     
     Eligible = vector<vector<bool>>(getNrTeams(), vector<bool>(getNrTeams(), true));
     TeamLeagueIndex = vector<int>(NrTeams); // index of the team in its league
@@ -245,25 +246,27 @@ MiaoInstance Input::getMiaoInstance(){
 }
 
 void Input::setAllowedNrCapacityViolations1RR(const InputData& data){
-    string FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
-    FilePath += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
-    std::ifstream file(FilePath);
-    if (!file.is_open()) {
-        std::cerr << "Error opening the file " << FilePath;
-        return;
-    }
-    std::string line;
-    std::getline(file, line);
+    if (data.Miao){
+        string FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
+        FilePath += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
+        std::ifstream file(FilePath);
+        if (!file.is_open()) {
+            std::cerr << "Error opening the file " << FilePath;
+            return;
+        }
+        std::string line;
+        std::getline(file, line);
 
-    // Read only first line
-    std::getline(file, line);
-    std::stringstream ss(line);
-    string i;
-    int s,b,v;
-    char comma;
-    getline(ss, i, ',');
-    if (ss >> s >> comma >> b >> comma >> v) {
-        AllowedNrCapacityViolations = v;
+        // Read only first line
+        std::getline(file, line);
+        std::stringstream ss(line);
+        string i;
+        int s,b,v;
+        char comma;
+        getline(ss, i, ',');
+        if (ss >> s >> comma >> b >> comma >> v) {
+            AllowedNrCapacityViolations = v;
+        }
     }
 }
 
@@ -580,10 +583,10 @@ int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
     }
     int DummyCapacity = 0;
     for (l = 0; l < getNrLeagues(); ++l){
-        // cout << "League " << l << " has size " << LeagueTeams[l].size() << endl;
+        cout << "League " << l << " has size " << LeagueTeams[l].size() << endl;
         if ((int)LeagueTeams[l].size() % 2 != 0){
             assert(false); // All instances should have leagues of even size!!!
-            // cout << "add dummy" << endl;
+            cout << "add dummy" << endl;
             Teams.push_back(NrTeams);
             TeamStrength.push_back(l);
             TeamClub.push_back(IndexDummyClub);
