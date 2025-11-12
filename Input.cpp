@@ -874,6 +874,7 @@ int Input::read_HAPs(){
         ++h;
     }
     int index = 0;
+    cout << "Nr of HAPs listed = " << h << endl;
     for (h = 0; h < HAPs_even.size(); ++h){
         if (InstanceMiao != MiaoInstance::M && !HAP_satisfies_all_requirements(HAPs_even[h])){ // preprocess the haps!
             // Do do not preprocess for the canoncial HAP set
