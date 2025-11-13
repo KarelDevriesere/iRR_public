@@ -1309,17 +1309,19 @@ void GurSolver::BuildPatternFormulation(){
 		model.addConstr(sum_h == 1); // each team is assigned to exactly 1 hap
 	}
 
-	for (c = 0; c < getNrClubs(); ++c){
-		for (r = 0; r < getNrRounds(); ++r){
-			GRBLinExpr sum_th = 0;
-			for (auto& t: getTeamsClub(c)){
-				for (h = 0; h < NrHaps; ++h){
-					if (getModeHAPRound(h,r) == HA::H){
-						sum_th += y[t][h];
+	if (getSetting() != Setting::TTP){
+		for (c = 0; c < getNrClubs(); ++c){
+			for (r = 0; r < getNrRounds(); ++r){
+				GRBLinExpr sum_th = 0;
+				for (auto& t: getTeamsClub(c)){
+					for (h = 0; h < NrHaps; ++h){
+						if (getModeHAPRound(h,r) == HA::H){
+							sum_th += y[t][h];
+						}
 					}
 				}
+				model.addConstr(sum_th <= getCapacityClub(c, r) + v[c][r]); // capacity
 			}
-			model.addConstr(sum_th <= getCapacityClub(c, r) + v[c][r]); // capacity
 		}
 	}
 

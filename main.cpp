@@ -177,6 +177,13 @@ int main(int argc, const char* argv[]){
                 data.CM = false;
                 data.Hockey = false;
             }
+            else if (arg == "--PercentageHAPs"){ // TTP
+                data.PercentageHAPs = std::stoi(argv[++i]);
+                if (data.PercentageHAPs < 0 || data.PercentageHAPs > 100){
+                    std::cerr << "PercentageHAPs should be between 0 and 100" << endl;
+                    return 1;
+                }
+            }
             else if (arg == "--InstanceHockey"){
                 int hockey_i = std::stoi(argv[++i]);
                 data.Miao = false;

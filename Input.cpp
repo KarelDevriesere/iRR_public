@@ -5,6 +5,7 @@
 #include <string>
 #include <cmath>
 #include <numeric> // for iota
+#include <algorithm> // for sorting
 
 #include "rapidxml/rapidxml.hpp"
 #include "rapidxml/rapidxml_utils.hpp"
@@ -904,5 +905,48 @@ int Input::read_HAPs(){
     cout << HAPs.size() << " satisfactory haps" << endl;
 
     return 1;
+
+}
+
+void Input::DeleteNonPromisingHAPsTTP(const int NrHaps){
+    // first, sort the HAPs based on nr of breaks
+    vector<pair<int, int>>HapIndexNrBreaks;
+    int h,r,NrBreaks;
+    for (h = 0; h < HAPs.size(); ++h){
+        NrBreaks = 0;
+        for (r = 1; r < NrRounds; ++r){
+            if (HAPs[h][r-1] == HAPs[h][r]){
+                ++NrBreaks;
+            }
+        }
+        HapIndexNrBreaks.emplace_back(h, NrBreaks);
+    }
+
+    std::sort(HapIndexNrBreaks.begin(), HapIndexNrBreaks.end(),
+              [](const auto &a, const auto &b) {
+                  return a.second > b.second;  // descending by value
+              });
+
+    vector<vector<HA>>NewHAPs;
+    NewHAPs.reserve(NrHaps);
+    int i = 0;
+    vector<bool>HAPSeen(HAPs.size(), false);
+    for (const auto &[h, b] : HapIndexNrBreaks){
+        if (HAPSeen.at(h)){
+            continue;
+        }
+        NewHAPs.push_back(HAPs[h]);
+        NewHAPs.push_back(HAPs[getComplementIndexHAP(h)]);
+        HAPSeen.at(getComplementIndexHAP(h)) = true;
+        // std::cout << "HAP " << h << " has " << b << " breaks" << "\n";
+        i += 2;
+        if (i >= NrHaps){
+            break;
+        }
+    }
+    HAPs = std::move(NewHAPs);
+    cout << "Nr of HAPs that will be used = " << HAPs.size() << endl;
+
+    AllHAPsIncluded = false;
 
 }

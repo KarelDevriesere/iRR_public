@@ -386,10 +386,15 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
     StartTime = std::chrono::high_resolution_clock::now();
     // TODO: Miao is also doing something with byes...
 
-    if (!InitialSolutionGiven){
+    if (!InitialSolutionGiven || !in.AllHAPsIncluded){
         // Assign HAPs such that we respect v+
+        cout << "Assign HAPs to teams.." << endl;
         GurSolver gursol(in);
-        gursol.AssignHAPsToTeams(sol);
+        // gursol.AssignHAPsToTeams(sol);
+        const bool relax_x = false, min_travel = false, min_capacity_violations = false;
+        gursol.BuildMiaoFormulation(relax_x, min_travel, min_capacity_violations);
+        gursol.solve();
+        gursol.StoreHAPs(sol);
     }
     else{
         best_obj = sol.ComputeTotalCost();
@@ -398,10 +403,10 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
         cout << "Assign Haps to teams" << endl;
         AssignsHAPsToTeamsBasedOnSol(in, sol);
         UpdateBestSolution(sol);
-        ReAssignHAPs(sol); // do a HAP move
-        Reset(sol);
         cout << "Ready" << endl;
     }
+    ReAssignHAPs(sol); // do a HAP move
+    Reset(sol);
 
     // Initial solution is infeasible for tiny!!!
 

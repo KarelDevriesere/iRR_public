@@ -95,6 +95,7 @@ struct InputData{
     bool RunMiaoRF = false;
 
     bool Hockey = false;
+    int PercentageHAPs = 100;
 };
 
 class Input
@@ -229,6 +230,9 @@ class Input
         int getNrRoundsBaseAlgo()const{return NrRoundsBaseAlgo;};
 
         string getInstanceName()const{return InstanceName;};
+
+        bool AllHAPsIncluded = true;
+        void DeleteNonPromisingHAPsTTP(const int NrHaps);
 };
 
 #endif

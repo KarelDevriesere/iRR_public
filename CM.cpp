@@ -357,9 +357,9 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
         config = to_string(data.seed) + ",MiaoAlgo," + data.Instance + "," + to_string(data.CapacitySetting) + "," + to_string(data.MaxNrBreaks);
     }
     else{
-        FilePath = "Instances" + string(PATHSEP) + "TTP" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + sol.getInstanceName() + "_s" + to_string(data.seed) + ".txt";
+        FilePath = "Instances" + string(PATHSEP) + "TTP" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + sol.getInstanceName() + "_PercHAPs" + to_string(data.PercentageHAPs) + "_s" + to_string(data.seed) + ".txt";
         
-        config = to_string(data.seed) + ",MiaoAlgo," + sol.getInstanceName() + "," + to_string(data.HistoryLength);
+        config = to_string(data.seed) + ",MiaoAlgo," + sol.getInstanceName() + "," + to_string(data.HistoryLength) + "," + to_string(data.PercentageHAPs);
     }
     std::ofstream output_file(FilePath);
     output_file << config << "\n";
@@ -659,6 +659,10 @@ void TestCostMinimization(InputData& data){
 
     if (data.TTP && data.RunMiaoAlgo){
         in.read_HAPs();
+        if (data.PercentageHAPs < 100){
+            double NrPromisingHAPs = in.getNrHAPs()*((double)data.PercentageHAPs/100.0);
+            in.DeleteNonPromisingHAPsTTP((int)NrPromisingHAPs);
+        }
     }
     
     if (data.Heuristic && !data.RunMiaoAlgo && !data.RunMiaoRF){
