@@ -33,6 +33,19 @@ void Input::setBaseAlgo(){
         */
 }
 
+int Input::getDistanceTeams(const int i, const int j){
+    if (i > IsTeamDummy.size() || j > IsTeamDummy.size() || i < 0 || j < 0){
+        cout << "i = " << i << ", j = " << j << " in getDistanceTeams()" << endl;
+        std::abort();
+    }
+    if (isTeamDummy(i) || isTeamDummy(j)){
+        return 0;
+    }
+    else{
+        return DistanceClubs[TeamClub[i]][TeamClub[j]];
+    }
+}
+
 void Input::SetDefault(const int NrTeams){
     // All teams same strength, every team has its own club, no dummy teams, all teams in same league
     // In solution: modify everything such that instead of travel cost, we compute the costs

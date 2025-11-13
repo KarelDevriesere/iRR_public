@@ -169,8 +169,17 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
             pair<vector<pair<int,int>>, vector<int>>Matching_OpponentMatching = MoveMWPM(sol, r, bipartite, keepHAP, CM, gen, MinCostM); // in the file operators
             vector<pair<int,int>>matching = Matching_OpponentMatching.first;
             if ((int)matching.size() < N/2){
+                // shuffling rounds does not seem a good idea, instead go back to the old HAP assignement and do a new HAP move
+                if (++NrInfeasibleMatchings > 100){
+                    cout << "NrInfeasibleMatchings = " << NrInfeasibleMatchings << endl;
+                    STOP = true;
+                }
+                return false;
+                // The problem with reshuffling rounds is that in ComputeEdgeWeight of TTP, we assume the rounds go from 0 to R-1 to compute the cost of trips
+                // Hence, it is more difficult to compute the cost of trips!!!
+                // So instead of doing this, just leave and try with a new HAP
+                /*
                 cout << "matching failed, shuffle rounds" << endl;
-                // cin.get();
                 shuffle(Rounds.begin(), Rounds.end(), default_random_engine(42));
                 Reset(sol);
                 s = 0;
@@ -178,6 +187,7 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
                 if (count++ <= 100){
                     return false;
                 }
+                    */
             }
             else{
                 // cout << "Matching in round " << r << ":" << endl;
@@ -349,15 +359,26 @@ bool MiaoAlgo::ComplementInsertion(Solution& sol){
 }
 
 void AssignsHAPsToTeamsBasedOnSol(Input& in, Solution& sol){
-    GurSolver gursol(in);
-    const bool relax_x = false;
-    const bool min_travel = false;
-	const bool min_capacity_violations = true; // set to true!!!
-	gursol.BuildMiaoFormulation(relax_x, min_travel, min_capacity_violations);
-    gursol.Fix_x(sol);
-    int obj = gursol.solve();
-	assert(obj <= sol.getAllowedNrCapacityViolations());
-	gursol.StoreHAPs(sol);
+    // Find the HAP of teams:
+    int i,h,r;
+    for (i = 0; i < sol.getNrTeams(); ++i){
+        for (h = 0; h < in.getNrHAPs(); ++h){
+            for (r = 0; r < sol.getNrRounds(); ++r){
+                if (sol.Orientation[i][r] != in.getModeHAPRound(h,r)){
+                    break;
+                }
+            }
+            if (r == sol.getNrRounds()){
+                cout << "Team " << i << " is assigned HAP " << h << endl;
+                sol.setHAPIndexTeam(i, h);
+                break;
+            }
+        }
+        if (h == in.getNrHAPs()){
+            cout << "HAP of " << i << " not found when assign HAPs to teams based on sol" << endl;
+            std::abort();
+        }
+    }
 }
 
 void MiaoAlgo::solve(Input& in, Solution& sol){
@@ -399,6 +420,9 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
                     STOP = true;
                 }
             }
+        }
+        else{
+            ReverseMove(sol); // if schedule phase not succesful: reverse move, and try with new HAP move
         }
         // cout << "reassign haps" << endl;
         ReAssignHAPs(sol); // do a HAP move

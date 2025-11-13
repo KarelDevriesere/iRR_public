@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <assert.h>
 #include <limits.h>
+#include <iostream>
 
 using namespace std;
 
@@ -136,7 +137,7 @@ class Input
 
         bool HAP_satisfies_all_requirements(const vector<HA>& HAP);
 
-        MiaoInstance InstanceMiao;
+        MiaoInstance InstanceMiao = MiaoInstance::S;
         // pair<TotalNrTeams,NrDummyTeams>
         std::unordered_map<MiaoInstance, std::pair<int,int>>NrTeamsMiaoInstances = {{MiaoInstance::S, {50,0}}, {MiaoInstance::U13, {184,18}}, {MiaoInstance::U15, {216,49}},
             {MiaoInstance::U17, {144,14}}, {MiaoInstance::U21, {64,6}}, {MiaoInstance::M, {608,87}}, {MiaoInstance::Tiny, {16,1}}};
@@ -159,14 +160,7 @@ class Input
         int getNrRounds()const{return NrRounds;}
         int getNrClubs()const{return NrClubs;}
         int getDistanceClubs(const int c1, const int c2)const{return DistanceClubs[c1][c2];}
-        int getDistanceTeams(const int i, const int j)const{
-            if (isTeamDummy(i) || isTeamDummy(j)){
-                return 0;
-            }
-            else{
-                return DistanceClubs[TeamClub[i]][TeamClub[j]];
-            }
-        }
+        int getDistanceTeams(const int i, const int j);
         vector<int> getTeamsClub(const int c)const{return ClubTeams[c];}
         vector<int> getSingleTeamClubs()const{return SingleTeamClubs;};
         vector<int> getMultiTeamClubs()const{return MultiTeamClubs;};
