@@ -255,14 +255,16 @@ void SolveLeagueByLeague(Input& in){
 	const bool min_cap = true;
     Solution sol(in);
 	for (int l = 0; l < sol.getNrLeagues(); ++l){
-		cout << "Solve league " << l << endl;
         GurSolver gursol(in);
 		gursol.build_base_league(HA, relax_x, l);
-        gursol.build_capacity_constraint_league(l);
+        gursol.build_capacity_constraint_league(sol,l);
+        gursol.AddObj(min_travel, min_cap);
         gursol.solve();
         gursol.SaveSolutionLeague(sol, l);
 	}
     sol.validate();
+    sol.CostCapacityViol = 1;
+    cout << "Total cost = " << sol.ComputeTotalHACost() << endl;
     cin.get();
 }
 
@@ -520,11 +522,18 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
             }
         }
         const bool relax_x = false;
-        gur.build_all(HA, relax_x);
+        if (min_travel || (min_cap && in.getSetting() == Setting::Miao)){
+            gur.build_all(HA, relax_x);
+        }
+        else{
+            SolveLeagueByLeague(in);
+        }
         if (min_travel){
             gur.setBoundCapacityViolations();
         }
-        gur.AddObj(min_travel, min_cap);
+        if (min_travel || (min_cap && in.getSetting() == Setting::Miao)){
+            gur.AddObj(min_travel, min_cap);
+        }
         if (min_travel && !(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
             gur.WarmStart(sol);
         }

@@ -88,7 +88,7 @@ class GurSolver : public Input
         void build_base(const bool HA, const bool relax_x);
         void build_league(const bool HA, const bool relax_x);
         void build_base_league(const bool HA, const bool relax_x, const int l);
-        void build_capacity_constraint_league(const int l);
+        void build_capacity_constraint_league(Solution& sol, const int l);
         int build_all(const bool HA, const bool relax_x);
         void build_HAP_constraints();
         void AddObj(const bool min_travel, const bool min_capacity_violations);

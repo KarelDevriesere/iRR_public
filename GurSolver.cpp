@@ -639,14 +639,11 @@ void GurSolver::build_base_league(const bool HA, const bool relax_x, const int l
 
 	int i,j,r,i_,j_;
 
-	x = vector<vector<vector<GRBVar>>>(getNrTeams(), vector<vector<GRBVar>>(getNrTeams(), vector<GRBVar>(getNrRounds())));
-
-	// cout << "x" << endl;
+	x = vector<vector<vector<GRBVar>>>(getNrTeamsLeague(l), vector<vector<GRBVar>>(getNrTeamsLeague(l), vector<GRBVar>(getNrRounds())));
 
 	for (i = 0; i < getNrTeamsLeague(l); ++i){
 		for (j = 0; j < getNrTeamsLeague(l); ++j){
-		   i_ = getGlobalIndexTeam(l,i), j_ = getGlobalIndexTeam(l,j);
-		   if (isEligible(i_, j_)){
+		   if (true /*isEligible(i_, j_)*/){
 			// cout << i << " and " << j << " of strength " << getStrenghtTeam(i) << " and " << getStrenghtTeam(j) << " can play vs each other" << endl;
 			   for (r = 0; r < getNrRounds(); ++r){
 				   std::string varName = "x_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(r);
@@ -662,12 +659,9 @@ void GurSolver::build_base_league(const bool HA, const bool relax_x, const int l
 		}
    }
 
-   // cout << "c1" << endl;
-
    for (i = 0; i < getNrTeamsLeague(l); ++i){
 		for (j = 0; j < getNrTeamsLeague(l); ++j){
-			i_ = getGlobalIndexTeam(l,i), j_ = getGlobalIndexTeam(l,j);
-		   if (isEligible(i_, j_)/*i != j*/){
+		   if (i != j){
 			   std::string consName = "c1_" + std::to_string(i) + "_" + std::to_string(j);
 			   GRBLinExpr sum_r = 0;
 			   for (r = 0; r < getNrRounds(); ++r){
@@ -692,8 +686,7 @@ void GurSolver::build_base_league(const bool HA, const bool relax_x, const int l
 			std::string consName = "c2_" + std::to_string(i) + "_" + std::to_string(r);
 			 GRBLinExpr sum_j = 0;
 			 for (j = 0; j < getNrTeamsLeague(l); ++j){
-				i_ = getGlobalIndexTeam(l,i), j_ = getGlobalIndexTeam(l,j);
-				if (/*i != j*/ isEligible(i_, j_)){
+				if (i != j){
 					sum_j += (x[i][j][r] + x[j][i][r]);
 				}
 			 }
@@ -702,7 +695,6 @@ void GurSolver::build_base_league(const bool HA, const bool relax_x, const int l
 		}
    }
 
-    // cout << "c3" << endl;
 
     if (!SRR){
 		array<pair<int,int>,2>Range = {{{0, getNrRounds()/2}, {getNrRounds()/2, getNrRounds()}}};
@@ -723,11 +715,20 @@ void GurSolver::build_base_league(const bool HA, const bool relax_x, const int l
 		}
 	}
 
+	for (i = 0; i < getNrTeamsLeague(l); ++i){
+		for (j = 0; j < getNrTeamsLeague(l); ++j){
+			i_ = getGlobalIndexTeam(l,i), j_ = getGlobalIndexTeam(l,j);
+			if (!isEligible(i_, j_)){
+				for (r = 0; r < getNrRounds(); ++r){
+					model.addConstr(x[i][j][r] == 0);
+				}
+			}
+		}
+	}
+
 	if (!HA){
 		return;
 	}
-
-	// cout << "c4" << endl;
 
 	assert(getNrRounds() % 2 == 0);
 
@@ -737,8 +738,7 @@ void GurSolver::build_base_league(const bool HA, const bool relax_x, const int l
 		GRBLinExpr sum_jr_H = 0;
 		// GRBLinExpr sum_jr_A = 0;
 		for (j = 0; j < getNrTeamsLeague(l); ++j){
-			i_ = getGlobalIndexTeam(l,i), j_ = getGlobalIndexTeam(l,j_);
-			if (isEligible(i_, j_) /*true*/){
+			if (true){
 				for (r = 0; r < getNrRounds(); ++r){
 					sum_jr_H += x[i][j][r];
 					// sum_jr_A += x[j][i][r];
@@ -753,11 +753,8 @@ void GurSolver::build_base_league(const bool HA, const bool relax_x, const int l
 		for (r = 2; r < getNrRounds(); ++r){
 			GRBLinExpr sum_H = 0, sum_A = 0;
 			for (j = 0; j < getNrTeamsLeague(l); ++j){
-				i_ = getGlobalIndexTeam(l,i), j_ = getGlobalIndexTeam(l,j);
-				if (isEligible(i_, j_)){
-					sum_H += (x[i][j][r-2] + x[i][j][r-1] + x[i][j][r]);
-					sum_A += (x[j][i][r-2] + x[j][i][r-1] + x[j][i][r]);
-				}
+				sum_H += (x[i][j][r-2] + x[i][j][r-1] + x[i][j][r]);
+				sum_A += (x[j][i][r-2] + x[j][i][r-1] + x[j][i][r]);
 			}
 			model.addConstr(sum_H <= 2, "c_4H");
 			model.addConstr(sum_A <= 2, "c_4A");
@@ -1025,7 +1022,7 @@ void GurSolver::build_HAP_constraints(){
    }
 }
 
-void GurSolver::build_capacity_constraint_league(const int l){
+void GurSolver::build_capacity_constraint_league(Solution& sol, const int l){
 	v = vector<vector<GRBVar>>(getNrClubs(), vector<GRBVar>(getNrRounds()));
 
 	for (int c = 0; c < getNrClubs(); ++c){ // NrClubs == clubs without dummy
@@ -1035,19 +1032,17 @@ void GurSolver::build_capacity_constraint_league(const int l){
 			v[c][r] = model.addVar(0, ub_var, 0.0, GRB_INTEGER);
 
 			GRBLinExpr sum_tj = 0;
-			for (int i = 0; i < getNrTeamsLeague(l); ++l){
+			for (int i = 0; i < getNrTeamsLeague(l); ++i){
 				if (getTeamClub(i) != c){
 					continue;
 				}
 				for (int j = 0; j < getNrTeamsLeague(l); ++j){
-					i_ = getGlobalIndexTeam(l,i), j_ = getGlobalIndexTeam(l,j);
-					if (isEligible(i_, j_)){
-						sum_tj += x[i][j][r];
-					}
+					int i_ = getGlobalIndexTeam(l,i), j_ = getGlobalIndexTeam(l,j);
+					sum_tj += x[i][j][r];
 				}
 			}
 			// cout << "Capacity of club " << c << " in round " << r << " = " << getCapacityClub(c, r) << endl;
-			model.addConstr(sum_tj <= getCapacityClub(c, r) - ComputeCapacityClubRound(c, r) + 0.1 + v[c][r], "Capacity");
+			model.addConstr(sum_tj <= getCapacityClub(c, r) - sol.ComputeCapacityClubRound(c, r) + 0.1 + v[c][r], "Capacity");
 		}
 	}
 }
@@ -1261,11 +1256,12 @@ void GurSolver::SaveSolution(Solution& sol){
 	}
 }
 
-void SaveSolutionLeague(Solution& sol, const int l){
+void GurSolver::SaveSolutionLeague(Solution& sol, const int l){
 	for (int i = 0; i < getNrTeamsLeague(l); ++i){
 		for (int r = 0; r < getNrRounds(); ++r){
 			for (int j = 0; j < getNrTeamsLeague(l); ++j){
-				int i_ = sol.getGlobalIndexTeam(l,i), j_ = sol.getGlobalIndexTeam(l,j);
+				int i_ = getGlobalIndexTeam(l,i), j_ = getGlobalIndexTeam(l,j);
+				assert(!x.empty());
 				if (x[i][j][r].get(GRB_DoubleAttr_X) > 0.9){
 					assert(isEligible(i_,j_));
 					sol.TeamColorOpp[j_][r] = i_;
