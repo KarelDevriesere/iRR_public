@@ -631,7 +631,141 @@ void build_single_league_withoutHA(){
 	// 
 }
 
-void GurSolver::build_base(const bool HA, const bool relax_x){
+
+void GurSolver::build_base_league(const bool HA, const bool relax_x, const int l){ // l = league
+
+	assert(getNrTeamsLeague(l) % 2 == 0);
+	assert(getNrTeamsLeague(l)-1 >= getNrRounds());
+
+	int i,j,r,i_,j_;
+
+	x = vector<vector<vector<GRBVar>>>(getNrTeamsLeague(l), vector<vector<GRBVar>>(getNrTeamsLeague(l), vector<GRBVar>(getNrRounds())));
+
+	for (i = 0; i < getNrTeamsLeague(l); ++i){
+		for (j = 0; j < getNrTeamsLeague(l); ++j){
+		   if (true /*isEligible(i_, j_)*/){
+			// cout << i << " and " << j << " of strength " << getStrenghtTeam(i) << " and " << getStrenghtTeam(j) << " can play vs each other" << endl;
+			   for (r = 0; r < getNrRounds(); ++r){
+				   std::string varName = "x_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(r);
+				   if (!relax_x){
+						x[i][j][r] = model.addVar(0, 1, 0.0, GRB_BINARY, varName);
+				   }
+				   else{
+						x[i][j][r] = model.addVar(0, 1, 0.0, GRB_CONTINUOUS, varName);
+				   }
+				   
+			  }
+		   }
+		}
+   }
+
+   for (i = 0; i < getNrTeamsLeague(l); ++i){
+		for (j = 0; j < getNrTeamsLeague(l); ++j){
+		   if (i != j){
+			   std::string consName = "c1_" + std::to_string(i) + "_" + std::to_string(j);
+			   GRBLinExpr sum_r = 0;
+			   for (r = 0; r < getNrRounds(); ++r){
+				if (SRR){
+					// If SRR: a team sees an opponent at most once
+					sum_r += (x[i][j][r] + x[j][i][r]);
+				}
+				else{
+					// If DRR: a game (i,j) happens at most once (if 2x same opponent, the other game needs to be (j,i))
+					sum_r += x[i][j][r];
+				}  
+			   }
+			   if (getNrRounds() < getNrTeamsLeague(l)-1){ // then not every team can play against any other team
+				model.addConstr(sum_r <= 1, consName);
+			   }
+			   else{
+				model.addConstr(sum_r == 1, consName);
+			   }
+		   }
+		}
+		for (r = 0; r < getNrRounds(); ++r){
+			std::string consName = "c2_" + std::to_string(i) + "_" + std::to_string(r);
+			 GRBLinExpr sum_j = 0;
+			 for (j = 0; j < getNrTeamsLeague(l); ++j){
+				if (i != j){
+					sum_j += (x[i][j][r] + x[j][i][r]);
+				}
+			 }
+			 // Each team plays exactly once in each round
+			 model.addConstr(sum_j == 1, consName);
+		}
+   }
+
+
+    if (!SRR){
+		array<pair<int,int>,2>Range = {{{0, getNrRounds()/2}, {getNrRounds()/2, getNrRounds()}}};
+		for (i = 0; i < getNrTeamsLeague(l); ++i){
+			// Make DRR phased: every team sees an opponent at most once in a half
+			for (j = 0; j < getNrTeamsLeague(l); ++j){
+				// if (isEligible(i, j)){
+					for (auto&[start, end]: Range){
+						GRBLinExpr sum_r = 0;
+						std::string consName = "c3_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(start) + "_" + std::to_string(end);
+						for (r = start; r < end; ++r){
+							sum_r += (x[i][j][r] + x[j][i][r]);
+						}
+						model.addConstr(sum_r <= 1, consName);
+					}
+				// }
+			}
+		}
+	}
+
+	for (i = 0; i < getNrTeamsLeague(l); ++i){
+		for (j = 0; j < getNrTeamsLeague(l); ++j){
+			i_ = getGlobalIndexTeam(l,i), j_ = getGlobalIndexTeam(l,j);
+			if (!isEligible(i_, j_)){
+				for (r = 0; r < getNrRounds(); ++r){
+					model.addConstr(x[i][j][r] == 0);
+				}
+			}
+		}
+	}
+
+	if (!HA){
+		return;
+	}
+
+	assert(getNrRounds() % 2 == 0);
+
+	int nrH = getNrRounds() / 2;
+	int nrA = nrH;
+	for (i = 0; i < getNrTeamsLeague(l); ++i){
+		GRBLinExpr sum_jr_H = 0;
+		// GRBLinExpr sum_jr_A = 0;
+		for (j = 0; j < getNrTeamsLeague(l); ++j){
+			if (true){
+				for (r = 0; r < getNrRounds(); ++r){
+					sum_jr_H += x[i][j][r];
+					// sum_jr_A += x[j][i][r];
+				}
+			}
+		}
+		model.addConstr(sum_jr_H == nrH, "c_3H");
+		// model.addConstr(sum_jr_A == nrA, "c_3A");
+	}
+
+	for (i = 0; i < getNrTeamsLeague(l); ++i){
+		for (r = 2; r < getNrRounds(); ++r){
+			GRBLinExpr sum_H = 0, sum_A = 0;
+			for (j = 0; j < getNrTeamsLeague(l); ++j){
+				sum_H += (x[i][j][r-2] + x[i][j][r-1] + x[i][j][r]);
+				sum_A += (x[j][i][r-2] + x[j][i][r-1] + x[j][i][r]);
+			}
+			model.addConstr(sum_H <= 2, "c_4H");
+			model.addConstr(sum_A <= 2, "c_4A");
+		}
+	}
+
+	// cout << "base done" << endl;
+
+}
+
+void GurSolver::build_base(const bool HA, const bool relax_x){ 
 
 	assert(getNrTeams() % 2 == 0);
 	assert(getNrTeams()-1 >= getNrRounds());
@@ -644,7 +778,7 @@ void GurSolver::build_base(const bool HA, const bool relax_x){
 
 	for (i = 0; i < getNrTeams(); ++i){
 		for (j = 0; j < getNrTeams(); ++j){
-		   // if (isEligible(i, j)){
+		   if (isEligible(i, j)){
 			// cout << i << " and " << j << " of strength " << getStrenghtTeam(i) << " and " << getStrenghtTeam(j) << " can play vs each other" << endl;
 			   for (r = 0; r < getNrRounds(); ++r){
 				   std::string varName = "x_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(r);
@@ -656,7 +790,7 @@ void GurSolver::build_base(const bool HA, const bool relax_x){
 				   }
 				   
 			  }
-		   // }
+		   }
 		}
    }
 
@@ -664,7 +798,7 @@ void GurSolver::build_base(const bool HA, const bool relax_x){
 
    for (i = 0; i < getNrTeams(); ++i){
 		for (j = 0; j < getNrTeams(); ++j){
-		   if (/*isEligible(i, j)*/ i != j){
+		   if (isEligible(i, j)/*i != j*/){
 			   std::string consName = "c1_" + std::to_string(i) + "_" + std::to_string(j);
 			   GRBLinExpr sum_r = 0;
 			   for (r = 0; r < getNrRounds(); ++r){
@@ -689,7 +823,7 @@ void GurSolver::build_base(const bool HA, const bool relax_x){
 			std::string consName = "c2_" + std::to_string(i) + "_" + std::to_string(r);
 			 GRBLinExpr sum_j = 0;
 			 for (j = 0; j < getNrTeams(); ++j){
-				if (i != j /*isEligible(i, j)*/){
+				if (/*i != j*/ isEligible(i, j)){
 					sum_j += (x[i][j][r] + x[j][i][r]);
 				}
 			 }
@@ -733,7 +867,7 @@ void GurSolver::build_base(const bool HA, const bool relax_x){
 		GRBLinExpr sum_jr_H = 0;
 		// GRBLinExpr sum_jr_A = 0;
 		for (j = 0; j < getNrTeams(); ++j){
-			if (/*isEligible(i, j)*/ true){
+			if (isEligible(i, j) /*true*/){
 				for (r = 0; r < getNrRounds(); ++r){
 					sum_jr_H += x[i][j][r];
 					// sum_jr_A += x[j][i][r];
@@ -772,6 +906,7 @@ void GurSolver::build_league(const bool HA, const bool relax_x){
 
    // if we outcomment this, check whether isEligible is put again in all the constraints!!!
    // Much faster for Tiny-Constant
+   /*
    for (int i = 0; i < getNrTeams(); ++i){
 	for (int j = i+1; j < getNrTeams(); ++j){
 		if (!isEligible(i,j)){
@@ -782,6 +917,7 @@ void GurSolver::build_league(const bool HA, const bool relax_x){
 		}
 	}
    }
+   */
 
    if (HA){
 	build_HAP_constraints();
@@ -884,6 +1020,31 @@ void GurSolver::build_HAP_constraints(){
 		}
 	}
    }
+}
+
+void GurSolver::build_capacity_constraint_league(Solution& sol, const int l){
+	v = vector<vector<GRBVar>>(getNrClubs(), vector<GRBVar>(getNrRounds()));
+
+	for (int c = 0; c < getNrClubs(); ++c){ // NrClubs == clubs without dummy
+		for (int r = 0; r < getNrRounds(); ++r){
+			assert(getNrTeamsClub(c) >= sol.getCapacityClub(c, r));
+			int ub_var = getNrTeamsClub(c)-sol.getCapacityClub(c, r);
+			v[c][r] = model.addVar(0, ub_var, 0.0, GRB_INTEGER);
+
+			GRBLinExpr sum_tj = 0;
+			for (int i = 0; i < getNrTeamsLeague(l); ++i){
+				if (getTeamClub(i) != c){
+					continue;
+				}
+				for (int j = 0; j < getNrTeamsLeague(l); ++j){
+					int i_ = getGlobalIndexTeam(l,i), j_ = getGlobalIndexTeam(l,j);
+					sum_tj += x[i][j][r];
+				}
+			}
+			// cout << "Capacity of club " << c << " in round " << r << " = " << getCapacityClub(c, r) << endl;
+			model.addConstr(sum_tj <= getCapacityClub(c, r) - sol.ComputeCapacityClubRound(c, r) + 0.1 + v[c][r], "Capacity");
+		}
+	}
 }
 
 int GurSolver::build_all(const bool HA, const bool relax_x){
@@ -1095,6 +1256,28 @@ void GurSolver::SaveSolution(Solution& sol){
 	}
 }
 
+void GurSolver::SaveSolutionLeague(Solution& sol, const int l){
+	for (int i = 0; i < getNrTeamsLeague(l); ++i){
+		for (int r = 0; r < getNrRounds(); ++r){
+			for (int j = 0; j < getNrTeamsLeague(l); ++j){
+				int i_ = getGlobalIndexTeam(l,i), j_ = getGlobalIndexTeam(l,j);
+				assert(!x.empty());
+				if (x[i][j][r].get(GRB_DoubleAttr_X) > 0.9){
+					assert(isEligible(i_,j_));
+					sol.TeamColorOpp[j_][r] = i_;
+					sol.TeamColorOpp[i_][r] = j_;
+					sol.MatchColor[i_][j_] = r;
+					if (SRR){
+						sol.MatchColor[j_][i_] = r;
+					}
+					sol.Orientation[i_][r] = HA::H;
+					sol.Orientation[j_][r] = HA::A;
+				}
+			}
+		}
+	}
+}
+
 
 void GurSolver::BuildPatternFormulation(){
 	const int NrHaps = getNrHAPs(); 
@@ -1126,17 +1309,19 @@ void GurSolver::BuildPatternFormulation(){
 		model.addConstr(sum_h == 1); // each team is assigned to exactly 1 hap
 	}
 
-	for (c = 0; c < getNrClubs(); ++c){
-		for (r = 0; r < getNrRounds(); ++r){
-			GRBLinExpr sum_th = 0;
-			for (auto& t: getTeamsClub(c)){
-				for (h = 0; h < NrHaps; ++h){
-					if (getModeHAPRound(h,r) == HA::H){
-						sum_th += y[t][h];
+	if (getSetting() != Setting::TTP){
+		for (c = 0; c < getNrClubs(); ++c){
+			for (r = 0; r < getNrRounds(); ++r){
+				GRBLinExpr sum_th = 0;
+				for (auto& t: getTeamsClub(c)){
+					for (h = 0; h < NrHaps; ++h){
+						if (getModeHAPRound(h,r) == HA::H){
+							sum_th += y[t][h];
+						}
 					}
 				}
+				model.addConstr(sum_th <= getCapacityClub(c, r) + v[c][r]); // capacity
 			}
-			model.addConstr(sum_th <= getCapacityClub(c, r) + v[c][r]); // capacity
 		}
 	}
 
@@ -1211,10 +1396,12 @@ void GurSolver::AddMiaoSymmetryConstraint(){
 	// cout << "added symmetry constraint" << endl;
 }
 
-void GurSolver::BuildMiaoFormulation(const bool relax_x){
-	const bool HA = true;
+void GurSolver::BuildMiaoFormulation(const bool relax_x, const bool min_travel, const bool min_capacity_violations){
+	const bool HA = false;
 	build_all(HA, relax_x);
-	setBoundCapacityViolations();
+	if (min_travel){
+		setBoundCapacityViolations();
+	}
 	BuildPatternFormulation();
 	// link the assigned patterns with the opponent schedule
 	for (int i = 0; i < getNrTeams(); ++i){
@@ -1233,6 +1420,9 @@ void GurSolver::BuildMiaoFormulation(const bool relax_x){
 			model.addConstr(sum == 0);
 		}
 	}
+
+	AddObj(min_travel, min_capacity_violations);
+
 	// AddMiaoSymmetryConstraint(); // does not work with warm start
 	
 	// Constraint for the dummy teams:

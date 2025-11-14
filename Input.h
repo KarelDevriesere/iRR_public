@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <assert.h>
 #include <limits.h>
+#include <iostream>
 
 using namespace std;
 
@@ -22,6 +23,9 @@ enum class MiaoInstance{S, U13, U15, U17, U21, M, Tiny}; // Instances paper Miao
 
 const std::unordered_map<Move, string>MiaoMoves = {{Move::InterClubSwap, "InterClubSwap"}, {Move::IntraClubSwap, "IntraClubSwap"}, {Move::RandomSwap, "RandomSwap"}, {Move::ComplementInsertion, "ComplementInsertion"}};
 const std::unordered_map<Move, double>MiaoWeights = {{Move::InterClubSwap, 1.0/3.0}, {Move::IntraClubSwap, 1.0/3.0}, {Move::RandomSwap, 1.0/6.0}, {Move::ComplementInsertion, 1.0/6.0}};
+
+const std::unordered_map<Move, string>MiaoMovesTTP = {{Move::RandomSwap, "RandomSwap"}, {Move::ComplementInsertion, "ComplementInsertion"}};
+const std::unordered_map<Move, double>MiaoWeightsTTP = {{Move::RandomSwap, 1.0/2.0}, {Move::ComplementInsertion, 1.0/2.0}};
 
 enum class HA{H, A, BYE};
 
@@ -89,6 +93,9 @@ struct InputData{
 
     bool RunMiaoAlgo = false;
     bool RunMiaoRF = false;
+
+    bool Hockey = false;
+    int PercentageHAPs = 100;
 };
 
 class Input
@@ -131,7 +138,7 @@ class Input
 
         bool HAP_satisfies_all_requirements(const vector<HA>& HAP);
 
-        MiaoInstance InstanceMiao;
+        MiaoInstance InstanceMiao = MiaoInstance::S;
         // pair<TotalNrTeams,NrDummyTeams>
         std::unordered_map<MiaoInstance, std::pair<int,int>>NrTeamsMiaoInstances = {{MiaoInstance::S, {50,0}}, {MiaoInstance::U13, {184,18}}, {MiaoInstance::U15, {216,49}},
             {MiaoInstance::U17, {144,14}}, {MiaoInstance::U21, {64,6}}, {MiaoInstance::M, {608,87}}, {MiaoInstance::Tiny, {16,1}}};
@@ -154,14 +161,7 @@ class Input
         int getNrRounds()const{return NrRounds;}
         int getNrClubs()const{return NrClubs;}
         int getDistanceClubs(const int c1, const int c2)const{return DistanceClubs[c1][c2];}
-        int getDistanceTeams(const int i, const int j)const{
-            if (isTeamDummy(i) || isTeamDummy(j)){
-                return 0;
-            }
-            else{
-                return DistanceClubs[TeamClub[i]][TeamClub[j]];
-            }
-        }
+        int getDistanceTeams(const int i, const int j);
         vector<int> getTeamsClub(const int c)const{return ClubTeams[c];}
         vector<int> getSingleTeamClubs()const{return SingleTeamClubs;};
         vector<int> getMultiTeamClubs()const{return MultiTeamClubs;};
@@ -230,6 +230,9 @@ class Input
         int getNrRoundsBaseAlgo()const{return NrRoundsBaseAlgo;};
 
         string getInstanceName()const{return InstanceName;};
+
+        bool AllHAPsIncluded = true;
+        void DeleteNonPromisingHAPsTTP(const int NrHaps);
 };
 
 #endif

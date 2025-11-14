@@ -19,6 +19,7 @@ class MiaoAlgo: public SA<Move>{
         MiaoAlgo(const std::unordered_map<Move, string>& moves, const std::unordered_map<Move, double>& weights, const int NrRounds, std::mt19937& g);
         ~MiaoAlgo();
 
+        int NrInfeasibleMatchings = 0;
         bool InitialOnly = false;
         bool InitialSolutionGiven = false;
 

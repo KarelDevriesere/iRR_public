@@ -5,6 +5,7 @@
 #include <string>
 #include <cmath>
 #include <numeric> // for iota
+#include <algorithm> // for sorting
 
 #include "rapidxml/rapidxml.hpp"
 #include "rapidxml/rapidxml_utils.hpp"
@@ -33,6 +34,19 @@ void Input::setBaseAlgo(){
         */
 }
 
+int Input::getDistanceTeams(const int i, const int j){
+    if (i > IsTeamDummy.size() || j > IsTeamDummy.size() || i < 0 || j < 0){
+        cout << "i = " << i << ", j = " << j << " in getDistanceTeams()" << endl;
+        std::abort();
+    }
+    if (isTeamDummy(i) || isTeamDummy(j)){
+        return 0;
+    }
+    else{
+        return DistanceClubs[TeamClub[i]][TeamClub[j]];
+    }
+}
+
 void Input::SetDefault(const int NrTeams){
     // All teams same strength, every team has its own club, no dummy teams, all teams in same league
     // In solution: modify everything such that instead of travel cost, we compute the costs
@@ -45,7 +59,7 @@ void Input::SetDefault(const int NrTeams){
     iota(TeamClub.begin(), TeamClub.end(), 0);
 
     NrLeagues = 1;
-    LeagueTeams = vector<vector<int>>(1);
+    LeagueTeams = vector<vector<int>>(1, vector<int>(NrTeams, 0));
     iota(LeagueTeams[0].begin(), LeagueTeams[0].end(), 0);
 
     NrClubs = NrTeams;
@@ -54,6 +68,7 @@ void Input::SetDefault(const int NrTeams){
         ClubTeams.at(i) = {i};
     }
     ClubCapacity = vector<vector<int>>(NrClubs, vector<int>(NrRounds, 1));
+    iota(SingleTeamClubs.begin(), SingleTeamClubs.end(), 0);
     
     Eligible = vector<vector<bool>>(getNrTeams(), vector<bool>(getNrTeams(), true));
     TeamLeagueIndex = vector<int>(NrTeams); // index of the team in its league
@@ -245,25 +260,27 @@ MiaoInstance Input::getMiaoInstance(){
 }
 
 void Input::setAllowedNrCapacityViolations1RR(const InputData& data){
-    string FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
-    FilePath += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
-    std::ifstream file(FilePath);
-    if (!file.is_open()) {
-        std::cerr << "Error opening the file " << FilePath;
-        return;
-    }
-    std::string line;
-    std::getline(file, line);
+    if (data.Miao){
+        string FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
+        FilePath += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
+        std::ifstream file(FilePath);
+        if (!file.is_open()) {
+            std::cerr << "Error opening the file " << FilePath;
+            return;
+        }
+        std::string line;
+        std::getline(file, line);
 
-    // Read only first line
-    std::getline(file, line);
-    std::stringstream ss(line);
-    string i;
-    int s,b,v;
-    char comma;
-    getline(ss, i, ',');
-    if (ss >> s >> comma >> b >> comma >> v) {
-        AllowedNrCapacityViolations = v;
+        // Read only first line
+        std::getline(file, line);
+        std::stringstream ss(line);
+        string i;
+        int s,b,v;
+        char comma;
+        getline(ss, i, ',');
+        if (ss >> s >> comma >> b >> comma >> v) {
+            AllowedNrCapacityViolations = v;
+        }
     }
 }
 
@@ -408,7 +425,7 @@ int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
 
     std::ifstream file(file_path);
     if (!file.is_open()) {
-        std::cerr << "Error opening the file!";
+        std::cout << "Error opening the file!" << endl;
         return 0;
     }
 
@@ -580,10 +597,10 @@ int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
     }
     int DummyCapacity = 0;
     for (l = 0; l < getNrLeagues(); ++l){
-        // cout << "League " << l << " has size " << LeagueTeams[l].size() << endl;
+        cout << "League " << l << " has size " << LeagueTeams[l].size() << endl;
         if ((int)LeagueTeams[l].size() % 2 != 0){
             assert(false); // All instances should have leagues of even size!!!
-            // cout << "add dummy" << endl;
+            cout << "add dummy" << endl;
             Teams.push_back(NrTeams);
             TeamStrength.push_back(l);
             TeamClub.push_back(IndexDummyClub);
@@ -871,6 +888,7 @@ int Input::read_HAPs(){
         ++h;
     }
     int index = 0;
+    cout << "Nr of HAPs listed = " << h << endl;
     for (h = 0; h < HAPs_even.size(); ++h){
         if (InstanceMiao != MiaoInstance::M && !HAP_satisfies_all_requirements(HAPs_even[h])){ // preprocess the haps!
             // Do do not preprocess for the canoncial HAP set
@@ -887,5 +905,48 @@ int Input::read_HAPs(){
     cout << HAPs.size() << " satisfactory haps" << endl;
 
     return 1;
+
+}
+
+void Input::DeleteNonPromisingHAPsTTP(const int NrHaps){
+    // first, sort the HAPs based on nr of breaks
+    vector<pair<int, int>>HapIndexNrBreaks;
+    int h,r,NrBreaks;
+    for (h = 0; h < HAPs.size(); ++h){
+        NrBreaks = 0;
+        for (r = 1; r < NrRounds; ++r){
+            if (HAPs[h][r-1] == HAPs[h][r]){
+                ++NrBreaks;
+            }
+        }
+        HapIndexNrBreaks.emplace_back(h, NrBreaks);
+    }
+
+    std::sort(HapIndexNrBreaks.begin(), HapIndexNrBreaks.end(),
+              [](const auto &a, const auto &b) {
+                  return a.second > b.second;  // descending by value
+              });
+
+    vector<vector<HA>>NewHAPs;
+    NewHAPs.reserve(NrHaps);
+    int i = 0;
+    vector<bool>HAPSeen(HAPs.size(), false);
+    for (const auto &[h, b] : HapIndexNrBreaks){
+        if (HAPSeen.at(h)){
+            continue;
+        }
+        NewHAPs.push_back(HAPs[h]);
+        NewHAPs.push_back(HAPs[getComplementIndexHAP(h)]);
+        HAPSeen.at(getComplementIndexHAP(h)) = true;
+        // std::cout << "HAP " << h << " has " << b << " breaks" << "\n";
+        i += 2;
+        if (i >= NrHaps){
+            break;
+        }
+    }
+    HAPs = std::move(NewHAPs);
+    cout << "Nr of HAPs that will be used = " << HAPs.size() << endl;
+
+    AllHAPsIncluded = false;
 
 }

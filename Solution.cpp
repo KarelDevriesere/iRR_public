@@ -470,7 +470,7 @@ int Solution::ComputeHACostTeam(const int i){
 
 int Solution::ComputeTotalHACost(){
     int cost = ComputeCostCapacities();
-    // cout << "Cost capacities = " << cost << endl;
+    cout << "Cost capacities = " << cost << endl;
     for (int i = 0; i < getNrTeams(); ++i){
         cost += ComputeHACostTeam(i);
     }
@@ -532,6 +532,9 @@ int Solution::ComputeTravelCostTeamTTP(const int t){
     int CostOfTrips = 0;
     for (r = 1; r < NrColouredRounds; ++r){
         i = TeamColorOpp[t][r-1], j = TeamColorOpp[t][r];
+        if (i == -1 || j == -1){
+            continue;
+        }
         if (Orientation[t][r-1] == HA::H && Orientation[t][r] == HA::A){
             CostOfTrips += getDistanceTeams(t,j);
             // cout << t << " -> " << j << ": " << getDistanceTeams(t,j) << endl;
@@ -545,11 +548,11 @@ int Solution::ComputeTravelCostTeamTTP(const int t){
             // cout << i << " -> " << j << ": " << getDistanceTeams(i,j) << endl;
         }
     }
-    if (Orientation[t][0] == HA::A){
+    if (Orientation[t][0] == HA::A && TeamColorOpp[t][0] != -1){
         CostOfTrips += getDistanceTeams(t,TeamColorOpp[t][0]); // if it plays A in first round, it must also travel to that team (not accounted for in sum above)
         // cout << t << " -> " << TeamColorOpp[t][0] << ": " << getDistanceTeams(t,TeamColorOpp[t][0]) << endl;
     }
-    if (Orientation[t][NrColouredRounds-1] == HA::A){
+    if (Orientation[t][NrColouredRounds-1] == HA::A && TeamColorOpp[t][NrColouredRounds-1] != -1){
         CostOfTrips += getDistanceTeams(t,TeamColorOpp[t][NrColouredRounds-1]); // similar for last round
         // cout << TeamColorOpp[t][NrColouredRounds-1] << " -> " << t << ": " << getDistanceTeams(t,TeamColorOpp[t][NrColouredRounds-1]) << endl;
     }

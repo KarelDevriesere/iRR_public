@@ -1258,7 +1258,6 @@ int ComputeEdgeWeightM(const int i, const int j, const int c, const bool MinCost
         }
     }
     else if (sol.getSetting() == Setting::TTP){
-        // cout << "setting = TTP" << endl;
         int Opp_i = sol.TeamColorOpp[i][c];
         int Opp_j = sol.TeamColorOpp[j][c];
         sol.TeamColorOpp[i][c] = j;
@@ -1389,20 +1388,18 @@ pair<vector<pair<int,int>>,vector<int>> MoveMWPM(Solution& sol, const int r, con
     assert(mate1.size() == num_vertices(g));
     boost::maximum_weighted_matching(g, &mate1[0]);
 
-    vector<pair<int,int>>Matching(sol.getNrTeams()/2);
+    vector<pair<int,int>>Matching;
     vector<int>OpponentMatching(sol.getNrTeams(), -1); // i.e. OpponentMatching[i] = j, then the opponent of i in the matching is j
 
-    int m = 0;
     for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi){
         if (mate1[*vi] != boost::graph_traits< BGraph >::null_vertex() && *vi < mate1[*vi]){
             // std::cout << "{" << *vi << ", " << mate1[*vi] << "}" << std::endl;
             i = *vi, j = mate1[*vi];
             OpponentMatching[i] = j;
             OpponentMatching[j] = i;
-            Matching[m++] = {i,j};
+            Matching.push_back({i,j});
         }
     }
-    assert(Matching.size() == N/2); // check whether matching is perfect
     
     return {Matching, OpponentMatching}; // for Miao's algo: Matching, for my algo: OpponentMatching (bc I do no want full matching but alternating cycles instead)
 }
@@ -1416,6 +1413,11 @@ vector<vector<pair<int,int>>>iPRS(Solution& sol, const int r, const bool biparti
     */
 
     pair<vector<pair<int,int>>,vector<int>>OpponentMatching_Matching = MoveMWPM(sol, r, bipartite, includeHAPs, CM, gen, MinCostM);
+
+    if (OpponentMatching_Matching.first.size() != sol.getNrTeams()/2){
+        cout << "Matching has size " << OpponentMatching_Matching.first.size() << " in iPRS" << endl;
+        std::abort();
+    }
 
     vector<vector<pair<int,int>>>AlternatingCycles = CreateAlternatingCycles(sol, OpponentMatching_Matching.second, r, bipartite, gen); // first edge in alternating cycle: new match (so initially uncolored)
 

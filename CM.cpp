@@ -12,6 +12,45 @@ string PathInitialSolutionMiao(InputData data){
     return path;
 }
 
+unordered_map<string, int>BestSeedsMiaoAlgo = { // see Plotter
+    {"i01_s0_b3",0},
+    {"i01_s0_b100",2},
+    {"i01_s1_b3",2},
+    {"i01_s1_b100",2},
+    {"i01_s2_b3",4},
+    {"i01_s2_b100",3},
+    {"i02_s0_b3",4},
+    {"i02_s0_b100",4},
+    {"i02_s1_b3",2},
+    {"i02_s1_b100",0},
+    {"i02_s2_b3",4},
+    {"i02_s2_b100",3},
+    {"i03_s0_b3",-1},
+    {"i03_s0_b100",4},
+    {"i03_s1_b3",3},
+    {"i03_s1_b100",3},
+    {"i03_s2_b3",0},
+    {"i03_s2_b100",2},
+    {"i04_s0_b3",2},
+    {"i04_s0_b100",2},
+    {"i04_s1_b3",4},
+    {"i04_s1_b100",0},
+    {"i04_s2_b3",2},
+    {"i04_s2_b100",1},
+    {"i05_s0_b3",3},
+    {"i05_s0_b100",1},
+    {"i05_s1_b3",0},
+    {"i05_s1_b100",3},
+    {"i05_s2_b3",4},
+    {"i05_s2_b100",3},
+    {"i06_s0_b3",3},
+    {"i06_s0_b100",3},
+    {"i06_s1_b3",0},
+    {"i06_s1_b100",4},
+    {"i06_s2_b3",3},
+    {"i06_s2_b100",3}
+};
+
 const unordered_map<string,int>InstanceHL = {
     {"I_BRA24_6",100000},
     {"I_BRA24_12",10000},
@@ -123,6 +162,9 @@ std::string FolderPath(const InputData& data) {
     else if (data.CM){
         folder_path = "Instances" + std::string(PATHSEP) + "CostMinimization" + std::string(PATHSEP) + "Karel" + std::string(PATHSEP) + "0_100" + std::string(PATHSEP);
     }
+    else if (data.Hockey){
+        folder_path = "Instances" + std::string(PATHSEP) + "Hockey"  + std::string(PATHSEP);
+    }
     else {
         folder_path = "Instances" + std::string(PATHSEP) + "Miao"  + std::string(PATHSEP);
         if (data.ConstantCapacity){
@@ -206,6 +248,26 @@ void SaveSolution(std::ofstream& output_file, Solution& sol){
     }
 }
 
+void SolveLeagueByLeague(Input& in){
+	const bool HA = true;
+	const bool relax_x = false;
+	const bool min_travel = false;
+	const bool min_cap = true;
+    Solution sol(in);
+	for (int l = 0; l < sol.getNrLeagues(); ++l){
+        GurSolver gursol(in);
+		gursol.build_base_league(HA, relax_x, l);
+        gursol.build_capacity_constraint_league(sol,l);
+        gursol.AddObj(min_travel, min_cap);
+        gursol.solve();
+        gursol.SaveSolutionLeague(sol, l);
+	}
+    sol.validate();
+    sol.CostCapacityViol = 1;
+    cout << "Total cost = " << sol.ComputeTotalHACost() << endl;
+    cin.get();
+}
+
 int RF_Miao(Input& in, const int TimeLimitRF){
 
 	// This is not part of GurSolver since we cannot change the variable type once this is defined in Gurobi
@@ -217,11 +279,10 @@ int RF_Miao(Input& in, const int TimeLimitRF){
 
 	// relax x_ijr variables:
 	bool relax_x = true;
-	gur_relax.BuildMiaoFormulation(relax_x);
 
 	const bool min_travel = true;
 	const bool min_capacity_violations = false;
-	gur_relax.AddObj(min_travel, min_capacity_violations);
+    gur_relax.BuildMiaoFormulation(relax_x, min_travel, min_capacity_violations);
     gur_relax.setTimeLimit(TimeLimitRF);
     gur_relax.TrackTimeBestSolution = true;
 
@@ -240,9 +301,8 @@ int RF_Miao(Input& in, const int TimeLimitRF){
 
     GurSolver gur_fix(in);
     relax_x = false;
-    gur_fix.BuildMiaoFormulation(relax_x);
     gur_fix.Fix_y_Patterns(sol);
-    gur_fix.AddObj(min_travel, min_capacity_violations); // turn back
+    gur_fix.BuildMiaoFormulation(relax_x, min_travel, min_capacity_violations);
     gur_fix.setTimeLimit(TimeLimitRF);
     gur_fix.TrackTimeBestSolution = true;
 
@@ -257,23 +317,50 @@ int RF_Miao(Input& in, const int TimeLimitRF){
 void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data){
     // Find initial solution with Vizing
     Solution sol(in);
-    string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
-    path += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
-    if (!(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
-        ReadSolution(path, sol);
-    }
     std::mt19937 gen(data.seed);
-    MiaoAlgo miao_algo(MiaoMoves, MiaoWeights, in.getNrRounds(), gen);
+
+    std::unordered_map<Move, string>moves;
+    std::unordered_map<Move, double>weights;
+    if (in.getSetting() == Setting::Miao){
+        moves = MiaoMoves;
+        weights = MiaoWeights;
+    }
+    else{
+        moves = MiaoMovesTTP;
+        weights = MiaoWeightsTTP; 
+    }
+
+    MiaoAlgo miao_algo(moves, weights, in.getNrRounds(), gen);
+
+    if (in.getSetting() == Setting::Miao){
+        string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
+        path += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
+        if (!(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
+            ReadSolution(path, sol);
+        }
+    }
+    else{
+        VizingConstruction(sol, data.seed);
+    }
     miao_algo.InitialSolutionGiven = true;
     miao_algo.setTimeLimit_meta(data.TimeLimit);
     miao_algo.SetTimeStamps(TimeStamps);
     miao_algo.solve(in, sol);
     sol.validate();
 
-    const string FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
-    const string config = to_string(data.seed) + ",MiaoAlgo," + data.Instance + "," + to_string(data.CapacitySetting) + "," + to_string(data.MaxNrBreaks);
+    string FilePath;
+    string config;
 
-    cout << "Save file as " << FilePath << endl;
+    if (in.getSetting() == Setting::Miao){
+        FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + "_seed" + to_string(data.seed) + ".txt";
+        
+        config = to_string(data.seed) + ",MiaoAlgo," + data.Instance + "," + to_string(data.CapacitySetting) + "," + to_string(data.MaxNrBreaks);
+    }
+    else{
+        FilePath = "Instances" + string(PATHSEP) + "TTP" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + sol.getInstanceName() + "_PercHAPs" + to_string(data.PercentageHAPs) + "_s" + to_string(data.seed) + ".txt";
+        
+        config = to_string(data.seed) + ",MiaoAlgo," + sol.getInstanceName() + "," + to_string(data.HistoryLength) + "," + to_string(data.PercentageHAPs);
+    }
     std::ofstream output_file(FilePath);
     output_file << config << "\n";
     miao_algo.SaveSolutionsTimeStamps(output_file);
@@ -288,14 +375,28 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     Solution sol(in);
     sol.SetOneCostAllViolations(data.ConstrViolationCost);
 
-    cout << "Solve Vizing" << endl;
-    VizingConstruction(sol, data.seed);
-    cout << "Found initial solution" << endl;
+    if (in.getSetting() != Setting::Miao){
+        cout << "Solve Vizing" << endl;
+        VizingConstruction(sol, data.seed);
+        cout << "Found initial solution" << endl;
+    }
+    else{
+        // string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
+        // path += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
+        string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + string(PATHSEP);
+        string instance_full = data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks);
+        path += instance_full + "_seed" + to_string(BestSeedsMiaoAlgo.at(instance_full)) + ".txt";
+        if (!(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
+            ReadSolution(path, sol);
+        }
+        else{
+            VizingConstruction(sol, data.seed); 
+        }
+    }
 
     assert(sol.validate());
     int obj = sol.ComputeTotalCost();
     cout << "Cost initial solution = " << obj << endl;
-    cin.get();
 
     std::mt19937 gen(data.seed);
     int HL = data.HistoryLength;
@@ -352,23 +453,30 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     }
 
     string FilePath; 
-    if (data.OutputFolder.empty()){
-        FilePath = FolderPath + "Results" + std::string(PATHSEP) + "Heuristic";
+    string config;
+    if (in.getSetting() == Setting::TTP){
+        if (data.OutputFolder.empty()){
+            FilePath = FolderPath + "Results" + std::string(PATHSEP) + "Heuristic";
+        }
+        else{
+            FilePath = data.OutputFolder;
+        }
+        FilePath += std::string(PATHSEP) + sol.getInstanceName();
+        FilePath += "_s" + to_string(data.seed) + "_HL" + to_string(data.HistoryLength) + ".txt";
+        config = to_string(data.seed);
+        if (data.Base){
+            config += ",BaseAlgo,";
+        }
+        else{
+            config += ",Heuristic,";
+        }
+        config += to_string(data.MaxIt) + "," + to_string(data.TimeLimit) + "," + to_string(data.HistoryLength) + "," + to_string(data.ConstrViolationCost) + "," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
     }
-    else{
-        FilePath = data.OutputFolder;
+    else if (in.getSetting() == Setting::Miao){
+        cout << "Started from Miao solution!!!" << endl;
+        FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "HeuristicStartingFromMiao" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + "_seed" + to_string(data.seed) + "_HL" + to_string(data.HistoryLength) + ".txt";
+        config = to_string(data.seed) + ",HeuristicStartingFromMiao," + data.Instance + "," + to_string(data.CapacitySetting) + "," + to_string(data.MaxNrBreaks) + "," + to_string(data.HistoryLength);
     }
-    FilePath += std::string(PATHSEP) + sol.getInstanceName();
-    FilePath += "_s" + to_string(data.seed) + "_HL" + to_string(data.HistoryLength) + ".txt";
-
-    string config = to_string(data.seed);
-    if (data.Base){
-        config += ",BaseAlgo,";
-    }
-    else{
-        config += ",Heuristic,";
-    }
-    config += to_string(data.MaxIt) + "," + to_string(data.TimeLimit) + "," + to_string(data.HistoryLength) + "," + to_string(data.ConstrViolationCost) + "," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
 
     cout << "Save file as " << FilePath << endl;
     std::ofstream output_file(FilePath);
@@ -394,7 +502,7 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     Solution sol(in);
     bool HA = true;
     bool relax_x = false;
-    const bool min_travel = true, min_cap = false;
+    const bool min_travel = false, min_cap = true;
     if (in.getSetting() == Setting::CM){
         gur.build_base(HA, relax_x);
         gur.AddObjGeneralCosts();
@@ -406,16 +514,27 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     }
     else{
         // IP without patterns:
-        string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
-        path += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
-        if (!(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
-            ReadSolution(path, sol);
+        if (min_travel){
+            string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
+            path += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
+            if (!(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
+                ReadSolution(path, sol);
+            }
         }
         const bool relax_x = false;
-        gur.build_all(HA, relax_x);
-        gur.setBoundCapacityViolations();
-        gur.AddObj(min_travel, min_cap);
-        if (!(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
+        if (min_travel || (min_cap && in.getSetting() == Setting::Miao)){
+            gur.build_all(HA, relax_x);
+        }
+        else{
+            SolveLeagueByLeague(in);
+        }
+        if (min_travel){
+            gur.setBoundCapacityViolations();
+        }
+        if (min_travel || (min_cap && in.getSetting() == Setting::Miao)){
+            gur.AddObj(min_travel, min_cap);
+        }
+        if (min_travel && !(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
             gur.WarmStart(sol);
         }
         // gur.Fix_x(sol);
@@ -425,9 +544,16 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     gur.solve();
     gur.SaveSolution(sol);
     // Save solution in file:
-    if (in.getSetting() == Setting::Miao && min_cap){
-        string FilePathVcr = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
-        FilePathVcr += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
+    if (in.getSetting() == Setting::Miao || in.getSetting() == Setting::Hockey && min_cap){
+        string FilePathVcr = "Instances" + string(PATHSEP);
+        if (in.getSetting() == Setting::Miao){
+            FilePathVcr += "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
+            FilePathVcr += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
+        }
+        else{
+            FilePathVcr += "Hockey" + string(PATHSEP) + "Vcr" + string(PATHSEP);
+            FilePathVcr += data.Instance + ".txt";
+        }
         std::ofstream output_file_Vcr(FilePathVcr);
         output_file_Vcr << "Instance,CapacitySetting,MaxNrBreaks,Vcr\n";
         output_file_Vcr << data.Instance << "," << data.CapacitySetting << "," << data.MaxNrBreaks << "," << gur.getBestObjValue() << "\n";
@@ -489,15 +615,15 @@ void TestCostMinimization(InputData& data){
 
     Input in;
     if (data.CM && !in.read_CostMinimization(file_path, InstanceSetCM::Karel)){
-        cout << "Could not read " << file_path << endl;
+        cout << "Could not read CM path " << file_path << endl;
         return;
     }
     else if (data.TTP && !in.read_TTP(file_path)){
-        cout << "could not read " << file_path << endl;
+        cout << "could not read TTP path " << file_path << endl;
         return;
     }
-    else if (data.Miao && !in.read_Miao_Hockey(file_path, data.Miao)){
-        cout << "could not read " << file_path << endl;
+    else if ((data.Miao || data.Hockey) && !in.read_Miao_Hockey(file_path, data.Miao)){
+        cout << "could not read Miao or Hockey path " << file_path << endl;
         return;
     }
     if (data.Base){
@@ -508,9 +634,12 @@ void TestCostMinimization(InputData& data){
             in.setBaseAlgo();
         }
     }
-    if (!data.Miao){
+    in.SRR = true;
+    if (!data.Miao && !data.Hockey){
         in.setHAP_requirements(false, false, false, false, in.getNrRounds());
-        in.SRR = true;
+    }
+    else if(data.Hockey){
+        in.setHAP_requirements(true, false, false, false, in.getNrRounds());
     }
     else{
         bool SetMaxNrBreaks = true;
@@ -518,7 +647,6 @@ void TestCostMinimization(InputData& data){
             SetMaxNrBreaks = false;
         }
         in.setHAP_requirements(true, false, false, SetMaxNrBreaks, data.MaxNrBreaks);
-        in.SRR = true;
         if (!data.ConstantCapacity){
             in.setMiaoHAPSetting(data.CapacitySetting);
         }
@@ -527,6 +655,14 @@ void TestCostMinimization(InputData& data){
 
     if (data.TTP && !data.HistoryLengthProvided){
         data.HistoryLength = InstanceHL.at(in.getInstanceName()); 
+    }
+
+    if (data.TTP && data.RunMiaoAlgo){
+        in.read_HAPs();
+        if (data.PercentageHAPs < 100){
+            double NrPromisingHAPs = in.getNrHAPs()*((double)data.PercentageHAPs/100.0);
+            in.DeleteNonPromisingHAPsTTP((int)NrPromisingHAPs);
+        }
     }
     
     if (data.Heuristic && !data.RunMiaoAlgo && !data.RunMiaoRF){
