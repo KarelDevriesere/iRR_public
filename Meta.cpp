@@ -201,7 +201,7 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
             }
 
             this->UpdateTimeStamps();
-
+	
             if (this->getTimeDiff() > this->TIME_LIMIT || (++this->it > MAX_IT && this->it_idle > this->it*0.02) || (this->LowerBound >= 0 && obj <= this->LowerBoundGap*this->LowerBound)){
                 this->STOP = true;
                 if (this->getTimeDiff() > this->TIME_LIMIT){
@@ -211,7 +211,7 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
                     cout << "Lower bounds = " << this->LowerBound << ", current objective = " << obj << endl;
                 }
                 else{
-                    cout << "max it_idle hit" << endl;
+                    cout << "max it_idle hit: " << this->it_idle << endl;
                 }
             }
             // cin.get();

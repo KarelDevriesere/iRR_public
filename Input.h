@@ -72,7 +72,7 @@ struct InputData{
     int k = 5; // CM
     int inst = 0; // CM
     int TimeLimit = 7200;
-    int MaxIt = 1000000;
+    int MaxIt = 10000000;
     bool CM = true; // CM
     bool TTP = false; // TTP
     bool Base = false;
