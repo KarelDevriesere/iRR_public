@@ -424,7 +424,7 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
         }
     }
     else if (in.getSetting() == Setting::Hockey){
-        string path = "Instances" + string(PATHSEP) + "Hockey" + string(PATHSEP) + "Results" + string(PATHSEP) + "Vcr" + string(PATHSEP) + data.Instance + ".txt";
+        string path = "Instances" + string(PATHSEP) + "Hockey" + string(PATHSEP) + "Vcr" + string(PATHSEP) + data.Instance + ".txt";
         ReadSolution(path, sol);
     }
     else{
