@@ -617,20 +617,6 @@ void GurSolver::FixHAP(Solution& sol){
 	}
 }
 
-void build_single_league_withoutHA(){
-	// In this case, we just need to select r perfect matchings such that their total sum is optimal!!
-	// Can be done greedily if we know fur sure we cannot get stuck!!
-	// The insight is that, if we only have travel distance, the order of the rounds does matter, so all
-	// we need to do is to find a number of (edge-disjoint) perfect matchings
-	// UPDATE 14/03/2025: tried this idee with matching formulation of Jasper's code, DOES NOT SEEM TO WORK
-	// Scip is way too slow compared to Gurobi, i.e. Gurobi finds optimal solution within a second for i01 and i05 and within 9 seconds for i06
-
-	// Question: can we make abstraction of the round? E.g. just select k Matchings?
-
-	// New idee: Dantzig Wolfe for multi-competition problem
-	// 
-}
-
 
 void GurSolver::build_base_league(const bool HA, const bool relax_x, const int l){ // l = league
 
@@ -1033,11 +1019,12 @@ void GurSolver::build_capacity_constraint_league(Solution& sol, const int l){
 
 			GRBLinExpr sum_tj = 0;
 			for (int i = 0; i < getNrTeamsLeague(l); ++i){
-				if (getTeamClub(i) != c){
+				int i_ = getGlobalIndexTeam(l,i);
+				if (getTeamClub(i_) != c){
 					continue;
 				}
 				for (int j = 0; j < getNrTeamsLeague(l); ++j){
-					int i_ = getGlobalIndexTeam(l,i), j_ = getGlobalIndexTeam(l,j);
+					int j_ = getGlobalIndexTeam(l,j);
 					sum_tj += x[i][j][r];
 				}
 			}
