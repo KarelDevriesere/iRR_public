@@ -320,20 +320,17 @@ int main(int argc, const char* argv[]){
         // First, check if BM or M or PTS is chosen
         if (iPTS_chosen && !data.Base){
             if (MinCostSpecified && !data.MinCost){
-                data.InputWeights[Move::PTS_Random_PR] = iPTS_weight;
-                data.InputWeights.erase(Move::PTS_MinCost_PR);
-                data.InputWeights.erase(Move::PTS);
+                data.InputWeights[Move::iPTS_Random_PR] = iPTS_weight;
+                data.InputWeights.erase(Move::iPTS_MinCost_PR);
             }
             else if (MinCostSpecified && data.MinCost){
-                data.InputWeights[Move::PTS_MinCost_PR] = iPTS_weight;
-                data.InputWeights.erase(Move::PTS_Random_PR);
-                data.InputWeights.erase(Move::PTS);
+                data.InputWeights[Move::iPTS_MinCost_PR] = iPTS_weight;
+                data.InputWeights.erase(Move::iPTS_Random_PR);
             }
             else {
-                cout << "distribute weight PTS over " << data.Moves.at(Move::PTS_MinCost_PR) << " and " << data.Moves.at(Move::PTS_Random_PR) << endl;
-                data.InputWeights[Move::PTS_Random_PR] = iPTS_weight/2.0;
-                data.InputWeights[Move::PTS_MinCost_PR] = iPTS_weight/2.0;
-                data.InputWeights.erase(Move::PTS);
+                cout << "distribute weight iPTS over " << data.Moves.at(Move::iPTS_MinCost_PR) << " and " << data.Moves.at(Move::iPTS_Random_PR) << endl;
+                data.InputWeights[Move::iPTS_Random_PR] = iPTS_weight/2.0;
+                data.InputWeights[Move::iPTS_MinCost_PR] = iPTS_weight/2.0;
             }
         }
         if (BM_chosen && !data.Base){

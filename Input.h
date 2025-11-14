@@ -12,7 +12,7 @@ using namespace std;
 
 enum class Move{TS,PTS,RS,PRS,C,NC,
     MinCost_BM, Random_BM,
-    PTS_MinCost_PR, PTS_Random_PR,
+    iPTS_MinCost_PR, iPTS_Random_PR,
     MinCost_M_MinCost_PR, MinCost_M_Random_PR, Random_M_MinCost_PR, Random_M_Random_PR,
     InterClubSwap, IntraClubSwap, RandomSwap, ComplementInsertion}; // Miao's HAP operators
 
@@ -36,12 +36,12 @@ struct InputData{
     {Move::PTS, true}, 
     {Move::RS, true}, 
     {Move::PRS, true}, 
-    {Move::C, true}, 
+    {Move::C, false}, 
     /*{Move::NC, false},*/
     {Move::MinCost_BM, false}, 
     {Move::Random_BM, false}, 
-    {Move::PTS_MinCost_PR, false}, 
-    {Move::PTS_Random_PR, false}, 
+    {Move::iPTS_MinCost_PR, false}, 
+    {Move::iPTS_Random_PR, false}, 
     {Move::MinCost_M_MinCost_PR, false}, 
     {Move::MinCost_M_Random_PR, false},
     {Move::Random_M_MinCost_PR, false}, 
@@ -55,8 +55,8 @@ struct InputData{
     /*{Move::NC, "NC"},*/
     {Move::MinCost_BM, "MinCost_BM"}, 
     {Move::Random_BM, "Random_BM"}, 
-    {Move::PTS_MinCost_PR, "PTS_MinCost_PR"}, 
-    {Move::PTS_Random_PR, "PTS_Random_PR"}, 
+    {Move::iPTS_MinCost_PR, "iPTS_MinCost_PR"}, 
+    {Move::iPTS_Random_PR, "iPTS_Random_PR"}, 
     {Move::MinCost_M_MinCost_PR, "MinCost_M_MinCost_PR"}, 
     {Move::MinCost_M_Random_PR, "MinCost_M_Random_PR"},
     {Move::Random_M_MinCost_PR, "Random_M_MinCost_PR"}, 

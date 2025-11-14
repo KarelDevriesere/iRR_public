@@ -109,7 +109,7 @@ void Heuristic_CM::SelectPTS(Solution& sol){
     // cout << "lantarn created" << endl;
     // PrintLantarn(sol, lantarn);
 
-    if (sol.IsBaseAlgo() && lantarn.InfeasibleColor){
+    if (CurrentMove == Move::PTS && lantarn.InfeasibleColor){
         return; // In base algo: PTS only if feasible colours!!
     }
 
@@ -351,11 +351,11 @@ void Heuristic_CM::DoMove(Solution& sol){
         MinCostPR = false;
         SelectPTS(sol);
     }
-    else if (CurrentMove == Move::PTS_MinCost_PR){
+    else if (CurrentMove == Move::iPTS_MinCost_PR){
         MinCostPR = true;
         SelectPTS(sol);
     }
-    else if (CurrentMove == Move::PTS_Random_PR){
+    else if (CurrentMove == Move::iPTS_Random_PR){
         MinCostPR = false;
         SelectPTS(sol);
     }

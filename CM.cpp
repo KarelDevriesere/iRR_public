@@ -261,11 +261,16 @@ void SolveLeagueByLeague(Input& in, const InputData& data){
     }
 
     // Sorting leagues does not seem to be better!!!
+    /*
     std::sort(LeagueSize.begin(), LeagueSize.end(),
               [](const auto &a, const auto &b) {
                   return a.second > b.second;  // descending by value
               });
+    */
 
+    // TODO: Vcr of hockey i03 and i06!!!
+    // Next: test algo
+    // Analyze results Miao TTP (effect os eeletcing only subset of patterns)
 	for (auto& [l, league_size]: LeagueSize){
         GurSolver gursol(in);
 		gursol.build_base_league(HA, relax_x, l);
@@ -361,6 +366,10 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
             ReadSolution(path, sol);
         }
     }
+    else if (in.getSetting() == Setting::Hockey){
+        string path = "Instances" + string(PATHSEP) + "Hockey" + string(PATHSEP) + "Vcr" + string(PATHSEP) + data.Instance + ".txt";
+        ReadSolution(path, sol);
+    }
     else{
         VizingConstruction(sol, data.seed);
     }
@@ -377,6 +386,10 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
         FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + "_seed" + to_string(data.seed) + ".txt";
         
         config = to_string(data.seed) + ",MiaoAlgo," + data.Instance + "," + to_string(data.CapacitySetting) + "," + to_string(data.MaxNrBreaks);
+    }
+    else if (in.getSetting() == Setting::Hockey){
+        FilePath = "Instances" + string(PATHSEP) + "Hockey" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + data.Instance + ".txt";
+        config = to_string(data.seed) + ",MiaoAlgo," + data.Instance;
     }
     else{
         FilePath = "Instances" + string(PATHSEP) + "TTP" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + sol.getInstanceName() + "_PercHAPs" + to_string(data.PercentageHAPs) + "_s" + to_string(data.seed) + ".txt";
@@ -397,12 +410,7 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     Solution sol(in);
     sol.SetOneCostAllViolations(data.ConstrViolationCost);
 
-    if (in.getSetting() != Setting::Miao){
-        cout << "Solve Vizing" << endl;
-        VizingConstruction(sol, data.seed);
-        cout << "Found initial solution" << endl;
-    }
-    else{
+    if (in.getSetting() == Setting::Miao){
         // string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
         // path += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
         string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + string(PATHSEP);
@@ -414,6 +422,15 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
         else{
             VizingConstruction(sol, data.seed); 
         }
+    }
+    else if (in.getSetting() == Setting::Hockey){
+        string path = "Instances" + string(PATHSEP) + "Hockey" + string(PATHSEP) + "Results" + string(PATHSEP) + "Vcr" + string(PATHSEP) + data.Instance + ".txt";
+        ReadSolution(path, sol);
+    }
+    else{
+        cout << "Solve Vizing" << endl;
+        VizingConstruction(sol, data.seed);
+        cout << "Found initial solution" << endl;
     }
 
     assert(sol.validate());
@@ -663,6 +680,7 @@ void TestCostMinimization(InputData& data){
     }
     else if(data.Hockey){
         in.setHAP_requirements(true, false, false, false, in.getNrRounds());
+        in.setAllowedNrCapacityViolations1RR(data);
     }
     else{
         bool SetMaxNrBreaks = true;

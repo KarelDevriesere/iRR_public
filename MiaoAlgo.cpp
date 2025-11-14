@@ -153,65 +153,65 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
     const bool bipartite = true;
     int h, a;
     sol.NrColouredRounds = 0; // for computing travel cost teams in TTP
-    for (int l = 0; l < sol.getNrLeagues(); ++l){
-        int s = 0, count = 0;
-        while (s < sol.getNrRounds()){
 
-            const int r = Rounds[s];
-            sol.NrColouredRounds++;
-            // cout << "Optimize round " << r << ", try: " << count << endl;
+    int s = 0, count = 0;
+    while (s < sol.getNrRounds()){
 
-            // cout << "find matching" << endl;
-            const bool CM = false;
-            const bool keepHAP = true;
-            const bool MinCostM = true;
-            assert(l == 0);
-            pair<vector<pair<int,int>>, vector<int>>Matching_OpponentMatching = MoveMWPM(sol, r, bipartite, keepHAP, CM, gen, MinCostM); // in the file operators
-            vector<pair<int,int>>matching = Matching_OpponentMatching.first;
-            if ((int)matching.size() < N/2){
-                // shuffling rounds does not seem a good idea, instead go back to the old HAP assignement and do a new HAP move
-                if (++NrInfeasibleMatchings > 100){
-                    cout << "NrInfeasibleMatchings = " << NrInfeasibleMatchings << endl;
-                    STOP = true;
-                }
+        const int r = Rounds[s];
+        sol.NrColouredRounds++;
+        cout << "Optimize round " << r << endl;
+
+        // cout << "find matching" << endl;
+        const bool CM = false;
+        const bool keepHAP = true;
+        const bool MinCostM = true;
+        pair<vector<pair<int,int>>, vector<int>>Matching_OpponentMatching = MoveMWPM(sol, r, bipartite, keepHAP, CM, gen, MinCostM); // in the file operators
+        vector<pair<int,int>>matching = Matching_OpponentMatching.first;
+        if ((int)matching.size() < N/2){
+            // shuffling rounds does not seem a good idea, instead go back to the old HAP assignement and do a new HAP move
+            if (++NrInfeasibleMatchings > 100){
+                cout << "NrInfeasibleMatchings = " << NrInfeasibleMatchings << endl;
+                STOP = true;
+            }
+            cout << "matching failed" << endl;
+            return false;
+            // The problem with reshuffling rounds is that in ComputeEdgeWeight of TTP, we assume the rounds go from 0 to R-1 to compute the cost of trips
+            // Hence, it is more difficult to compute the cost of trips!!!
+            // So instead of doing this, just leave and try with a new HAP
+            /*
+            cout << "matching failed, shuffle rounds" << endl;
+            shuffle(Rounds.begin(), Rounds.end(), default_random_engine(42));
+            Reset(sol);
+            s = 0;
+            sol.NrColouredRounds = 0;
+            if (count++ <= 100){
                 return false;
-                // The problem with reshuffling rounds is that in ComputeEdgeWeight of TTP, we assume the rounds go from 0 to R-1 to compute the cost of trips
-                // Hence, it is more difficult to compute the cost of trips!!!
-                // So instead of doing this, just leave and try with a new HAP
-                /*
-                cout << "matching failed, shuffle rounds" << endl;
-                shuffle(Rounds.begin(), Rounds.end(), default_random_engine(42));
-                Reset(sol);
-                s = 0;
-                sol.NrColouredRounds = 0;
-                if (count++ <= 100){
-                    return false;
-                }
-                    */
             }
-            else{
-                // cout << "Matching in round " << r << ":" << endl;
-                for (auto& [i, j]: matching){
-                    if (sol.Orientation[i][r] == HA::H){
-                        assert(sol.Orientation[j][r] == HA::A);
-                        h = i, a = j;
-                    }
-                    else{
-                        assert(sol.Orientation[i][r] == HA::A);
-                        assert(sol.Orientation[j][r] == HA::H);
-                        a = i, h = j;
-                    }
-                    // cout << h << ", " << a << endl;
-                    SetValueCircleMethod(h, a, r, sol);
+                */
+        }
+        else{
+            // cout << "Matching in round " << r << ":" << endl;
+            for (auto& [i, j]: matching){
+                if (sol.Orientation[i][r] == HA::H){
+                    assert(sol.Orientation[j][r] == HA::A);
+                    h = i, a = j;
                 }
-                ++s;
+                else{
+                    assert(sol.Orientation[i][r] == HA::A);
+                    assert(sol.Orientation[j][r] == HA::H);
+                    a = i, h = j;
+                }
+                // cout << h << ", " << a << endl;
+                SetValueCircleMethod(h, a, r, sol);
             }
+            ++s;
         }
     }
+
     assert(sol.validate());
     // cout << "Total travel cost = " << sol.ComputeTravelCost() << endl;
     // cout << "Total cost = " << sol.ComputeTotalCost() << endl;
-    if (sol.getSetting() == Setting::Miao){
+    if (sol.getSetting() == Setting::Miao || sol.getSetting() == Setting::Hockey){
         assert(sol.ComputeTravelCost() == sol.ComputeTotalCost());
     }
     else{
@@ -274,17 +274,34 @@ bool MiaoAlgo::IntraClubSwap(Solution& sol){
 }
 
 bool MiaoAlgo::RandomSwap(Solution& sol){
-    int c1 = RandomIntegerNumber(0, sol.getNrClubs()-1);
-    assert(sol.getTeamsClub(c1).size() > 0);
-    int i_ = RandomIntegerNumber(0, sol.getTeamsClub(c1).size()-1);
-    int c2 = ((c1+1)+(RandomIntegerNumber(0, sol.getNrClubs()-2)))%sol.getNrClubs();
-    int j_ = RandomIntegerNumber(0, sol.getTeamsClub(c2).size()-1);
-    assert(sol.getTeamsClub(c2).size() > 0);
+    int i,j;
+    if (sol.getNrLeagues() <= 1){
+        int c1 = RandomIntegerNumber(0, sol.getNrClubs()-1);
+        assert(sol.getTeamsClub(c1).size() > 0);
+        int i_ = RandomIntegerNumber(0, sol.getTeamsClub(c1).size()-1);
+        int c2 = ((c1+1)+(RandomIntegerNumber(0, sol.getNrClubs()-2)))%sol.getNrClubs();
+        int j_ = RandomIntegerNumber(0, sol.getTeamsClub(c2).size()-1);
+        assert(sol.getTeamsClub(c2).size() > 0);
 
-    int i = sol.getTeamsClub(c1)[i_];
-    int j = sol.getTeamsClub(c2)[j_];
+        i = sol.getTeamsClub(c1)[i_];
+        j = sol.getTeamsClub(c2)[j_];
+    }
+    else{
+        int l = RandomIntegerNumber(0, sol.getNrLeagues()-1);
+        int i_ = RandomIntegerNumber(0, sol.getNrTeamsLeague(l)-1);
+        int j_ = -1;
+        do{
+            j_ = ((i_+1)+(RandomIntegerNumber(0, sol.getNrTeamsLeague(l)-2)))%sol.getNrTeamsLeague(l);
+        }
+        while (sol.getTeamClub(sol.getGlobalIndexTeam(l,i_)) == sol.getTeamClub(sol.getGlobalIndexTeam(l,j_)));
+
+        i = sol.getGlobalIndexTeam(l,i_);
+        j = sol.getGlobalIndexTeam(l,j_);
+    }
+
     team1 = i;
     team2 = j;
+    assert(sol.getTeamClub(i) != sol.getTeamClub(j));
     // cout << "RandomSwap: swap HAPs of teams " << i << " and " << j << " of clubs << " << c1 << " and " << c2 << endl;
     SwapHAPs(sol, i, j);
     // cout << "cost = " << sol.ComputeCostCapacities() << endl;
@@ -302,16 +319,22 @@ bool MiaoAlgo::ComplementInsertion(Solution& sol){
     // Also fill TeamsHAP!!
     // Given two teams with complementary HAPs, replace their patterns with a newly chosen pair of 
     // complementary HAPs from H. 
-    int i = RandomIntegerNumber(0, sol.getNrTeams()-1);
+    int l = RandomIntegerNumber(0, sol.getNrLeagues()-1);
+    if (sol.getNrLeagues()==1 && sol.getNrTeamsLeague(0) != sol.getNrTeams()){
+        cout << "sol.getNrTeamsLeague(0) != sol.getNrTeams() in ComplementInsertion()" << endl;
+        std::abort();
+    }
+    int i_ = RandomIntegerNumber(0, sol.getNrTeamsLeague(l)-1);
+    int i = sol.getGlobalIndexTeam(l,i_);
     int h = sol.getHAPIndexTeam(i);
     int hc = sol.getComplementIndexHAP(h);
     // cout << "i = " << i << ", h = " << h << ", hc = " << hc << endl;
-    int j = 0;
-    while (sol.getHAPIndexTeam(j) != hc){
+    int j_ = 0;
+    while (sol.getHAPIndexTeam(sol.getGlobalIndexTeam(l,j_)) != hc){
         // cout << "hap of " << j << "  = " << sol.getHAPIndexTeam(j) << endl;
-        ++j;
+        ++j_;
         // Does this complemantray HAP always exists? No, of course not!!
-        if (j >= sol.getNrTeams()){
+        if (j_ >= sol.getNrTeamsLeague(l)){
             return false;
             /*
             cout << "Chosen team = " << i << endl;
@@ -336,6 +359,11 @@ bool MiaoAlgo::ComplementInsertion(Solution& sol){
             assert(j < sol.getNrTeams());
             */
         }
+    }
+    int j = sol.getGlobalIndexTeam(l,j_);
+    if (sol.getNrLeagues()==1 && ((i != i_) || (j != j_))){
+        cout << "(i != i_) || (j != j_) in ComplementInsertion()" << endl;
+        std::abort();
     }
     team1 = i;
     team2 = j;

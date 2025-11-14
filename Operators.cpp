@@ -1178,6 +1178,10 @@ bool ForbiddenEdge_CM(const int i, const int j, const int r, const bool bipartit
             return true;
         }
     }
+    if (sol.getLeagueTeam(i) != sol.getLeagueTeam(j)){
+        assert(sol.getNrLeagues() > 1);
+        return true;
+    }
     return false;
 }
 
@@ -1243,7 +1247,7 @@ vector<vector<pair<int,int>>> CreateAlternatingCycles(Solution& sol, const vecto
 }
 
 int ComputeEdgeWeightM(const int i, const int j, const int c, const bool MinCostM, const bool bipartite, Solution& sol){
-    int d;
+    int d = 0;
     if (sol.getSetting() == Setting::CM){
         // cout << "Setting == CM" << endl;
         if (bipartite && sol.Orientation[i][c] == HA::H){
@@ -1278,7 +1282,7 @@ int ComputeEdgeWeightM(const int i, const int j, const int c, const bool MinCost
         sol.TeamColorOpp[i][c] = Opp_i;
         sol.TeamColorOpp[j][c] = Opp_j;
     }
-    else if (sol.getSetting() == Setting::Miao){
+    else if (sol.getSetting() == Setting::Miao || sol.getSetting() == Setting::Hockey){
         int Opp_i = sol.TeamColorOpp[i][c];
         int Opp_j = sol.TeamColorOpp[j][c];
         d = sol.getDistanceTeams(i,j);
@@ -1374,6 +1378,7 @@ pair<vector<pair<int,int>>,vector<int>> MoveMWPM(Solution& sol, const int r, con
                 d = MaxWeight - dist_int(gen);
             }
             assert(d >= 0);
+            // cout << "add edge " << i << ", " << j << " with weight " << d << endl;
             boost::add_edge(i, j, EdgeProperty(d), g);
         }
     }
