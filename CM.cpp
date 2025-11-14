@@ -248,13 +248,25 @@ void SaveSolution(std::ofstream& output_file, Solution& sol){
     }
 }
 
-void SolveLeagueByLeague(Input& in){
+void SolveLeagueByLeague(Input& in, const InputData& data){
 	const bool HA = true;
 	const bool relax_x = false;
 	const bool min_travel = false;
 	const bool min_cap = true;
     Solution sol(in);
-	for (int l = 0; l < sol.getNrLeagues(); ++l){
+    // sort the leagues by size
+    vector<pair<int,int>>LeagueSize;
+    for (int l = 0; l < sol.getNrLeagues(); ++l){
+        LeagueSize.emplace_back(l, (int)sol.getNrTeamsLeague(l));
+    }
+
+    // Sorting leagues does not seem to be better!!!
+    std::sort(LeagueSize.begin(), LeagueSize.end(),
+              [](const auto &a, const auto &b) {
+                  return a.second > b.second;  // descending by value
+              });
+
+	for (auto& [l, league_size]: LeagueSize){
         GurSolver gursol(in);
 		gursol.build_base_league(HA, relax_x, l);
         gursol.build_capacity_constraint_league(sol,l);
@@ -266,6 +278,16 @@ void SolveLeagueByLeague(Input& in){
     sol.CostCapacityViol = 1;
     cout << "Total cost = " << sol.ComputeTotalHACost() << endl;
     cin.get();
+    string FilePathVcr = "Instances" + string(PATHSEP);
+    FilePathVcr += "Hockey" + string(PATHSEP) + "Vcr" + string(PATHSEP);
+    FilePathVcr += data.Instance + ".txt";
+    std::ofstream output_file_Vcr(FilePathVcr);
+    output_file_Vcr << "Instance,Vcr\n";
+    output_file_Vcr << data.Instance << "," << sol.ComputeTotalHACost() << "\n";
+    SaveSolution(output_file_Vcr, sol);
+    output_file_Vcr.close();
+    cout << "Save " << sol.ComputeTotalHACost() << " in file " << FilePathVcr << endl;
+    return;
 }
 
 int RF_Miao(Input& in, const int TimeLimitRF){
@@ -526,7 +548,8 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
             gur.build_all(HA, relax_x);
         }
         else{
-            SolveLeagueByLeague(in);
+            SolveLeagueByLeague(in, data);
+            return;
         }
         if (min_travel){
             gur.setBoundCapacityViolations();
