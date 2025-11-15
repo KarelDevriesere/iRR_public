@@ -154,6 +154,7 @@ void MiaoAlgo::ReAssignHAPs(Solution& sol){
     // cout << "ReAssign HAPs" << endl;
     double rnd;
     bool MoveChosen = false;
+    sol.NrColouredRounds = sol.getNrRounds(); // such that capacity costs are computed correctly
     while(!MoveChosen){
         rnd = RandomDoubleNumber(0.0, 1.0);
         auto iterator = WeightsCumul.upper_bound(rnd); 
@@ -176,13 +177,14 @@ void MiaoAlgo::ReAssignHAPs(Solution& sol){
 }
 
 bool MiaoAlgo::SchedulePhase(Solution& sol){
+    assert(sol.ComputeTotalHACost() <= 0);
     const int N = sol.getNrTeamsLeague(CurrentLeague);
     const bool bipartite = true;
     int h, a;
     sol.NrColouredRounds = 0; // for computing travel cost teams in TTP
 
     int s = 0, count = 0;
-    cout << "Try to find schedule for league " << CurrentLeague << endl;
+    // cout << "Try to find schedule for league " << CurrentLeague << endl;
     while (s < sol.getNrRounds()){
 
         const int r = Rounds[s];
@@ -197,6 +199,7 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
         vector<pair<int,int>>matching = Matching_OpponentMatching.first;
         if ((int)matching.size() < N/2){
             // shuffling rounds does not seem a good idea, instead go back to the old HAP assignement and do a new HAP move
+            // cout << "matching failed in round " << s << endl;
             ++NrInfeasibleMatchings;
             return false;
             // The problem with reshuffling rounds is that in ComputeEdgeWeight of TTP, we assume the rounds go from 0 to R-1 to compute the cost of trips
@@ -214,7 +217,6 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
                 */
         }
         else{
-            ++NrSuccesfullMatchings;
             // cout << "Matching in round " << r << ":" << endl;
             for (auto& [i, j]: matching){
                 if (sol.Orientation[i][r] == HA::H){
@@ -233,11 +235,13 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
         }
     }
 
-    cout << "schedule found" << endl;
+    // cout << "schedule found" << endl;
+    ++NrSuccesfullMatchings;
+    assert(sol.ComputeTotalHACost() <= 0);
 
     assert(sol.validate());
-    cout << "Total travel cost = " << sol.ComputeTravelCost() << endl;
-    cout << "Total cost = " << sol.ComputeTotalCost() << endl;
+    // cout << "Total travel cost = " << sol.ComputeTravelCost() << endl;
+    // cout << "Total cost = " << sol.ComputeTotalCost() << endl;
     if (sol.getSetting() == Setting::Miao || sol.getSetting() == Setting::Hockey){
         assert(sol.ComputeTravelCost() == sol.ComputeTotalCost());
     }
@@ -301,12 +305,12 @@ bool MiaoAlgo::IntraClubSwap(Solution& sol){
 }
 
 bool MiaoAlgo::RandomSwap(Solution& sol){
-    int i,j;
+    int i,j,c1,c2;
     if (sol.getNrLeagues() <= 1){
-        int c1 = RandomIntegerNumber(0, sol.getNrClubs()-1);
+        c1 = RandomIntegerNumber(0, sol.getNrClubs()-1);
         assert(sol.getTeamsClub(c1).size() > 0);
         int i_ = RandomIntegerNumber(0, sol.getTeamsClub(c1).size()-1);
-        int c2 = ((c1+1)+(RandomIntegerNumber(0, sol.getNrClubs()-2)))%sol.getNrClubs();
+        c2 = ((c1+1)+(RandomIntegerNumber(0, sol.getNrClubs()-2)))%sol.getNrClubs();
         int j_ = RandomIntegerNumber(0, sol.getTeamsClub(c2).size()-1);
         assert(sol.getTeamsClub(c2).size() > 0);
 
@@ -325,6 +329,8 @@ bool MiaoAlgo::RandomSwap(Solution& sol){
 
         i = sol.getGlobalIndexTeam(l,i_);
         j = sol.getGlobalIndexTeam(l,j_);
+        c1 = sol.getTeamClub(sol.getGlobalIndexTeam(l,i_));
+        c2 = sol.getTeamClub(sol.getGlobalIndexTeam(l,j_));
     }
 
     team1 = i;
@@ -488,10 +494,12 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
             }
         }
         else{
+            Update(sol, INT_MAX); // infeasible solution but still update values
             ReverseMove(sol); // if schedule phase not succesful: reverse move, and try with new HAP move
         }
         // cout << "reassign haps" << endl;
         ReAssignHAPs(sol); // do a HAP move
+        assert(sol.ComputeTotalHACost() <= 0);
         Reset(sol); // this deletes all the matchups in the rounds of the league chosen by the HAP operator
     }
     while(!STOP);

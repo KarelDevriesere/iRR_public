@@ -1173,6 +1173,9 @@ bool ForbiddenEdge_CM(const int i, const int j, const int r, const bool bipartit
     else if (sol.MatchColor[j][i] >= 0 && sol.MatchColor[j][i] != r){
         return true;
     }
+    else if (!sol.isEligible(i,j)){
+        return true;
+    }
     if (bipartite){
         if (sol.Orientation[i][r] == sol.Orientation[j][r]){
             return true;
@@ -1286,9 +1289,11 @@ int ComputeEdgeWeightM(const int i, const int j, const int c, const bool MinCost
         int Opp_i = sol.TeamColorOpp[i][c];
         int Opp_j = sol.TeamColorOpp[j][c];
         d = sol.getDistanceTeams(i,j);
+        /* Remove this from the soft space
         if (!sol.isEligible(i,j)){
             d += sol.NonEligibleCost;
         }
+            */
         if (sol.Orientation[i][c] == sol.Orientation[j][c]){
             assert(!bipartite);
             sol.TeamColorOpp[i][c] = j;

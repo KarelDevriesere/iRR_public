@@ -741,8 +741,6 @@ int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
 
     std::cout << "NrTeams = " << NrTeams << ", NrLeagues = " << NrLeagues << ", NrClubs = " << NrClubs << ", NrRounds = " << NrRounds << std::endl;
 
-    read_HAPs();
-
     /*
     for (l = 0; l < NrLeagues; ++l){
         std::cout << "League " << l << " has " << LeagueTeams[l].size() << " teams" << std::endl;

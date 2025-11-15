@@ -470,7 +470,7 @@ int Solution::ComputeHACostTeam(const int i){
 
 int Solution::ComputeTotalHACost(){
     int cost = ComputeCostCapacities();
-    //cout << "Cost capacities = " << cost << endl;
+    // cout << "Cost capacities = " << cost << endl;
     for (int i = 0; i < getNrTeams(); ++i){
         cost += ComputeHACostTeam(i);
     }
