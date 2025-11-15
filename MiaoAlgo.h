@@ -26,6 +26,8 @@ class MiaoAlgo: public SA<Move>{
         bool InitialSolutionGiven = false;
         int CurrentLeague = 0;
 
+        int NrSuccesfullMatchings = 0;
+
         vector<int>Rounds;
 
         bool InterClubSwap(Solution& sol);

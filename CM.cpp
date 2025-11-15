@@ -411,6 +411,8 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
     output_file << config << "\n";
     miao_algo.SaveSolutionsTimeStamps(output_file);
     SaveSolution(output_file, sol);
+    output_file << "NrSuccesfullMatchings,NrInfeasibleMatchings" << "\n";
+    output_file << miao_algo.NrSuccesfullMatchings << "," << miao_algo.NrInfeasibleMatchings << "\n";
     output_file.close();
     cout << "Close file" << endl;
 }

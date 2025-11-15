@@ -197,12 +197,7 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
         vector<pair<int,int>>matching = Matching_OpponentMatching.first;
         if ((int)matching.size() < N/2){
             // shuffling rounds does not seem a good idea, instead go back to the old HAP assignement and do a new HAP move
-            if (++NrInfeasibleMatchings > 100){
-                cout << "NrInfeasibleMatchings = " << NrInfeasibleMatchings << endl;
-                STOP = true;
-            }
-            cout << "matching failed" << endl;
-            cin.get();
+            ++NrInfeasibleMatchings;
             return false;
             // The problem with reshuffling rounds is that in ComputeEdgeWeight of TTP, we assume the rounds go from 0 to R-1 to compute the cost of trips
             // Hence, it is more difficult to compute the cost of trips!!!
@@ -219,6 +214,7 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
                 */
         }
         else{
+            ++NrSuccesfullMatchings;
             // cout << "Matching in round " << r << ":" << endl;
             for (auto& [i, j]: matching){
                 if (sol.Orientation[i][r] == HA::H){
