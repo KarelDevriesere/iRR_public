@@ -58,6 +58,23 @@ void setHAP(Solution& sol, const int i, const int h){
     sol.setHAPIndexTeam(i, h);
 }
 
+void MiaoAlgo::SetAllOpponents(Solution& sol){
+    for (int i = 0; i < sol.getNrTeams(); ++i){
+        for (int r = 0; r < sol.getNrRounds(); ++r){
+            Opponents[i][r] = sol.TeamColorOpp[i][r];
+        }
+    }
+}
+
+void MiaoAlgo::SetOpponentsCurrentLeague(Solution& sol){
+    for (int i = 0; i < sol.getNrTeamsLeague(CurrentLeague); ++i){
+        int i_ = sol.getGlobalIndexTeam(CurrentLeague, i);
+        for (int r = 0; r < sol.getNrRounds(); ++r){
+            Opponents[i_][r] = sol.TeamColorOpp[i_][r];
+        }
+    }
+}
+
 MiaoAlgo::MiaoAlgo(const std::unordered_map<Move, string>& moves, // moves, weights and in are defined in main
            const std::unordered_map<Move, double>& weights, const int NrRounds, std::mt19937& g): SA<Move>(moves, weights, g){
     Rounds = vector<int>(NrRounds);
@@ -103,6 +120,16 @@ void MiaoAlgo::ReverseMove(Solution& sol){
     else{
         SwapHAPs(sol, team1, team2); // see operators
     }
+    int i,j,i_,r;
+    for (i_ = 0; i_ < sol.getNrTeamsLeague(CurrentLeague); ++i_){
+        i = sol.getGlobalIndexTeam(CurrentLeague,i_);
+        for (r = 0; r < sol.getNrRounds(); ++r){
+            j = Opponents[i][r];
+            sol.TeamColorOpp[i][r] = j;
+            sol.MatchColor[i][j] = r;
+            sol.MatchColor[j][i] = r;
+        }
+    }
 }
 
 void MiaoAlgo::Reset(Solution& sol){
@@ -110,7 +137,8 @@ void MiaoAlgo::Reset(Solution& sol){
     // Such that we can do the matchings again without conflicts
     // But: do not reset the orientations!!
     int j;
-    for (int i = 0; i < sol.getNrTeams(); ++i){
+    for (int i_ = 0; i_ < sol.getNrTeamsLeague(CurrentLeague); ++i_){
+        int i = sol.getGlobalIndexTeam(CurrentLeague, i_);
         for (int r = 0; r < sol.getNrRounds(); ++r){
             j = sol.TeamColorOpp[i][r];
             sol.TeamColorOpp[i][r] = -1;
@@ -130,7 +158,6 @@ void MiaoAlgo::ReAssignHAPs(Solution& sol){
         rnd = RandomDoubleNumber(0.0, 1.0);
         auto iterator = WeightsCumul.upper_bound(rnd); 
         CurrentMove = iterator->second;
-        // cout << "Move = " << Moves.at(CurrentMove) << endl;
         if (CurrentMove == Move::InterClubSwap){
             MoveChosen = InterClubSwap(sol);
         }
@@ -145,27 +172,28 @@ void MiaoAlgo::ReAssignHAPs(Solution& sol){
         }
         NrChosen.at(CurrentMove)++;
     }
-    // cout << "Move chosen" << endl;
+    // cout << "Move = " << Moves.at(CurrentMove) << endl;
 }
 
 bool MiaoAlgo::SchedulePhase(Solution& sol){
-    const int N = sol.getNrTeams();
+    const int N = sol.getNrTeamsLeague(CurrentLeague);
     const bool bipartite = true;
     int h, a;
     sol.NrColouredRounds = 0; // for computing travel cost teams in TTP
 
     int s = 0, count = 0;
+    cout << "Try to find schedule for league " << CurrentLeague << endl;
     while (s < sol.getNrRounds()){
 
         const int r = Rounds[s];
         sol.NrColouredRounds++;
-        cout << "Optimize round " << r << endl;
+        // cout << "Optimize round " << r << endl;
 
         // cout << "find matching" << endl;
         const bool CM = false;
         const bool keepHAP = true;
         const bool MinCostM = true;
-        pair<vector<pair<int,int>>, vector<int>>Matching_OpponentMatching = MoveMWPM(sol, r, bipartite, keepHAP, CM, gen, MinCostM); // in the file operators
+        pair<vector<pair<int,int>>, vector<int>>Matching_OpponentMatching = MoveMWPMOneLeague(sol, r, gen, CurrentLeague); // in the file operators
         vector<pair<int,int>>matching = Matching_OpponentMatching.first;
         if ((int)matching.size() < N/2){
             // shuffling rounds does not seem a good idea, instead go back to the old HAP assignement and do a new HAP move
@@ -174,6 +202,7 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
                 STOP = true;
             }
             cout << "matching failed" << endl;
+            cin.get();
             return false;
             // The problem with reshuffling rounds is that in ComputeEdgeWeight of TTP, we assume the rounds go from 0 to R-1 to compute the cost of trips
             // Hence, it is more difficult to compute the cost of trips!!!
@@ -208,9 +237,11 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
         }
     }
 
+    cout << "schedule found" << endl;
+
     assert(sol.validate());
-    // cout << "Total travel cost = " << sol.ComputeTravelCost() << endl;
-    // cout << "Total cost = " << sol.ComputeTotalCost() << endl;
+    cout << "Total travel cost = " << sol.ComputeTravelCost() << endl;
+    cout << "Total cost = " << sol.ComputeTotalCost() << endl;
     if (sol.getSetting() == Setting::Miao || sol.getSetting() == Setting::Hockey){
         assert(sol.ComputeTravelCost() == sol.ComputeTotalCost());
     }
@@ -288,6 +319,7 @@ bool MiaoAlgo::RandomSwap(Solution& sol){
     }
     else{
         int l = RandomIntegerNumber(0, sol.getNrLeagues()-1);
+        CurrentLeague = l;
         int i_ = RandomIntegerNumber(0, sol.getNrTeamsLeague(l)-1);
         int j_ = -1;
         do{
@@ -320,6 +352,7 @@ bool MiaoAlgo::ComplementInsertion(Solution& sol){
     // Given two teams with complementary HAPs, replace their patterns with a newly chosen pair of 
     // complementary HAPs from H. 
     int l = RandomIntegerNumber(0, sol.getNrLeagues()-1);
+    CurrentLeague = l;
     if (sol.getNrLeagues()==1 && sol.getNrTeamsLeague(0) != sol.getNrTeams()){
         cout << "sol.getNrTeamsLeague(0) != sol.getNrTeams() in ComplementInsertion()" << endl;
         std::abort();
@@ -433,6 +466,8 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
         UpdateBestSolution(sol);
         cout << "Ready" << endl;
     }
+    Opponents = vector<vector<int>>(sol.getNrTeams(), vector<int>(sol.getNrRounds()));
+    SetAllOpponents(sol);
     ReAssignHAPs(sol); // do a HAP move
     Reset(sol);
 
@@ -447,8 +482,10 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
             if (!Update(sol, sol.ComputeTotalCost())){ // update best objective
                 // if solution not accepted: reverse
                 ReverseMove(sol);
+                // Problem is that with multi leagues, if we do not accept the HAP move, in the next iteration we might choose a HAP operator from another league. Then the new opponent schedule is not compatible again with the reversed HAPs for the previous league. Hence we also have to go back to the old matching
             } 
             else{
+                SetOpponentsCurrentLeague(sol);
                 if (InitialOnly){
                     STOP = true;
                 }
@@ -459,7 +496,7 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
         }
         // cout << "reassign haps" << endl;
         ReAssignHAPs(sol); // do a HAP move
-        Reset(sol); // this deletes all the matchups in the rounds
+        Reset(sol); // this deletes all the matchups in the rounds of the league chosen by the HAP operator
     }
     while(!STOP);
 

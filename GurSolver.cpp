@@ -1227,8 +1227,10 @@ void GurSolver::SaveSolution(Solution& sol){
 	for (int i = 0; i < getNrTeams(); ++i){
 		for (int r = 0; r < getNrRounds(); ++r){
 			for (int j = 0; j < getNrTeams(); ++j){
+				if (!isEligible(i,j)){
+					continue;
+				}
 				if (x[i][j][r].get(GRB_DoubleAttr_X) > 0.9){
-					assert(isEligible(i,j));
 					sol.TeamColorOpp[j][r] = i;
 					sol.TeamColorOpp[i][r] = j;
 					sol.MatchColor[i][j] = r;
@@ -1241,6 +1243,7 @@ void GurSolver::SaveSolution(Solution& sol){
 			}
 		}
 	}
+
 }
 
 void GurSolver::SaveSolutionLeague(Solution& sol, const int l){

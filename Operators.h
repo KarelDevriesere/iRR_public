@@ -126,6 +126,8 @@ void SwapMatchings(Solution& sol, vector<pair<int,int>>Matching, const int l, co
 
 pair<vector<pair<int,int>>,vector<int>>MoveMWPM(Solution& sol, const int r, const bool bipartite, const bool includeHAPs, const bool CM, std::mt19937& gen, const bool MinCostM);
 
+pair<vector<pair<int,int>>,vector<int>>MoveMWPMOneLeague(Solution& sol, const int r, std::mt19937& gen, const int l);
+
 vector<vector<pair<int,int>>>iPRS(Solution& sol, const int r, const bool bipartite, const bool includeHAPs, const bool CM, std::mt19937& gen, const bool MinCostM);
 
 vector<vector<array<int,3>>>EvaluateAlternatingCycleWithPaths(Solution& sol, vector<pair<int,int>>& AlternatingCycle, const int r, const bool bipartite, const bool CM, int& delta, std::mt19937& gen, const bool MinCostP, bool NoPathDueTo2RRConstraint);

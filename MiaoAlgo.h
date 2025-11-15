@@ -15,6 +15,8 @@ class MiaoAlgo: public SA<Move>{
         int hap_index1;
         int hap_index2;
 
+        vector<vector<int>>Opponents; // Opponents[i][r] = j means that j is the opponent of j in round r
+
     public:
         MiaoAlgo(const std::unordered_map<Move, string>& moves, const std::unordered_map<Move, double>& weights, const int NrRounds, std::mt19937& g);
         ~MiaoAlgo();
@@ -22,6 +24,7 @@ class MiaoAlgo: public SA<Move>{
         int NrInfeasibleMatchings = 0;
         bool InitialOnly = false;
         bool InitialSolutionGiven = false;
+        int CurrentLeague = 0;
 
         vector<int>Rounds;
 
@@ -34,6 +37,8 @@ class MiaoAlgo: public SA<Move>{
         void Reset(Solution& sol); // delete all opponents
         void SaveBestSequenceMatches(Solution& sol);
         void ReverseMove(Solution& sol);
+        void SetAllOpponents(Solution& sol);
+        void SetOpponentsCurrentLeague(Solution& sol);
 
         // Custom functions already declared in SA:
         void solve(Input& in, Solution& sol) override;
