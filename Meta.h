@@ -170,6 +170,7 @@ class MetaBase{ // Everything that can be used for all metaheuristics
             for (auto&[TimeStamp, Solution]: TimeStampSolution){
                 output_file << TimeStamp << "," << Solution << "\n";
             }
+            cout << "Total time = " << (int)this->getTimeDiff() << endl;
             output_file << "Final, " << this->best_obj << "," << (int)this->getTimeDiff() << "\n" << endl;
         }
 };
