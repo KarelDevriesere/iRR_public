@@ -277,11 +277,17 @@ void SolveLeagueByLeague(Input& in, const InputData& data, const bool ComputeTra
     // Analyze results Miao TTP (effect os eeletcing only subset of patterns)
 	for (auto& [l, league_size]: LeagueSize){
         GurSolver gursol(in);
+        cout << "build base " << l << endl;
 		gursol.build_base_league(HA, relax_x, l);
         if (!ComputeTravelBound){
             gursol.build_capacity_constraint_league(sol,l);
+            gursol.AddObj(min_travel, min_cap);
         }
-        gursol.AddObj(min_travel, min_cap);
+        else{
+            gursol.AddObjMinTravelLeague(l);
+        }
+        cout << "Solve league " << l << endl;
+
         gursol.solve();
         gursol.SaveSolutionLeague(sol, l);
 	}
@@ -735,6 +741,12 @@ void TestCostMinimization(InputData& data){
             in.DeleteNonPromisingHAPsTTP((int)NrPromisingHAPs);
         }
     }
+
+    /*
+    bool TravelBound = true;
+    SolveLeagueByLeague(in, data, TravelBound);
+    return;
+    */
     
     if (data.Heuristic && !data.RunMiaoAlgo && !data.RunMiaoRF){
         SolveHeuristic(in,TimeStamps,folder_path,data);

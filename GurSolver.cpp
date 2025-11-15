@@ -1098,6 +1098,21 @@ void GurSolver::AddObjMinBreaks(){
 	model.setObjective(Objective, GRB_MINIMIZE);
 }
 
+void GurSolver::AddObjMinTravelLeague(const int l){
+	Objective = 0;
+	for (int i = 0; i < getNrTeamsLeague(l); ++i){
+		for (int j = 0; j < getNrTeamsLeague(l); ++j){
+			int i_ = getGlobalIndexTeam(l,i), j_ = getGlobalIndexTeam(l,j);
+			if (isEligible(i_, j_)){
+				for (int r = 0; r < getNrRounds(); ++r){
+					Objective += getDistanceTeams(i_, j_)*x[i][j][r];
+				}
+			}
+		}
+	}
+	model.setObjective(Objective, GRB_MINIMIZE);
+}
+
 void GurSolver::AddObj(const bool min_travel, const bool min_capacity_violations){
 	if (min_travel){
 		Objective = 0;
