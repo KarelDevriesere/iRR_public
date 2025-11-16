@@ -248,11 +248,15 @@ void SaveSolution(std::ofstream& output_file, Solution& sol){
     }
 }
 
-void SolveLeagueByLeague(Input& in, const InputData& data){
+void SolveLeagueByLeague(Input& in, const InputData& data, const bool ComputeTravelBound){
 	const bool HA = true;
 	const bool relax_x = false;
-	const bool min_travel = false;
-	const bool min_cap = true;
+	bool min_travel = false;
+	bool min_cap = true;
+    if (ComputeTravelBound){
+        bool min_travel = true;
+	    bool min_cap = false;
+    }
     Solution sol(in);
     // sort the leagues by size
     vector<pair<int,int>>LeagueSize;
@@ -273,15 +277,28 @@ void SolveLeagueByLeague(Input& in, const InputData& data){
     // Analyze results Miao TTP (effect os eeletcing only subset of patterns)
 	for (auto& [l, league_size]: LeagueSize){
         GurSolver gursol(in);
+        cout << "build base " << l << endl;
 		gursol.build_base_league(HA, relax_x, l);
-        gursol.build_capacity_constraint_league(sol,l);
-        gursol.AddObj(min_travel, min_cap);
+        if (!ComputeTravelBound){
+            gursol.build_capacity_constraint_league(sol,l);
+            gursol.AddObj(min_travel, min_cap);
+        }
+        else{
+            gursol.AddObjMinTravelLeague(l);
+        }
+        cout << "Solve league " << l << endl;
+
         gursol.solve();
         gursol.SaveSolutionLeague(sol, l);
 	}
     sol.validate();
     sol.CostCapacityViol = 1;
-    cout << "Total cost = " << sol.ComputeTotalHACost() << endl;
+    if (ComputeTravelBound){
+        cout << "Total cost = " << sol.ComputeTravelCost() << endl;
+    }
+    else{
+        cout << "Total cost = " << sol.ComputeTotalHACost() << endl;
+    }
     cin.get();
     string FilePathVcr = "Instances" + string(PATHSEP);
     FilePathVcr += "Hockey" + string(PATHSEP) + "Vcr" + string(PATHSEP);
@@ -348,7 +365,7 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
 
     std::unordered_map<Move, string>moves;
     std::unordered_map<Move, double>weights;
-    if (in.getSetting() == Setting::Miao){
+    if (in.getSetting() == Setting::Miao || in.getSetting() == Setting::Hockey){
         moves = MiaoMoves;
         weights = MiaoWeights;
     }
@@ -398,6 +415,8 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
     }
     std::ofstream output_file(FilePath);
     output_file << config << "\n";
+    output_file << "NrSuccesfullMatchings,NrInfeasibleMatchings" << "\n";
+    output_file << miao_algo.NrSuccesfullMatchings << "," << miao_algo.NrInfeasibleMatchings << "\n";
     miao_algo.SaveSolutionsTimeStamps(output_file);
     SaveSolution(output_file, sol);
     output_file.close();
@@ -516,6 +535,10 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
         FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "HeuristicStartingFromMiao" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + "_seed" + to_string(data.seed) + "_HL" + to_string(data.HistoryLength) + ".txt";
         config = to_string(data.seed) + ",HeuristicStartingFromMiao," + data.Instance + "," + to_string(data.CapacitySetting) + "," + to_string(data.MaxNrBreaks) + "," + to_string(data.HistoryLength);
     }
+    else if (in.getSetting() == Setting::Hockey){
+        FilePath = "Instances" + string(PATHSEP) + "Hockey" + string(PATHSEP) + "Results" + string(PATHSEP) + "Heuristic" + std::string(PATHSEP) + data.Instance + "_seed" + to_string(data.seed) + "_HL" + to_string(data.HistoryLength) + ".txt";
+        config = to_string(data.seed) + ",Heuristic," + data.Instance + "," + to_string(data.HistoryLength);
+    }
 
     cout << "Save file as " << FilePath << endl;
     std::ofstream output_file(FilePath);
@@ -541,7 +564,7 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     Solution sol(in);
     bool HA = true;
     bool relax_x = false;
-    const bool min_travel = false, min_cap = true;
+    const bool min_travel = true, min_cap = false;
     if (in.getSetting() == Setting::CM){
         gur.build_base(HA, relax_x);
         gur.AddObjGeneralCosts();
@@ -554,9 +577,17 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     else{
         // IP without patterns:
         if (min_travel){
-            string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
-            path += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
-            if (!(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
+
+            string path = "Instances" + string(PATHSEP);
+            if (in.getSetting() == Setting::Miao){
+                path += "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
+                path += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
+                if (!(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
+                    ReadSolution(path, sol);
+                }
+            }
+            else {
+                path += "Hockey" + string(PATHSEP) + "Vcr" + string(PATHSEP) + data.Instance  +".txt";
                 ReadSolution(path, sol);
             }
         }
@@ -565,7 +596,8 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
             gur.build_all(HA, relax_x);
         }
         else{
-            SolveLeagueByLeague(in, data);
+            const bool TravelBound = false;
+            SolveLeagueByLeague(in, data, TravelBound);
             return;
         }
         if (min_travel){
@@ -574,7 +606,7 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
         if (min_travel || (min_cap && in.getSetting() == Setting::Miao)){
             gur.AddObj(min_travel, min_cap);
         }
-        if (min_travel && !(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
+        if (min_travel && !(in.getSetting() == Setting::Miao && data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
             gur.WarmStart(sol);
         }
         // gur.Fix_x(sol);
@@ -582,9 +614,10 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     gur.setTimeLimit(data.TimeLimit);
     gur.SetTimeStamps(TimeStamps);
     gur.solve();
+    cout << "save solution" << endl;
     gur.SaveSolution(sol);
     // Save solution in file:
-    if (in.getSetting() == Setting::Miao || in.getSetting() == Setting::Hockey && min_cap){
+    if (in.getSetting() == Setting::Miao || (in.getSetting() == Setting::Hockey && min_cap)){
         string FilePathVcr = "Instances" + string(PATHSEP);
         if (in.getSetting() == Setting::Miao){
             FilePathVcr += "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
@@ -602,6 +635,7 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
         cout << "Save " << gur.getBestObjValue() << " in file " << FilePathVcr << endl;
         return;
     } 
+    cout << "validate" << endl;
     sol.validate();
 
     string FilePath;
@@ -614,6 +648,10 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     else if (in.getSetting() == Setting::Miao){
         FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "IP" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
         config = to_string(data.seed) + ",IP," + data.Instance + "," + to_string(data.CapacitySetting) + "," + to_string(data.MaxNrBreaks);
+    }
+    else if (in.getSetting() == Setting::Hockey){
+        FilePath = "Instances" + string(PATHSEP) + "Hockey" + string(PATHSEP) + "Results" + string(PATHSEP) + "IP" + std::string(PATHSEP) + data.Instance + ".txt";
+        config = to_string(data.seed) + ",IP," + data.Instance;
     }
     cout << "Save file as " << FilePath << endl;
     std::ofstream output_file(FilePath);
@@ -681,6 +719,7 @@ void TestCostMinimization(InputData& data){
     else if(data.Hockey){
         in.setHAP_requirements(true, false, false, false, in.getNrRounds());
         in.setAllowedNrCapacityViolations1RR(data);
+        in.read_HAPs();
     }
     else{
         bool SetMaxNrBreaks = true;
@@ -692,6 +731,7 @@ void TestCostMinimization(InputData& data){
             in.setMiaoHAPSetting(data.CapacitySetting);
         }
         in.setAllowedNrCapacityViolations1RR(data);
+        in.read_HAPs();
     }
 
     if (data.TTP && !data.HistoryLengthProvided){
@@ -705,6 +745,12 @@ void TestCostMinimization(InputData& data){
             in.DeleteNonPromisingHAPsTTP((int)NrPromisingHAPs);
         }
     }
+
+    /*
+    bool TravelBound = true;
+    SolveLeagueByLeague(in, data, TravelBound);
+    return;
+    */
     
     if (data.Heuristic && !data.RunMiaoAlgo && !data.RunMiaoRF){
         SolveHeuristic(in,TimeStamps,folder_path,data);

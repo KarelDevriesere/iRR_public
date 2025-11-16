@@ -222,6 +222,18 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
 template<typename Move>
 bool SA<Move>::Update(Solution& sol, const int obj){
             // cout << "prev_obj = " << current_obj << ", new obj = " << obj << endl;
+
+            if (this->getTimeDiff() > this->TIME_LIMIT || T < T_end){
+                this->STOP = true;
+                if (this->getTimeDiff() > this->TIME_LIMIT){
+                    cout << "Time limit hit" << endl;
+                }
+                else{
+                    cout << "Final temperature hit after " << this->getTimeDiff() << " seconds" << endl;
+                }
+                // cin.get();
+            }
+
             this->UpdateValues(sol, obj);
             bool SolutionAccepted = false;
             if (obj <= this->current_obj){
@@ -232,7 +244,7 @@ bool SA<Move>::Update(Solution& sol, const int obj){
             else{
                 this->dist_real = std::uniform_real_distribution<>(0.0, 1.0);
                 double rnd = this->dist_real(this->gen);
-                if (rnd <= exp(-(obj-this->current_obj)/T)){ // Metropolis acceptance
+                if (rnd <= exp(-(obj-this->current_obj)/T) && obj < INT_MAX-10){ // Metropolis acceptance
                     // cout << "Accept solution with prob " << exp(-(obj-current_obj)/T) << ", prev_obj = " << current_obj << ", new obj = " << obj << endl;
                     this->current_obj = obj;
                     this->it_accepted++;
@@ -260,16 +272,6 @@ bool SA<Move>::Update(Solution& sol, const int obj){
                 cout << "New T = " << T << endl;
                 this->it_accepted = 0;
                 this->it = 0;
-            }
-            if (this->getTimeDiff() > this->TIME_LIMIT || T < T_end){
-                this->STOP = true;
-                if (this->getTimeDiff() > this->TIME_LIMIT){
-                    cout << "Time limit hit" << endl;
-                }
-                else{
-                    cout << "Final temperature hit after " << this->getTimeDiff() << " seconds" << endl;
-                }
-                // cin.get();
             }
             return SolutionAccepted;
 }

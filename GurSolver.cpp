@@ -1098,6 +1098,21 @@ void GurSolver::AddObjMinBreaks(){
 	model.setObjective(Objective, GRB_MINIMIZE);
 }
 
+void GurSolver::AddObjMinTravelLeague(const int l){
+	Objective = 0;
+	for (int i = 0; i < getNrTeamsLeague(l); ++i){
+		for (int j = 0; j < getNrTeamsLeague(l); ++j){
+			int i_ = getGlobalIndexTeam(l,i), j_ = getGlobalIndexTeam(l,j);
+			if (isEligible(i_, j_)){
+				for (int r = 0; r < getNrRounds(); ++r){
+					Objective += getDistanceTeams(i_, j_)*x[i][j][r];
+				}
+			}
+		}
+	}
+	model.setObjective(Objective, GRB_MINIMIZE);
+}
+
 void GurSolver::AddObj(const bool min_travel, const bool min_capacity_violations){
 	if (min_travel){
 		Objective = 0;
@@ -1227,8 +1242,10 @@ void GurSolver::SaveSolution(Solution& sol){
 	for (int i = 0; i < getNrTeams(); ++i){
 		for (int r = 0; r < getNrRounds(); ++r){
 			for (int j = 0; j < getNrTeams(); ++j){
+				if (!isEligible(i,j)){
+					continue;
+				}
 				if (x[i][j][r].get(GRB_DoubleAttr_X) > 0.9){
-					assert(isEligible(i,j));
 					sol.TeamColorOpp[j][r] = i;
 					sol.TeamColorOpp[i][r] = j;
 					sol.MatchColor[i][j] = r;
@@ -1241,6 +1258,7 @@ void GurSolver::SaveSolution(Solution& sol){
 			}
 		}
 	}
+
 }
 
 void GurSolver::SaveSolutionLeague(Solution& sol, const int l){

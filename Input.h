@@ -104,6 +104,7 @@ class Input
         int NrTeams = 0, NrLeagues = 0, NrClubs = 0, NrRounds = 0; 
         bool ConstantCapacity;
         vector<vector<int>>ClubTeams;
+        vector<vector<vector<int>>>ClubTeamsLeague;
         vector<vector<int>>LeagueTeams;
         // vector<int>LeagueIndex;
         vector<vector<int>>ClubCapacity;
@@ -114,6 +115,8 @@ class Input
         vector<int>TeamClub;
         vector<int>SingleTeamClubs;
         vector<int>MultiTeamClubs;
+        vector<vector<int>>SingleTeamClubsLeague;
+        vector<vector<int>>MultiTeamClubsLeague;
         vector<int>TeamLeagueIndex;
         vector<bool>IsTeamDummy;
         vector<vector<bool>>Eligible; // stores whether 2 teams are eligible to play vs each other
@@ -163,8 +166,11 @@ class Input
         int getDistanceClubs(const int c1, const int c2)const{return DistanceClubs[c1][c2];}
         int getDistanceTeams(const int i, const int j);
         vector<int> getTeamsClub(const int c)const{return ClubTeams[c];}
+        vector<int> getTeamsClubLeague(const int c, const int l)const{return ClubTeamsLeague[c][l];}
         vector<int> getSingleTeamClubs()const{return SingleTeamClubs;};
         vector<int> getMultiTeamClubs()const{return MultiTeamClubs;};
+        vector<int> getSingleTeamClubsLeague(const int l)const{return SingleTeamClubsLeague[l];};
+        vector<int> getMultiTeamClubsLeague(const int l)const{return MultiTeamClubsLeague[l];};
         vector<int> getTeamsLeague(const int l)const{return LeagueTeams[l];};
         int getNrTeamsClub(const int c)const{return ClubTeams[c].size();};
         int getTeamClub(const int i)const{return TeamClub[i];}

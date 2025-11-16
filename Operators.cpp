@@ -1173,6 +1173,9 @@ bool ForbiddenEdge_CM(const int i, const int j, const int r, const bool bipartit
     else if (sol.MatchColor[j][i] >= 0 && sol.MatchColor[j][i] != r){
         return true;
     }
+    else if (!sol.isEligible(i,j)){
+        return true;
+    }
     if (bipartite){
         if (sol.Orientation[i][r] == sol.Orientation[j][r]){
             return true;
@@ -1286,9 +1289,11 @@ int ComputeEdgeWeightM(const int i, const int j, const int c, const bool MinCost
         int Opp_i = sol.TeamColorOpp[i][c];
         int Opp_j = sol.TeamColorOpp[j][c];
         d = sol.getDistanceTeams(i,j);
+        /* Remove this from the soft space
         if (!sol.isEligible(i,j)){
             d += sol.NonEligibleCost;
         }
+            */
         if (sol.Orientation[i][c] == sol.Orientation[j][c]){
             assert(!bipartite);
             sol.TeamColorOpp[i][c] = j;
@@ -1320,6 +1325,99 @@ int ComputeEdgeWeightM(const int i, const int j, const int c, const bool MinCost
     }
 
     return d;
+}
+
+pair<vector<pair<int,int>>,vector<int>> MoveMWPMOneLeague(Solution& sol, const int r, std::mt19937& gen, const int l){
+
+    int N = sol.getNrTeamsLeague(l);
+    int R = sol.getNrRounds();
+    int SizeMatching = N/2;
+    vector<bool>TeamSelected(N, true);
+
+    typedef boost::property< boost::edge_weight_t, float, boost::property< boost::edge_index_t, int > >EdgeProperty;
+
+    typedef boost::adjacency_list <boost::vecS, boost::vecS, boost::undirectedS, boost::no_property, EdgeProperty>BGraph;
+    boost::graph_traits< BGraph >::vertex_iterator vi, vi_end;
+
+    BGraph g(N); 
+
+    int UB_random = 100;
+    std::uniform_int_distribution<>dist_int = std::uniform_int_distribution<>(0,UB_random); 
+
+    int i, j, i_, j_;
+    // vector<vector<bool>>ForbiddenEdge(sol.getNrTeams(), vector<bool>(sol.getNrTeams(), false));
+    // forbidden edges: all edges in the current schedule (coloring of the current schedule must remain feasible)
+    int MaxWeight = 0;
+    // each edge randomly gets a cost of 0 and 1, in a perfect matching there are N/2 edges so max cost should be N/2+1
+    int Weight = 0;
+    bool bipartite = true;
+    bool MinCostM = true;
+
+    for (i = 0; i < N; ++i){
+        i_ = sol.getGlobalIndexTeam(l,i);
+        for (j = i+1; j < N; ++j){
+            j_ = sol.getGlobalIndexTeam(l,j);
+            if (ForbiddenEdge_CM(i_,j_,r,bipartite,TeamSelected,sol)){
+                continue;
+            }
+            Weight = ComputeEdgeWeightM(i_, j_, r, MinCostM, bipartite, sol);
+            if (Weight > MaxWeight){
+                MaxWeight = Weight;
+            }
+        }
+    }
+    MaxWeight = MaxWeight*(N/2)+1;
+
+    for (i = 0; i < N; ++i){
+        i_ = sol.getGlobalIndexTeam(l,i);
+        for (j = i+1; j < N; ++j){
+            j_ = sol.getGlobalIndexTeam(l,j);
+            if (ForbiddenEdge_CM(i_,j_,r,bipartite,TeamSelected,sol)){
+                continue;
+            }
+            // If still here, edge can be included:
+            
+            int d;
+            if (MinCostM){
+                d = MaxWeight - ComputeEdgeWeightM(i_, j_, r, MinCostM, bipartite, sol);
+            }
+            else{
+                d = MaxWeight - dist_int(gen);
+            }
+            assert(d >= 0);
+            // cout << "add edge " << i << ", " << j << " with weight " << d << endl;
+            boost::add_edge(i, j, EdgeProperty(d), g);
+        }
+    }
+
+    // sol.print_all_rounds();
+    // cout << "Bipartite matching in round " << r << endl;
+
+    // cout << "do MWPM" << endl;
+    assert(boost::num_edges(g) > 0); // graph cannot be empty
+
+    std::vector< boost::graph_traits< BGraph >::vertex_descriptor > mate1(N);
+    assert(mate1.size() == num_vertices(g));
+    boost::maximum_weighted_matching(g, &mate1[0]);
+
+    vector<pair<int,int>>Matching;
+    vector<int>OpponentMatching(sol.getNrTeams(), -1); // i.e. OpponentMatching[i] = j, then the opponent of i in the matching is j
+
+    // cout << "Matching in league " << l << " with " << N << "teams: " << endl;
+    for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi){
+        if (mate1[*vi] != boost::graph_traits< BGraph >::null_vertex() && *vi < mate1[*vi]){
+            // std::cout << "{" << *vi << ", " << mate1[*vi] << "}" << std::endl;
+            i = *vi, j = mate1[*vi];
+            i_ = sol.getGlobalIndexTeam(l,i);
+            j_ = sol.getGlobalIndexTeam(l,j);
+            OpponentMatching[i_] = j_;
+            OpponentMatching[j_] = i_;
+            Matching.push_back({i_,j_});
+            // cout << i_ << " vs " << j_ << endl;
+        }
+    }
+    
+    return {Matching, OpponentMatching}; // for Miao's algo: Matching, for my algo: OpponentMatching (bc I do no want full matching but alternating cycles instead)
 }
 
 pair<vector<pair<int,int>>,vector<int>> MoveMWPM(Solution& sol, const int r, const bool bipartite, const bool includeHAPs, const bool CM, std::mt19937& gen, const bool MinCostM){

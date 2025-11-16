@@ -64,8 +64,10 @@ void Input::SetDefault(const int NrTeams){
 
     NrClubs = NrTeams;
     ClubTeams = vector<vector<int>>(NrTeams);
+    ClubTeamsLeague = vector<vector<vector<int>>>(NrTeams, vector<vector<int>>(NrLeagues));
     for (int i = 0; i < NrTeams; ++i){
         ClubTeams.at(i) = {i};
+        ClubTeamsLeague.at(i).at(0) = {i};
     }
     ClubCapacity = vector<vector<int>>(NrClubs, vector<int>(NrRounds, 1));
     iota(SingleTeamClubs.begin(), SingleTeamClubs.end(), 0);
@@ -475,6 +477,10 @@ int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
                     NrClubs = num; // +1 because we are going to create a dummy club!!
                     IndexDummyClub = NrClubs;
                     ClubTeams = vector<vector<int>>(NrClubs+1);
+                    ClubTeamsLeague = vector<vector<vector<int>>>(NrClubs+1);
+                    for (int clb = 0; clb < NrClubs; ++clb){
+                        ClubTeamsLeague[clb] = vector<vector<int>>(NrLeagues);
+                    }
                     DistanceClubs = vector<vector<int>>(NrClubs+1, vector<int>(NrClubs+1));
                     DistanceClubs[IndexDummyClub] = vector<int>(NrClubs+1, 0);
                 }
@@ -723,6 +729,30 @@ int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
         assert(index_found);
     }
 
+    SingleTeamClubsLeague = vector<vector<int>>(NrLeagues);
+    MultiTeamClubsLeague = vector<vector<int>>(NrLeagues);
+
+    for (int l = 0; l < NrLeagues; ++l){
+        for (int c = 0; c < NrClubs; ++c){
+            int count = 0;
+            for (int i = 0; i < getNrTeamsLeague(l); ++i){
+                int i_ = getGlobalIndexTeam(l,i);
+                if (getTeamClub(i_) == c){
+                    ClubTeamsLeague[c][l].push_back(i_);
+                    count++;
+                }
+            }
+            if (count == 1){
+                SingleTeamClubsLeague[l].push_back(c);
+            }
+            else if (count > 1){
+                MultiTeamClubsLeague[l].push_back(c);
+            }
+        }
+        cout << "Size SingleTeamClubs in league " << l << " = " << SingleTeamClubsLeague[l].size() << endl;
+        cout << "Size MultiTeamClubs in league " << l << " = " << MultiTeamClubsLeague[l].size() << endl;
+    }
+
     // set Maximum cost of an edge )> for maximum weight matching
     MaxEdgeCost = MaxDistanceClubs;
 
@@ -740,8 +770,6 @@ int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
     // ++NrClubs;
 
     std::cout << "NrTeams = " << NrTeams << ", NrLeagues = " << NrLeagues << ", NrClubs = " << NrClubs << ", NrRounds = " << NrRounds << std::endl;
-
-    read_HAPs();
 
     /*
     for (l = 0; l < NrLeagues; ++l){
