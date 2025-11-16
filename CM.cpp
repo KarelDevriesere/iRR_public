@@ -365,7 +365,7 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
 
     std::unordered_map<Move, string>moves;
     std::unordered_map<Move, double>weights;
-    if (in.getSetting() == Setting::Miao){
+    if (in.getSetting() == Setting::Miao || in.getSetting() == Setting::Hockey){
         moves = MiaoMoves;
         weights = MiaoWeights;
     }

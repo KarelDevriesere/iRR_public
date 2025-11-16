@@ -254,18 +254,39 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
 bool MiaoAlgo::InterClubSwap(Solution& sol){
     // Must they be of the same league->yes?
     // So modify code!!!
+
+    /*
     int c1_ = RandomIntegerNumber(0,sol.getSingleTeamClubs().size()-1);
     int c1 = sol.getSingleTeamClubs()[c1_];
     int i_ = RandomIntegerNumber(0, sol.getTeamsClub(c1).size()-1);
     int c2_ = ((c1_+1)+(RandomIntegerNumber(0, sol.getSingleTeamClubs().size()-2)))%sol.getSingleTeamClubs().size();
     int c2 = sol.getSingleTeamClubs()[c2_];
     int j_ = RandomIntegerNumber(0, sol.getTeamsClub(c2).size()-1);
+    */
 
-    int i = sol.getTeamsClub(c1)[i_];
-    int j = sol.getTeamsClub(c2)[j_];
+    int l = RandomIntegerNumber(0, sol.getNrLeagues()-1);
+    int start_l = l;
+    while (sol.getSingleTeamClubsLeague(l).size() < 2){
+        l = (++l)%sol.getNrLeagues();
+        if (l == start_l){
+            cout << "No league with at least 2 single team clubs, adjust weights!!" << endl;
+            std::abort();
+        }
+    }
+    CurrentLeague = l;
+    int c1_ = RandomIntegerNumber(0,sol.getSingleTeamClubsLeague(l).size()-1);
+    int c1 = sol.getSingleTeamClubsLeague(l)[c1_];
+    int i_ = RandomIntegerNumber(0, sol.getTeamsClubLeague(c1, l).size()-1);
+    int c2_ = ((c1_+1)+(RandomIntegerNumber(0, sol.getSingleTeamClubsLeague(l).size()-2)))%sol.getSingleTeamClubsLeague(l).size();
+    int c2 = sol.getSingleTeamClubsLeague(l)[c2_];
+    int j_ = RandomIntegerNumber(0, sol.getTeamsClubLeague(c2, l).size()-1);
+
+    int i = sol.getTeamsClubLeague(c1, l)[i_];
+    int j = sol.getTeamsClubLeague(c2, l)[j_];
     team1 = i;
     team2 = j;
     // cout << "InterClubSwap: swap HAPs of teams " << i << " and " << j << " of clubs " << c1 << " and " << c2 << endl;
+    // cout <<  i << " is in league " << sol.getLeagueTeam(i) << ", j is in league " << sol.getLeagueTeam(j) << endl;
     SwapHAPs(sol, i, j);
     // cout << "cost = " << sol.ComputeCostCapacities() << endl;
     if (sol.ComputeCostCapacities() > 0){
@@ -279,14 +300,33 @@ bool MiaoAlgo::InterClubSwap(Solution& sol){
 
 bool MiaoAlgo::IntraClubSwap(Solution& sol){
     assert(sol.ComputeCostCapacities() <= 0);
+    /*
     int c_ = RandomIntegerNumber(0, sol.getMultiTeamClubs().size()-1);
     int c = sol.getMultiTeamClubs()[c_];
     assert(sol.getTeamsClub(c).size() > 1);
     int i_ = RandomIntegerNumber(0, sol.getTeamsClub(c).size()-1);
     int j_ = ((i_+1)+(RandomIntegerNumber(0, sol.getTeamsClub(c).size()-2)))%sol.getTeamsClub(c).size();
+    */
 
-    int i = sol.getTeamsClub(c)[i_];
-    int j = sol.getTeamsClub(c)[j_];
+    int l = RandomIntegerNumber(0, sol.getNrLeagues()-1);
+    int start_l = l;
+    while (sol.getMultiTeamClubsLeague(l).size() == 0){
+        l = (++l)%sol.getNrLeagues();
+        if (l == start_l){
+            cout << "No Multi team clubs in any league for this instance, adjust weights!!" << endl;
+            std::abort();
+        }
+    }
+    CurrentLeague = l;
+
+    int c_ = RandomIntegerNumber(0, sol.getMultiTeamClubsLeague(l).size()-1);
+    int c = sol.getMultiTeamClubsLeague(l)[c_];
+    assert(sol.getTeamsClubLeague(c, l).size() > 1);
+    int i_ = RandomIntegerNumber(0, sol.getTeamsClubLeague(c, l).size()-1);
+    int j_ = ((i_+1)+(RandomIntegerNumber(0, sol.getTeamsClubLeague(c, l).size()-2)))%sol.getTeamsClubLeague(c, l).size();
+
+    int i = sol.getTeamsClubLeague(c, l)[i_];
+    int j = sol.getTeamsClubLeague(c, l)[j_];
     team1 = i;
     team2 = j;
     // cout << "IntraClubSwap: swap HAPs of teams " << i << " and " << j << " of clubs << " << c << " and " << c << endl;
@@ -335,7 +375,9 @@ bool MiaoAlgo::RandomSwap(Solution& sol){
 
     team1 = i;
     team2 = j;
-    assert(sol.getTeamClub(i) != sol.getTeamClub(j));
+    if (sol.getSetting() == Setting::Miao){
+        assert(sol.getTeamClub(i) != sol.getTeamClub(j));
+    }
     // cout << "RandomSwap: swap HAPs of teams " << i << " and " << j << " of clubs << " << c1 << " and " << c2 << endl;
     SwapHAPs(sol, i, j);
     // cout << "cost = " << sol.ComputeCostCapacities() << endl;
