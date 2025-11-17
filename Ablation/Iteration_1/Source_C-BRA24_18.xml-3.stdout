@@ -1,0 +1,38 @@
+------ Weights ------
+C: 0.225084
+PTS: 0.446711
+PRS: 0.186371
+RS: 0.0386508
+TS: 0.103183
+---------------------
+Test cost minimization
+TimeLimit = 21600
+Max iterations = 10000000
+HistoryLength = 1
+FolderPath: Instances/TTP/
+Read TTP files
+Instance: I_BRA24_18, Type: NULL, Contributor: Ribeiro and Urrutia
+Date: 2025/10/30
+NrTeams = 24, NrRounds =  18
+Solve heuristic
+Solve Vizing
+Found initial solution
+Cost initial solution = 397547
+------ Cumulative Weights ------
+Cumulative weight of C = 0.225084
+Cumulative weight of PTS = 0.671795
+Cumulative weight of PRS = 0.858166
+Cumulative weight of RS = 0.896817
+Cumulative weight of TS = 1
+-------------------------------
+start solve
+updated best solution
+Lower bounds = 167657, current objective = 378482
+Total cost after hill climbing = 378482
+start solve
+updated best solution
+max it_idle hit: 1470513
+Final cost = 211559
+Travel cost = 211559, Cost violations = 10000 x 0
+Save file as Instances/TTP/Results/Heuristic/I_BRA24_18_s3_HL10000.txt
+Save XML file as Instances/TTP/Results/Heuristic/I_BRA24_18_s3_HL10000.xml

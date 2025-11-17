@@ -1,0 +1,163 @@
+#------------------------------------------------------------------------------
+# irace: An implementation in R of (Elitist) Iterated Racing
+# Version: 4.2.0.b50b134
+# Copyright (C) 2010-2025
+# Manuel Lopez-Ibanez     <manuel.lopez-ibanez@manchester.ac.uk>
+# Jeremie Dubois-Lacoste
+# Leslie Perez Caceres    <leslie.perez.caceres@ulb.ac.be>
+#
+# This is free software, and you are welcome to redistribute it under certain
+# conditions.  See the GNU General Public License for details. There is NO
+# WARRANTY; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#
+# irace builds upon previous code from the race package:
+#     race: Racing methods for the selection of the best
+#     Copyright (C) 2003 Mauro Birattari
+#------------------------------------------------------------------------------
+# installed at: /kyukon/data/gent/419/vsc41980/local_R_LIBS/RHEL9/zen2/4.4.2-gfbf-2024a/irace
+# called with: --batchmode slurm --target-runner target-runner --target-evaluator target-evaluator --target-runner-retries 10 --seed 1062306592 --recovery-file /data/gent/vo/001/gvo00147/vsc41980/iRR_new/irace-backup_two.Rdata
+# 2025-11-08 22:24:03 CET: Reading parameter file '/kyukon/data/gent/vo/001/gvo00147/vsc41980/iRR_new/Irace/parameters-SA.txt'.
+# 2025-11-08 22:24:03 CET: Recovering from file: '/data/gent/vo/001/gvo00147/vsc41980/iRR_new/irace-backup_two.Rdata'
+# 2025-11-08 22:24:03 CET: Initialization
+# Elitist race
+# Elitist new instances: 1
+# Elitist limit: 2
+# nbIterations: 5
+# minNbSurvival: 5
+# nbParameters: 13
+# seed: 1062306592
+# confidence level: 0.95
+# budget: 1000
+# mu: 5
+# deterministic: FALSE
+
+# 2025-11-08 22:24:03 CET: Iteration 1 of 5
+# experimentsUsed: 0
+# remainingBudget: 1000
+# currentBudget: 200
+# nbConfigurations: 33
+# Markers:
+     x No test is performed.
+     c Configurations are discarded only due to capping.
+     - The test is performed and some configurations are discarded.
+     = The test is performed but no configuration is discarded.
+     ! The test is performed and configurations could be discarded but elite configurations are preserved.
+     . All alive configurations are elite and nothing is discarded.
+
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+| |   Instance|      Alive|       Best|       Mean best| Exp so far|  W time|  rho|KenW|  Qvar|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+|x|          1|         33|         14|     796.0000000|         33|00:00:00|   NA|  NA|    NA|
+|x|          2|         33|         27|     60794.00000|         66|00:00:00|+0.35|0.67|0.7387|
+|x|          3|         33|         24|     60013.00000|         99|00:00:00|+0.22|0.48|0.7757|
+|x|          4|         33|         24|     46529.75000|        132|00:00:00|+0.25|0.44|0.7256|
+|-|          5|          7|         24|     38189.00000|        165|00:00:00|+0.30|0.44|0.5076|
+|-|          6|          3|         24|     31870.83333|        172|00:00:00|+0.08|0.24|0.5249|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+Best-so-far configuration:          24    mean value:      31870.83333
+Description of the best-so-far configuration:
+   .ID. LB_Gap_HC    TS     RS    PRS PTS_PR PTS_PRO      C     BM    BMO   M_PR M_PRO MO_PRO ViolCost .PARENT.
+24   24    2.8245 0.632 0.8147 0.0404 0.0999  0.6185 0.6448 0.5884 0.0366 0.7512 0.182 0.0118    75712       NA
+
+# 2025-11-08 22:24:03 CET: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+   LB_Gap_HC     TS     RS    PRS PTS_PR PTS_PRO      C     BM    BMO   M_PR  M_PRO MO_PRO ViolCost
+24    2.8245 0.6320 0.8147 0.0404 0.0999  0.6185 0.6448 0.5884 0.0366 0.7512 0.1820 0.0118    75712
+27    2.5745 0.3195 0.2522 0.3529 0.6624  0.6810 0.4573 0.7759 0.3491 0.4387 0.2445 0.1993    56962
+32    2.0745 0.9445 0.1272 0.4779 0.5374  0.8060 0.8323 0.4009 0.9741 0.5637 0.6195 0.0743    19462
+# 2025-11-08 22:24:03 CET: Iteration 2 of 5
+# experimentsUsed: 172
+# remainingBudget: 828
+# currentBudget: 207
+# nbConfigurations: 32
+# Markers:
+     x No test is performed.
+     c Configurations are discarded only due to capping.
+     - The test is performed and some configurations are discarded.
+     = The test is performed but no configuration is discarded.
+     ! The test is performed and configurations could be discarded but elite configurations are preserved.
+     . All alive configurations are elite and nothing is discarded.
+
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+| |   Instance|      Alive|       Best|       Mean best| Exp so far|  W time|  rho|KenW|  Qvar|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+|x|          7|         32|         24|     202059.0000|         32|00:00:00|   NA|  NA|    NA|
+|x|          2|         32|         24|     161107.5000|         61|00:00:00|+0.13|0.56|0.7968|
+|x|          5|         32|         24|     109013.6667|         90|00:00:00|+0.22|0.48|0.6910|
+|x|          6|         32|         24|     81830.25000|        119|00:00:00|+0.14|0.35|0.7745|
+|-|          4|         11|         24|     66680.20000|        148|00:00:00|+0.09|0.27|0.8598|
+|=|          3|         11|         24|     65413.66667|        156|00:00:00|+0.16|0.30|0.7984|
+|-|          1|          3|         24|     56183.42857|        164|00:00:00|+0.10|0.23|0.5895|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+Best-so-far configuration:          24    mean value:      56183.42857
+Description of the best-so-far configuration:
+   .ID. LB_Gap_HC    TS     RS    PRS PTS_PR PTS_PRO      C     BM    BMO   M_PR M_PRO MO_PRO ViolCost .PARENT.
+24   24    2.8245 0.632 0.8147 0.0404 0.0999  0.6185 0.6448 0.5884 0.0366 0.7512 0.182 0.0118    75712       NA
+
+# 2025-11-08 22:24:03 CET: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+   LB_Gap_HC     TS     RS    PRS PTS_PR PTS_PRO      C     BM    BMO   M_PR  M_PRO MO_PRO ViolCost
+24    2.8245 0.6320 0.8147 0.0404 0.0999  0.6185 0.6448 0.5884 0.0366 0.7512 0.1820 0.0118    75712
+62    3.0460 0.4285 0.3820 0.1477 0.4713  0.4624 0.4191 0.5422 0.5326 0.8926 0.0988 0.0302    45178
+42    4.7837 0.4062 0.5875 0.2041 0.1168  0.4512 0.9672 0.5265 0.5061 0.8100 0.1328 0.0137    72305
+# 2025-11-08 22:24:03 CET: Iteration 3 of 5
+# experimentsUsed: 336
+# remainingBudget: 664
+# currentBudget: 221
+# nbConfigurations: 30
+# Markers:
+     x No test is performed.
+     c Configurations are discarded only due to capping.
+     - The test is performed and some configurations are discarded.
+     = The test is performed but no configuration is discarded.
+     ! The test is performed and configurations could be discarded but elite configurations are preserved.
+     . All alive configurations are elite and nothing is discarded.
+
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+| |   Instance|      Alive|       Best|       Mean best| Exp so far|  W time|  rho|KenW|  Qvar|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+|x|          8|         30|         65|     57592.00000|         30|00:00:00|   NA|  NA|    NA|
+|x|          3|         30|         24|     58554.50000|         57|00:00:00|+0.07|0.53|0.2287|
+|x|          4|         30|         24|     41063.00000|         84|00:00:00|+0.19|0.46|0.1967|
+|x|          7|         30|         24|     81312.00000|        111|00:00:00|+0.17|0.38|0.5678|
+|-|          5|         10|         24|     66014.80000|        138|00:00:00|+0.03|0.23|0.8839|
+# 2025-11-08 22:24:03 CET: Recovery completed.
+|=|          6|         10|         24|     55059.00000|        145|00:00:00|+0.09|0.24|0.8360|
+|=|          1|         10|         24|     47308.00000|        152|00:00:38|+0.13|0.25|0.7984|
+|=|          2|         10|         24|     56414.00000|        159|02:02:35|+0.08|0.20|0.8294|
+|=|          9|         10|         24|     50230.22222|        169|00:28:47|+0.09|0.19|0.8150|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+Best-so-far configuration:          24    mean value:      50230.22222
+Description of the best-so-far configuration:
+   .ID. LB_Gap_HC    TS     RS    PRS PTS_PR PTS_PRO      C     BM    BMO   M_PR M_PRO MO_PRO ViolCost .PARENT.
+24   24    2.8245 0.632 0.8147 0.0404 0.0999  0.6185 0.6448 0.5884 0.0366 0.7512 0.182 0.0118    75712       NA
+
+# 2025-11-09 00:56:05 CET: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+   LB_Gap_HC     TS     RS    PRS PTS_PR PTS_PRO      C     BM    BMO   M_PR  M_PRO MO_PRO ViolCost
+24    2.8245 0.6320 0.8147 0.0404 0.0999  0.6185 0.6448 0.5884 0.0366 0.7512 0.1820 0.0118    75712
+76    1.7747 0.1387 0.2256 0.3305 0.2684  0.5202 0.6853 0.7469 0.0370 0.6058 0.0214 0.0112    33939
+62    3.0460 0.4285 0.3820 0.1477 0.4713  0.4624 0.4191 0.5422 0.5326 0.8926 0.0988 0.0302    45178
+77    2.1730 0.4369 0.4435 0.1220 0.3305  0.3207 0.5222 0.2617 0.6430 0.8091 0.0883 0.0328    27768
+42    4.7837 0.4062 0.5875 0.2041 0.1168  0.4512 0.9672 0.5265 0.5061 0.8100 0.1328 0.0137    72305
+# 2025-11-09 00:56:05 CET: Iteration 4 of 5
+# experimentsUsed: 505
+# remainingBudget: 495
+# currentBudget: 247
+# nbConfigurations: 29
+# Markers:
+     x No test is performed.
+     c Configurations are discarded only due to capping.
+     - The test is performed and some configurations are discarded.
+     = The test is performed but no configuration is discarded.
+     ! The test is performed and configurations could be discarded but elite configurations are preserved.
+     . All alive configurations are elite and nothing is discarded.
+
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+| |   Instance|      Alive|       Best|       Mean best| Exp so far|  W time|  rho|KenW|  Qvar|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+|x|         10|         29|        105|     60535.00000|         29|01:38:28|   NA|  NA|    NA|
+|x|          8|         29|         76|     59263.00000|         53|02:00:58|+0.33|0.66|0.5467|
+|x|          7|         29|         24|     106943.6667|         77|01:52:24|+0.35|0.57|0.4175|
+|x|          9|         29|         76|     81258.25000|        101|00:42:02|+0.31|0.48|0.5128|
+|-|          4|         10|         76|     66204.20000|        125|02:01:00|+0.17|0.34|0.7972|
+|=|          2|         10|        112|     74034.83333|        130|02:00:34|+0.12|0.27|0.8288|
+|=|          3|         10|        112|     71908.42857|        135|02:00:39|+0.11|0.24|0.8211|
+|-|          1|          6|        112|     63018.87500|        140|00:48:39|+0.10|0.22|0.7782|
