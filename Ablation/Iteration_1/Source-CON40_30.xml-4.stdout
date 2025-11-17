@@ -1,0 +1,36 @@
+------ Weights ------
+PTS: 0.576464
+PRS: 0.240505
+RS: 0.0498774
+TS: 0.133154
+---------------------
+Test cost minimization
+TimeLimit = 21600
+Max iterations = 10000000
+HistoryLength = 1
+FolderPath: Instances/TTP/
+Read TTP files
+Instance: I_CON40_30, Type: NULL, Contributor: Urrutia, Ribeiro
+Date: 2025/10/30
+NrTeams = 40, NrRounds =  30
+Solve heuristic
+Solve Vizing
+Found initial solution
+Cost initial solution = 1073
+------ Cumulative Weights ------
+Cumulative weight of PTS = 0.576464
+Cumulative weight of PRS = 0.816969
+Cumulative weight of RS = 0.866846
+Cumulative weight of TS = 1
+-------------------------------
+start solve
+updated best solution
+Lower bounds = 803, current objective = 1073
+Total cost after hill climbing = 1073
+start solve
+updated best solution
+max it_idle hit: 860992
+Final cost = 848
+Travel cost = 848, Cost violations = 10000 x 0
+Save file as Instances/TTP/Results/Heuristic/I_CON40_30_s4_HL1.txt
+Save XML file as Instances/TTP/Results/Heuristic/I_CON40_30_s4_HL1.xml
