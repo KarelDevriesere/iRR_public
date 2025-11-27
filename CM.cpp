@@ -95,7 +95,7 @@ const unordered_map<string,int>InstanceBound = {
     {"I_CON32_16",352}, 	// Via Benders
     {"I_CON32_24",516}, 	// Via Benders, running on HPC
     {"I_CON40_10",280}, 	// Via Benders
-    {"I_CON40_20",555}, 	// Via Benders, running on HPC
+    {"I_CON40_20",560},
     {"I_CON40_30",803}, 	// Via Benders, running on HPC
     {"I_GAL40_10",23617},
     {"I_GAL40_20",50962},
@@ -299,16 +299,27 @@ void SolveLeagueByLeague(Input& in, const InputData& data, const bool ComputeTra
     else{
         cout << "Total cost = " << sol.ComputeTotalHACost() << endl;
     }
-    cin.get();
-    string FilePathVcr = "Instances" + string(PATHSEP);
-    FilePathVcr += "Hockey" + string(PATHSEP) + "Vcr" + string(PATHSEP);
-    FilePathVcr += data.Instance + ".txt";
-    std::ofstream output_file_Vcr(FilePathVcr);
-    output_file_Vcr << "Instance,Vcr\n";
-    output_file_Vcr << data.Instance << "," << sol.ComputeTotalHACost() << "\n";
-    SaveSolution(output_file_Vcr, sol);
-    output_file_Vcr.close();
-    cout << "Save " << sol.ComputeTotalHACost() << " in file " << FilePathVcr << endl;
+    if (ComputeTravelBound){
+        string FilePathBound = "Instances" + string(PATHSEP);
+        FilePathBound += "Hockey" + string(PATHSEP) + "Bounds" + string(PATHSEP);
+        FilePathBound += data.Instance + ".txt";
+        std::ofstream output_file_bound(FilePathBound);
+        output_file_bound << "Instance,Bound\n";
+        output_file_bound << data.Instance << "," << sol.ComputeTravelCost() << "\n";
+        output_file_bound.close();
+        cout << "Save " << sol.ComputeTravelCost() << " in file " << FilePathBound << endl;
+    }
+    else{
+        string FilePathVcr = "Instances" + string(PATHSEP);
+        FilePathVcr += "Hockey" + string(PATHSEP) + "Vcr" + string(PATHSEP);
+        FilePathVcr += data.Instance + ".txt";
+        std::ofstream output_file_Vcr(FilePathVcr);
+        output_file_Vcr << "Instance,Vcr\n";
+        output_file_Vcr << data.Instance << "," << sol.ComputeTotalHACost() << "\n";
+        SaveSolution(output_file_Vcr, sol);
+        output_file_Vcr.close();
+        cout << "Save " << sol.ComputeTotalHACost() << " in file " << FilePathVcr << endl;
+    }
     return;
 }
 
@@ -405,18 +416,21 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
         config = to_string(data.seed) + ",MiaoAlgo," + data.Instance + "," + to_string(data.CapacitySetting) + "," + to_string(data.MaxNrBreaks);
     }
     else if (in.getSetting() == Setting::Hockey){
-        FilePath = "Instances" + string(PATHSEP) + "Hockey" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + data.Instance + ".txt";
+        FilePath = "Instances" + string(PATHSEP) + "Hockey" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + data.Instance + "_seed" + to_string(data.seed) + ".txt";
         config = to_string(data.seed) + ",MiaoAlgo," + data.Instance;
     }
     else{
-        FilePath = "Instances" + string(PATHSEP) + "TTP" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + sol.getInstanceName() + "_PercHAPs" + to_string(data.PercentageHAPs) + "_s" + to_string(data.seed) + ".txt";
+        FilePath = "Instances" + string(PATHSEP) + "TTP" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + sol.getInstanceName();
+        if (data.PercentageHAPs < 99.99){
+        FilePath += "_PercHAPs" + to_string(data.PercentageHAPs);
+        } 
+        FilePath += "_s" + to_string(data.seed) + ".txt";
         
         config = to_string(data.seed) + ",MiaoAlgo," + sol.getInstanceName() + "," + to_string(data.HistoryLength) + "," + to_string(data.PercentageHAPs);
     }
     std::ofstream output_file(FilePath);
     output_file << config << "\n";
-    output_file << "NrSuccesfullMatchings,NrInfeasibleMatchings" << "\n";
-    output_file << miao_algo.NrSuccesfullMatchings << "," << miao_algo.NrInfeasibleMatchings << "\n";
+    output_file << "NrSuccesfullMatchings," << miao_algo.NrSuccesfullMatchings << ",NrInfeasibleMatchings," << miao_algo.NrInfeasibleMatchings << "\n";
     miao_algo.SaveSolutionsTimeStamps(output_file);
     SaveSolution(output_file, sol);
     output_file.close();
