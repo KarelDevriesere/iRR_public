@@ -1,0 +1,44 @@
+------ Weights ------
+MinCost_BM: 0.0379165
+Random_BM: 0.181683
+C: 0.175656
+PRS: 0.145444
+RS: 0.0301631
+TS: 0.080524
+PTS: 0.348613
+---------------------
+Test cost minimization
+TimeLimit = 21600
+Max iterations = 10000000
+HistoryLength = 1
+FolderPath: Instances/TTP/
+Read TTP files
+Instance: I_GAL40_30, Type: NULL, Contributor: Uthus, Riddle, Guesgen
+Date: 2025/10/30
+NrTeams = 40, NrRounds =  30
+Solve heuristic
+Solve Vizing
+Found initial solution
+Cost initial solution = 171997
+------ Cumulative Weights ------
+Cumulative weight of MinCost_BM = 0.0379165
+Cumulative weight of Random_BM = 0.2196
+Cumulative weight of C = 0.395256
+Cumulative weight of PRS = 0.5407
+Cumulative weight of RS = 0.570863
+Cumulative weight of TS = 0.651387
+Cumulative weight of PTS = 1
+-------------------------------
+start solve
+updated best solution
+Lower bounds = 81661, current objective = 171957
+Lower bounds = 81661, current objective = 171871
+Lower bounds = 81661, current objective = 171841
+Total cost after hill climbing = 171841
+start solve
+updated best solution
+max it_idle hit: 784349
+Final cost = 96272
+Travel cost = 96272, Cost violations = 10000 x 0
+Save file as Instances/TTP/Results/Heuristic/I_GAL40_30_s2_HL500.txt
+Save XML file as Instances/TTP/Results/Heuristic/I_GAL40_30_s2_HL500.xml

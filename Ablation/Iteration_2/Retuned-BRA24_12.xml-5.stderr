@@ -1,0 +1,3 @@
+Gurobi shell based on Python 3.11.5 can be launched with command `gurobi.sh`
+Gurobi Python Interface can be loaded in Python 3.11.5 with 'import gurobipy'
+/var/spool/slurm/slurmd/job60120763/slurm_script: line 46: --TimeLimit: command not found

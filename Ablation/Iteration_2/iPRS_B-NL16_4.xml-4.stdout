@@ -1,0 +1,43 @@
+------ Weights ------
+MinCost_BM: 0.0379165
+Random_BM: 0.181683
+C: 0.175656
+PRS: 0.145444
+RS: 0.0301631
+TS: 0.080524
+PTS: 0.348613
+---------------------
+Test cost minimization
+TimeLimit = 21600
+Max iterations = 10000000
+HistoryLength = 1
+FolderPath: Instances/TTP/
+Read TTP files
+Instance: I_NL16_4, Type: NULL, Contributor: Easton, Nemhauser, and Trick
+Date: 2025/10/30
+NrTeams = 16, NrRounds =  4
+Solve heuristic
+Solve Vizing
+Found initial solution
+Cost initial solution = 78996
+------ Cumulative Weights ------
+Cumulative weight of MinCost_BM = 0.0379165
+Cumulative weight of Random_BM = 0.2196
+Cumulative weight of C = 0.395256
+Cumulative weight of PRS = 0.5407
+Cumulative weight of RS = 0.570863
+Cumulative weight of TS = 0.651387
+Cumulative weight of PTS = 1
+-------------------------------
+start solve
+updated best solution
+Lower bounds = 23625, current objective = 53169
+Lower bounds = 23625, current objective = 51986
+Total cost after hill climbing = 51986
+start solve
+updated best solution
+max it_idle hit: 9400131
+Final cost = 25306
+Travel cost = 25306, Cost violations = 10000 x 0
+Save file as Instances/TTP/Results/Heuristic/I_NL16_4_s4_HL1000.txt
+Save XML file as Instances/TTP/Results/Heuristic/I_NL16_4_s4_HL1000.xml
