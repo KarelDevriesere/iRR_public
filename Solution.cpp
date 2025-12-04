@@ -553,8 +553,10 @@ int Solution::ComputeTravelCostTeamTTP(const int t){
         // cout << t << " -> " << TeamColorOpp[t][0] << ": " << getDistanceTeams(t,TeamColorOpp[t][0]) << endl;
     }
     if (Orientation[t][NrColouredRounds-1] == HA::A && TeamColorOpp[t][NrColouredRounds-1] != -1){
-        CostOfTrips += getDistanceTeams(t,TeamColorOpp[t][NrColouredRounds-1]); // similar for last round
-        // cout << TeamColorOpp[t][NrColouredRounds-1] << " -> " << t << ": " << getDistanceTeams(t,TeamColorOpp[t][NrColouredRounds-1]) << endl;
+       //  if ((NrColouredRounds == getNrRounds()) || (NrColouredRounds >= 3 && Orientation[t][NrColouredRounds-1] == HA::A && Orientation[t][NrColouredRounds-2] == HA::A && Orientation[t][NrColouredRounds-3] == HA::A)){
+            CostOfTrips += getDistanceTeams(t,TeamColorOpp[t][NrColouredRounds-1]); // similar for last round
+            // cout << TeamColorOpp[t][NrColouredRounds-1] << " -> " << t << ": " << getDistanceTeams(t,TeamColorOpp[t][NrColouredRounds-1]) << endl;
+        // }
     }
     return CostOfTrips;
 }

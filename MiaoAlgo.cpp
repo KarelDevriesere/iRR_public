@@ -120,6 +120,7 @@ void MiaoAlgo::ReverseMove(Solution& sol){
     else{
         SwapHAPs(sol, team1, team2); // see operators
     }
+    /*
     int i,j,i_,r;
     for (i_ = 0; i_ < sol.getNrTeamsLeague(CurrentLeague); ++i_){
         i = sol.getGlobalIndexTeam(CurrentLeague,i_);
@@ -130,22 +131,23 @@ void MiaoAlgo::ReverseMove(Solution& sol){
             sol.MatchColor[j][i] = r;
         }
     }
+    */
 }
 
 void MiaoAlgo::Reset(Solution& sol){
     // cout << "Reset" << endl;
     // Such that we can do the matchings again without conflicts
     // But: do not reset the orientations!!
-    int j;
+    int i,j;
     for (int i_ = 0; i_ < sol.getNrTeamsLeague(CurrentLeague); ++i_){
-        int i = sol.getGlobalIndexTeam(CurrentLeague, i_);
+        i = sol.getGlobalIndexTeam(CurrentLeague, i_);
         for (int r = 0; r < sol.getNrRounds(); ++r){
-            j = sol.TeamColorOpp[i][r];
             sol.TeamColorOpp[i][r] = -1;
-            if (j != -1){
-                sol.MatchColor[i][j] = -1;
-                sol.MatchColor[j][i] = -1;
-            }
+        }
+        for (int j_ = 0; j_ < sol.getNrTeamsLeague(CurrentLeague); ++j_){
+            j = sol.getGlobalIndexTeam(CurrentLeague, j_);
+            sol.MatchColor[i][j] = -1;
+            sol.MatchColor[j][i] = -1;
         }
     }
 }
@@ -199,7 +201,9 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
         vector<pair<int,int>>matching = Matching_OpponentMatching.first;
         if ((int)matching.size() < N/2){
             // shuffling rounds does not seem a good idea, instead go back to the old HAP assignement and do a new HAP move
-            // cout << "matching failed in round " << s << endl;
+            cout << "matching failed in round " << s << endl;
+            cout << "matching has size of only " << (int)matching.size() << endl;
+            cin.get();
             ++NrInfeasibleMatchings;
             return false;
             // The problem with reshuffling rounds is that in ComputeEdgeWeight of TTP, we assume the rounds go from 0 to R-1 to compute the cost of trips

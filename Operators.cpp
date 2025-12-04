@@ -1403,7 +1403,9 @@ pair<vector<pair<int,int>>,vector<int>> MoveMWPMOneLeague(Solution& sol, const i
     vector<pair<int,int>>Matching;
     vector<int>OpponentMatching(sol.getNrTeams(), -1); // i.e. OpponentMatching[i] = j, then the opponent of i in the matching is j
 
-    // cout << "Matching in league " << l << " with " << N << "teams: " << endl;
+    // cout << "----------" << endl;
+    // cout << "Matching in league " << l << " with " << N << "teams and round " << r << ": " << endl;
+    // cout << "----------" << endl;
     for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi){
         if (mate1[*vi] != boost::graph_traits< BGraph >::null_vertex() && *vi < mate1[*vi]){
             // std::cout << "{" << *vi << ", " << mate1[*vi] << "}" << std::endl;
@@ -1416,6 +1418,7 @@ pair<vector<pair<int,int>>,vector<int>> MoveMWPMOneLeague(Solution& sol, const i
             // cout << i_ << " vs " << j_ << endl;
         }
     }
+    // cout << "----------" << endl;
     
     return {Matching, OpponentMatching}; // for Miao's algo: Matching, for my algo: OpponentMatching (bc I do no want full matching but alternating cycles instead)
 }
