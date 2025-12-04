@@ -37,9 +37,15 @@ def ResultsInstances(InstanceSetting):
         for key in NrRoundsTTP.keys():
             for r in NrRoundsTTP[key]:
                 instances.append(key + "_" + str(r))
+    elif InstanceSetting == "Hockey":
+        PathRoot = os.path.join(PathRoot, "Hockey")
+        I = ["i01", "i02", "i03", "i04", "i05", "i06"]
+        for i in I:
+            instances.append(i)
     PathRoot = os.path.join(PathRoot, "Results")
 
     Table = {inst: {"IP_value": -1, "IP_bound": -1, "IP_time": -1, "MiaoAlgo_Avg_value": [], "MiaoAlgo_Avg_time": [], "MiaoAlgo_seed": [], "Heuristic_Avg_value": [], "Heuristic_Avg_time": [], "Heuristic_HL": []} for inst in instances}
+    TableMatchings = {inst: {"NrSuccesfullMatchings": [], "NrInfeasibleMatchings": []} for inst in instances}
     PathIP = os.path.join(PathRoot, "IP")
     PathHeuristic = os.path.join(PathRoot, "Heuristic") # HeuristicStartingFromMiao
     PathMiaoAlgo = os.path.join(PathRoot, "MiaoAlgo")
@@ -67,7 +73,15 @@ def ResultsInstances(InstanceSetting):
                             if method == "Heuristic": # HeuristicStartingFromMiao
                                 HL = str(row[5])
                                 Table[Instance]["Heuristic_HL"].append(HL)
-                        else:
+                        elif InstanceSetting == "Hockey":
+                            Instance = row[2]
+                            if method == "Heuristic": # HeuristicStartingFromMiao
+                                HL = str(row[3])
+                                Table[Instance]["Heuristic_HL"].append(HL)
+                        elif InstanceSetting == "TTP":
+                            if "PercHAPs" in filename:
+                                print(f'File {filename} contains PercHAPs, skip!!')
+                                break
                             pattern = re.compile(r'(?:^|_)([A-Z]+[0-9]+_[0-9]+)(?:_|\.|$)')
 
                             match = pattern.search(filename)
@@ -87,10 +101,14 @@ def ResultsInstances(InstanceSetting):
                                 HL = str(row[4])
                                 Table[Instance]["Heuristic_HL"].append(HL)
 
-                    elif i > 1 and row[0] != "Final":
+                    elif i > 0 and row[0] != "Final" and row[0] != "Time" and row[0] != "NrSuccesfullMatchings":
                         if int(row[0]) > max_time:
                             max_time = int(row[0])
-                    if i > 1 and (row[0] == "Final" or method == "Heuristic" and int(row[0]) == TIME_LIMIT): # row[0] == "Final"
+                    elif row[0] == "NrSuccesfullMatchings":
+                        TableMatchings[Instance][row[0]].append(int(row[1]))
+                        TableMatchings[Instance][row[2]].append(int(row[3]))
+                        # print(f'{Instance} & {row[1]} & {row[3]} \\\\ \n')
+                    if i > 1 and (row[0] == "Final"): # or method == "Heuristic" and int(row[0]) == TIME_LIMIT): # row[0] == "Final"
                         if method == "IP":
                             Table[Instance]["IP_value"] = int(row[1])
                             Table[Instance]["IP_bound"] = row[2]
@@ -113,17 +131,43 @@ def ResultsInstances(InstanceSetting):
                             print(f'Unknown method = {method}')
                             breakpoint()
                         break
+
+
+    for inst in TableMatchings.keys():
+        if len(TableMatchings[inst]["NrSuccesfullMatchings"]) > 0:
+            avg_succes = round(sum(TableMatchings[inst]["NrSuccesfullMatchings"]) / len(TableMatchings[inst]["NrSuccesfullMatchings"]),2)
+            avg_fail = round(sum(TableMatchings[inst]["NrInfeasibleMatchings"]) / len(TableMatchings[inst]["NrInfeasibleMatchings"]),2)
+            print('{} & {} & {} \\\\ \n'.format(inst, avg_succes, avg_fail))
+    
     if InstanceSetting == "Miao":
         OutputPath = os.path.join(os.path.join("Results", "Miao"), "Analysis.txt")   
-    else:
+    elif InstanceSetting == "TTP":
         OutputPath = os.path.join(os.path.join("Results", "TTP"), "Analysis.txt") 
+    else:
+        OutputPath = os.path.join(os.path.join("Results", "Hockey"), "Analysis.txt")
 
+    PathBoxPlot = "Results"
+    if InstanceSetting == "TTP":
+        PathBoxPlot = os.path.join(PathBoxPlot, "TTP")
+    else:
+        PathBoxPlot = os.path.join(PathBoxPlot, "Hockey")
+    PathBoxPlot = os.path.join(PathBoxPlot, "DataBoxplot.csv")
+    write_header = not os.path.exists(PathBoxPlot)
 
-    with open(OutputPath, 'w') as output_file:
+    with open(OutputPath, 'w') as output_file, open(PathBoxPlot, "a", newline="") as output_file_boxplot:
         if InstanceSetting == "Miao":
             output_file.write("Instance & IP_v & IP_b & IP_t & Miao_{av} & Miao_{at} & Miao_{bv} & Miao_{bt} & Heur_{av} & Heur_{at} & Heur_{bv} & Heur_{bt} & Heur_{bHL}\n")
         else:
             output_file.write("Instance & Bound & IP_v & IP_b & IP_t & Miao_{av} & Miao_{at} & Miao_{bv} & Miao_{bt} & Heur_{av} & Heur_{at} & Heur_{bv} & Heur_{bt} & Heur_{bHL}\n")
+
+        writer = csv.writer(output_file_boxplot)
+
+        if write_header:
+            if InstanceSetting == "TTP": 
+                writer.writerow(["Algorithm", "LB", "Obj"])
+            else:
+                writer.writerow(["Algorithm", "InstanceClass", "LB", "Obj"])
+
         for Instance in Table.keys():
             Heuristic_Avg_value = -1
             Heuristic_Avg_time = -1
@@ -142,7 +186,7 @@ def ResultsInstances(InstanceSetting):
                 Heuristic_Best_time = Table[Instance]["Heuristic_Avg_time"][0]
                 Heuristic_best_HL = Table[Instance]["Heuristic_HL"][0]
 
-                for i in [1,2,3,4]:
+                for i in range(1,len(Table[Instance]["Heuristic_Avg_value"])):
                     if Table[Instance]["Heuristic_Avg_value"][i] < Heuristic_Best_value:
                         Heuristic_Best_value = Table[Instance]["Heuristic_Avg_value"][i]
                         Heuristic_Best_time = Table[Instance]["Heuristic_Avg_time"][i]
@@ -155,19 +199,22 @@ def ResultsInstances(InstanceSetting):
                 MiaoAlgo_Best_time = Table[Instance]["MiaoAlgo_Avg_time"][0]
                 MiaoAlgoBestSeed = Table[Instance]["MiaoAlgo_seed"][0]
     
-                for i in [1,2,3,4]:
+                for i in range(1,len(Table[Instance]["MiaoAlgo_Avg_value"])):
                     if Table[Instance]["MiaoAlgo_Avg_value"][i] < MiaoAlgo_Best_value:
                         MiaoAlgo_Best_value = Table[Instance]["MiaoAlgo_Avg_value"][i]
                         MiaoAlgo_Best_time = Table[Instance]["MiaoAlgo_Avg_time"][i]
                         MiaoAlgoBestSeed = Table[Instance]["MiaoAlgo_seed"][i]
 
-            print(f'{{"{Instance}",{MiaoAlgoBestSeed}}},')
+            # print(f'{{"{Instance}",{MiaoAlgoBestSeed}}},')
             
             line = Instance + " & "
 
-            if InstanceSetting == "TTP":
-                bound = -1
-                FilePathBounds = os.path.join(os.path.join(os.path.join("Instances", "TTP"), "Bounds"), "BestBounds.txt")
+            bound = -1
+            if InstanceSetting == "TTP" or InstanceSetting == "Hockey":
+                if InstanceSetting == "TTP":
+                    FilePathBounds = os.path.join(os.path.join(os.path.join("Instances", "TTP"), "Bounds"), "BestBounds.txt")
+                else:
+                    FilePathBounds = os.path.join(os.path.join(os.path.join("Instances", "Hockey"), "Bounds"), "BestBounds.txt")
                 if not os.path.exists(FilePathBounds):
                     raise FileNotFoundError(f"The file '{FilePathBounds}' does not exist.")
                     sys.exit(0)
@@ -187,6 +234,9 @@ def ResultsInstances(InstanceSetting):
                 line += str(Table[Instance]["IP_value"]) 
             
             line += " & " + str(Table[Instance]["IP_bound"]) + " & " + str(Table[Instance]["IP_time"]) + " & " + str(MiaoAlgo_Avg_value)  +" & " + str(MiaoAlgo_Avg_time)  + " & " 
+
+            if bound == -1:
+                bound = Table[Instance]["IP_bound"]
             
             if (MiaoAlgo_Best_value <= Table[Instance]["IP_value"] or Table[Instance]["IP_value"] == -1) and (MiaoAlgo_Best_value <= Heuristic_Best_value or Heuristic_Best_value == -1) and MiaoAlgo_Best_value != -1:
                 line += "\\cellcolor{green!25}" + str(MiaoAlgo_Best_value)  
@@ -206,11 +256,77 @@ def ResultsInstances(InstanceSetting):
             
             line += " & " + str(Heuristic_Best_time) + " & " + str(Heuristic_best_HL) + " \\\\ \n"
 
+            if InstanceSetting == "TTP":
+                for value in Table[Instance]["MiaoAlgo_Avg_value"]:
+                    writer.writerow(["Greedy", bound, value])
+                writer.writerow(["IP", bound, Table[Instance]["IP_value"]])
+            else:
+                for i, value in enumerate(Table[Instance]["Heuristic_Avg_value"]):
+                    heur = "Heuristic_" + str(Table[Instance]["Heuristic_HL"][i])
+                    writer.writerow([heur, InstanceSetting, bound, value])
+                    if value < int(bound):
+                        print(Instance)
+                        breakpoint()
+                for value in Table[Instance]["MiaoAlgo_Avg_value"]:
+                    writer.writerow(["Greedy", InstanceSetting, bound, value])
+                    if value < int(bound):
+                        print(Instance)
+                        breakpoint()
+                writer.writerow(["IP", InstanceSetting, bound, Table[Instance]["IP_value"]])
+                if Table[Instance]["IP_value"] < int(bound):
+                    print(Instance)
+                    breakpoint()
+
 
             output_file.write(line)
         
     print(f"done")
-                        
+
+
+def ResultsPercHAPs():
+    Path = os.path.join(os.path.join(os.path.join("Instances", "TTP"), "Results"), "MiaoAlgo")
+    Instances = ["I_BRA24_18", "I_CIRC40_20", "I_CON40_20", "I_GAL40_20", "I_INCR40_20", "I_LINE40_20", "I_NFL32_24", "I_NL16_12"]
+    Percentages = [10, 30, 50, 70, 90]
+    Values = {inst: {perc: [] for perc in Percentages} for inst in Instances}
+    Times = {inst: {perc: [] for perc in Percentages} for inst in Instances}
+    BestValues = {inst: {perc: -1 for perc in Percentages} for inst in Instances}
+    BestTimes = {inst: {perc: -1 for perc in Percentages} for inst in Instances}
+    for file_index, filename in enumerate(os.listdir(Path)):
+        if not filename.endswith(".txt") or "PercHAPs" not in filename:
+            continue
+        FilePath = os.path.join(Path, filename)
+        if not os.path.exists(FilePath):
+            raise FileNotFoundError(f"The file '{FilePath}' does not exist.")
+            sys.exit(0)
+        with open(FilePath, 'r', newline="") as file:
+            reader = csv.reader(file)
+            for i, row in enumerate(reader):
+                if i == 0:
+                    seed = str(row[0])
+                    method = row[1]
+                    instance = row[2]
+                    HL = row[3] # does not matter
+                    Perc = int(row[4]) # percentage of the haps used
+                    if instance not in Instances or Perc not in Percentages:
+                        break
+                elif row[0] == "Final":
+                    Values[instance][Perc].append(int(row[1]))
+                    Times[instance][Perc].append(int(row[2]))
+                    break
+
+    print(f'Instance & bv10 & t10 & bv30 & t30 & bv50 & t50 & bv70 & t70 & bv90 & t90 \\\\ \n')
+    for instance in Instances:
+        for Perc in Percentages:
+            if len(Values[instance][Perc]) > 0:
+                best_value = Values[instance][Perc][0]
+                best_time = Times[instance][Perc][0]
+                for i in range(1,len(Values[instance][Perc])):
+                    if Values[instance][Perc][i] < best_value:
+                        best_value = Values[instance][Perc][i]
+                        best_time = Times[instance][Perc][i]
+                BestValues[instance][Perc] = best_value
+                BestTimes[instance][Perc] = best_time
+        print(f'{instance} & {BestValues[instance][10]} & {BestTimes[instance][10]} & {BestValues[instance][30]} & {BestTimes[instance][30]} & {BestValues[instance][50]} & {BestTimes[instance][50]} & {BestValues[instance][70]} & {BestTimes[instance][70]} & {BestValues[instance][90]} & {BestTimes[instance][90]} \\\\')
 
 
 def MergeBounds():
@@ -557,6 +673,8 @@ if __name__ == "__main__":
     MakeLinePlotInstTimeL()
     breakpoint()
     '''
+    ResultsPercHAPs()
+    breakpoint()
     setting = sys.argv[1]
     CM = False
     TTP = False
@@ -566,15 +684,17 @@ if __name__ == "__main__":
         print("Analyze results cost minimization")
         for subfolder in ["CostMinimization", "Karel", "0_100"]:
             FolderPath = os.path.join(FolderPath, subfolder)
-    elif setting== "TTP":
+    elif setting == "TTP":
         TTP = True
         FolderPath = os.path.join(FolderPath, "TTP")
         print("Analyze results TTP")
     elif setting == "Miao":
         Miao = True
         FolderPath = os.path.join(FolderPath, "Miao")
+    elif setting == "Hockey":
+        FolderPath = os.path.join(FolderPath, "Hockey")
     else:
-        print("Specify CM or TTP or Miao")
+        print("Specify CM or TTP or Miao or Hockey")
     FolderPath = os.path.join(FolderPath, "Results")
 
     if not os.path.exists(FolderPath):
