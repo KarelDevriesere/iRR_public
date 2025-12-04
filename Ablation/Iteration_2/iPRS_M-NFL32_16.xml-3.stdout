@@ -1,0 +1,44 @@
+------ Weights ------
+MinCost_M_MinCost_PR: 0.00253316
+Random_M_MinCost_PR: 0.0302067
+C: 0.172709
+PRS: 0.143004
+RS: 0.0296571
+Random_M_Random_PR: 0.199952
+TS: 0.0791731
+PTS: 0.342765
+---------------------
+Test cost minimization
+TimeLimit = 21600
+Max iterations = 10000000
+HistoryLength = 1
+FolderPath: Instances/TTP/
+Read TTP files
+Instance: I_NFL32_16, Type: NULL, Contributor: Trick
+Date: 2025/10/30
+NrTeams = 32, NrRounds =  16
+Solve heuristic
+Solve Vizing
+Found initial solution
+Cost initial solution = 475398
+------ Cumulative Weights ------
+Cumulative weight of MinCost_M_MinCost_PR = 0.00253316
+Cumulative weight of Random_M_MinCost_PR = 0.0327399
+Cumulative weight of C = 0.205449
+Cumulative weight of PRS = 0.348453
+Cumulative weight of RS = 0.37811
+Cumulative weight of Random_M_Random_PR = 0.578062
+Cumulative weight of TS = 0.657235
+Cumulative weight of PTS = 1
+-------------------------------
+start solve
+updated best solution
+Lower bounds = 173493, current objective = 398657
+Total cost after hill climbing = 398657
+start solve
+updated best solution
+max it_idle hit: 862091
+Final cost = 208055
+Travel cost = 208055, Cost violations = 10000 x 0
+Save file as Instances/TTP/Results/Heuristic/I_NFL32_16_s3_HL1000.txt
+Save XML file as Instances/TTP/Results/Heuristic/I_NFL32_16_s3_HL1000.xml
