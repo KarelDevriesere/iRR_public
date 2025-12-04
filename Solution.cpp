@@ -485,14 +485,14 @@ int Solution::ComputeTotalCostMiaoHockey(){
     // cout << "HAP cost = " << HA_cost << endl;
     int opp_cost = ComputeCostNonEligibleOpponents();
     // cout << "Non-eligible opponents cost = " << opp_cost << endl;
-    int same_club_cost = ComputeCostSameClub();
+    // int same_club_cost = ComputeCostSameClub();
     // cout << "Cost of playing too many times vs team same club = " << same_club_cost << endl;
     int DRR_cost = 0;
     if (!SRR){
         DRR_cost += ComputeCost2RRConstraint();
         // cout << "DRR cost = " << DRR_cost << endl;
     }
-    return travel_cost + HA_cost + opp_cost + same_club_cost + DRR_cost;
+    return travel_cost + HA_cost + opp_cost + DRR_cost;
 }
 
 int Solution::ComputeTTPViolations(const int i){
