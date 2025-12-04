@@ -159,9 +159,6 @@ std::string FolderPath(const InputData& data) {
     if (data.TTP){
         folder_path =  "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP);
     }
-    else if (data.CM){
-        folder_path = "Instances" + std::string(PATHSEP) + "CostMinimization" + std::string(PATHSEP) + "Karel" + std::string(PATHSEP) + "0_100" + std::string(PATHSEP);
-    }
     else if (data.Hockey){
         folder_path = "Instances" + std::string(PATHSEP) + "Hockey"  + std::string(PATHSEP);
     }
@@ -323,51 +320,6 @@ void SolveLeagueByLeague(Input& in, const InputData& data, const bool ComputeTra
     return;
 }
 
-int RF_Miao(Input& in, const int TimeLimitRF){
-
-	// This is not part of GurSolver since we cannot change the variable type once this is defined in Gurobi
-	// Instead, we should create a new model, so it's best to define this function outside GurSolver and create seperate gur objects
-
-    int dur = 0;
-    Solution sol(in);
-    GurSolver gur_relax(in);
-
-	// relax x_ijr variables:
-	bool relax_x = true;
-
-	const bool min_travel = true;
-	const bool min_capacity_violations = false;
-    gur_relax.BuildMiaoFormulation(relax_x, min_travel, min_capacity_violations);
-    gur_relax.setTimeLimit(TimeLimitRF);
-    gur_relax.TrackTimeBestSolution = true;
-
-    // cout << "solve model" << endl;
-	int lb = gur_relax.solve();
-    if (lb < 0){ // no solution found during assigning HAPs
-        return -1;
-    }
-    dur += gur_relax.getTimeTillBestSolution();
-    // cout << "Lower bound = " << lb << endl;
-
-    // other alternative: just find a feasible hap assignment
-    // gur_relax.AssignHAPsToTeams(sol); -> but then infeasible in next stage!
-
-    gur_relax.StoreHAPs(sol);
-
-    GurSolver gur_fix(in);
-    relax_x = false;
-    gur_fix.Fix_y_Patterns(sol);
-    gur_fix.BuildMiaoFormulation(relax_x, min_travel, min_capacity_violations);
-    gur_fix.setTimeLimit(TimeLimitRF);
-    gur_fix.TrackTimeBestSolution = true;
-
-    gur_fix.solve();
-    gur_fix.SaveSolution(sol);
-    dur += gur_fix.getTimeTillBestSolution();
-    // cout << "solution found!!" << endl;
-
-    return dur;
-}
 
 void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data){
     // Find initial solution with Vizing
@@ -471,50 +423,53 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     cout << "Cost initial solution = " << obj << endl;
 
     std::mt19937 gen(data.seed);
-    int HL = data.HistoryLength;
-    int TL = data.TimeLimit;
-    if (data.HillClimbingFirst){
-        HL = 1;
+    int HL = 1;
+    if (data.HistoryLengthProvided){
+        HL = data.HistoryLength;
     }
+    int TL = data.TimeLimit;
     Heuristic_CM algo(data.Moves, data.InputWeights, gen, HL, obj);
+    if (!data.HistoryLengthProvided){
+        algo.MakeHistoryLengthDynamic();
+    }
+    algo.SetPerturbeIncrease(data.PerturbeIncrease);
     algo.setTimeLimit_meta(TL);
     algo.SetMaxIt(data.MaxIt);
     algo.SetTimeStamps(TimeStamps);
 
-    if (data.HillClimbingFirst){
-        algo.AddLowerBound(InstanceBound.at(in.getInstanceName()));
-        algo.AddLowerBoundStoppingCriterion(data.LowerBoundGap);
-        algo.solve(in, sol);
-
-        algo.SaveBestSolution(sol);
-        sol.validate();
-
-        obj = sol.ComputeTotalCost();
-        cout << "Total cost after hill climbing = " << sol.ComputeTotalCost() << endl;
-        algo.SetHistoryLength(data.HistoryLength);
-        algo.InitializeHistoricValues(obj);
-        algo.AddLowerBoundStoppingCriterion(1.0);
-    }
+    // algo.AddLowerBound(InstanceBound.at(in.getInstanceName()));
+    // algo.AddLowerBoundStoppingCriterion(data.LowerBoundGap);
     algo.solve(in, sol);
 
     int NrViolations = 0;
+    sol.SetOneCostAllViolations(1);
     if (data.TTP){
-        sol.SetOneCostAllViolations(1);
         NrViolations = sol.ComputeTotalCostTTPViolations();
-        if (NrViolations > 0){
-            cout << "Solution not feasible, nr of violations = " << NrViolations << endl;
-            cout << "Start hill climbing" << endl;
-            // Hill climbing
-            sol.SetOneCostAllViolations(100000);
-            obj = sol.ComputeTotalCost();
-            algo.SetHistoryLength(1);
-            algo.setTimeLimit_meta(2*data.TimeLimit);
-            algo.solve(in, sol);
-            sol.SetOneCostAllViolations(1);
+    }
+    else{
+        NrViolations = sol.ComputeTotalCostMiaoHockey() - sol.ComputeTravelCost();
+        cout << "TravelCost = " << sol.ComputeTravelCost() << endl;
+        cout << "HA Cost = " << sol.ComputeTotalHACost() << endl;
+        cout << "Eligible opponents cost = " << sol.ComputeCostNonEligibleOpponents() << endl;
+    }
+    if (NrViolations > 0){
+        cout << "Solution not feasible, nr of violations = " << NrViolations << endl;
+        cout << "Start hill climbing" << endl;
+        // Hill climbing
+        sol.SetOneCostAllViolations(100000);
+        obj = sol.ComputeTotalCost();
+        algo.SetHistoryLength(1);
+        algo.setTimeLimit_meta(2*data.TimeLimit);
+        algo.solve(in, sol);
+        sol.SetOneCostAllViolations(1);
+        if (data.TTP){
             NrViolations = sol.ComputeTotalCostTTPViolations();
-            cout << "Final nr of violations = " << NrViolations << endl;
-            sol.SetOneCostAllViolations(100000);
         }
+        else{
+            NrViolations = sol.ComputeTotalCostMiaoHockey() - sol.ComputeTravelCost();
+        }
+        cout << "Final nr of violations = " << NrViolations << endl;
+        sol.SetOneCostAllViolations(100000);
     }
 
     algo.SaveBestSolution(sol);
@@ -579,14 +534,10 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     bool HA = true;
     bool relax_x = false;
     const bool min_travel = true, min_cap = false;
-    if (in.getSetting() == Setting::CM){
-        gur.build_base(HA, relax_x);
-        gur.AddObjGeneralCosts();
-    }
-    else if (in.getSetting() == Setting::TTP){
-        // gur.iTTP();
-        gur.iTTP_TripModel();
-        gur.Fix_x(sol);
+    if (in.getSetting() == Setting::TTP){
+        gur.iTTP();
+        // gur.iTTP_TripModel();
+        // gur.Fix_x(sol);
     }
     else{
         // IP without patterns:
@@ -706,11 +657,7 @@ void TestCostMinimization(InputData& data){
     }
 
     Input in;
-    if (data.CM && !in.read_CostMinimization(file_path, InstanceSetCM::Karel)){
-        cout << "Could not read CM path " << file_path << endl;
-        return;
-    }
-    else if (data.TTP && !in.read_TTP(file_path)){
+    if (data.TTP && !in.read_TTP(file_path)){
         cout << "could not read TTP path " << file_path << endl;
         return;
     }
@@ -771,9 +718,6 @@ void TestCostMinimization(InputData& data){
     }
     else if (data.RunMiaoAlgo){
         SolveMiaoHeuristic(in,TimeStamps,folder_path,data);
-    }
-    else if (data.RunMiaoRF){
-        RF_Miao(in, data.TimeLimit);
     }
     else{
         SolveIP(in,TimeStamps,folder_path,data);

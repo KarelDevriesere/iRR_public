@@ -203,15 +203,42 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
             this->UpdateTimeStamps();
 	
             if (this->getTimeDiff() > this->TIME_LIMIT || (++this->it > MAX_IT && this->it_idle > this->it*0.02) || (this->LowerBound >= 0 && obj <= this->LowerBoundGap*this->LowerBound)){
-                this->STOP = true;
                 if (this->getTimeDiff() > this->TIME_LIMIT){
                     cout << "Time limit hit" << endl;
+                    this->STOP = true;
                 }
                 else if (this->LowerBound >= 0 && obj <= this->LowerBoundGap*this->LowerBound){
                     cout << "Lower bounds = " << this->LowerBound << ", current objective = " << obj << endl;
+                    this->STOP = true;
                 }
                 else{
                     cout << "max it_idle hit: " << this->it_idle << endl;
+                    if (!DynamicHL){
+                        this->STOP = true;
+                    }
+                    else{
+                        // cout << "-------------------------" << endl;
+                        // cout << "Previous HL = " << HistoryLength << endl;
+                        if (HistoryLength*2 <= 50000){
+                            HistoryLength *= 2;
+                            cout << "New HistoryLength = " << HistoryLength << endl;
+                        }
+                        // cout << "New HL = " << HistoryLength << endl;
+                        // cout << "Previous PerturbValue = " << PerturbeValue << endl;
+                        PerturbeValue += PerturbeIncrease;
+                        // cout << "New PerturbValue = " << PerturbeValue << endl;
+                        InitializeHistoricValues(this->best_obj+PerturbeValue+1000);
+                        // cout << "Historic Values = ";
+                        /*
+                        for (auto& v: HistoricValues){
+                            cout << v  << ", ";
+                        }
+                            */
+                        // cout << endl;
+                        // cout << "-------------------------" << endl;
+                        this->it_idle = 0;
+                        this->it = 0;
+                    }
                 }
             }
             // cin.get();

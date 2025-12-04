@@ -67,13 +67,10 @@ struct InputData{
     bool Heuristic = 1;
     bool HistoryLengthProvided = false;
     int HistoryLength = 1;
-    int NrTeams = 36; // CM
+    int PerturbeIncrease = 100;
     int NrRounds = 4; // TTP
-    int k = 5; // CM
-    int inst = 0; // CM
     int TimeLimit = 7200;
-    int MaxIt = 10000000;
-    bool CM = true; // CM
+    long MaxIt = 100000;
     bool TTP = false; // TTP
     bool Base = false;
     long ConstrViolationCost = 100000;
@@ -87,9 +84,6 @@ struct InputData{
 
     bool MinCost = false;
     string OutputFolder;
-
-    bool HillClimbingFirst = false;
-    double LowerBoundGap = 1.0;
 
     bool RunMiaoAlgo = false;
     bool RunMiaoRF = false;
