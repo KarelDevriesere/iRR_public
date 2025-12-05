@@ -877,7 +877,7 @@ bool Input::HAP_satisfies_all_requirements(const vector<HA>& HAP){
 int Input::read_HAPs(){
     std::string file_path = "Patterns" + std::string(PATHSEP);
     if (Setting_ == Setting::TTP){
-        file_path += "iTTPPatterns" + std::string(PATHSEP) + "patterns_" + to_string(NrRounds) + "_ittp.txt";
+        file_path += "iTTPPattern" + std::string(PATHSEP) + "patterns_" + to_string(NrRounds) + "_ittp.txt";
     }
     else{
         file_path += "patterns_" + to_string(NrRounds) + "_";
