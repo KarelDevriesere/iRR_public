@@ -23,12 +23,19 @@ class GurSolver : public Input
         GRBEnv env;
         GRBModel model;
         GRBLinExpr Objective;
+        vector<vector<vector<GRBVar>>>x_tir;
         vector<vector<vector<GRBVar>>> x;
         vector<vector<GRBVar>>v;
         vector<vector<GRBVar>>b;
         vector<vector<GRBVar>>y;
         vector<vector<vector<GRBVar>>>z; // for TTP
+        vector<vector<GRBVar>>z_tr; // TTP trip model
+        vector<vector<vector<GRBVar>>>z_trs; // TTP trip model
         vector<vector<HA>>Orientation;
+
+        vector<vector<vector<int>>>Trips;
+	    vector<vector<int>>CostTrips;
+	    int NrTrips;
 
         vector<vector<vector<GRBConstr>>>Constraints_fixed_variables; // per team per round
 
@@ -136,10 +143,12 @@ class GurSolver : public Input
             output_file << "Final, " << getBestObjValue() << "," << getBestBound() << "\n" << endl;
         }
 
+        bool TripModelTTP = false;
         void iTTP_TripModel();
 
         // For TTP bounds:
         pair<vector<vector<int>>,vector<int>>GenerateTrips(const int t, const vector<int>& TeamsList);
+        pair<vector<vector<int>>,vector<int>>GenerateTrips_TripModel(const int t, const vector<int>& TeamsList, const int MinTripLength);
         void BoundTTP_AllTeams(const int minTrips);
         void BoundTTP(const int t);
         // Add LB to the model
