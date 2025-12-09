@@ -60,6 +60,9 @@ pair<vector<vector<int>>,vector<int>>GurSolver::GenerateTrips(const int t, const
 					continue;
 				}
 				Trips.push_back({TeamsList[i], TeamsList[k], TeamsList[j]});
+				if (t == 10){
+					cout << "{" << TeamsList[i] << "," << TeamsList[k] << "," << TeamsList[j] << "}" << endl;
+				}
 				dist = getDistanceTeams(t,TeamsList[i]) + getDistanceTeams(TeamsList[i],TeamsList[k]) + getDistanceTeams(TeamsList[k],TeamsList[j]) + getDistanceTeams(TeamsList[j],t);
 				CostTrips.push_back(dist);
 			}
@@ -75,6 +78,56 @@ pair<vector<vector<int>>,vector<int>>GurSolver::GenerateTrips(const int t, const
 	return {Trips,CostTrips};
 }
 
+
+pair<vector<vector<int>>,vector<int>>GurSolver::GenerateTrips_TripModel(const int t, const vector<int>& TeamsList, const int MinTripLength){
+	// Here, the order of the teams matters!!!!
+	const int N = getNrTeams();
+	vector<vector<vector<int>>>TripleSeen(N, vector<vector<int>>(N, vector<int>(N, false)));
+	vector<vector<int>>Trips;
+	vector<int>CostTrips;
+	int i,j,k,dist; 
+	for (i = 0; i < N-1; ++i) {
+        for (j = i+1; j < N-1; ++j) {
+            for (k = 0; k < N-1; ++k) {
+                if (k == i || k == j){
+					continue;
+				}
+				if (getNrRounds() >= 6){
+					Trips.push_back({TeamsList[i], TeamsList[k], TeamsList[j]});
+					Trips.push_back({TeamsList[j], TeamsList[k], TeamsList[i]});
+					dist = getDistanceTeams(t,TeamsList[i]) + getDistanceTeams(TeamsList[i],TeamsList[k]) + getDistanceTeams(TeamsList[k],TeamsList[j]) + getDistanceTeams(TeamsList[j],t);
+					CostTrips.push_back(dist);
+					CostTrips.push_back(dist);
+				}
+			}
+			if (MinTripLength < 3){
+				Trips.push_back({TeamsList[i], TeamsList[j]});
+				Trips.push_back({TeamsList[j], TeamsList[i]});
+				dist = getDistanceTeams(t,TeamsList[i]) + getDistanceTeams(TeamsList[i],TeamsList[j]) + getDistanceTeams(TeamsList[j],t);
+				CostTrips.push_back(dist);
+				CostTrips.push_back(dist);
+			}
+        }
+		if (MinTripLength < 2){
+			Trips.push_back({TeamsList[i]});
+			dist = 2*getDistanceTeams(t,TeamsList[i]);
+			CostTrips.push_back(dist);
+		}
+    }
+	int SumTripLength = 0;
+	if (getNrRounds() >= 6 && MinTripLength <= 3){
+		SumTripLength += ((N-1)*(N-2)*(N-3));
+	}
+	if (MinTripLength <= 2){
+		SumTripLength += ((N-1)*(N-2));
+	}
+	if (MinTripLength <= 1){
+		SumTripLength += (N-1);
+	}
+	assert(Trips.size() == SumTripLength);
+	return {Trips,CostTrips};
+}
+
 bool IsTeamInTrip(const int i, vector<int>& trip){
 	for (auto& opp: trip){
 		if (opp == i){
@@ -86,14 +139,50 @@ bool IsTeamInTrip(const int i, vector<int>& trip){
 
 void GurSolver::iTTP_TripModel(){
 
+	cout << "build trip model" << endl;
+
+	TripModelTTP = true;
+
 	const int N = getNrTeams();
 	const int R = getNrRounds();
-	int t,i,j,r,s;
+	int NrHaps = getNrHAPs();
+	cout << "NrHaps included in model = " << NrHaps << endl;
+ 	int t,i,j,r,s,h;
+
+	// Compute the least number of consecutive A's: this will be the minimum trip length
+	// Convenient when, for example, doing BRA24_6: HHHAAA and AAAHHH: take only trips of lenght 3 into account
+
+	int MinTripLength = 3;
+	int TripLength = 3;
+	for (h = 0; h < NrHaps; ++h){
+		if (getModeHAPRound(h,0)==HA::A){
+			TripLength = 1;
+		}
+		for (r = 1; r < R; ++r){
+			if (getModeHAPRound(h,r)==HA::A){
+				TripLength++;
+			}
+			else{
+				if (getModeHAPRound(h,r-1)==HA::A){
+					if (TripLength < MinTripLength){
+						MinTripLength = TripLength;
+						if (MinTripLength == 1){
+							break;
+						}
+					}
+					TripLength = 0;
+				}
+			}
+		}
+		if (MinTripLength == 1){
+			break;
+		}
+	}
+	cout << "MinTripLength = " << MinTripLength << endl;
 
 	vector<pair<vector<vector<int>>,vector<int>>>Trips_CostTrips(N);
-	vector<vector<vector<int>>>Trips(N);
-	vector<vector<int>>CostTrips(N);
-	int NrTrips;
+	Trips = vector<vector<vector<int>>>(N);
+	CostTrips = vector<vector<int>>(N);
 	for (t = 0; t < N; ++t){
 		vector<int>TeamsList(N-1);
 		for (i = 0, j = -1; i < N; ++i){
@@ -101,7 +190,7 @@ void GurSolver::iTTP_TripModel(){
 				TeamsList[++j] = i;
 			}
 		}
-		Trips_CostTrips[t] = GenerateTrips(t, TeamsList);
+		Trips_CostTrips[t] = GenerateTrips_TripModel(t, TeamsList, MinTripLength);
 		Trips[t] = Trips_CostTrips[t].first;
 		CostTrips[t] = Trips_CostTrips[t].second;
 		NrTrips = CostTrips[t].size();
@@ -110,105 +199,149 @@ void GurSolver::iTTP_TripModel(){
 		}
 	}
 
-	z = vector<vector<vector<GRBVar>>>(N, vector<vector<GRBVar>>(NrTrips, vector<GRBVar>(R)));
+	z_trs = vector<vector<vector<GRBVar>>>(N, vector<vector<GRBVar>>(NrTrips, vector<GRBVar>(R)));
 	for (t = 0; t < N; ++t){
 		for (r = 0; r < NrTrips; ++r){
+			int L = Trips[t][r].size();
 			for (s = 0; s < R; ++s){
-				z[t][r][s] = model.addVar(0, 1, 0.0, GRB_BINARY);
-			}
-		}
-	}
-
-	for (t = 0; t < N; ++t){
-		for (i = 0; i < N; ++i){
-			if (i == t){
-				continue;
-			}
-			GRBLinExpr sum_sr_t = 0;
-			GRBLinExpr sum_sr_i = 0;
-			for (s = 0; s < R; ++s){
-				for (r = 0; r < NrTrips; ++r){
-					if (IsTeamInTrip(i, Trips[t][r])){
-						sum_sr_t += z[t][r][s];
-					}
-					if (IsTeamInTrip(t, Trips[i][r])){
-						sum_sr_i += z[i][r][s];
-					}
-				}
-			}
-			model.addConstr(sum_sr_t + sum_sr_i <= 1);
-		}
-	}
-
-	int L_r = 0, L_i = 0;
-	for (t = 0; t < N; ++t){
-		GRBLinExpr sum_sr_t = 0;
-		GRBLinExpr sum_sr_i = 0;
-		for (r = 0; r < NrTrips; ++r){
-			L_r = (int)Trips[t][r].size();
-			for (s = 0; s < R; ++s){
-				sum_sr_t += (z[t][r][s]*L_r);
-				for (i = 0; i < N; ++i){
-					if (IsTeamInTrip(t, Trips[i][r])){
-						L_i = (int)Trips[i][r].size();
-						sum_sr_i += (z[i][r][s]*L_i);
-					}
+				z_trs[t][r][s] = model.addVar(0, 1, 0.0, GRB_BINARY, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]");
+				if (s+L > R){
+					z_trs[t][r][s].set(GRB_DoubleAttr_UB, 0.0); // trip cannot start in this round
 				}
 			}
 		}
-		model.addConstr(sum_sr_t == R/2);
-		model.addConstr(sum_sr_i == R/2);
 	}
 
+	y = vector<vector<GRBVar>>(N, vector<GRBVar>(NrHaps));
 	for (t = 0; t < N; ++t){
-		for (s = 0; s < R-3; ++s){
-			GRBLinExpr sum_zr_t = 0;
-			GRBLinExpr sum_zr_i = 0;
-			for (int k = s; k < s+4; k++){
+		for (h = 0; h < NrHaps; ++h){
+			y[t][h] = model.addVar(0, 1, 0.0, GRB_BINARY, "y[" + to_string(t) + "," + to_string(h) + "]");
+		}
+	}
+
+	cout << "c1" << endl;
+
+	for (t = 0; t < N; ++t){
+		GRBLinExpr sum_h = 0;
+		for (h = 0; h < NrHaps; ++h){
+			sum_h += y[t][h];
+		}
+		model.addConstr(sum_h == 1, "c1"); // each team is assigned to exactly 1 hap
+	}
+
+	cout << "c2" << endl;
+
+	for (t = 0; t < N; ++t){
+		for (i = t+1; i < N; ++i){
+			GRBLinExpr sum_rs = 0;
+			for (r = 0; r < NrTrips; r++){
+				bool team_found = false;
+				for (auto& opp: Trips[i][r]){
+					if (opp == t){
+						team_found = true;
+						break;
+					}
+				}
+				if (team_found){
+					for (s = 0; s < R; s++){
+						sum_rs += z_trs[i][r][s];
+					}
+				}
+				team_found = false;
+				for (auto& opp: Trips[t][r]){
+					if (opp == i){
+						team_found = true;
+						break;
+					}
+				}
+				if (team_found){
+					for (s = 0; s < R; s++){
+						sum_rs += z_trs[t][r][s];
+					}
+				}
+			}
+			model.addConstr(sum_rs <= 1, "c2");
+		}
+	}
+
+	cout << "c3" << endl;
+
+	for (t = 0; t < N; ++t){
+		for (s = 0; s < R; s++){
+			GRBLinExpr sum_rsh = 0;
+			for (r = 0; r < NrTrips; ++r){
+				int L = Trips[t][r].size();
+				for (int s_ = max(s-L+1, 0); s_ <= s; s_++){
+					sum_rsh += z_trs[t][r][s_];
+				}
+			}
+			for (h = 0; h < NrHaps; ++h){
+				if (getModeHAPRound(h,s) == HA::A){
+					sum_rsh -= y[t][h];
+				}
+			}
+			model.addConstr(sum_rsh == 0, "c3");
+		}
+	}
+
+	cout << "c$" << endl;
+
+	for (t = 0; t < N; ++t){
+		for (s = 0; s < R; s++){
+			GRBLinExpr sum_rsh = 0;
+			for (i = 0; i < N; ++i){
 				for (r = 0; r < NrTrips; ++r){
-					L_r = (int)Trips[t][r].size();
-					sum_zr_t += (z[t][r][k]*L_r);
-					for (i = 0; i < N; ++i){
-						if (IsTeamInTrip(t, Trips[i][r])){
-							L_i = (int)Trips[i][r].size();
-							sum_zr_i += (z[i][r][k]*L_i);
+					int L = Trips[i][r].size();
+					for (int s_ = max(s-L+1, 0); s_ <= s; s_++){
+						for (int l = 0; l < L; ++l){
+							if (Trips[i][r][l] == t && s_+l == s){
+								sum_rsh += z_trs[i][r][s_];
+							}
 						}
 					}
 				}
 			}
-			model.addConstr(sum_zr_t <= 3);
-			model.addConstr(sum_zr_i <= 3);
+			for (h = 0; h < NrHaps; ++h){
+				if (getModeHAPRound(h,s) == HA::H){
+					sum_rsh -= y[t][h];
+				}
+			}
+			model.addConstr(sum_rsh == 0, "c4");
 		}
 	}
 
-	cout << "sum_trips" << endl;
-	int L_q = 0;
-	for (t = 0; t < N; ++t){
-		cout << "t = " << t << endl;
+	/*
+	// Can't we leave this constraint because of Triangle inequality????
+
+	for (t = 0; t < getNrTeams(); ++t){
 		for (r = 0; r < NrTrips; ++r){
-			for (int q = 0; q < NrTrips; ++q){
-				if (q == r){
-					continue;
-				}
-				for (s = 0; s < R; ++s){
-					for (int k = s; k < std::min(R, s+L_r); ++k){
-						model.addConstr(z[t][r][s]+z[t][q][k] <= 1);
+			for (s = 1; s < R; ++s){
+				GRBLinExpr sum_h = 0;
+				for (h = 0; h < getNrHAPs(); ++h){
+					if (getModeHAPRound(h,s-1) == HA::H){
+						sum_h += y[t][h];
 					}
 				}
+				model.addConstr(z_trs[t][r][s] <= sum_h, "c5");
 			}
 		}
 	}
+	*/
+
+	cout << "objective" << endl;
 
 	Objective = 0;
 	for (t = 0; t < N; ++t){
 		for (r = 0; r < NrTrips; ++r){
 			for (s = 0; s < R; ++s){
-				Objective += CostTrips[t][r]*z[t][r][s];
+				Objective += CostTrips[t][r]*z_trs[t][r][s];
 			}
 		}
 	}
+	
 	model.setObjective(Objective, GRB_MINIMIZE);
-	// PRINT SOLUTION!!!
+
+	cout << "done" << endl;
 }
 
 void GurSolver::BoundTTP_AllTeams(const int minTrips){
@@ -1239,26 +1372,83 @@ int GurSolver::getBestBound(){
 
 void GurSolver::SaveSolution(Solution& sol){
 	sol.clear();
-	for (int i = 0; i < getNrTeams(); ++i){
-		for (int r = 0; r < getNrRounds(); ++r){
-			for (int j = 0; j < getNrTeams(); ++j){
-				if (!isEligible(i,j)){
-					continue;
-				}
-				if (x[i][j][r].get(GRB_DoubleAttr_X) > 0.9){
-					sol.TeamColorOpp[j][r] = i;
-					sol.TeamColorOpp[i][r] = j;
-					sol.MatchColor[i][j] = r;
-					if (SRR){
-						sol.MatchColor[j][i] = r;
+	if (TripModelTTP){
+		vector<int>dist_team(getNrTeams(),0);
+
+		for (int t = 0; t < getNrTeams(); ++t){
+			// cout << "Trips team " << t << ": " << endl;
+			for (int r = 0; r < NrTrips; ++r){
+				for (int s = 0; s < getNrRounds(); ++s){
+					if (z_trs[t][r][s].get(GRB_DoubleAttr_X) > 0.9){
+						// cout << "-------" << endl;
+						// cout << "start trip in " << s << endl;
+						// cout << "cost = " << CostTrips[t][r] << endl;
+						dist_team[t] += CostTrips[t][r];
+						// cout << "length = " << Trips[t][r].size() << endl;
+						for (int l = 0; l < Trips[t][r].size(); ++l){
+							int j = Trips[t][r][l];
+							// cout << j << endl;
+							sol.TeamColorOpp[t][s+l] = j;
+							sol.TeamColorOpp[j][s+l] = t;
+							sol.MatchColor[t][j] = s+l;
+							if (SRR){
+								sol.MatchColor[j][t] = s+l;
+							}
+							sol.Orientation[j][s+l] = HA::H;
+							sol.Orientation[t][s+l] = HA::A;
+							int count_hap_t = 0;
+							int count_hap_j = 0;
+							for (int h = 0; h < getNrHAPs(); ++h){
+								if (y[t][h].get(GRB_DoubleAttr_X) > 0.9){
+									assert(getModeHAPRound(h,s+l) == HA::A);
+									count_hap_t++;
+								}
+								if (y[j][h].get(GRB_DoubleAttr_X) > 0.9){
+									assert(getModeHAPRound(h,s+l) == HA::H);
+									count_hap_j++;
+								}
+							}
+							assert(count_hap_t == 1);
+							assert(count_hap_j == 1);
+						}
+						// cout << "-------" << endl;
 					}
-					sol.Orientation[i][r] = HA::H;
-					sol.Orientation[j][r] = HA::A;
+				}
+			}
+		}
+		for (int t = 0; t < getNrTeams(); ++t){
+			if (dist_team[t] != sol.ComputeTravelCostTeamTTP(t)){
+				cout << "dist_team " << t << " = " << dist_team[t] << " but real travel dist = " << sol.ComputeTravelCostTeamTTP(t) << endl;
+			}
+		}
+	}
+	else{
+		for (int r = 0; r < getNrRounds(); ++r){ 
+			// cout << "-------" << endl;
+			// cout << "Round " << r << endl;
+			// cout << "-------" << endl;
+			for (int i = 0; i < getNrTeams(); ++i){
+				for (int j = 0; j < getNrTeams(); ++j){
+					if (!isEligible(i,j)){
+						continue;
+					}
+					if (x[i][j][r].get(GRB_DoubleAttr_X) > 0.9)
+					{
+						sol.TeamColorOpp[j][r] = i;
+						sol.TeamColorOpp[i][r] = j;
+						sol.MatchColor[i][j] = r;
+						if (SRR){
+							sol.MatchColor[j][i] = r;
+						}
+						sol.Orientation[i][r] = HA::H;
+						sol.Orientation[j][r] = HA::A;
+						// cout << i << " - " << j << endl;
+					}
 				}
 			}
 		}
 	}
-
+	// cin.get();
 }
 
 void GurSolver::SaveSolutionLeague(Solution& sol, const int l){

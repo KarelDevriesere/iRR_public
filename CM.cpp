@@ -535,8 +535,8 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     bool relax_x = false;
     const bool min_travel = true, min_cap = false;
     if (in.getSetting() == Setting::TTP){
-        gur.iTTP();
-        // gur.iTTP_TripModel();
+        // gur.iTTP();
+        gur.iTTP_TripModel();
         // gur.Fix_x(sol);
     }
     else{
@@ -581,6 +581,15 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     gur.solve();
     cout << "save solution" << endl;
     gur.SaveSolution(sol);
+    cout << "test whether solution is feasible" << endl;
+    sol.validate();
+    cout << "Travel cost = " << sol.ComputeTotalCostTTP() << endl;
+    GurSolver gur_validate(in);
+    gur_validate.iTTP();
+    gur_validate.Fix_x(sol);
+    gur_validate.solve();
+    cout << "feasible!!" << endl;
+
     // Save solution in file:
     if (in.getSetting() == Setting::Miao || (in.getSetting() == Setting::Hockey && min_cap)){
         string FilePathVcr = "Instances" + string(PATHSEP);
@@ -607,8 +616,8 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     string config;
     
     if (in.getSetting() == Setting::TTP){
-        FilePath = FolderPath + "Results" + std::string(PATHSEP) + "IP" + std::string(PATHSEP) + data.Instance + "_" + to_string(in.getNrRounds()) + ".txt";
-        config = to_string(data.seed) + ",IP," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
+        FilePath = FolderPath + "Results" + std::string(PATHSEP) + "IP_TripModel" + std::string(PATHSEP) + sol.getInstanceName() + ".txt";
+        config = to_string(data.seed) + ",IP_TripModel," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
     }
     else if (in.getSetting() == Setting::Miao){
         FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "IP" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
@@ -699,7 +708,7 @@ void TestCostMinimization(InputData& data){
         data.HistoryLength = InstanceHL.at(in.getInstanceName()); 
     }
 
-    if (data.TTP && data.RunMiaoAlgo){
+    if (data.TTP /*&& data.RunMiaoAlgo*/){ // Do this also for IP!!!
         in.read_HAPs();
         if (data.PercentageHAPs < 100){
             double NrPromisingHAPs = in.getNrHAPs()*((double)data.PercentageHAPs/100.0);
