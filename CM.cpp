@@ -617,7 +617,7 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     string config;
     
     if (in.getSetting() == Setting::TTP){
-        FilePath = FolderPath + "Results" + std::string(PATHSEP) + "IP_TripModel" + std::string(PATHSEP) + sol.getInstanceName() + ".txt";
+        FilePath = FolderPath + "Results" + std::string(PATHSEP) + "IP_TripModel" + std::string(PATHSEP) + sol.getInstanceName() + "_" + to_string(data.PercentageHAPs) + ".txt";
         config = to_string(data.seed) + ",IP_TripModel," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
     }
     else if (in.getSetting() == Setting::Miao){

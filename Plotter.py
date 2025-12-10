@@ -285,8 +285,12 @@ def ResultsInstances(InstanceSetting):
 
 def ResultsPercHAPs():
     Path = os.path.join(os.path.join(os.path.join("Instances", "TTP"), "Results"), "MiaoAlgo")
-    Instances = ["I_BRA24_18", "I_CIRC40_20", "I_CON40_20", "I_GAL40_20", "I_INCR40_20", "I_LINE40_20", "I_NFL32_24", "I_NL16_12"]
+    Instances = []
+    for key in NrRoundsTTP.keys():
+        for round_ in NrRoundsTTP[key]:
+            Instances.append("I_"+key+"_"+str(round_))
     Percentages = [10, 30, 50, 70, 90]
+    Seeds = [0,11,42,154,396,588,1217,2486,5003,10000]
     Values = {inst: {perc: [] for perc in Percentages} for inst in Instances}
     Times = {inst: {perc: [] for perc in Percentages} for inst in Instances}
     BestValues = {inst: {perc: -1 for perc in Percentages} for inst in Instances}
@@ -673,8 +677,8 @@ if __name__ == "__main__":
     MakeLinePlotInstTimeL()
     breakpoint()
     '''
-    ResultsPercHAPs()
-    breakpoint()
+    # ResultsPercHAPs()
+    # breakpoint()
     setting = sys.argv[1]
     CM = False
     TTP = False
