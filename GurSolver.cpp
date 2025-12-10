@@ -199,19 +199,6 @@ void GurSolver::iTTP_TripModel(){
 		}
 	}
 
-	z_trs = vector<vector<vector<GRBVar>>>(N, vector<vector<GRBVar>>(NrTrips, vector<GRBVar>(R)));
-	for (t = 0; t < N; ++t){
-		for (r = 0; r < NrTrips; ++r){
-			int L = Trips[t][r].size();
-			for (s = 0; s < R; ++s){
-				z_trs[t][r][s] = model.addVar(0, 1, 0.0, GRB_BINARY, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]");
-				if (s+L > R){
-					z_trs[t][r][s].set(GRB_DoubleAttr_UB, 0.0); // trip cannot start in this round
-				}
-			}
-		}
-	}
-
 	y = vector<vector<GRBVar>>(N, vector<GRBVar>(NrHaps));
 	for (t = 0; t < N; ++t){
 		for (h = 0; h < NrHaps; ++h){
@@ -227,6 +214,19 @@ void GurSolver::iTTP_TripModel(){
 			sum_h += y[t][h];
 		}
 		model.addConstr(sum_h == 1, "c1"); // each team is assigned to exactly 1 hap
+	}
+
+	z_trs = vector<vector<vector<GRBVar>>>(N, vector<vector<GRBVar>>(NrTrips, vector<GRBVar>(R)));
+	for (t = 0; t < N; ++t){
+		for (r = 0; r < NrTrips; ++r){
+			int L = Trips[t][r].size();
+			for (s = 0; s < R; ++s){
+				z_trs[t][r][s] = model.addVar(0, 1, 0.0, GRB_CONTINUOUS, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]");
+				if (s+L > R){
+					z_trs[t][r][s].set(GRB_DoubleAttr_UB, 0.0); // trip cannot start in this round
+				}
+			}
+		}
 	}
 
 	cout << "c2" << endl;
