@@ -241,6 +241,19 @@ void GurSolver::iTTP_TripModel(){
 		model.addConstr(sum_h == 1/*, "c1"*/); // each team is assigned to exactly 1 hap
 	}
 
+	z_trs = vector<vector<vector<GRBVar>>>(N, vector<vector<GRBVar>>(NrTrips, vector<GRBVar>(R)));
+	for (t = 0; t < N; ++t){
+		for (r = 0; r < NrTrips; ++r){
+			int L = Trips[t][r].size();
+			for (s = 0; s < R; ++s){
+				z_trs[t][r][s] = model.addVar(0, 1, 0.0, GRB_CONTINUOUS, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]");
+				if (s+L > R){
+					z_trs[t][r][s].set(GRB_DoubleAttr_UB, 0.0); // trip cannot start in this round
+				}
+			}
+		}
+	}
+
 	cout << "c2" << endl;
 
 	for (t = 0; t < N; ++t){
@@ -734,9 +747,9 @@ void GurSolver::FixHAP(Solution& sol){
 		int nr_H = 0;
 		int nr_A = 0;
 		for (int r = 0; r < getNrRounds(); ++r){
-			assert(Orientation[i][r] == HA::H || Orientation[i][r] == HA::A);
+			assert(sol.Orientation[i][r] == HA::H || sol.Orientation[i][r] == HA::A);
 			int nr_opp = 0;
-			if (Orientation[i][r] == HA::H){
+			if (sol.Orientation[i][r] == HA::H){
 				nr_H++;
 				for (int j = 0; j < getNrTeams(); ++j){
 					if (!isEligible(i, j)){
@@ -761,10 +774,7 @@ void GurSolver::FixHAP(Solution& sol){
 			}
 			// assert(nr_opp == 1);
 		}
-		if (!isTeamDummy(i)){
-			// cout << "team " << i << " has " << nr_H << " games and " << nr_A << " away games in " << getNrRounds() << " rounds" << endl;
-			assert(nr_H == Half && nr_A == Half);
-		}
+		assert(nr_H == Half && nr_A == Half);
 	}
 }
 

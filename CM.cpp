@@ -333,8 +333,15 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
         weights = MiaoWeights;
     }
     else{
-        moves = MiaoMovesTTP;
-        weights = MiaoWeightsTTP; 
+        if (in.getInstanceName().find("I_CON") != std::string::npos){
+            // random swap has no effect
+            moves = MiaoMovesTTP_CON;
+            weights = MiaoWeightsTTP_CON;
+        }
+        else{   
+            moves = MiaoMovesTTP;
+            weights = MiaoWeightsTTP;
+        } 
     }
 
     MiaoAlgo miao_algo(moves, weights, in.getNrRounds(), gen);
@@ -351,13 +358,17 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
         ReadSolution(path, sol);
     }
     else{
-        VizingConstruction(sol, data.seed);
+        if (in.AllHAPsIncluded){
+            VizingConstruction(sol, data.seed);
+            miao_algo.InitialSolutionGiven = true;
+        }
     }
-    miao_algo.InitialSolutionGiven = true;
     miao_algo.setTimeLimit_meta(data.TimeLimit);
     miao_algo.SetTimeStamps(TimeStamps);
     miao_algo.solve(in, sol);
-    sol.validate();
+    if (miao_algo.NrSuccesfullMatchings >= 1){
+        sol.validate();
+    }
 
     string FilePath;
     string config;
@@ -383,10 +394,12 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
     std::ofstream output_file(FilePath);
     output_file << config << "\n";
     output_file << "NrSuccesfullMatchings," << miao_algo.NrSuccesfullMatchings << ",NrInfeasibleMatchings," << miao_algo.NrInfeasibleMatchings << "\n";
-    miao_algo.SaveSolutionsTimeStamps(output_file);
-    SaveSolution(output_file, sol);
+    if (miao_algo.NrSuccesfullMatchings >= 1){
+        miao_algo.SaveSolutionsTimeStamps(output_file);
+        SaveSolution(output_file, sol);
+    }
     output_file.close();
-    cout << "Close file" << endl;
+    cout << "Close file:" << FilePath << endl;
 }
 
 void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data){
@@ -579,6 +592,7 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     gur.setTimeLimit(data.TimeLimit);
     gur.SetTimeStamps(TimeStamps);
     gur.solve();
+    cin.get();
     cout << "save solution" << endl;
     gur.SaveSolution(sol);
     cout << "test whether solution is feasible" << endl;

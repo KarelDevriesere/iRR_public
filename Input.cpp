@@ -830,6 +830,16 @@ bool Input::HAP_satisfies_all_requirements(const vector<HA>& HAP){
             }
         }
     }
+    if (getSetting() == Setting::TTP){
+        // There was a mistake in the HAPs, some of them contained AAAA in last 4 rounds..
+        for (int h = 3; h < HAP.size(); ++h){
+            if (HAP[h] == HAP[h-1] && HAP[h-1] == HAP[h-2] && HAP[h-2] == HAP[h-3]){
+                // cout << "HHHH or AAAA detected in HAP" << endl;
+                // cin.get();
+                return false;
+            }
+        }
+    }
     if (HAP_requirements.at(HAP_requirement_name::NoBreakBeginningEnd)){
         if (HAP[0] == HAP[1] || HAP[(int)HAP.size()-1] == HAP[(int)HAP.size()-2]){
             // cout << "break beginning or end in HAP" << endl;

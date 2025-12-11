@@ -68,8 +68,8 @@ template <typename Move>
 void MetaBase<Move>::SaveBestSolution(Solution& sol){
             int h,a;
             if (BestSequenceMatches.empty()){
-                cout << "Failed to find a solution, abort.." << endl;
-                std::exit(0);
+                cout << "Failed to find a solution.." << endl;
+                return;
             }
             // first, clear everything
             sol.clear();
@@ -281,7 +281,7 @@ bool SA<Move>::Update(Solution& sol, const int obj){
                     // reverse move
                     // We only need to reverse the haps since the matchings are thrown away anyway
                     // cout << "Reject solution with prob " << exp(-(obj-current_obj)/T) << endl;
-                    return false; // CUSTOMIZE WHAT HAPPENS AFTERWARDS
+                    SolutionAccepted = false; // CUSTOMIZE WHAT HAPPENS AFTERWARDS
                 }
             }
             if (SolutionAccepted){
@@ -294,7 +294,7 @@ bool SA<Move>::Update(Solution& sol, const int obj){
 
             this->UpdateTimeStamps();
 
-            if (++this->it % I_temp == 0 || this->it_accepted % I_accept == 0){ 
+            if (++this->it % I_temp == 0 || (this->it_accepted - I_accept >= 0)){ 
                 T *= cooling_rate;
                 cout << "New T = " << T << endl;
                 this->it_accepted = 0;

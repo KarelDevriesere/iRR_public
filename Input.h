@@ -27,6 +27,9 @@ const std::unordered_map<Move, double>MiaoWeights = {{Move::InterClubSwap, 1.0/3
 const std::unordered_map<Move, string>MiaoMovesTTP = {{Move::RandomSwap, "RandomSwap"}, {Move::ComplementInsertion, "ComplementInsertion"}};
 const std::unordered_map<Move, double>MiaoWeightsTTP = {{Move::RandomSwap, 1.0/2.0}, {Move::ComplementInsertion, 1.0/2.0}};
 
+const std::unordered_map<Move, string>MiaoMovesTTP_CON = {{Move::ComplementInsertion, "ComplementInsertion"}};
+const std::unordered_map<Move, double>MiaoWeightsTTP_CON = {{Move::ComplementInsertion, 1.0}};
+
 enum class HA{H, A, BYE};
 
 struct InputData{
