@@ -512,7 +512,17 @@ int Solution::ComputeTTPViolations(const int i){
         }
         if (nrH > 3 || nrA > 3){
             nrV++;
-            // cin.get();
+            cout << "HAP of " << i << ": " << endl;
+            for (int s = 0; s < NrColouredRounds; ++s){
+                if (Orientation[i][s] == HA::H){
+                    cout << "H";
+                }
+                else{
+                    assert(Orientation[i][r] == HA::A);
+                    cout << "A";
+                }
+            }
+            cout << endl;
         }
     }
     return nrV;

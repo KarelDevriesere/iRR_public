@@ -201,9 +201,9 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
         vector<pair<int,int>>matching = Matching_OpponentMatching.first;
         if ((int)matching.size() < N/2){
             // shuffling rounds does not seem a good idea, instead go back to the old HAP assignement and do a new HAP move
-            cout << "matching failed in round " << s << endl;
-            cout << "matching has size of only " << (int)matching.size() << endl;
-            cin.get();
+            // cout << "matching failed in round " << s << endl;
+            // cout << "matching has size of only " << (int)matching.size() << endl;
+            // cin.get();
             ++NrInfeasibleMatchings;
             return false;
             // The problem with reshuffling rounds is that in ComputeEdgeWeight of TTP, we assume the rounds go from 0 to R-1 to compute the cost of trips
@@ -495,15 +495,53 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
     StartTime = std::chrono::high_resolution_clock::now();
     // TODO: Miao is also doing something with byes...
 
+    Opponents = vector<vector<int>>(sol.getNrTeams(), vector<int>(sol.getNrRounds(), -1));
+
     if (!InitialSolutionGiven || !in.AllHAPsIncluded){
         // Assign HAPs such that we respect v+
         cout << "Assign HAPs to teams.." << endl;
-        GurSolver gursol(in);
-        // gursol.AssignHAPsToTeams(sol);
-        const bool relax_x = false, min_travel = false, min_capacity_violations = false;
-        gursol.BuildMiaoFormulation(relax_x, min_travel, min_capacity_violations);
-        gursol.solve();
-        gursol.StoreHAPs(sol);
+        if (in.getNrRounds() > in.getNrTeams()/2){
+            GurSolver gursol(in);
+            // gursol.AssignHAPsToTeams(sol);
+            const bool relax_x = false, min_travel = false, min_capacity_violations = false;
+            // gursol.BuildMiaoFormulation(relax_x, min_travel, min_capacity_violations);
+            gursol.BuildPatternFormulation(); // just assign HAPs to teams without objective!!
+            gursol.solve();
+            gursol.StoreHAPs(sol);
+            // Use Benders here to find feasible opponent schedule?
+            ReAssignHAPs(sol);
+        }
+        else{
+            // We know that this always produces an initial solution!!
+            // If I do not do this, it can be that I never find anything, even if, for example, n=40 and r=20
+            int hc_i = RandomIntegerNumber(0, sol.getNrHAPs()-1);
+            int hc_j = sol.getComplementIndexHAP(hc_i);
+            for (int i = 0; i < in.getNrTeams()/2; ++i){
+                setHAP(sol, i, hc_i);
+            }
+            for (int j = in.getNrTeams()/2; j < in.getNrTeams(); ++j){
+                setHAP(sol, j, hc_j);
+            }
+            sol.NrColouredRounds = sol.getNrRounds();
+            auto it = Moves.begin();
+            CurrentMove = it->first;
+        }
+        cout << "patterns assigned" << endl;
+        /*
+        // This works if r <= n/2
+        GurSolver gur_x(in);
+        gur_x.build_all(false, false);
+        for (int i = 0; i < gur_x.HapFixed.size(); ++i){
+            gur_x.HapFixed[i] = true;
+        }
+        gur_x.FixHAP(sol);
+        gur_x.solve();
+        gur_x.SaveSolution(sol);
+        AssignsHAPsToTeamsBasedOnSol(in, sol);
+        UpdateBestSolution(sol);
+        cout << "opponent schedule found" << endl;
+        */
+        // Full Miao Formulation takes too long!!!
     }
     else{
         best_obj = sol.ComputeTotalCost();
@@ -512,14 +550,11 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
         cout << "Assign Haps to teams" << endl;
         AssignsHAPsToTeamsBasedOnSol(in, sol);
         UpdateBestSolution(sol);
+        SetAllOpponents(sol);
         cout << "Ready" << endl;
+        ReAssignHAPs(sol);
     }
-    Opponents = vector<vector<int>>(sol.getNrTeams(), vector<int>(sol.getNrRounds()));
-    SetAllOpponents(sol);
-    ReAssignHAPs(sol); // do a HAP move
     Reset(sol);
-
-    // Initial solution is infeasible for tiny!!!
 
     do{
         // cout << "solve matchings with following haps" << endl;
@@ -543,7 +578,6 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
             Update(sol, INT_MAX); // infeasible solution but still update values
             ReverseMove(sol); // if schedule phase not succesful: reverse move, and try with new HAP move
         }
-        // cout << "reassign haps" << endl;
         ReAssignHAPs(sol); // do a HAP move
         assert(sol.ComputeTotalHACost() <= 0);
         Reset(sol); // this deletes all the matchups in the rounds of the league chosen by the HAP operator
@@ -552,8 +586,10 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
 
     // cout << "Miao Algo done" << endl;
     // save into solution
-
-    SaveBestSolution(sol);
+    if (NrSuccesfullMatchings >= 1 || InitialSolutionGiven){
+        cout << "NrSuccesfullMatchings = " << NrSuccesfullMatchings << endl;
+        SaveBestSolution(sol);
+    }
 }
 
 void MiaoAlgo::SolveGivenSeqeuence(Input& in, Solution& sol){

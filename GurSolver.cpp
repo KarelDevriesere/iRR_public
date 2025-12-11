@@ -716,9 +716,9 @@ void GurSolver::FixHAP(Solution& sol){
 		int nr_H = 0;
 		int nr_A = 0;
 		for (int r = 0; r < getNrRounds(); ++r){
-			assert(Orientation[i][r] == HA::H || Orientation[i][r] == HA::A);
+			assert(sol.Orientation[i][r] == HA::H || sol.Orientation[i][r] == HA::A);
 			int nr_opp = 0;
-			if (Orientation[i][r] == HA::H){
+			if (sol.Orientation[i][r] == HA::H){
 				nr_H++;
 				for (int j = 0; j < getNrTeams(); ++j){
 					if (!isEligible(i, j)){
@@ -743,10 +743,7 @@ void GurSolver::FixHAP(Solution& sol){
 			}
 			// assert(nr_opp == 1);
 		}
-		if (!isTeamDummy(i)){
-			// cout << "team " << i << " has " << nr_H << " games and " << nr_A << " away games in " << getNrRounds() << " rounds" << endl;
-			assert(nr_H == Half && nr_A == Half);
-		}
+		assert(nr_H == Half && nr_A == Half);
 	}
 }
 
