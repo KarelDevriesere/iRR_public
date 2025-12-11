@@ -139,6 +139,8 @@ bool IsTeamInTrip(const int i, vector<int>& trip){
 
 void GurSolver::iTTP_TripModel(){
 
+	model.set(GRB_DoubleParam_MemLimit, 32.0);
+
 	cout << "build trip model" << endl;
 
 	TripModelTTP = true;
@@ -147,7 +149,7 @@ void GurSolver::iTTP_TripModel(){
 	const int R = getNrRounds();
 	int NrHaps = getNrHAPs();
 	cout << "NrHaps included in model = " << NrHaps << endl;
- 	int t,i,j,r,s,h;
+ 	int t,i,j,r,s,h,L;
 
 	// Compute the least number of consecutive A's: this will be the minimum trip length
 	// Convenient when, for example, doing BRA24_6: HHHAAA and AAAHHH: take only trips of lenght 3 into account
@@ -199,25 +201,35 @@ void GurSolver::iTTP_TripModel(){
 		}
 	}
 
+	vector<vector<int>>LastStartRoundTrip = vector<vector<int>>(N, vector<int>(NrTrips, -1));
+	for (t = 0; t < N; ++t){
+		for (r = 0; r < NrTrips; ++r){
+			L = Trips[t][r].size();
+			LastStartRoundTrip[t][r] = R-L;
+		}
+	}
+
+	cout << "NrTrips = " << NrTrips << endl;
+
 	z_trs = vector<vector<vector<GRBVar>>>(N, vector<vector<GRBVar>>(NrTrips, vector<GRBVar>(R)));
 	for (t = 0; t < N; ++t){
 		for (r = 0; r < NrTrips; ++r){
-			int L = Trips[t][r].size();
-			for (s = 0; s < R; ++s){
-				z_trs[t][r][s] = model.addVar(0, 1, 0.0, GRB_BINARY, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]");
-				if (s+L > R){
-					z_trs[t][r][s].set(GRB_DoubleAttr_UB, 0.0); // trip cannot start in this round
-				}
+			for (s = 0; s < LastStartRoundTrip[t][r]; ++s){
+				z_trs[t][r][s] = model.addVar(0, 1, 0.0, GRB_BINARY/*, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]"*/);
 			}
 		}
 	}
 
+	cout << "Nr of trip variables = " << N*R*NrTrips << endl;
+
 	y = vector<vector<GRBVar>>(N, vector<GRBVar>(NrHaps));
 	for (t = 0; t < N; ++t){
 		for (h = 0; h < NrHaps; ++h){
-			y[t][h] = model.addVar(0, 1, 0.0, GRB_BINARY, "y[" + to_string(t) + "," + to_string(h) + "]");
+			y[t][h] = model.addVar(0, 1, 0.0, GRB_BINARY/*,"y[" + to_string(t) + "," + to_string(h) + "]"*/);
 		}
 	}
+
+	cout << "Nr of y variables = " << N*NrHaps << endl;
 
 	cout << "c1" << endl;
 
@@ -226,7 +238,7 @@ void GurSolver::iTTP_TripModel(){
 		for (h = 0; h < NrHaps; ++h){
 			sum_h += y[t][h];
 		}
-		model.addConstr(sum_h == 1, "c1"); // each team is assigned to exactly 1 hap
+		model.addConstr(sum_h == 1/*, "c1"*/); // each team is assigned to exactly 1 hap
 	}
 
 	cout << "c2" << endl;
@@ -243,7 +255,7 @@ void GurSolver::iTTP_TripModel(){
 					}
 				}
 				if (team_found){
-					for (s = 0; s < R; s++){
+					for (s = 0; s < LastStartRoundTrip[i][r]; s++){
 						sum_rs += z_trs[i][r][s];
 					}
 				}
@@ -255,12 +267,12 @@ void GurSolver::iTTP_TripModel(){
 					}
 				}
 				if (team_found){
-					for (s = 0; s < R; s++){
+					for (s = 0; s < LastStartRoundTrip[t][r]; s++){
 						sum_rs += z_trs[t][r][s];
 					}
 				}
 			}
-			model.addConstr(sum_rs <= 1, "c2");
+			model.addConstr(sum_rs <= 1/*, "c2"*/);
 		}
 	}
 
@@ -272,6 +284,9 @@ void GurSolver::iTTP_TripModel(){
 			for (r = 0; r < NrTrips; ++r){
 				int L = Trips[t][r].size();
 				for (int s_ = max(s-L+1, 0); s_ <= s; s_++){
+					if (s_ > LastStartRoundTrip[t][r]){
+						break;
+					}
 					sum_rsh += z_trs[t][r][s_];
 				}
 			}
@@ -280,7 +295,7 @@ void GurSolver::iTTP_TripModel(){
 					sum_rsh -= y[t][h];
 				}
 			}
-			model.addConstr(sum_rsh == 0, "c3");
+			model.addConstr(sum_rsh == 0/*, "c3"*/);
 		}
 	}
 
@@ -293,6 +308,9 @@ void GurSolver::iTTP_TripModel(){
 				for (r = 0; r < NrTrips; ++r){
 					int L = Trips[i][r].size();
 					for (int s_ = max(s-L+1, 0); s_ <= s; s_++){
+						if (s_ > LastStartRoundTrip[i][r]){
+							break;
+						}
 						for (int l = 0; l < L; ++l){
 							if (Trips[i][r][l] == t && s_+l == s){
 								sum_rsh += z_trs[i][r][s_];
@@ -306,7 +324,7 @@ void GurSolver::iTTP_TripModel(){
 					sum_rsh -= y[t][h];
 				}
 			}
-			model.addConstr(sum_rsh == 0, "c4");
+			model.addConstr(sum_rsh == 0/*, "c4"*/);
 		}
 	}
 
@@ -333,7 +351,7 @@ void GurSolver::iTTP_TripModel(){
 	Objective = 0;
 	for (t = 0; t < N; ++t){
 		for (r = 0; r < NrTrips; ++r){
-			for (s = 0; s < R; ++s){
+			for (s = 0; s < LastStartRoundTrip[t][r]; ++s){
 				Objective += CostTrips[t][r]*z_trs[t][r][s];
 			}
 		}
