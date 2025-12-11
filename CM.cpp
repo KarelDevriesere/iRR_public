@@ -370,6 +370,8 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
         sol.validate();
     }
 
+    cout << "hello" << endl;
+
     string FilePath;
     string config;
 
