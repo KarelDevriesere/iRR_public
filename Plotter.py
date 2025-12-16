@@ -677,8 +677,8 @@ if __name__ == "__main__":
     MakeLinePlotInstTimeL()
     breakpoint()
     '''
-    # ResultsPercHAPs()
-    # breakpoint()
+    ResultsPercHAPs()
+    breakpoint()
     setting = sys.argv[1]
     CM = False
     TTP = False
