@@ -20,7 +20,7 @@ ListLengths = [1,5,10,50,100,500,1000,5000,10000,50000,100000] # list lengths
 
 TIME_LIMIT = 600
 
-def ResultsInstances(InstanceSetting):
+def ResultsInstances(InstanceSetting, iTTP=False):
     instances = []
     PathRoot = "Instances"
     if InstanceSetting == "Miao":
@@ -44,12 +44,18 @@ def ResultsInstances(InstanceSetting):
             instances.append(i)
     PathRoot = os.path.join(PathRoot, "Results")
 
-    Table = {inst: {"IP_value": -1, "IP_bound": -1, "IP_time": -1, "MiaoAlgo_Avg_value": [], "MiaoAlgo_Avg_time": [], "MiaoAlgo_seed": [], "Heuristic_Avg_value": [], "Heuristic_Avg_time": [], "Heuristic_HL": []} for inst in instances}
+    if iTTP:
+        Table = {inst: {"IP_value": -1, "IP_bound": -1, "IP_time": -1, "IP_gap": -1, "MiaoAlgo_Avg_value": [],        "MiaoAlgo_Avg_time": [], "MiaoAlgo_seed": [], "Miao_gap": -1} for inst in instances}
+    else:
+        Table = {inst: {"IP_value": -1, "IP_bound": -1, "IP_time": -1, "MiaoAlgo_Avg_value": [],        "MiaoAlgo_Avg_time": [], "MiaoAlgo_seed": [], "Heuristic_Avg_value": [], "Heuristic_Avg_time": [], "Heuristic_HL": []} for inst in instances}
     TableMatchings = {inst: {"NrSuccesfullMatchings": [], "NrInfeasibleMatchings": []} for inst in instances}
     PathIP = os.path.join(PathRoot, "IP")
     PathHeuristic = os.path.join(PathRoot, "Heuristic") # HeuristicStartingFromMiao
     PathMiaoAlgo = os.path.join(PathRoot, "MiaoAlgo")
-    Paths = [PathIP, PathMiaoAlgo, PathHeuristic]
+    if iTTP:
+        Paths = [PathIP, PathMiaoAlgo]
+    else:
+        Paths = [PathIP, PathMiaoAlgo, PathHeuristic]
     for Path in Paths:
         for file_index, filename in enumerate(os.listdir(Path)):
             if not filename.endswith(".txt"):
@@ -142,7 +148,10 @@ def ResultsInstances(InstanceSetting):
     if InstanceSetting == "Miao":
         OutputPath = os.path.join(os.path.join("Results", "Miao"), "Analysis.txt")   
     elif InstanceSetting == "TTP":
-        OutputPath = os.path.join(os.path.join("Results", "TTP"), "Analysis.txt") 
+        if iTTP:
+            OutputPath = os.path.join(os.path.join("Results", "TTP"), "Analysis_iTTP.txt")
+        else:
+            OutputPath = os.path.join(os.path.join("Results", "TTP"), "Analysis.txt") 
     else:
         OutputPath = os.path.join(os.path.join("Results", "Hockey"), "Analysis.txt")
 
@@ -158,7 +167,10 @@ def ResultsInstances(InstanceSetting):
         if InstanceSetting == "Miao":
             output_file.write("Instance & IP_v & IP_b & IP_t & Miao_{av} & Miao_{at} & Miao_{bv} & Miao_{bt} & Heur_{av} & Heur_{at} & Heur_{bv} & Heur_{bt} & Heur_{bHL}\n")
         else:
-            output_file.write("Instance & Bound & IP_v & IP_b & IP_t & Miao_{av} & Miao_{at} & Miao_{bv} & Miao_{bt} & Heur_{av} & Heur_{at} & Heur_{bv} & Heur_{bt} & Heur_{bHL}\n")
+            if iTTP:
+                output_file.write("Instance & Bound & IP_v & IP_b & IP_t & IP_gap & Miao_{av} & Miao_{at} & Miao_{bv} & Miao_{bt} & Miao_gap\n")
+            else:
+                output_file.write("Instance & Bound & IP_v & IP_b & IP_t & Miao_{av} & Miao_{at} & Miao_{bv} & Miao_{bt} & Heur_{av} & Heur_{at} & Heur_{bv} & Heur_{bt} & Heur_{bHL}\n")
 
         writer = csv.writer(output_file_boxplot)
 
@@ -193,8 +205,8 @@ def ResultsInstances(InstanceSetting):
                         Heuristic_best_HL = Table[Instance]["Heuristic_HL"][i]
                 
             if len(Table[Instance]["MiaoAlgo_Avg_value"]) > 0:
-                MiaoAlgo_Avg_value = round(sum(Table[Instance]["MiaoAlgo_Avg_value"]) / len(Table[Instance]["MiaoAlgo_Avg_value"]),2)
-                MiaoAlgo_Avg_time = round(sum(Table[Instance]["MiaoAlgo_Avg_time"]) / len(Table[Instance]["MiaoAlgo_Avg_time"]),2)
+                MiaoAlgo_Avg_value = round(sum(Table[Instance]["MiaoAlgo_Avg_value"]) / len(Table[Instance]["MiaoAlgo_Avg_value"]),3)
+                MiaoAlgo_Avg_time = round(sum(Table[Instance]["MiaoAlgo_Avg_time"]) / len(Table[Instance]["MiaoAlgo_Avg_time"]),3)
                 MiaoAlgo_Best_value = Table[Instance]["MiaoAlgo_Avg_value"][0]
                 MiaoAlgo_Best_time = Table[Instance]["MiaoAlgo_Avg_time"][0]
                 MiaoAlgoBestSeed = Table[Instance]["MiaoAlgo_seed"][0]
@@ -231,12 +243,16 @@ def ResultsInstances(InstanceSetting):
             elif Table[Instance]["IP_value"] >= MiaoAlgo_Best_value and Table[Instance]["IP_value"] >= Heuristic_Best_value:
                 line += "\\cellcolor{red!25}" + str(Table[Instance]["IP_value"])
             else:
-                line += str(Table[Instance]["IP_value"]) 
-            
-            line += " & " + str(Table[Instance]["IP_bound"]) + " & " + str(Table[Instance]["IP_time"]) + " & " + str(MiaoAlgo_Avg_value)  +" & " + str(MiaoAlgo_Avg_time)  + " & " 
+                line += str(Table[Instance]["IP_value"])  
 
             if bound == -1:
                 bound = Table[Instance]["IP_bound"]
+
+            line += " & " + str(Table[Instance]["IP_bound"]) + " & " + str(Table[Instance]["IP_time"]) 
+            if iTTP:
+                gap_ip = ((Table[Instance]["IP_value"] - bound) / Table[Instance]["IP_value"])*100
+                line += " & " + str(gap_ip)
+            line += " & " + str(MiaoAlgo_Avg_value)  +" & " + str(MiaoAlgo_Avg_time)  + " & "
             
             if (MiaoAlgo_Best_value <= Table[Instance]["IP_value"] or Table[Instance]["IP_value"] == -1) and (MiaoAlgo_Best_value <= Heuristic_Best_value or Heuristic_Best_value == -1) and MiaoAlgo_Best_value != -1:
                 line += "\\cellcolor{green!25}" + str(MiaoAlgo_Best_value)  
@@ -245,37 +261,45 @@ def ResultsInstances(InstanceSetting):
             else:
                 line += str(MiaoAlgo_Best_value) 
 
-            line += " & " + str(MiaoAlgo_Best_time) + " & " + str(Heuristic_Avg_value)  +" & " + str(Heuristic_Avg_time) + " & " 
-            
-            if (Heuristic_Best_value <= Table[Instance]["IP_value"] or Table[Instance]["IP_value"] == -1) and (Heuristic_Best_value <= MiaoAlgo_Best_value or MiaoAlgo_Best_value == -1) and Heuristic_Best_value != -1:
-                line += "\\cellcolor{green!25}" + str(Heuristic_Best_value)  
-            elif Heuristic_Best_value >= Table[Instance]["IP_value"] and Heuristic_Best_value >= MiaoAlgo_Best_value:
-                line += "\\cellcolor{red!25}" + str(Heuristic_Best_value)
-            else:
-                line += str(Heuristic_Best_value)  
-            
-            line += " & " + str(Heuristic_Best_time) + " & " + str(Heuristic_best_HL) + " \\\\ \n"
+            line += " & " + str(MiaoAlgo_Best_time)
 
-            if InstanceSetting == "TTP":
-                for value in Table[Instance]["MiaoAlgo_Avg_value"]:
-                    writer.writerow(["Greedy", bound, value])
-                writer.writerow(["IP", bound, Table[Instance]["IP_value"]])
-            else:
-                for i, value in enumerate(Table[Instance]["Heuristic_Avg_value"]):
-                    heur = "Heuristic_" + str(Table[Instance]["Heuristic_HL"][i])
-                    writer.writerow([heur, InstanceSetting, bound, value])
-                    if value < int(bound):
+            if iTTP:
+                gap_miao = ((MiaoAlgo_Best_value - bound) / MiaoAlgo_Best_value)*100
+                line += " & " + str(gap_miao)
+
+            if not iTTP:
+            
+                line +=  " & " + str(Heuristic_Avg_value)  +" & " + str(Heuristic_Avg_time) + " & " 
+                
+                if (Heuristic_Best_value <= Table[Instance]["IP_value"] or Table[Instance]["IP_value"] == -1) and (Heuristic_Best_value <= MiaoAlgo_Best_value or MiaoAlgo_Best_value == -1) and Heuristic_Best_value != -1:
+                    line += "\\cellcolor{green!25}" + str(Heuristic_Best_value)  
+                elif Heuristic_Best_value >= Table[Instance]["IP_value"] and Heuristic_Best_value >= MiaoAlgo_Best_value:
+                    line += "\\cellcolor{red!25}" + str(Heuristic_Best_value)
+                else:
+                    line += str(Heuristic_Best_value)  
+                
+                line += " & " + str(Heuristic_Best_time) + " & " + str(Heuristic_best_HL) + " \\\\ \n"
+
+                if InstanceSetting == "TTP":
+                    for value in Table[Instance]["MiaoAlgo_Avg_value"]:
+                        writer.writerow(["Greedy", bound, value])
+                    writer.writerow(["IP", bound, Table[Instance]["IP_value"]])
+                else:
+                    for i, value in enumerate(Table[Instance]["Heuristic_Avg_value"]):
+                        heur = "Heuristic_" + str(Table[Instance]["Heuristic_HL"][i])
+                        writer.writerow([heur, InstanceSetting, bound, value])
+                        if value < int(bound):
+                            print(Instance)
+                            breakpoint()
+                    for value in Table[Instance]["MiaoAlgo_Avg_value"]:
+                        writer.writerow(["Greedy", InstanceSetting, bound, value])
+                        if value < int(bound):
+                            print(Instance)
+                            breakpoint()
+                    writer.writerow(["IP", InstanceSetting, bound, Table[Instance]["IP_value"]])
+                    if Table[Instance]["IP_value"] < int(bound):
                         print(Instance)
                         breakpoint()
-                for value in Table[Instance]["MiaoAlgo_Avg_value"]:
-                    writer.writerow(["Greedy", InstanceSetting, bound, value])
-                    if value < int(bound):
-                        print(Instance)
-                        breakpoint()
-                writer.writerow(["IP", InstanceSetting, bound, Table[Instance]["IP_value"]])
-                if Table[Instance]["IP_value"] < int(bound):
-                    print(Instance)
-                    breakpoint()
 
 
             output_file.write(line)
