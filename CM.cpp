@@ -341,7 +341,7 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
         else{   
             moves = MiaoMovesTTP;
             weights = MiaoWeightsTTP;
-        } 
+        }  
     }
 
     MiaoAlgo miao_algo(moves, weights, in.getNrRounds(), gen);
@@ -358,17 +358,13 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
         ReadSolution(path, sol);
     }
     else{
-        if (in.AllHAPsIncluded){
-            VizingConstruction(sol, data.seed);
-            miao_algo.InitialSolutionGiven = true;
-        }
+        VizingConstruction(sol, data.seed);
     }
+    miao_algo.InitialSolutionGiven = true;
     miao_algo.setTimeLimit_meta(data.TimeLimit);
     miao_algo.SetTimeStamps(TimeStamps);
     miao_algo.solve(in, sol);
-    if (miao_algo.NrSuccesfullMatchings >= 1){
-        sol.validate();
-    }
+    sol.validate();
 
     cout << "hello" << endl;
 
@@ -396,12 +392,10 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
     std::ofstream output_file(FilePath);
     output_file << config << "\n";
     output_file << "NrSuccesfullMatchings," << miao_algo.NrSuccesfullMatchings << ",NrInfeasibleMatchings," << miao_algo.NrInfeasibleMatchings << "\n";
-    if (miao_algo.NrSuccesfullMatchings >= 1){
-        miao_algo.SaveSolutionsTimeStamps(output_file);
-        SaveSolution(output_file, sol);
-    }
+    miao_algo.SaveSolutionsTimeStamps(output_file);
+    SaveSolution(output_file, sol);
     output_file.close();
-    cout << "Close file:" << FilePath << endl;
+    cout << "Close file" << endl;
 }
 
 void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data){
@@ -594,7 +588,6 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     gur.setTimeLimit(data.TimeLimit);
     gur.SetTimeStamps(TimeStamps);
     gur.solve();
-    cin.get();
     cout << "save solution" << endl;
     gur.SaveSolution(sol);
     cout << "test whether solution is feasible" << endl;
