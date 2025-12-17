@@ -125,6 +125,7 @@ class GurSolver : public Input
         bool TrackTimeBestSolution = true;
         void addCallbackToTrackTime();
         int getTimeTillBestSolution()const{return TimeTillBestSolutionGurSolverOuter;};
+        void PrintVariables();
 
 
         vector<vector<pair<int,int>>> EdgeColoring(int& C, vector<vector<bool>>& ForbiddenEdge, int& NrColorsUsed);

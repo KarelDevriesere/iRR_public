@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
+#include <numeric> // for iota
 #include "GurSolver.h"
 
 #include <boost/graph/adjacency_list.hpp>
@@ -240,8 +241,13 @@ void VizingConstruction(Solution& sol, const int seed){
 
 	vector<vector<bool>>ColorLeft(N-1, vector<bool>(N-1, true));
 
+	vector<int>ShuffledTeams(N);
+	iota(ShuffledTeams.begin(), ShuffledTeams.end(), 0);
+	std::mt19937 gen(seed);
+	std::shuffle(ShuffledTeams.begin(), ShuffledTeams.end(), gen);
+
 	// cout << "set Colorleft" << endl;
-	int i,j,c;
+	int i,j,c,i_,j_;
     for (size_t k = 0; k < edge_vector.size(); ++k)
     {
 		i = edge_vector[k].first;
@@ -250,21 +256,25 @@ void VizingConstruction(Solution& sol, const int seed){
 		ColorLeft[i][c] = false;
 		ColorLeft[j][c] = false;
 		if (c < sol.getNrRounds()){
-			sol.TeamColorOpp[i][c] = j;
-    		sol.TeamColorOpp[j][c] = i;
+			i_ = ShuffledTeams[i];
+			j_ = ShuffledTeams[j];
+			sol.TeamColorOpp[i_][c] = j_;
+    		sol.TeamColorOpp[j_][c] = i_;
 		}
     }
 
 	int LastNode = N-1;
+	int LastNode_ = ShuffledTeams[LastNode];
 
 	for (i = 0; i < N-1; ++i){
 		c = 0;
 		while (!ColorLeft[i][c]){
 			++c;
 		}
+		i_ = ShuffledTeams[i];
 		if (c < sol.getNrRounds()){
-			sol.TeamColorOpp[i][c] = LastNode;
-    		sol.TeamColorOpp[LastNode][c] = i;
+			sol.TeamColorOpp[i_][c] = LastNode_;
+    		sol.TeamColorOpp[LastNode_][c] = i_;
 		}
 	}
 
