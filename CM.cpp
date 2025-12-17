@@ -358,15 +358,21 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
         ReadSolution(path, sol);
     }
     else{
-        VizingConstruction(sol, data.seed);
+        if (in.getNrRounds() > in.getNrTeams() / 2){ // If this is the case, our strategy of using only 2 HAPs does not work!!
+            VizingConstruction(sol, data.seed);
+            miao_algo.InitialSolutionGiven = true;
+        }
+        else{
+            // If not, assign only 2 HAPs to the teams: we know that this always results in a feasible solution!!
+            miao_algo.InitialSolutionGiven = false;
+        }
     }
-    miao_algo.InitialSolutionGiven = true;
     miao_algo.setTimeLimit_meta(data.TimeLimit);
     miao_algo.SetTimeStamps(TimeStamps);
     miao_algo.solve(in, sol);
-    sol.validate();
-
-    cout << "hello" << endl;
+    if (miao_algo.NrSuccesfullMatchings >= 1){
+        sol.validate();
+    }
 
     string FilePath;
     string config;
@@ -392,8 +398,10 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
     std::ofstream output_file(FilePath);
     output_file << config << "\n";
     output_file << "NrSuccesfullMatchings," << miao_algo.NrSuccesfullMatchings << ",NrInfeasibleMatchings," << miao_algo.NrInfeasibleMatchings << "\n";
-    miao_algo.SaveSolutionsTimeStamps(output_file);
-    SaveSolution(output_file, sol);
+    if (miao_algo.NrSuccesfullMatchings >= 1 || miao_algo.InitialSolutionGiven){
+        miao_algo.SaveSolutionsTimeStamps(output_file);
+        SaveSolution(output_file, sol);
+    }
     output_file.close();
     cout << "Close file" << endl;
 }
@@ -721,6 +729,9 @@ void TestCostMinimization(InputData& data){
         in.read_HAPs();
         if (data.PercentageHAPs < 100){
             double NrPromisingHAPs = in.getNrHAPs()*((double)data.PercentageHAPs/100.0);
+            if (NrPromisingHAPs < 2.0){
+                NrPromisingHAPs = 2;
+            }
             in.DeleteNonPromisingHAPsTTP((int)NrPromisingHAPs);
         }
     }
