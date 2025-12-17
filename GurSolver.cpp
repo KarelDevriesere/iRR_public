@@ -1747,6 +1747,40 @@ void GurSolver::StoreHAPs(Solution& sol){
 	assert(cap_viol <= getAllowedNrCapacityViolations());
 }
 
+void GurSolver::PrintVariables(){
+	if (!x.empty()){
+		for (int r = 0; r < getNrRounds(); ++r){
+			cout << "-------" << endl;
+			cout << "Round " << r << endl;
+			cout << "-------" << endl;
+			for (int i = 0; i < getNrTeams(); ++i){
+				for (int j = i+1; j < getNrTeams(); ++j){
+					if (x[i][j][r].get(GRB_DoubleAttr_X) > 0.01){
+						cout << "x[" << i << "][" << j << "][" << r << "] = " << x[i][j][r].get(GRB_DoubleAttr_X) << endl;
+					}
+					if (x[j][i][r].get(GRB_DoubleAttr_X) > 0.01){
+						cout << "x[" << j << "][" << i << "][" << r << "] = " << x[j][i][r].get(GRB_DoubleAttr_X) << endl;
+					}
+				}
+			}
+		}
+	}
+	if (!z.empty()){
+		cout << "-----" << endl;
+		cout << "TRIP variables: " << endl;
+		cout << "-----" << endl;
+		for (int t = 0; t < getNrTeams(); ++t){
+			for (int i = 0; i < getNrTeams(); ++i){
+				for (int j = 0; j < getNrTeams(); ++j){
+					if (z[t][i][j].get(GRB_DoubleAttr_X) > 0.01){
+						cout << "z[" << t << "][" << i << "][" << j << "] = " << z[t][i][j].get(GRB_DoubleAttr_X) << endl;
+					}	   
+				}
+			}
+		}
+	}
+}
+
 void GurSolver::AssignHAPsToTeams(Solution& sol){
 
 	// cout << "Assign HAPs to teams" << endl;

@@ -552,8 +552,8 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     bool relax_x = false;
     const bool min_travel = true, min_cap = false;
     if (in.getSetting() == Setting::TTP){
-        // gur.iTTP();
-        gur.iTTP_TripModel();
+        gur.iTTP();
+        // gur.iTTP_TripModel();
         // gur.Fix_x(sol);
     }
     else{
@@ -596,6 +596,8 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     gur.setTimeLimit(data.TimeLimit);
     gur.SetTimeStamps(TimeStamps);
     gur.solve();
+    gur.PrintVariables();
+    cin.get();
     cout << "save solution" << endl;
     gur.SaveSolution(sol);
     cout << "test whether solution is feasible" << endl;
