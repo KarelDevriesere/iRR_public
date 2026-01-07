@@ -212,7 +212,9 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
                     this->STOP = true;
                 }
                 else{
+#if PRINT == 1
                     cout << "max it_idle hit: " << this->it_idle << endl;
+#endif
                     if (!DynamicHL){
                         this->STOP = true;
                     }

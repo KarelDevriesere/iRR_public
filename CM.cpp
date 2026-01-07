@@ -430,8 +430,62 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
         ReadSolution(path, sol);
     }
     else{
-        cout << "Solve Vizing" << endl;
-        VizingConstruction(sol, data.seed);
+        // cout << "Solve Vizing" << endl;
+        // VizingConstruction(sol, data.seed);
+
+        // Start from best found solution by Miao's algorithm (with 100% of the HAPs)
+        string path = "Instances" + string(PATHSEP) + "TTP" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + string(PATHSEP) + sol.getInstanceName();
+        array<int,10>seeds = {0,11,42,154,396,588,1217,2486,5003,10000};
+
+        int BestValue = INT_MAX;
+        int BestSeed = -1;
+        string path_seed = "";
+
+        for (int& seed: seeds){
+            path_seed = path + "_s" + to_string(seed) + ".txt";
+            cout << "string path = " << path_seed << endl;
+
+            std::ifstream file(path_seed);
+            if (!file.is_open()) {
+                std::cerr << "Could not open file\n";
+                return;
+            }
+
+            std::string line;
+            int Value = -1;
+
+            while (std::getline(file, line)) {
+                std::stringstream ss(line);
+                std::string token;
+
+                // Read first token
+                if (!std::getline(ss, token, ',')) continue;
+
+                if (token == "Final") {
+                    // Read the value right next to "Final"
+                    if (std::getline(ss, token, ',')) {
+                        Value = std::stoi(token);
+                    }
+                    break;
+                }
+            }
+            if (Value == -1){
+                cout << "Line with Final not found, return" << endl;
+                return;
+            }
+            else{
+                if (Value < BestValue){
+                    BestValue = Value;
+                    BestSeed = seed;
+                }
+            }
+        }
+        cout << "Best seed = " << BestSeed << " with value = " << BestValue << endl;
+
+        path_seed = path + "_s" + to_string(BestSeed) + ".txt";
+        ReadSolution(path_seed, sol);
+        sol.validate();
+
         cout << "Found initial solution" << endl;
     }
 
