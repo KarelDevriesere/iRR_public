@@ -217,17 +217,18 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
                         this->STOP = true;
                     }
                     else{
-                        cout << "-------------------------" << endl;
-                        cout << "Previous HL = " << HistoryLength << endl;
+                        // cout << "-------------------------" << endl;
+                        // cout << "Previous HL = " << HistoryLength << endl;
                         if (HistoryLength*2 <= 50000){
                             HistoryLength *= 2;
-                            cout << "New HistoryLength = " << HistoryLength << endl;
+                            // cout << "New HistoryLength = " << HistoryLength << endl;
                         }
-                        cout << "New HL = " << HistoryLength << endl;
+                        // cout << "New HL = " << HistoryLength << endl;
                         // cout << "Previous PerturbValue = " << PerturbeValue << endl;
                         // PerturbeValue += PerturbeIncrease;
                         // cout << "New PerturbValue = " << PerturbeValue << endl;
                         InitializeHistoricValues(1.1*this->best_obj);
+                        /*
                         cout << "Historic Values = ";
 
                         for (auto& v: HistoricValues){
@@ -235,13 +236,13 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
                         }
                         cout << endl;
                         cout << "-------------------------" << endl;
+                        */
                         this->it_idle = 0;
                         this->it = 0;
 
                         ResetSolutionAfterMove = true;
 
                         this->current_obj = this->best_obj;
-                        cin.get();
                     }
                 }
             }

@@ -498,7 +498,11 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
             FilePath = data.OutputFolder;
         }
         FilePath += std::string(PATHSEP) + sol.getInstanceName();
-        FilePath += "_s" + to_string(data.seed) + "_HL" + to_string(data.HistoryLength) + ".txt";
+        FilePath += "_s" + to_string(data.seed);
+        if (data.HistoryLengthProvided){
+            FilePath += "_HL" + to_string(data.HistoryLength);
+        }
+        FilePath += ".txt";
         config = to_string(data.seed);
         if (data.Base){
             config += ",BaseAlgo,";

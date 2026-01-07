@@ -505,6 +505,10 @@ bool RepairOrientationsEdgesLantarn_CM(Solution& sol, Lantarn& lantarn, const ve
 
 tuple<vector<Edge>,vector<Edge>,vector<int>> MakeLineGraph(Solution& sol, const int source, const int sink){
 
+    // Update 07/01/2026: Just the line graph does not work, a cycle or path in the line graph results in a walk or closed walk, respectively, in the original graph
+    // But: add N nodes in the line graph and I think it works
+    // e.h. (ij)->(j)->(jk) instead of (ij)->(jk)
+
     // source: team with A game too much, sink: team with H too much
     vector<Edge>Nodes; // Nodes of the line graph are edges of the original graph
 
@@ -536,6 +540,12 @@ tuple<vector<Edge>,vector<Edge>,vector<int>> MakeLineGraph(Solution& sol, const 
             }
         }
     }
+    // cout << "Added all edge nodes" << endl;
+
+    for (i = 0; i < sol.getNrTeams(); ++i){
+        Nodes.push_back({i,i});
+    }
+
     // cout << "Added all the nodes" << endl;
 
     // Now, evaluate for pair of nodes what the cost will be
