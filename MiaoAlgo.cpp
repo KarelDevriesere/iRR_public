@@ -157,7 +157,7 @@ void MiaoAlgo::ReAssignHAPs(Solution& sol){
     double rnd;
     bool MoveChosen = false;
     sol.NrColouredRounds = sol.getNrRounds(); // such that capacity costs are computed correctly
-    while(!MoveChosen){
+    while(!MoveChosen && !STOP){
         rnd = RandomDoubleNumber(0.0, 1.0);
         auto iterator = WeightsCumul.upper_bound(rnd); 
         CurrentMove = iterator->second;
@@ -416,6 +416,23 @@ bool MiaoAlgo::ComplementInsertion(Solution& sol){
         ++j_;
         // Does this complemantray HAP always exists? No, of course not!!
         if (j_ >= sol.getNrTeamsLeague(l)){
+            cout << "no complement hap found" << endl;
+            if (Moves.size() == 1){
+                STOP = true; // in this case, our algorithm is stuck!!
+                cout << "But this is the only move, so we are stuck!!" << endl;
+            }
+            else{
+                cout << "Only swaps, set size of this move to 0" << endl;
+                for (auto it = WeightsCumul.begin(); it != WeightsCumul.end(); ++it) {
+                    if (it->second == CurrentMove) {
+                        WeightsCumul.erase(it);
+                        break;   // erase only one
+                    }
+                }
+                for (auto it = WeightsCumul.begin(); it != WeightsCumul.end(); ++it) {
+                    cout << "Weight = " << it->first << ", move = " << Moves.at(it->second) << endl;
+                }
+            }
             return false;
             /*
             cout << "Chosen team = " << i << endl;
@@ -467,25 +484,78 @@ bool MiaoAlgo::ComplementInsertion(Solution& sol){
     return true;
 }
 
-void AssignsHAPsToTeamsBasedOnSol(Input& in, Solution& sol){
+void AssignsHAPsToTeamsBasedOnSol(Solution& sol){
     // Find the HAP of teams:
-    int i,h,r;
+    int i,h,r,index;
     for (i = 0; i < sol.getNrTeams(); ++i){
-        for (h = 0; h < in.getNrHAPs(); ++h){
+        for (h = 0; h < sol.getNrHAPs(); ++h){
             for (r = 0; r < sol.getNrRounds(); ++r){
-                if (sol.Orientation[i][r] != in.getModeHAPRound(h,r)){
+                if (sol.Orientation[i][r] != sol.getModeHAPRound(h,r)){
                     break;
                 }
             }
             if (r == sol.getNrRounds()){
+#ifdef PRINT
+#if PRINT == 1
                 cout << "Team " << i << " is assigned HAP " << h << endl;
+#endif
+#endif
                 sol.setHAPIndexTeam(i, h);
                 break;
             }
         }
-        if (h == in.getNrHAPs()){
+        if (h == sol.getNrHAPs()){
+            // When r > n/2, we start from Vizing, but it can be that, if we included only promising HAPs, this HAP is not found!!
+#ifdef PRINT
+#if PRINT == 1
             cout << "HAP of " << i << " not found when assign HAPs to teams based on sol" << endl;
-            std::abort();
+#endif
+#endif
+            // This can be because we did not include all HAPs!!
+            vector<HA>NewHAP = vector<HA>(sol.getNrRounds());
+            vector<HA>NewHAP_c = vector<HA>(sol.getNrRounds());
+            for (r = 0; r < sol.getNrRounds(); ++r){
+                if (sol.Orientation[i][r] == HA::H){
+#ifdef PRINT
+#if PRINT == 1
+                    cout << "H";
+#endif
+#endif
+                    NewHAP[r] = HA::H;
+                    NewHAP_c[r] = HA::A;
+                }
+                else{
+#ifdef PRINT
+#if PRINT == 1
+                    cout << "A";
+#endif
+#endif
+                    NewHAP[r] = HA::A;
+                    NewHAP_c[r] = HA::H;
+                }
+            }
+#ifdef PRINT
+#if PRINT == 1
+            cout << endl;
+#endif
+#endif
+
+            if (sol.HAP_satisfies_all_requirements(NewHAP)){
+                sol.AddHAPWithComplement(NewHAP, NewHAP_c);
+#ifdef PRINT
+#if PRINT == 1
+                cout << "HAP added" << endl;
+#endif
+#endif
+            }
+            else{
+#ifdef PRINT
+#if PRINT == 1
+                cout << "Infeasible HAP" << endl;
+#endif
+#endif
+                std::abort();
+            }
         }
     }
 }
@@ -497,7 +567,7 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
 
     Opponents = vector<vector<int>>(sol.getNrTeams(), vector<int>(sol.getNrRounds(), -1));
 
-    if (!InitialSolutionGiven || !in.AllHAPsIncluded){
+    if (!InitialSolutionGiven){
         // Assign HAPs such that we respect v+
         cout << "Assign HAPs to teams.." << endl;
         if (in.getNrRounds() > in.getNrTeams()/2){
@@ -548,15 +618,16 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
         cout << "Cost HAPs = " << sol.ComputeTotalHACost() << endl;
         current_obj = best_obj;
         cout << "Assign Haps to teams" << endl;
-        AssignsHAPsToTeamsBasedOnSol(in, sol);
+        AssignsHAPsToTeamsBasedOnSol(sol);
         UpdateBestSolution(sol);
         SetAllOpponents(sol);
         cout << "Ready" << endl;
         ReAssignHAPs(sol);
+        cout << "Travel cost = " << sol.ComputeTravelCostTTP() << endl;
     }
     Reset(sol);
 
-    do{
+    while(!STOP){
         // cout << "solve matchings with following haps" << endl;
         // for (int t = 0; t < sol.getNrTeams(); ++t){
         //    printHAP(sol, t);
@@ -582,7 +653,6 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
         assert(sol.ComputeTotalHACost() <= 0);
         Reset(sol); // this deletes all the matchups in the rounds of the league chosen by the HAP operator
     }
-    while(!STOP);
 
     // cout << "Miao Algo done" << endl;
     // save into solution

@@ -296,7 +296,11 @@ bool SA<Move>::Update(Solution& sol, const int obj){
 
             if (++this->it % I_temp == 0 || (this->it_accepted - I_accept >= 0)){ 
                 T *= cooling_rate;
+#ifdef PRINT
+#if PRINT == 1
                 cout << "New T = " << T << endl;
+#endif
+#endif
                 this->it_accepted = 0;
                 this->it = 0;
             }

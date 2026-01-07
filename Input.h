@@ -136,8 +136,6 @@ class Input
         vector<int>ComplementHAP;
         int MiaoHAPSetting = -1;
 
-        bool HAP_satisfies_all_requirements(const vector<HA>& HAP);
-
         MiaoInstance InstanceMiao = MiaoInstance::S;
         // pair<TotalNrTeams,NrDummyTeams>
         std::unordered_map<MiaoInstance, std::pair<int,int>>NrTeamsMiaoInstances = {{MiaoInstance::S, {50,0}}, {MiaoInstance::U13, {184,18}}, {MiaoInstance::U15, {216,49}},
@@ -217,6 +215,14 @@ class Input
         void setHAPIndexTeam(const int i, const int h){TeamsHAP[i] = h;};
         int getHAPIndexTeam(const int i)const{return TeamsHAP[i];};
         int getComplementIndexHAP(const int h)const{return ComplementHAP[h];};
+        void AddHAPWithComplement(const vector<HA>NewHAP, const vector<HA>NewHAP_c){
+            int index = getNrHAPs();
+            HAPs.push_back(NewHAP);
+            HAPs.push_back(NewHAP_c);
+            ComplementHAP.push_back(index+1);
+            ComplementHAP.push_back(index);
+        }
+        bool HAP_satisfies_all_requirements(const vector<HA>& HAP);
 
         Setting getSetting()const{return Setting_;};
 
