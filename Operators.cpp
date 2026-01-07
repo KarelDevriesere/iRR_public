@@ -505,6 +505,10 @@ bool RepairOrientationsEdgesLantarn_CM(Solution& sol, Lantarn& lantarn, const ve
 
 tuple<vector<Edge>,vector<Edge>,vector<int>> MakeLineGraph(Solution& sol, const int source, const int sink){
 
+    // Update 07/01/2026: Just the line graph does not work, a cycle or path in the line graph results in a walk or closed walk, respectively, in the original graph
+    // But: add N nodes in the line graph and I think it works
+    // e.h. (ij)->(j)->(jk) instead of (ij)->(jk)
+
     // source: team with A game too much, sink: team with H too much
     vector<Edge>Nodes; // Nodes of the line graph are edges of the original graph
 
@@ -536,6 +540,12 @@ tuple<vector<Edge>,vector<Edge>,vector<int>> MakeLineGraph(Solution& sol, const 
             }
         }
     }
+    // cout << "Added all edge nodes" << endl;
+
+    for (i = 0; i < sol.getNrTeams(); ++i){
+        Nodes.push_back({i,i});
+    }
+
     // cout << "Added all the nodes" << endl;
 
     // Now, evaluate for pair of nodes what the cost will be
@@ -708,7 +718,9 @@ bool FindPathLineGraphOneLeague(const int source, const int sink, Solution& sol,
     BGraph G(Nodes.size()+2); // Nodes.size()+2 vertices, +2 bc of extra SOURCE and SINK node
 
     for (std::size_t j = 0; j < edge_vector.size(); ++j){
-        assert(weights[j] >= 0);
+        if (weights[j] < 0){
+            weights[j] = 0; // Non-increasing!!
+        }
         boost::add_edge(edge_vector[j].first, edge_vector[j].second, weights[j], G);
     }
 
@@ -806,7 +818,7 @@ vector<array<int,3>> CycleBalanced(Solution& sol, std::mt19937& gen){
         // cout << "e = " << e << endl;
         Cycle.erase(Cycle.begin(), Cycle.begin()+e+1);
     }
-
+    
     /*
     cout << "Cycle: " << endl;
     for (auto& e: Cycle){
@@ -823,67 +835,111 @@ vector<array<int,3>> CycleBalanced(Solution& sol, std::mt19937& gen){
     return Cycle;
 }
 
-vector<array<int,3>> NegativeCycle(Solution& sol){
-    // See: https://www.boost.org/doc/libs/1_31_0/libs/graph/example/bellman-example.cpp
+vector<array<int,3>> NonIncreasingCycle(Solution& sol){
 
-    // define a source node: goes to all the nodes!!
+    int source = -1, sink = -1;
+    auto [Nodes,edge_vector,weights] = MakeLineGraph(sol, source, sink);
 
-    int cost = 0; // if no negative cycle cost will be 0
+    // Floyd Warshall algorithm:
 
-    typedef pair<int, int>E;
-    vector<E>edge_vector;
-    vector<int>weight;
+    int N = Nodes.size();
+    const int INF = 10000;
+    vector<vector<int>>dist(N, vector<int>(N, INF));
+    vector<vector<int>>pred(N, vector<int>(N,-1));
 
-    const int N = sol.getNrTeams();
-    int SOURCE = N;
-
-    int v,w,h,a,r;
-    for (v = 0; v < N; ++v){
-        for (w = v+1; w < N; ++w){
-            r = sol.MatchColor[v][w]; // SRR
-            if (r < 0){
-                continue;
+    for (int e = 0; e < edge_vector.size(); ++e){
+        auto edge = edge_vector[e]; // edge = {h,a}
+        if (weights[e] < 0){
+            weights[e] = 0; // non-increasing!!
+        }
+        dist[edge.second][edge.first] = weights[e];
+        pred[edge.second][edge.first] = edge.second;
+    }
+    for (int i = 0; i < N; ++i){
+        dist[i][i] = 0;
+        pred[i][i] = i;
+    }
+    for (int k = 0; k < N; ++k){
+        for (int i = 0; i < N; ++i){
+            for (int j = 0; j < N; ++j){
+                if (dist[i][j] > dist[i][k] + dist[k][j]){
+                    dist[i][j] = dist[i][k] + dist[k][j];
+                    pred[i][j] = pred[k][j];
+                }
             }
-            if (sol.Orientation[v][r] == HA::H){
-                h = v;
-                a = w;
-            }
-            else{
-                h = w;
-                a = v;
-            }
-            edge_vector.push_back(E(h,a));
-            weight.push_back(sol.getCostMatchRound(a,h,r)-sol.getCostMatchRound(h,a,r)); // improvement of reversing this edge
         }
     }
 
-    for (int v = 0; v < N; ++v){
-        edge_vector.push_back(E(SOURCE, v)); // create edges SOURCE --> v
-        weight.push_back(0); // get weight of 0
+    int min_weight_cycle = INF;
+    int start_edge = -1;
+
+    for (int e = 0; e < edge_vector.size(); ++e){
+        auto edge = edge_vector[e];
+        if (weights[e]+dist[edge.first][edge.second] < min_weight_cycle){
+            min_weight_cycle = weights[e]+dist[edge.first][edge.second];
+            start_edge = e;
+        }
     }
 
-    /*
-    vecS: specifies that each vertex stores outgoing vertices in a vector
-    vecS: means that the vertices themselves are also stored in a vector
-    directedS: specifies that the edges are directed
-    no_property: vertices have no extra properties (like labels, colors, ..)
-    property <boost::edge_weight_t, int>: each edge has a property called edge_weight_t, which stores an integer value
-    */
+    vector<array<int,3>>Cycle;
 
-    typedef boost::adjacency_list <boost::vecS, boost::vecS, boost::directedS, boost::no_property, boost::property <boost::edge_weight_t, int>>BGraph;
+    // retrieve the cycle:
+    Edge e;
+    int i,k,r;
+    int start = edge_vector[start_edge].first;
+    int curr = edge_vector[start_edge].second;
+    // cout << start << " <- " << curr;
+    // cout << "(" << Nodes[start].first << " -> " << Nodes[start].second << ") -> " << "(" << Nodes[curr].first << " -> " << Nodes[curr].second << ") -> "; 
 
-    BGraph g(N+1); // N+1 vertices, +1 bc of source node
+    e = Nodes[curr];
+    i = e.first, k = e.second; // (i,k) = i->k
+    r = sol.MatchColor[k][i];
+    Cycle.emplace_back(std::array<int, 3>{k, i, r});
+
+    while(curr != start){
+        curr = pred[start][curr];
+        // cout << " <- " << curr;
+        e = Nodes[curr];
+        i = e.first, k = e.second; // (i,k) = i->k
+        r = sol.MatchColor[k][i];
+        // cout << "(" << i << " -> " << k << ")";
+        Cycle.emplace_back(std::array<int, 3>{k, i, r});
+        assert(sol.Orientation[k][r] == HA::H);
+        assert(sol.Orientation[i][r] == HA::A);
+        // if (curr != start){cout << " -> ";};
+    }
+    // cout << endl;
+
+    // cout << "min_weight_cycle = " << min_weight_cycle << endl;
+    // cin.get();
+
+    return Cycle;
+}
+
+vector<array<int,3>> NegativeCycle(Solution& sol){
+    // See: https://www.boost.org/doc/libs/1_31_0/libs/graph/example/bellman-example.cpp
+
+    int source = -1, sink = -1;
+    auto [Nodes,edge_vector,weights] = MakeLineGraph(sol, source, sink);
+
+    int N = Nodes.size();
+    int SOURCE = N;
+    for (int v = 0; v < N; ++v){
+        edge_vector.push_back(Edge(SOURCE, v)); // create edges SOURCE --> v
+        weights.push_back(0); // get weight of 0
+        // cout << "add " << SOURCE << " -> " << "(" << Nodes[v].first << "," << Nodes[v].second << ")" << endl;
+    }
+
+    BGraph g(N+1); // Nodes.size()+2 vertices, +2 bc of extra SOURCE and SINK node
+
+    for (std::size_t j = 0; j < edge_vector.size(); ++j){
+        boost::add_edge(edge_vector[j].first, edge_vector[j].second, weights[j], g);
+    }
 
     typedef boost::property_map<BGraph, boost::edge_weight_t>::type WeightMap;
     WeightMap weight_map = boost::get(boost::edge_weight, g);
     typedef boost::graph_traits<BGraph>::vertex_descriptor Vertex;
 
-    for (std::size_t j = 0; j < edge_vector.size(); ++j){
-        boost::add_edge(edge_vector[j].first, edge_vector[j].second, weight[j], g);
-    }
-
-    // C+1 because of source node!!!
-    assert(boost::num_vertices(g) == N+1);
     vector<double> distance(N+1, std::numeric_limits<double>::max());
     vector<Vertex> predecessor(N+1, boost::graph_traits<BGraph>::null_vertex());
 
@@ -896,7 +952,6 @@ vector<array<int,3>> NegativeCycle(Solution& sol){
     bool NC = boost::bellman_ford_shortest_paths(g, N+1, boost::weight_map(get(boost::edge_weight, g)).distance_map(&distance[0]).predecessor_map(&predecessor[0]));
 
     vector<array<int,3>>Cycle;
-    Cycle.reserve(N);
      
     if (!NC)
     {
@@ -906,7 +961,7 @@ vector<array<int,3>> NegativeCycle(Solution& sol){
         {
             for (auto e : make_iterator_range(edges(g)))
             {
-                Vertex u = source(e, g), v = target(e, g);
+                Vertex u = boost::source(e, g), v = boost::target(e, g);
                 double weight = get(boost::edge_weight, g, e);
  
                 // If we can still relax an edge, then v is part of a negative cycle
@@ -929,18 +984,35 @@ vector<array<int,3>> NegativeCycle(Solution& sol){
  
             // Track the cycle
             Vertex cycle_start = current;
-            Vertex pred;
+
+            Edge e;
+            int i,k,r;
+
+            Vertex prev;
             do {
-                pred = predecessor[current];
-                r = sol.MatchColor[current][pred];
-                Cycle.emplace_back(std::array<int, 3>{(int)current,(int)pred,r});
-                // cout << "add edge " << (int)current << "<-" << (int)pred << " (round " << r << "): " << sol.getCostMatchRound(pred,current,r)-sol.getCostMatchRound(current,pred,r) << endl;
-                current = pred;
+                e = Nodes[current];
+                i = e.first, k = e.second; // (i,k) = i->k
+                r = sol.MatchColor[k][i];
+                Cycle.emplace_back(std::array<int, 3>{k, i, r});
+                // cout << "(" << k << " <- " << i << ")";
+                assert(sol.Orientation[k][r] == HA::H);
+                assert(sol.Orientation[i][r] == HA::A);
+                prev = predecessor[current];
+                int s = 0;
+                while(!(edge_vector[s].first == prev && edge_vector[s].second == current)){
+                    ++s;
+                }
+                current = prev;
+                // if (current != cycle_start){cout << " -> (" << weights[s] << ")";};
+                // cout << " <- (" << weights[s] << ")";
+                
             }while (current != cycle_start);
+            // cout << endl;
         }
     }
     else{
         // cout << "No negative cycle found!" << endl;
+        // cout << "NC true" << endl;
         assert(Cycle.empty());
     }
 

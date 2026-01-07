@@ -189,6 +189,7 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
         bool DynamicHL = false;
         int PerturbeValue = 0;
         int PerturbeIncrease = 100;
+        bool ResetSolutionAfterMove = false;
 
         LAHC(const std::unordered_map<Move, string>& moves, // moves, weights and in are defined in main
            const std::unordered_map<Move, double>& weights, std::mt19937& g): MetaBase<Move>(moves, weights, g){

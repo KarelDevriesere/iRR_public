@@ -218,16 +218,24 @@ int Solution::getNrSameClub(const int i){
 
 int Solution::ComputeCostReversingOrientationTeam(const int i, const int r1, const int r2){
     int cost = 0;
-    std::swap(Orientation[i][r1], Orientation[i][r2]);
-    // cout << "swap orientation of " << i << " in " << r1 << " and " << r2 << endl;
     if (getSetting() == Setting::TTP){
-        cost = ComputeTTPViolations(i);
+        cost -= (getCostTTPViolation()*ComputeTTPViolations(i) + ComputeTravelCostTeamTTP(i));
     }
     else if (getSetting() == Setting::Miao || getSetting() == Setting::Hockey){
-        cost = ComputeHACostTeam(i) + ComputeCost2RRConstraintTeam(i); //  not possible to take capacity violations into account because multiple teams in same club!!
+        cost -= ComputeHACostTeam(i) + ComputeCost2RRConstraintTeam(i); //  not possible to take capacity violations into account because multiple teams in same club!!
         // Also, then we get negative costs which is not allowed for dijkstra shortest paths
     }
     std::swap(Orientation[i][r1], Orientation[i][r2]);
+    // cout << "swap orientation of " << i << " in " << r1 << " and " << r2 << endl;
+    if (getSetting() == Setting::TTP){
+        cost += (getCostTTPViolation()*ComputeTTPViolations(i) + ComputeTravelCostTeamTTP(i));
+    }
+    else if (getSetting() == Setting::Miao || getSetting() == Setting::Hockey){
+        cost += ComputeHACostTeam(i) + ComputeCost2RRConstraintTeam(i); //  not possible to take capacity violations into account because multiple teams in same club!!
+        // Also, then we get negative costs which is not allowed for dijkstra shortest paths
+    }
+    std::swap(Orientation[i][r1], Orientation[i][r2]);
+    // cout << "cost = " << cost << endl;
     return cost;
 }
 
@@ -512,17 +520,19 @@ int Solution::ComputeTTPViolations(const int i){
         }
         if (nrH > 3 || nrA > 3){
             nrV++;
+            /*
             cout << "HAP of " << i << ": " << endl;
             for (int s = 0; s < NrColouredRounds; ++s){
                 if (Orientation[i][s] == HA::H){
                     cout << "H";
                 }
                 else{
-                    assert(Orientation[i][r] == HA::A);
+                    assert(Orientation[i][s] == HA::A);
                     cout << "A";
                 }
             }
             cout << endl;
+            */
         }
     }
     return nrV;

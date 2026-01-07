@@ -294,10 +294,21 @@ void Heuristic_CM::SelectMatching(Solution& sol, const bool bipartite){
 void Heuristic_CM::SelectBalancedCycle(Solution& sol){
 
     bool NegativeCycleFound = false;
+    int CostReversingCycle = 0;
 
     vector<array<int,3>>Cycle;
     if (MinCostC){
+        cout << "NC" << endl;
         Cycle = NegativeCycle(sol);
+        if (Cycle.empty()){
+            cout << "No NC, try Floyd-Warshall" << endl;
+            cin.get();
+            Cycle = NonIncreasingCycle(sol); // If no negative cycle, find a non-increasing cyclce
+            assert(!Cycle.empty()); // must always return a cycle!!
+        }
+        else{
+            NegativeCycleFound = true;
+        }
     }    
     else {
         Cycle = CycleBalanced(sol, gen);
@@ -313,10 +324,17 @@ void Heuristic_CM::SelectBalancedCycle(Solution& sol){
     cost_before = sol.ComputeTotalCost();
 #endif
 
-    assert(Cycle[0][0] == Cycle[(int)Cycle.size()-1][1]);
+    // assert(Cycle[0][0] == Cycle[(int)Cycle.size()-1][1]);
     // cout << "Reverse path" << endl;
     ReversePath(sol, Cycle);
     // cout << "done" << endl;
+
+#ifndef NDEBUG
+    if (NegativeCycleFound){
+        cout << cost_before << " > " << sol.ComputeTotalCost() << endl;
+        assert(cost_before > sol.ComputeTotalCost());
+    }
+#endif
 
     if (!Update(sol, sol.ComputeTotalCost())){
         // If not better: reverse the cycle again as if nothing happened
@@ -326,11 +344,6 @@ void Heuristic_CM::SelectBalancedCycle(Solution& sol){
         assert(!(MinCostC && NegativeCycleFound)); // If a negative cycle was found, it cannot be that we not accept the solution
 #endif
     }
-#ifndef NDEBUG
-    if (NegativeCycleFound){
-        assert(cost_before > sol.ComputeTotalCost());
-    }
-#endif
     return;
 }
 
@@ -394,12 +407,17 @@ void Heuristic_CM::DoMove(Solution& sol){
         SelectMatching(sol, bipartite);
     }
     else if (CurrentMove == Move::NC) {
-        MinCostC = false; // TODO: NC in line graph for TTP!!
+        MinCostC = true; // TODO: NC in line graph for TTP!!
         SelectBalancedCycle(sol);
     }
     else{
         MinCostC = false;
         SelectBalancedCycle(sol);
+    }
+    if (ResetSolutionAfterMove){
+        SaveBestSolution(sol);
+        assert(best_obj == sol.ComputeTotalCost());
+        ResetSolutionAfterMove = false;
     }
     // cout << "done" << endl;
     auto end = std::chrono::high_resolution_clock::now();
