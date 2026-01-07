@@ -22,6 +22,9 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/bellman_ford_shortest_paths.hpp>
 
+#include <boost/graph/floyd_warshall_shortest.hpp>
+#include <boost/graph/johnson_all_pairs_shortest.hpp>
+
 // TODO Overwrite maximum weighted matching with the newest boost file.
 // See https://github.com/boostorg/graph/issues/399
 //#include <boost/graph/maximum_weighted_matching.hpp>
@@ -121,6 +124,8 @@ int UpdateCycleBF(vector<int>& Cycle, Solution& sol);
 int MinimizeBreaksCycleBoost(Solution& sol);
 
 vector<array<int,3>> NegativeCycle(Solution& sol);
+
+vector<array<int,3>> NonIncreasingCycle(Solution& sol);
 
 void SwapMatchings(Solution& sol, vector<pair<int,int>>Matching, const int l, const int r, const bool bipartite);
 

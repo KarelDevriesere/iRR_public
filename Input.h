@@ -43,11 +43,11 @@ struct InputData{
     /*{Move::NC, false},*/
     {Move::MinCost_BM, false}, 
     {Move::Random_BM, false}, 
-    {Move::iPTS_MinCost_PR, false}, 
+    /*{Move::iPTS_MinCost_PR, false},*/
     {Move::iPTS_Random_PR, false}, 
-    {Move::MinCost_M_MinCost_PR, false}, 
-    {Move::MinCost_M_Random_PR, false},
-    {Move::Random_M_MinCost_PR, false}, 
+    /*{Move::MinCost_M_MinCost_PR, false},*/ 
+    /*{Move::MinCost_M_Random_PR, false},*/
+    /*{Move::Random_M_MinCost_PR, false},*/
     {Move::Random_M_Random_PR, false}};
 
     const unordered_map<Move,string>Moves = {{Move::TS, "TS"}, 
@@ -58,11 +58,11 @@ struct InputData{
     /*{Move::NC, "NC"},*/
     {Move::MinCost_BM, "MinCost_BM"}, 
     {Move::Random_BM, "Random_BM"}, 
-    {Move::iPTS_MinCost_PR, "iPTS_MinCost_PR"}, 
+    /*{Move::iPTS_MinCost_PR, "iPTS_MinCost_PR"},*/
     {Move::iPTS_Random_PR, "iPTS_Random_PR"}, 
-    {Move::MinCost_M_MinCost_PR, "MinCost_M_MinCost_PR"}, 
-    {Move::MinCost_M_Random_PR, "MinCost_M_Random_PR"},
-    {Move::Random_M_MinCost_PR, "Random_M_MinCost_PR"}, 
+    /*{Move::MinCost_M_MinCost_PR, "MinCost_M_MinCost_PR"},*/ 
+    /*{Move::MinCost_M_Random_PR, "MinCost_M_Random_PR"},*/
+    /*{Move::Random_M_MinCost_PR, "Random_M_MinCost_PR"},*/ 
     {Move::Random_M_Random_PR, "Random_M_Random_PR"}}; 
 
     string Instance;
