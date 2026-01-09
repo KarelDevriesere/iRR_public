@@ -159,8 +159,10 @@ void MiaoAlgo::ReAssignHAPs(Solution& sol){
     sol.NrColouredRounds = sol.getNrRounds(); // such that capacity costs are computed correctly
     while(!MoveChosen && !STOP){
         rnd = RandomDoubleNumber(0.0, 1.0);
+        cout << "rnd = " << rnd << endl;
         auto iterator = WeightsCumul.upper_bound(rnd); 
         CurrentMove = iterator->second;
+        cout << "Move = " << Moves.at(CurrentMove) << endl;
         if (CurrentMove == Move::InterClubSwap){
             MoveChosen = InterClubSwap(sol);
         }
@@ -657,6 +659,7 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
             }
         }
     }
+    cin.get();
 
     Reset(sol);
 
@@ -665,13 +668,17 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
         // for (int t = 0; t < sol.getNrTeams(); ++t){
         //    printHAP(sol, t);
         //}
+        cout << "Schedule phase" << endl;
         if (SchedulePhase(sol)){ // solve sequence of matching problems (round per round)
+            cout << "uPdate?" << endl;
             if (!Update(sol, sol.ComputeTotalCost())){ // update best objective
                 // if solution not accepted: reverse
+                cout << "No, reverse move" << endl;
                 ReverseMove(sol);
                 // Problem is that with multi leagues, if we do not accept the HAP move, in the next iteration we might choose a HAP operator from another league. Then the new opponent schedule is not compatible again with the reversed HAPs for the previous league. Hence we also have to go back to the old matching
             } 
             else{
+                cout << "Yes, set opponents" << endl;
                 SetOpponentsCurrentLeague(sol);
                 if (InitialOnly){
                     STOP = true;
@@ -679,12 +686,18 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
             }
         }
         else{
+            cout << "Schedule phase unsuccesfull" << endl;
             Update(sol, INT_MAX); // infeasible solution but still update values
             ReverseMove(sol); // if schedule phase not succesful: reverse move, and try with new HAP move
+            cout << "Updated and reversed" << endl;
         }
+        cout << "Reassign HAPs" << endl;
         ReAssignHAPs(sol); // do a HAP move
+        cout << "reassigned" << endl;
         assert(sol.ComputeTotalHACost() <= 0);
+        cout << "reset" << endl;
         Reset(sol); // this deletes all the matchups in the rounds of the league chosen by the HAP operator
+        cout << "done" << endl;
     }
 
     // cout << "Miao Algo done" << endl;
