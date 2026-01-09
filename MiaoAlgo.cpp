@@ -416,23 +416,7 @@ bool MiaoAlgo::ComplementInsertion(Solution& sol){
         ++j_;
         // Does this complemantray HAP always exists? No, of course not!!
         if (j_ >= sol.getNrTeamsLeague(l)){
-            cout << "no complement hap found" << endl;
-            if (Moves.size() == 1){
-                STOP = true; // in this case, our algorithm is stuck!!
-                cout << "But this is the only move, so we are stuck!!" << endl;
-            }
-            else{
-                cout << "Only swaps, set size of this move to 0" << endl;
-                for (auto it = WeightsCumul.begin(); it != WeightsCumul.end(); ++it) {
-                    if (it->second == CurrentMove) {
-                        WeightsCumul.erase(it);
-                        break;   // erase only one
-                    }
-                }
-                for (auto it = WeightsCumul.begin(); it != WeightsCumul.end(); ++it) {
-                    cout << "Weight = " << it->first << ", move = " << Moves.at(it->second) << endl;
-                }
-            }
+            // cout << "no complement hap found for team " << i << endl;
             return false;
             /*
             cout << "Chosen team = " << i << endl;
@@ -458,6 +442,7 @@ bool MiaoAlgo::ComplementInsertion(Solution& sol){
             */
         }
     }
+
     int j = sol.getGlobalIndexTeam(l,j_);
     if (sol.getNrLeagues()==1 && ((i != i_) || (j != j_))){
         cout << "(i != i_) || (j != j_) in ComplementInsertion()" << endl;
@@ -625,6 +610,54 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
         ReAssignHAPs(sol);
         cout << "Travel cost = " << sol.ComputeTravelCostTTP() << endl;
     }
+
+    // Check if the starting solution contains at leats one pair of complementary HAPs. If not: set this move to 0!!!
+
+    bool PairFound = true;
+
+    for (int i = 0; i < sol.getNrTeams(); ++i){
+        int l = sol.getLeagueTeam(i);
+        // cout << "l = " << l << endl;
+        int h = sol.getHAPIndexTeam(i);
+        int hc = sol.getComplementIndexHAP(h);
+        // cout << "i = " << i << ", h = " << h << ", hc = " << hc << endl;
+        int j_ = 0;
+        while (sol.getHAPIndexTeam(sol.getGlobalIndexTeam(l,j_)) != hc){
+            // cout << "hap of " << sol.getGlobalIndexTeam(l,j_)<< "  = " << sol.getHAPIndexTeam(sol.getGlobalIndexTeam(l,j_)) << endl;
+            ++j_;
+            // Does this complemantray HAP always exists? No, of course not!!
+            if (j_ >= sol.getNrTeamsLeague(l)){
+                // cout << "no complement hap found for team " << i << endl;
+                PairFound = false;
+                break;
+            }
+        }
+        if (PairFound){
+            cout << "Pair of complementary haps found!!!!" << endl;
+            break;
+        }
+    }
+
+    if (!PairFound){
+        cout << "Not one pair of complementary HAPs!!" << endl;
+        if (Moves.size() == 1){
+            STOP = true; // in this case, our algorithm is stuck!!
+            cout << "But this is the only move, so we are stuck!!" << endl;
+        }
+        else{
+            cout << "Only swaps, set size of this move to 0" << endl;
+            for (auto it = WeightsCumul.begin(); it != WeightsCumul.end(); ++it) {
+                if (it->second == Move::ComplementInsertion) {
+                    WeightsCumul.erase(it);
+                    break;   // erase only one
+                }
+            }
+            for (auto it = WeightsCumul.begin(); it != WeightsCumul.end(); ++it) {
+                cout << "Weight = " << it->first << ", move = " << Moves.at(it->second) << endl;
+            }
+        }
+    }
+
     Reset(sol);
 
     while(!STOP){

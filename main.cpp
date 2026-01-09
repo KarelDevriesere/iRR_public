@@ -108,10 +108,12 @@ int main(int argc, const char* argv[]){
                 data.Miao = true;
                 data.TTP = false;
                 data.Hockey = false;
+                /*
                 if (data.MaxNrBreaks != 0 && data.MaxNrBreaks != 1 && data.MaxNrBreaks != 2 && data.MaxNrBreaks != 3){
                     std::cerr << "MaxNrBreaks must be 0,1,2 or 3!!" << endl;
                     return 1;
                 }
+                    */
             }
             else if (arg == "--InstanceMiao"){ // Miao
                 int miao_i = std::stoi(argv[++i]);

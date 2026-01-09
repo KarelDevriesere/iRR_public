@@ -349,13 +349,15 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
     if (in.getSetting() == Setting::Miao){
         string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
         path += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
-        if (!(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)){
+        if (/*!(data.Instance == "i03" && data.CapacitySetting == 0 && data.MaxNrBreaks == 3)*/ true){
             ReadSolution(path, sol);
         }
+        miao_algo.InitialSolutionGiven = true;
     }
     else if (in.getSetting() == Setting::Hockey){
         string path = "Instances" + string(PATHSEP) + "Hockey" + string(PATHSEP) + "Vcr" + string(PATHSEP) + data.Instance + ".txt";
         ReadSolution(path, sol);
+        miao_algo.InitialSolutionGiven = true;
     }
     else{
         if (in.getNrRounds() > in.getNrTeams() / 2){ // If this is the case, our strategy of using only 2 HAPs does not work!!
@@ -367,6 +369,7 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
             miao_algo.InitialSolutionGiven = false;
         }
     }
+
     miao_algo.setTimeLimit_meta(data.TimeLimit);
     miao_algo.SetTimeStamps(TimeStamps);
     miao_algo.solve(in, sol);
@@ -378,12 +381,12 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
     string config;
 
     if (in.getSetting() == Setting::Miao){
-        FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + "_seed" + to_string(data.seed) + ".txt";
+        FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + "_s" + to_string(data.seed) + ".txt";
         
         config = to_string(data.seed) + ",MiaoAlgo," + data.Instance + "," + to_string(data.CapacitySetting) + "," + to_string(data.MaxNrBreaks);
     }
     else if (in.getSetting() == Setting::Hockey){
-        FilePath = "Instances" + string(PATHSEP) + "Hockey" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + data.Instance + "_seed" + to_string(data.seed) + ".txt";
+        FilePath = "Instances" + string(PATHSEP) + "Hockey" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.seed) + ".txt";
         config = to_string(data.seed) + ",MiaoAlgo," + data.Instance;
     }
     else{
@@ -406,15 +409,69 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
     cout << "Close file" << endl;
 }
 
+int ReturnBestSeed(string& path){
+    array<int,10>seeds = {0,11,42,154,396,588,1217,2486,5003,10000};
+
+    int BestValue = INT_MAX;
+    int BestSeed = -1;
+    string path_seed = "";
+
+    for (int& seed: seeds){
+        path_seed = path + "_s" + to_string(seed) + ".txt";
+        // cout << "string path = " << path_seed << endl;
+
+        std::ifstream file(path_seed);
+        if (!file.is_open()) {
+            std::cerr << "Could not open file\n";
+            std::abort();
+        }
+
+        std::string line;
+        int Value = -1;
+
+        while (std::getline(file, line)) {
+            std::stringstream ss(line);
+            std::string token;
+
+            // Read first token
+            if (!std::getline(ss, token, ',')) continue;
+
+            if (token == "Final") {
+                // Read the value right next to "Final"
+                if (std::getline(ss, token, ',')) {
+                    Value = std::stoi(token);
+                }
+                break;
+            }
+        }
+        if (Value == -1){
+            cout << "Line with Final not found, abort" << endl;
+            std::abort();
+        }
+        else{
+            if (Value < BestValue){
+                BestValue = Value;
+                BestSeed = seed;
+            }
+        }
+    }
+    cout << "Best seed = " << BestSeed << " with value = " << BestValue << endl;
+    assert(BestSeed > -1);
+    return BestSeed;
+}
+
 void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data){
     // Find initial solution with Vizing
     cout << "Solve heuristic" << endl;
     Solution sol(in);
     sol.SetOneCostAllViolations(data.ConstrViolationCost);
 
+    string path;
+
     if (in.getSetting() == Setting::Miao){
         // string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
         // path += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
+        /*
         string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + string(PATHSEP);
         string instance_full = data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks);
         path += instance_full + "_seed" + to_string(BestSeedsMiaoAlgo.at(instance_full)) + ".txt";
@@ -424,9 +481,12 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
         else{
             VizingConstruction(sol, data.seed); 
         }
+        */
+        path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks);
+        cout << "path = " << path << endl;
     }
     else if (in.getSetting() == Setting::Hockey){
-        string path = "Instances" + string(PATHSEP) + "Hockey" + string(PATHSEP) + "Vcr" + string(PATHSEP) + data.Instance + ".txt";
+        path = "Instances" + string(PATHSEP) + "Hockey" + string(PATHSEP) + "Vcr" + string(PATHSEP) + data.Instance + ".txt";
         ReadSolution(path, sol);
     }
     else{
@@ -434,60 +494,16 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
         // VizingConstruction(sol, data.seed);
 
         // Start from best found solution by Miao's algorithm (with 100% of the HAPs)
-        string path = "Instances" + string(PATHSEP) + "TTP" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + string(PATHSEP) + sol.getInstanceName();
-        array<int,10>seeds = {0,11,42,154,396,588,1217,2486,5003,10000};
-
-        int BestValue = INT_MAX;
-        int BestSeed = -1;
-        string path_seed = "";
-
-        for (int& seed: seeds){
-            path_seed = path + "_s" + to_string(seed) + ".txt";
-            cout << "string path = " << path_seed << endl;
-
-            std::ifstream file(path_seed);
-            if (!file.is_open()) {
-                std::cerr << "Could not open file\n";
-                return;
-            }
-
-            std::string line;
-            int Value = -1;
-
-            while (std::getline(file, line)) {
-                std::stringstream ss(line);
-                std::string token;
-
-                // Read first token
-                if (!std::getline(ss, token, ',')) continue;
-
-                if (token == "Final") {
-                    // Read the value right next to "Final"
-                    if (std::getline(ss, token, ',')) {
-                        Value = std::stoi(token);
-                    }
-                    break;
-                }
-            }
-            if (Value == -1){
-                cout << "Line with Final not found, return" << endl;
-                return;
-            }
-            else{
-                if (Value < BestValue){
-                    BestValue = Value;
-                    BestSeed = seed;
-                }
-            }
-        }
-        cout << "Best seed = " << BestSeed << " with value = " << BestValue << endl;
-
-        path_seed = path + "_s" + to_string(BestSeed) + ".txt";
-        ReadSolution(path_seed, sol);
-        sol.validate();
-
-        cout << "Found initial solution" << endl;
+        path = "Instances" + string(PATHSEP) + "TTP" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + string(PATHSEP) + sol.getInstanceName();
     }
+
+    int BestSeed = ReturnBestSeed(path);
+
+    string path_seed = path + "_s" + to_string(BestSeed) + ".txt";
+    ReadSolution(path_seed, sol);
+    sol.validate();
+
+    cout << "Found initial solution" << endl;
 
     assert(sol.validate());
     int obj = sol.ComputeTotalCost();
@@ -575,12 +591,12 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
         config += to_string(data.MaxIt) + "," + to_string(data.TimeLimit) + "," + to_string(data.HistoryLength) + "," + to_string(data.ConstrViolationCost) + "," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
     }
     else if (in.getSetting() == Setting::Miao){
-        cout << "Started from Miao solution!!!" << endl;
-        FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "HeuristicStartingFromMiao" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + "_seed" + to_string(data.seed) + "_HL" + to_string(data.HistoryLength) + ".txt";
-        config = to_string(data.seed) + ",HeuristicStartingFromMiao," + data.Instance + "," + to_string(data.CapacitySetting) + "," + to_string(data.MaxNrBreaks) + "," + to_string(data.HistoryLength);
+        cout << "Started from Miao solution but save in Heuristic!!!" << endl;
+        FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "Heuristic" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + "_seed" + to_string(data.seed) + ".txt";
+        config = to_string(data.seed) + ",Heuristic," + data.Instance + "," + to_string(data.CapacitySetting) + "," + to_string(data.MaxNrBreaks) + "," + to_string(data.HistoryLength);
     }
     else if (in.getSetting() == Setting::Hockey){
-        FilePath = "Instances" + string(PATHSEP) + "Hockey" + string(PATHSEP) + "Results" + string(PATHSEP) + "Heuristic" + std::string(PATHSEP) + data.Instance + "_seed" + to_string(data.seed) + "_HL" + to_string(data.HistoryLength) + ".txt";
+        FilePath = "Instances" + string(PATHSEP) + "Hockey" + string(PATHSEP) + "Results" + string(PATHSEP) + "Heuristic" + std::string(PATHSEP) + data.Instance + "_seed" + to_string(data.seed) + ".txt";
         config = to_string(data.seed) + ",Heuristic," + data.Instance + "," + to_string(data.HistoryLength);
     }
 

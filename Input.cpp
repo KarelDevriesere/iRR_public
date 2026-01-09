@@ -54,7 +54,7 @@ void Input::SetDefault(const int NrTeams){
     Teams = vector<int>(NrTeams);
     iota(Teams.begin(), Teams.end(), 0);
     TeamStrength = vector<int>(NrTeams, 1);
-    TeamLeague = vector<int>(NrTeams, 1);
+    TeamLeague = vector<int>(NrTeams, 0);
     TeamClub = vector<int>(NrTeams);
     iota(TeamClub.begin(), TeamClub.end(), 0);
 
