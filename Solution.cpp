@@ -665,6 +665,7 @@ bool Solution::validate(){
             assert(TeamColorOpp[j][r] == i);
             Opponent[i][r] = j;
             Opponent[j][r] = i;
+            assert(Orientation[j][r] != Orientation[i][r]);
             if (Orientation[i][r] == HA::H){
                 if (Orientation[j][r] != HA::A){
                     cout << j << endl;
@@ -688,7 +689,7 @@ bool Solution::validate(){
                    assert(MatchColor[i][j] == r); 
                 }
                 assert(MatchColor[j][i] == r);
-                if ((Orientation[j][r] != HA::H)){
+                if (Orientation[j][r] != HA::H){
                     cout << "error for " << i << " vs " << j << endl;
                 }
                 assert(Orientation[j][r] == HA::H);

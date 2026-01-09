@@ -1485,6 +1485,7 @@ pair<vector<pair<int,int>>,vector<int>> MoveMWPMOneLeague(Solution& sol, const i
                 j_ = sol.getGlobalIndexTeam(l,j);
                 OpponentMatching[i_] = j_;
                 OpponentMatching[j_] = i_;
+                assert(sol.Orientation[i_][r] != sol.Orientation[j_][r]);
                 Matching.push_back({i_,j_});
                 // cout << i_ << " vs " << j_ << endl;
             }
