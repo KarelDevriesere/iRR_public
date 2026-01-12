@@ -466,7 +466,7 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     Solution sol(in);
     sol.SetOneCostAllViolations(data.ConstrViolationCost);
 
-    string path;
+    string path = "Instances" + string(PATHSEP);
 
     if (in.getSetting() == Setting::Miao){
         // string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
@@ -482,21 +482,28 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
             VizingConstruction(sol, data.seed); 
         }
         */
-        path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks);
-        cout << "path = " << path << endl;
+        path += "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks);
+        // cout << "path = " << path << endl;
     }
     else if (in.getSetting() == Setting::Hockey){
-        path = "Instances" + string(PATHSEP) + "Hockey" + string(PATHSEP) + "Vcr" + string(PATHSEP) + data.Instance + ".txt";
-        ReadSolution(path, sol);
+        path += "Hockey" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + string(PATHSEP) + data.Instance;
     }
     else{
         // cout << "Solve Vizing" << endl;
         // VizingConstruction(sol, data.seed);
 
         // Start from best found solution by Miao's algorithm (with 100% of the HAPs)
-        path = "Instances" + string(PATHSEP) + "TTP" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + string(PATHSEP) + sol.getInstanceName();
+        path += "TTP" + string(PATHSEP) + "Results" + string(PATHSEP);
+        if (sol.getNrRounds() <= sol.getNrTeams()/2){
+            path += "MiaoAlgo08_01_2026";
+        }
+        else{
+            path += "MiaoAlgo";
+        }
+        path += string(PATHSEP) + sol.getInstanceName();
     }
 
+    cout << "path = " << path << endl;
     int BestSeed = ReturnBestSeed(path);
 
     string path_seed = path + "_s" + to_string(BestSeed) + ".txt";

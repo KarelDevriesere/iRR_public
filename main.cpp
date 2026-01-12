@@ -285,7 +285,7 @@ int main(int argc, const char* argv[]){
                 cout << "distribute weight BM over " << data.Moves.at(Move::MinCost_BM) << " and " << data.Moves.at(Move::Random_BM) << endl;
                 data.InputWeights[Move::Random_BM] = BM_weight/2.0;
                 data.InputWeights[Move::MinCost_BM] = BM_weight/2.0;
-            }
+            } 
         }
         if (M_chosen && !data.Base){
             if (MinCostSpecified && !data.MinCost){
