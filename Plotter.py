@@ -687,9 +687,11 @@ def AblationBoxPlots(InstanceSetting):
     Path_source_m = os.path.join("Ablation", "Source_M")
     Path_source_ipts = os.path.join("Ablation", "Source_iPTS")
     Path_source_ipts_bm = os.path.join("Ablation", "Source_iPTS_BM")
+    Path_source_ipts_m = os.path.join("Ablation", "Source_iPTS_M")
+    Path_source_all = os.path.join(os.path.join(os.path.join(os.path.join("Instances"), "TTP"), "Results"), "Heuristic")
 
-    Config = ["Source", "BM", "M", "iPTS", "iPTS+BM"]
-    Paths = [Path_source, Path_source_bm, Path_source_m, Path_source_ipts, Path_source_ipts_bm]
+    Config = ["Source", "BM", "M", "iPTS", "iPTS+BM", "iPTS+M", "iPTS+BM+M"]
+    Paths = [Path_source, Path_source_bm, Path_source_m, Path_source_ipts, Path_source_ipts_bm, Path_source_ipts_m, Path_source_all]
 
     data = []
 
