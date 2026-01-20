@@ -165,7 +165,7 @@ template <typename Move>
 template<typename Move>
 bool LAHC<Move>::Update(Solution& sol, const int obj) {
            // code based on Burke (2017) "The late acceptance Hill-Climbing Heuristic"
-            this->UpdateValues(sol, obj);
+
             bool SolutionAccepted = false;
             int v = this->it % HistoryLength;
             /*
@@ -185,24 +185,39 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
                 this->it_idle++;
             }
             else{
+                cout << "Reset idle to 0" << endl;
                 this->it_idle = 0;
             }
+            bool diff = false;
             if (obj <= this->current_obj || obj < HistoricValues.at(v)){
+#ifdef PRINT
+#if PRINT == 1
+                if (obj != this->current_obj){
+                    cout << "Accept solution of " << obj << endl;
+                    diff = true;
+                }
+#endif
+#endif
                 this->current_obj = obj; 
                 this->it_accepted++;
                 SolutionAccepted = true;
+                this->NrAccepted.at(this->CurrentMove)++;
                 // cout << "Accept solution" << endl;
-#if PRINT == 1
-                this->print_solution();
-#endif
             }
             if (obj < HistoricValues.at(v)){
                 HistoricValues.at(v) = obj;
             }
 
             this->UpdateTimeStamps();
-	
-            if (this->getTimeDiff() > this->TIME_LIMIT || (++this->it > MAX_IT && this->it_idle > this->it*0.02) || (this->LowerBound >= 0 && obj <= this->LowerBoundGap*this->LowerBound)){
+#ifdef PRINT
+#if PRINT == 1
+            if (this->it_idle % 1000 == 0){
+                cout << "* It. " << this->it << " Idle: " << this->it_idle << endl;
+            }
+#endif
+#endif
+            ++this->it;
+            if (this->getTimeDiff() > this->TIME_LIMIT || (this->it_idle > MAX_IT) || (this->LowerBound >= 0 && obj <= this->LowerBoundGap*this->LowerBound)){
                 if (this->getTimeDiff() > this->TIME_LIMIT){
                     cout << "Time limit hit" << endl;
                     this->STOP = true;
@@ -212,33 +227,55 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
                     this->STOP = true;
                 }
                 else{
+#ifdef PRINT
 #if PRINT == 1
                     cout << "max it_idle hit: " << this->it_idle << endl;
+#endif
 #endif
                     if (!DynamicHL){
                         this->STOP = true;
                     }
                     else{
-                        // cout << "-------------------------" << endl;
-                        // cout << "Previous HL = " << HistoryLength << endl;
+#ifdef PRINT
+#if PRINT == 1
+                        cout << "-------------------------" << endl;
+#endif
+#endif
                         if (HistoryLength*2 <= 50000){
                             HistoryLength *= 2;
-                            // cout << "New HistoryLength = " << HistoryLength << endl;
+#ifdef PRINT
+#if PRINT == 1
+                            cout << "New HistoryLength = " << HistoryLength << endl;
+#endif
+#endif
                         }
-                        // cout << "New HL = " << HistoryLength << endl;
-                        // cout << "Previous PerturbValue = " << PerturbeValue << endl;
-                        // PerturbeValue += PerturbeIncrease;
-                        // cout << "New PerturbValue = " << PerturbeValue << endl;
-                        InitializeHistoricValues(1.1*this->best_obj);
-                        /*
-                        cout << "Historic Values = ";
+#ifdef PRINT
+#if PRINT == 1
+                        cout << "Previous HL = " << HistoryLength << endl;
+                        cout << "New HL = " << HistoryLength << endl;
+#endif
+#endif
+                        PerturbeValue += PerturbeIncrease;
+#ifdef PRINT
+#if PRINT == 1
+                        cout << "Previous PerturbValue = " << PerturbeValue << endl;
+                        cout << "New PerturbValue = " << PerturbeValue << endl;
+                        cout << "Initialize list with " << PerturbeValue*this->best_obj << endl;
+#endif
+#endif
+                        InitializeHistoricValues(PerturbeValue*this->best_obj);
+#ifdef PRINT
+#if PRINT == 1
 
-                        for (auto& v: HistoricValues){
-                            cout << v  << ", ";
+                        cout << "Nr times Neighborhoods are selected" << endl;
+                        for (const auto& [move, nr]: this->NrChosen){
+                            cout << this->Moves.at(move) << " is chosen " << nr << " times, but accepted only " << this->NrAccepted.at(move) << " times" << endl;
                         }
-                        cout << endl;
                         cout << "-------------------------" << endl;
-                        */
+#endif
+#endif
+                        // cin.get();
+ 
                         this->it_idle = 0;
                         this->it = 0;
 
@@ -248,6 +285,11 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
                     }
                 }
             }
+
+            if (SolutionAccepted && diff){
+                this->print_solution();
+            }
+
             // cin.get();
             return SolutionAccepted;
 

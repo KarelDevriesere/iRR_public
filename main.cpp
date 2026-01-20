@@ -55,7 +55,7 @@ int main(int argc, const char* argv[]){
                 data.HistoryLengthProvided = true;
             }
             else if (arg == "PerturbeIncrease"){ // default is 100
-                data.PerturbeIncrease = std::stoi(argv[++i]);
+                data.PerturbeIncrease = std::stod(argv[++i]);
                 if (data.PerturbeIncrease <= 0){
                     std::cerr << "PerturbeIncrease should be strictly positive" << endl;
                     return 1;

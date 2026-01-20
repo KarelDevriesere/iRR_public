@@ -471,6 +471,7 @@ int Solution::ComputeHACostTeam(const int i){
     }
     if (!IsTeamBalanced(i)){
         // cout << i << "Not balanced!!" << endl;
+        // cin.get();
         cost++;
     }
     return HighCostHAPs*cost;

@@ -46,7 +46,7 @@ struct InputData{
     /*{Move::iPTS_MinCost_PR, false},*/
     {Move::iPTS_Random_PR, false}, 
     /*{Move::MinCost_M_MinCost_PR, false},*/ 
-    /*{Move::MinCost_M_Random_PR, false},*/
+    {Move::MinCost_M_Random_PR, false},
     /*{Move::Random_M_MinCost_PR, false},*/
     {Move::Random_M_Random_PR, false}};
 
@@ -61,7 +61,7 @@ struct InputData{
     /*{Move::iPTS_MinCost_PR, "iPTS_MinCost_PR"},*/
     {Move::iPTS_Random_PR, "iPTS_Random_PR"}, 
     /*{Move::MinCost_M_MinCost_PR, "MinCost_M_MinCost_PR"},*/ 
-    /*{Move::MinCost_M_Random_PR, "MinCost_M_Random_PR"},*/
+    {Move::MinCost_M_Random_PR, "MinCost_M_Random_PR"},
     /*{Move::Random_M_MinCost_PR, "Random_M_MinCost_PR"},*/ 
     {Move::Random_M_Random_PR, "Random_M_Random_PR"}}; 
 
@@ -70,10 +70,10 @@ struct InputData{
     bool Heuristic = 1;
     bool HistoryLengthProvided = false;
     int HistoryLength = 1;
-    int PerturbeIncrease = 100;
+    double PerturbeIncrease = 0.005;
     int NrRounds = 4; // TTP
     int TimeLimit = 7200;
-    long MaxIt = 100000;
+    long MaxIt = 50000;
     bool TTP = false; // TTP
     bool Base = false;
     long ConstrViolationCost = 100000;

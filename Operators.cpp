@@ -456,7 +456,7 @@ void KeepOrientationsAllEdgesLantarn(Solution& sol, Lantarn& lantarn, const vect
 }
 
 
-bool RepairOrientationsEdgesLantarn_CM(Solution& sol, Lantarn& lantarn, const vector<vector<HA>>& OrientationsCopy, vector<array<int,3>>& path, const bool MinCostP, const bool CM){
+bool RepairOrientationsEdgesLantarn_CM(Solution& sol, Lantarn& lantarn, const vector<vector<HA>>& OrientationsCopy, vector<array<int,3>>& path, const bool MinCostP, const bool CM, std::mt19937& gen){
     // Assumes orientations are already reversed!!
     // PrintLantarn(sol, lantarn);
     const int i = lantarn.i;
@@ -484,7 +484,7 @@ bool RepairOrientationsEdgesLantarn_CM(Solution& sol, Lantarn& lantarn, const ve
         int delta = 0; // we will not calculate delta here
         // cout << "try to find path from " << source << " to " << sink << endl;
         if (CM || !MinCostP){
-            if (!FindNormalPathOneLeague(source, sink, sol, path, delta, MinCostP)){
+            if (!FindNormalPathOneLeague(source, sink, sol, path, delta, MinCostP, gen)){
                 return false;
             }
         }
@@ -603,14 +603,18 @@ void ReversePath(Solution& sol, const vector<array<int,3>> path){
     }
 }
 
-bool FindNormalPathOneLeague(const int source, const int sink, Solution& sol, vector<array<int,3>>& path, int& delta, const bool MinCostP){ // source: A too much, sink: H too much
+bool FindNormalPathOneLeague(const int source, const int sink, Solution& sol, vector<array<int,3>>& path, int& delta, const bool MinCostP, std::mt19937& gen){ // source: A too much, sink: H too much
     int i,j,r;
     const int N = sol.getNrTeams();
     BGraph G(N);
     // cout << "source = " << source << endl;
     // cout << "sink = " << sink << endl;
 
-    int cost = 1;
+    int UB_random = 10; // generate costs between 0 and 100
+    std::uniform_int_distribution<>dist_int = std::uniform_int_distribution<>(0,UB_random);
+
+    int cost = 1; 
+    // What happens if we do shortest path?
     for (i = 0; i < sol.getNrTeams(); ++i){
         for (j = i+1; j < sol.getNrTeams(); ++j){
             if (!sol.SRR){
@@ -637,11 +641,19 @@ bool FindNormalPathOneLeague(const int source, const int sink, Solution& sol, ve
                         if (MinCostP){
                             cost = sol.getCostMatchRound(j,i,r); // on edge i<-j we stick the cost of doing i->j
                         }
+                        else{
+                            // generate random cost
+                            cost = dist_int(gen);
+                        }
                         boost::add_edge(j, i, cost, G);
                     }
                     else{
                         if (MinCostP){
                             cost = sol.getCostMatchRound(i,j,r);
+                        }
+                        else{
+                            // generate random cost
+                            cost = dist_int(gen);
                         }
                         boost::add_edge(i, j, cost, G);
                     }
@@ -1314,9 +1326,11 @@ vector<vector<pair<int,int>>> CreateAlternatingCycles(Solution& sol, const vecto
     }
 #endif
 
-    if (!bipartite && !AlternatingCycles.empty()){
+    if (!AlternatingCycles.empty()){
         shuffle(AlternatingCycles.begin(), AlternatingCycles.end(), gen);
-        AlternatingCycles = {AlternatingCycles[0]}; // only 1 alternating cycle otherwise trouble with reversing paths
+        if (!bipartite){
+            AlternatingCycles = {AlternatingCycles[0]}; // otherwise problems with reversing paths
+        }
     }
     return AlternatingCycles;
 }
@@ -1399,7 +1413,7 @@ int ComputeEdgeWeightM(const int i, const int j, const int c, const bool MinCost
     return d;
 }
 
-pair<vector<pair<int,int>>,vector<int>> MoveMWPMOneLeague(Solution& sol, const int r, std::mt19937& gen, const int l){
+pair<vector<pair<int,int>>,vector<int>> MoveMWPMOneLeague(Solution& sol, const int r, std::mt19937& gen, const int l, const bool bipartite, const bool MinCostM){
 
     int N = sol.getNrTeamsLeague(l);
     int R = sol.getNrRounds();
@@ -1420,10 +1434,11 @@ pair<vector<pair<int,int>>,vector<int>> MoveMWPMOneLeague(Solution& sol, const i
     // vector<vector<bool>>ForbiddenEdge(sol.getNrTeams(), vector<bool>(sol.getNrTeams(), false));
     // forbidden edges: all edges in the current schedule (coloring of the current schedule must remain feasible)
     int MaxWeight = 0;
+    if (!MinCostM){
+        MaxWeight = UB_random;
+    }
     // each edge randomly gets a cost of 0 and 1, in a perfect matching there are N/2 edges so max cost should be N/2+1
     int Weight = 0;
-    bool bipartite = true;
-    bool MinCostM = true;
 
     for (i = 0; i < N; ++i){
         i_ = sol.getGlobalIndexTeam(l,i);
@@ -1583,7 +1598,7 @@ pair<vector<pair<int,int>>,vector<int>> MoveMWPM(Solution& sol, const int r, con
     return {Matching, OpponentMatching}; // for Miao's algo: Matching, for my algo: OpponentMatching (bc I do no want full matching but alternating cycles instead)
 }
 
-vector<vector<pair<int,int>>>iPRS(Solution& sol, const int r, const bool bipartite, const bool includeHAPs, const bool CM, std::mt19937& gen, const bool MinCostM){
+vector<vector<pair<int,int>>>iPRS(Solution& sol, const int r, const int l, const bool bipartite, const bool includeHAPs, const bool CM, std::mt19937& gen, const bool MinCostM){
 
     /*
     The difference with Miao is that she really starts from 0, while I already have to take into account the matches in the other rounds
@@ -1591,7 +1606,7 @@ vector<vector<pair<int,int>>>iPRS(Solution& sol, const int r, const bool biparti
     Then, evaluate the cycles separately
     */
 
-    pair<vector<pair<int,int>>,vector<int>>OpponentMatching_Matching = MoveMWPM(sol, r, bipartite, includeHAPs, CM, gen, MinCostM);
+    pair<vector<pair<int,int>>, vector<int>>OpponentMatching_Matching = MoveMWPMOneLeague(sol, r, gen, l, bipartite, MinCostM);
 
     if (OpponentMatching_Matching.first.size() != sol.getNrTeams()/2){
         cout << "Matching has size " << OpponentMatching_Matching.first.size() << " in iPRS" << endl;
@@ -1720,7 +1735,7 @@ vector<vector<array<int,3>>>EvaluateAlternatingCycleWithPaths(Solution& sol, vec
             do{
                 ++a;
                 if (CM || !MinCostP){
-                    PathFound = FindNormalPathOneLeague(A_teams[k+a], H_teams[k], sol, path, delta, MinCostP);
+                    PathFound = FindNormalPathOneLeague(A_teams[k+a], H_teams[k], sol, path, delta, MinCostP, gen);
                 }
                 else{
                     PathFound = FindPathLineGraphOneLeague(A_teams[k+a], H_teams[k], sol, path);

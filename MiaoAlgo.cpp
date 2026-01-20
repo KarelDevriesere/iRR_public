@@ -196,7 +196,7 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
         const bool CM = false;
         const bool keepHAP = true;
         const bool MinCostM = true;
-        pair<vector<pair<int,int>>, vector<int>>Matching_OpponentMatching = MoveMWPMOneLeague(sol, r, gen, CurrentLeague); // in the file operators
+        pair<vector<pair<int,int>>, vector<int>>Matching_OpponentMatching = MoveMWPMOneLeague(sol, r, gen, CurrentLeague, true, true); // in the file operators
         vector<pair<int,int>>matching = Matching_OpponentMatching.first;
         if ((int)matching.size() < N/2){
             // shuffling rounds does not seem a good idea, instead go back to the old HAP assignement and do a new HAP move
