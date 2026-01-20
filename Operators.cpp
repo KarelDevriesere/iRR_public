@@ -1279,7 +1279,7 @@ vector<vector<pair<int,int>>> CreateAlternatingCycles(Solution& sol, const vecto
     AlternatingCycles.reserve(sol.getNrTeams()/4);
     int i,j;
     for (int t = 0; t < OpponentMatching.size(); ++t){
-        if (!NodeSeen[t]){
+        if (OpponentMatching[t] > -1 && !NodeSeen[t]){
             if (sol.TeamColorOpp[t][r] == OpponentMatching[t]){
                 // in this case, both in original and enw matching we have (i,j) and (i,j)
                 NodeSeen[t] = true, NodeSeen[OpponentMatching[t]] = true;;
@@ -1318,9 +1318,9 @@ vector<vector<pair<int,int>>> CreateAlternatingCycles(Solution& sol, const vecto
 #ifndef NDEBUG
     if (AlternatingCycles.empty()){
         for (int t = 0; t < OpponentMatching.size(); ++t){
-            if (sol.TeamColorOpp[t][r] != OpponentMatching[t]){
+            if (OpponentMatching[t] > -1 && sol.TeamColorOpp[t][r] != OpponentMatching[t]){
                 cout << "new matching but no alternating cycle?" << endl;
-                cin.get();
+                std::abort();
             }
         }
     }
@@ -1500,7 +1500,9 @@ pair<vector<pair<int,int>>,vector<int>> MoveMWPMOneLeague(Solution& sol, const i
                 j_ = sol.getGlobalIndexTeam(l,j);
                 OpponentMatching[i_] = j_;
                 OpponentMatching[j_] = i_;
-                assert(sol.Orientation[i_][r] != sol.Orientation[j_][r]);
+                if (bipartite){
+                    assert(sol.Orientation[i_][r] != sol.Orientation[j_][r]);
+                }
                 Matching.push_back({i_,j_});
                 // cout << i_ << " vs " << j_ << endl;
             }
@@ -1608,8 +1610,8 @@ vector<vector<pair<int,int>>>iPRS(Solution& sol, const int r, const int l, const
 
     pair<vector<pair<int,int>>, vector<int>>OpponentMatching_Matching = MoveMWPMOneLeague(sol, r, gen, l, bipartite, MinCostM);
 
-    if (OpponentMatching_Matching.first.size() != sol.getNrTeams()/2){
-        cout << "Matching has size " << OpponentMatching_Matching.first.size() << " in iPRS" << endl;
+    if (OpponentMatching_Matching.first.size() != sol.getNrTeamsLeague(l)/2){
+        cout << "Matching has size " << OpponentMatching_Matching.first.size() << " in iPRS but " << sol.getNrTeamsLeague(l) << " teams in league " << l << endl;
         std::abort();
     }
 

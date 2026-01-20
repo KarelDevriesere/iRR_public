@@ -291,6 +291,10 @@ void Heuristic_CM::SelectMatching(Solution& sol, const bool bipartite){
             break;
         }
     }
+    if (AlternatingCycles.empty()){
+        // do this here because update is not called when cycles are empty
+        Update(sol, sol.ComputeTotalCost());
+    }
 
     assert(sol.validate());
     return;
