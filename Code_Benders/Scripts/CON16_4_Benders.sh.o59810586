@@ -1,0 +1,155 @@
+Starting benders decomposition
+BREAK MAXIMIZATION
+Instance file provided: ../Instances/TTP/CON16_4.xml
+--------------------------------------------------------------------
+--- Starting 2-phase HAP approach for break minimization and maximization ---
+timeLimit: 252000
+solName: ../Instances/TTP/CON16_4_SolBenders.xml
+Complementary: 0
+Lexicographic: 0
+Pattern vars: 0
+--------------------------------------------------------------------
+WARNING IGNORING BA1
+WARNING IGNORING CA1
+WARNING IGNORING CA1
+*******************
+** Create Master **
+*******************
+
+Symmetry breaking structure:
+H 0 1 < 
+H 0 1 < 
+H 0 <  
+H 0 <  
+H 2 <  
+H 2 <  
+H <   
+H <   
+A 0 1 < 
+A 0 1 < 
+A 0 <  
+A 0 <  
+A 2 <  
+A 2 <  
+A <   
+A <   
+Master constructed
+Version identifier: 12.10.0.0 | 2019-11-26 | 843d4de
+CPXPARAM_Threads                                 5
+CPXPARAM_Parallel                                -1
+CPXPARAM_TimeLimit                               252000
+CPXPARAM_WorkMem                                 16000
+Initialize Worker
+Worker initialized
+Lazy constraint(s) or lazy constraint/branch callback is present.
+    Disabling dual reductions (CPX_PARAM_REDUCE) in presolve.
+    Disabling presolve reductions that prevent crushing forms.
+Tried aggregator 2 times.
+MIP Presolve eliminated 137 rows and 64 columns.
+MIP Presolve modified 41 coefficients.
+Aggregator did 27 substitutions.
+Reduced MIP has 156 rows, 103 columns, and 523 nonzeros.
+Reduced MIP has 102 binaries, 1 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.02 sec. (1.06 ticks)
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 1
+Total time spend to solve LP subproblems: 2
+Total time spend to solve IP subproblems: 3
+Found a new better solution: 56
+Cost RobinX:               (0,56)
+Found incumbent of value 56.000000 after 0.03 sec. (1.19 ticks)
+Probing fixed 32 vars, tightened 11 bounds.
+Probing changed sense of 34 constraints.
+Probing time = 0.00 sec. (0.37 ticks)
+Tried aggregator 2 times.
+MIP Presolve eliminated 127 rows and 64 columns.
+MIP Presolve modified 14 coefficients.
+Aggregator did 2 substitutions.
+Reduced MIP has 27 rows, 37 columns, and 119 nonzeros.
+Reduced MIP has 36 binaries, 1 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.00 sec. (0.29 ticks)
+Probing time = 0.00 sec. (0.03 ticks)
+Tried aggregator 2 times.
+MIP Presolve eliminated 5 rows and 2 columns.
+MIP Presolve modified 9 coefficients.
+Aggregator did 3 substitutions.
+Reduced MIP has 19 rows, 32 columns, and 97 nonzeros.
+Reduced MIP has 31 binaries, 1 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.00 sec. (0.12 ticks)
+Initialize Worker
+Worker initialized
+Initialize Worker
+Worker initialized
+Initialize Worker
+Worker initialized
+Initialize Worker
+Worker initialized
+Initialize Worker
+Worker initialized
+Initialize Worker
+Probing time = 0.00 sec. (0.02 ticks)
+Clique table members: 20.
+MIP emphasis: balance optimality and feasibility.
+MIP search method: dynamic search.
+Parallel mode: opportunistic, using up to 5 threads.
+Root relaxation solution time = 0.00 sec. (0.05 ticks)
+
+        Nodes                                         Cuts/
+   Node  Left     Objective  IInf  Best Integer    Best Bound    ItCnt     Gap
+
+*     0+    0                           56.0000       44.0000            21.43%
+Worker initialized
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 2
+Total time spend to solve LP subproblems: 3
+Total time spend to solve IP subproblems: 5
+Found a new better solution: 48
+Cost RobinX:               (0,48)
+*     0     0      integral     0       48.0000       48.0000       18    0.00%
+Elapsed time = 0.05 sec. (2.27 ticks, tree = 0.00 MB, solutions = 2)
+
+Root node processing (before b&c):
+  Real time             =    0.05 sec. (2.28 ticks)
+Parallel b&c, 5 threads:
+  Real time             =    0.00 sec. (0.00 ticks)
+  Sync time (average)   =    0.00 sec.
+  Wait time (average)   =    0.00 sec.
+                          ------------
+Total (root+branch&cut) =    0.05 sec. (2.28 ticks)
+Solution status master: Optimal
+Objective value master: 48
+Objective bound master: 48
+Optimal HAP set:
+1	1	0	0	
+1	1	0	0	
+1	1	0	0	
+1	1	0	0	
+1	1	0	0	
+1	1	0	0	
+1	1	0	0	
+1	1	0	0	
+0	0	1	1	
+0	0	1	1	
+0	0	1	1	
+0	0	1	1	
+0	0	1	1	
+0	0	1	1	
+0	0	1	1	
+0	0	1	1	
+Clearing
+Total elapsed time 0 seconds
+
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 2
+Total time spend to solve LP subproblems: 3.000000
+Total time spend to solve IP subproblems: 5.000000
+Two-phase approach done
+---------------------------------------
+--- Two-step approach done ---
+---------------------------------------

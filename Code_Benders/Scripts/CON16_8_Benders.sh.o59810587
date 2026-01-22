@@ -1,0 +1,162 @@
+Starting benders decomposition
+BREAK MAXIMIZATION
+Instance file provided: ../Instances/TTP/CON16_8.xml
+--------------------------------------------------------------------
+--- Starting 2-phase HAP approach for break minimization and maximization ---
+timeLimit: 252000
+solName: ../Instances/TTP/CON16_8_SolBenders.xml
+Complementary: 0
+Lexicographic: 0
+Pattern vars: 0
+--------------------------------------------------------------------
+WARNING IGNORING BA1
+WARNING IGNORING CA1
+WARNING IGNORING CA1
+*******************
+** Create Master **
+*******************
+
+Symmetry breaking structure:
+H 0 1 <     
+H 0 1 <     
+H 0 <      
+H 0 <      
+H 2 <      
+H 2 <      
+H <       
+H <       
+A 0 1 <     
+A 0 1 <     
+A 0 <      
+A 0 <      
+A 2 <      
+A 2 <      
+A <       
+A <       
+Master constructed
+Version identifier: 12.10.0.0 | 2019-11-26 | 843d4de
+CPXPARAM_Threads                                 5
+CPXPARAM_Parallel                                -1
+CPXPARAM_TimeLimit                               252000
+CPXPARAM_WorkMem                                 16000
+Initialize Worker
+Worker initialized
+Lazy constraint(s) or lazy constraint/branch callback is present.
+    Disabling dual reductions (CPX_PARAM_REDUCE) in presolve.
+    Disabling presolve reductions that prevent crushing forms.
+Tried aggregator 2 times.
+MIP Presolve eliminated 153 rows and 64 columns.
+MIP Presolve modified 9 coefficients.
+Aggregator did 27 substitutions.
+Reduced MIP has 592 rows, 295 columns, and 1883 nonzeros.
+Reduced MIP has 294 binaries, 1 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.00 sec. (2.50 ticks)
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 1
+Total time spend to solve LP subproblems: 7
+Total time spend to solve IP subproblems: 8
+Found a new better solution: 96
+Cost RobinX:               (0,96)
+Found incumbent of value 96.000000 after 0.02 sec. (2.89 ticks)
+Probing fixed 0 vars, tightened 1 bounds.
+Probing time = 0.00 sec. (2.19 ticks)
+Tried aggregator 1 time.
+MIP Presolve eliminated 10 rows and 4 columns.
+Reduced MIP has 582 rows, 291 columns, and 1855 nonzeros.
+Reduced MIP has 290 binaries, 1 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.00 sec. (1.58 ticks)
+Initialize Worker
+Worker initialized
+Initialize Worker
+Worker initialized
+Initialize Worker
+Probing fixed 0 vars, tightened 1 bounds.
+Probing time = 0.00 sec. (1.02 ticks)
+Clique table members: 814.
+MIP emphasis: balance optimality and feasibility.
+MIP search method: dynamic search.
+Parallel mode: opportunistic, using up to 5 threads.
+Root relaxation solution time = 0.01 sec. (5.98 ticks)
+
+        Nodes                                         Cuts/
+   Node  Left     Objective  IInf  Best Integer    Best Bound    ItCnt     Gap
+
+*     0+    0                           96.0000       26.0000            72.92%
+Worker initialized
+      0     0       76.5714   291       96.0000       76.5714      286   20.24%
+Initialize Worker
+Worker initialized
+Initialize Worker
+Worker initialized
+Initialize Worker
+Worker initialized
+Initialize Worker
+Worker initialized
+      0     0       84.7952   291       96.0000     Cuts: 225      518   11.67%
+      0     0       88.6603   291       96.0000      Cuts: 94      806    7.65%
+      0     0       89.3296   291       96.0000     Cuts: 127      908    6.95%
+      0     0       90.3816   291       96.0000     Cuts: 100     1011    5.85%
+      0     0       91.3947   291       96.0000     Cuts: 115     1111    4.80%
+      0     0       92.2255   291       96.0000      Cuts: 94     1185    3.93%
+      0     0       92.7843   291       96.0000      Cuts: 80     1281    3.35%
+      0     0       93.3286   291       96.0000      Cuts: 79     1349    2.78%
+      0     0       93.4327   291       96.0000      Cuts: 86     1412    2.67%
+      0     0       93.5882   291       96.0000      Cuts: 66     1499    2.51%
+      0     0       93.7429   291       96.0000     Cuts: 107     1570    2.35%
+      0     0       94.0297   291       96.0000      Cuts: 80     1650    2.05%
+      0     0       94.1843   291       96.0000      Cuts: 63     1709    1.89%
+      0     0       94.3229   291       96.0000      Cuts: 68     1765    1.75%
+      0     0       94.6915   291       96.0000      Cuts: 69     1839    1.36%
+      0     0       94.8634   291       96.0000      Cuts: 53     1888    1.18%
+      0     0       94.9464   291       96.0000      Cuts: 50     1933    1.10%
+      0     0        cutoff             96.0000                   1941    0.00%
+Elapsed time = 1.44 sec. (268.81 ticks, tree = 0.01 MB, solutions = 1)
+
+Clique cuts applied:  49
+Implied bound cuts applied:  4
+Zero-half cuts applied:  167
+Gomory fractional cuts applied:  4
+
+Root node processing (before b&c):
+  Real time             =    1.44 sec. (268.84 ticks)
+Parallel b&c, 5 threads:
+  Real time             =    0.00 sec. (0.00 ticks)
+  Sync time (average)   =    0.00 sec.
+  Wait time (average)   =    0.00 sec.
+                          ------------
+Total (root+branch&cut) =    1.44 sec. (268.84 ticks)
+Solution status master: Optimal
+Objective value master: 96
+Objective bound master: 96
+Optimal HAP set:
+1	0	1	1	1	0	0	0	
+1	0	1	1	1	0	0	0	
+1	0	1	1	1	0	0	0	
+1	0	1	1	1	0	0	0	
+1	1	0	1	1	0	0	0	
+1	1	0	1	1	0	0	0	
+1	0	1	1	1	0	0	0	
+1	0	1	1	1	0	0	0	
+0	1	0	0	0	1	1	1	
+0	1	0	0	0	1	1	1	
+0	1	0	0	0	1	1	1	
+0	1	0	0	0	1	1	1	
+0	1	0	0	0	1	1	1	
+0	1	0	0	0	1	1	1	
+0	0	1	0	0	1	1	1	
+0	0	1	0	0	1	1	1	
+Clearing
+Total elapsed time 1 seconds
+
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 1
+Total time spend to solve LP subproblems: 7.000000
+Total time spend to solve IP subproblems: 8.000000
+Two-phase approach done
+---------------------------------------
+--- Two-step approach done ---
+---------------------------------------

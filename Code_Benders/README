@@ -20,5 +20,14 @@ I made the following adaptions with respect to the orignal code:
 BE CAREFULL:
 
 The pattern models are merely approximations. We cannot guarantee it is suboptimal a pattern with less breaks for one team is chosen...
+To compile on HPC, see compile.sh
 
 
+To compute the bounds, we used the model without pattern vars (it is not exact unless all possible patterns are generated) and without any
+lexico constraints.
+All models were run on HPC.
+
+22/01/2025: cleaning up the files.
+For all the output files: see Scripts.
+For the best solutions: Best.
+For all intermediate ones: Suboptimal.
