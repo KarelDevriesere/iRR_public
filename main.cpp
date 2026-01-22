@@ -20,12 +20,8 @@ int main(int argc, const char* argv[]){
     InputData data;
 
     if (case_ == 0){
-        if (data.CM){
-            data.Instance = to_string(data.NrTeams) + "_" + to_string(data.NrRounds) + "_" + "k" + to_string(data.k) + "_" + to_string(data.inst);
-        }
-        else {
-            data.Instance = "N16.xml";
-        }
+
+        data.Instance = "Instances/TTP/NF16_4.xml";
 
         bool MinCostSpecified = false;
         bool M_chosen = false;
@@ -50,7 +46,7 @@ int main(int argc, const char* argv[]){
                     return 1;
                 }
             }
-            else if (arg == "--HistoryLength"){
+            else if (arg == "--HistoryLength"){ // if not provided: history length is dynamic!!
                 data.HistoryLength = std::stoi(argv[++i]); 
                 if (data.HistoryLength <= 0){
                     std::cerr << "HistoryLength should be strictly positive" << endl;
@@ -58,10 +54,10 @@ int main(int argc, const char* argv[]){
                 }
                 data.HistoryLengthProvided = true;
             }
-            else if (arg == "--CM"){
-                data.CM = std::stoi(argv[++i]);
-                if (data.CM != 0 && data.CM != 1){
-                    std::cerr << "CM should be 0 or 1" << endl;
+            else if (arg == "PerturbeIncrease"){ // default is 100
+                data.PerturbeIncrease = std::stod(argv[++i]);
+                if (data.PerturbeIncrease <= 0){
+                    std::cerr << "PerturbeIncrease should be strictly positive" << endl;
                     return 1;
                 }
             }
@@ -72,39 +68,6 @@ int main(int argc, const char* argv[]){
                     return 1;
                 }
             }
-            else if (arg == "--NrTeams"){ // CM
-                data.NrTeams = std::stoi(argv[++i]);
-                if (data.NrTeams != 36 && data.NrTeams != 100 && data.NrTeams != 250){
-                    std::cerr << "NrTeams must be 36 or 100 or 250" << endl;
-                    return 1;
-                }
-                data.CM = true;
-                data.TTP = false;
-                data.Miao = false;
-                data.Hockey = false;
-            }
-            else if (arg == "--k"){ // CM
-                data.k = std::stoi(argv[++i]);
-                if (data.k != 0 && data.k != 1 && data.k != 5 && data.k != 10){
-                    std::cerr << "k must be 0, 1, 5 or 10!" << endl;
-                    return 1;
-                }
-                data.CM = true;
-                data.TTP = false;
-                data.Miao = false;
-                data.Hockey = false;
-            }
-            else if (arg == "--i"){ // CM
-                data.inst = std::stoi(argv[++i]);
-                if (data.inst != 0 && data.inst != 1 && data.inst != 2 && data.inst != 3 && data.inst != 4){
-                    std::cerr << "i must be 0,1,2,3 or 4" << endl;
-                    return 1;
-                }
-                data.CM = true;
-                data.TTP = false;
-                data.Miao = false;
-                data.Hockey = false;
-            }
             else if (arg == "--InstanceTTP"){ // TTP
                 data.Instance = argv[++i];
                 //auto it = std::find(InstancesTTP.begin(), InstancesTTP.end(), data.Instance);
@@ -113,7 +76,6 @@ int main(int argc, const char* argv[]){
                 //    return 1;
                 //}
                 data.TTP = true;
-                data.CM = false;
                 data.Miao = false;
                 data.Hockey = false;
             }
@@ -139,25 +101,24 @@ int main(int argc, const char* argv[]){
                 data.CapacitySetting = setting;
                 data.Miao = true;
                 data.TTP = false;
-                data.CM = false;
                 data.Hockey = false;
             }
             else if (arg == "--MaxNrBreaks"){ // Miao
                 data.MaxNrBreaks = std::stoi(argv[++i]);
                 data.Miao = true;
                 data.TTP = false;
-                data.CM = false;
                 data.Hockey = false;
+                /*
                 if (data.MaxNrBreaks != 0 && data.MaxNrBreaks != 1 && data.MaxNrBreaks != 2 && data.MaxNrBreaks != 3){
                     std::cerr << "MaxNrBreaks must be 0,1,2 or 3!!" << endl;
                     return 1;
                 }
+                    */
             }
             else if (arg == "--InstanceMiao"){ // Miao
                 int miao_i = std::stoi(argv[++i]);
                 data.Miao = true;
                 data.TTP = false;
-                data.CM = false;
                 data.Hockey = false;
                 if (miao_i < 0 || miao_i > 6){
                     std::cerr << "MiaoInstance must be 1,2,3,4,5 or 6!!" << endl;
@@ -170,13 +131,6 @@ int main(int argc, const char* argv[]){
             else if (arg == "--MiaoAlgo"){ // Miao
                 data.RunMiaoAlgo = std::stoi(argv[++i]);
             }
-            else if (arg == "--MiaoRF"){ // Miao
-                data.RunMiaoRF = std::stoi(argv[++i]);
-                data.Miao = true;
-                data.TTP = false;
-                data.CM = false;
-                data.Hockey = false;
-            }
             else if (arg == "--PercentageHAPs"){ // TTP
                 data.PercentageHAPs = std::stoi(argv[++i]);
                 if (data.PercentageHAPs < 0 || data.PercentageHAPs > 100){
@@ -188,7 +142,6 @@ int main(int argc, const char* argv[]){
                 int hockey_i = std::stoi(argv[++i]);
                 data.Miao = false;
                 data.TTP = false;
-                data.CM = false;
                 data.Hockey = true;
                 if (hockey_i < 0 || hockey_i > 6){
                     std::cerr << "Hockey instance must be 1,2,3,4,5 or 6!!" << endl;
@@ -270,14 +223,6 @@ int main(int argc, const char* argv[]){
                 ComputeBounds = std::stoi(argv[++i]);
                 data.TTP = true;
             }
-            else if (arg == "--LowerBoundGapHillClimbing"){
-                data.HillClimbingFirst = true;
-                data.LowerBoundGap = std::stod(argv[++i]);
-                if (data.LowerBoundGap < 1.0){
-                    std::cerr << "LowerBoundGap should be >= 1.0" << endl;
-                    return 1;
-                }
-            }
             else if (arg == "--OutputFolder"){
                 data.OutputFolder = argv[++i];
                 if (!std::filesystem::is_directory(data.OutputFolder)){
@@ -287,9 +232,7 @@ int main(int argc, const char* argv[]){
 
             }
             else if (arg == "--help"){
-                cout << "Usage: " << argv[0] << "--Seed <int> --Heuristic <0/1> -- MinCostNB <0/1> --HistoryLength <+int> -- CM <0/1> --NrTeams <36/100>* --k <0/1/5/10>* --i <0/1/2/3/4>* --TimeLimit <+int> --MaxIt <+int> --Weight <Move> <+int>" << endl;
-                cout << "*: For CostMinimization instances" << endl;
-                cout << "For TTP instances, specify --TTP 1 --InstanceTTP <BRA24/CIRC40/CON40/GAL40/INCR40/LINE40/N16/NFL32>" << endl;
+                cout << "Usage: " << argv[0] << "--Seed <int> --Heuristic <0/1> -- MinCostNB <0/1> --HistoryLength <+int> --TimeLimit <+int> --MaxIt <+int> --Weight <Move> <+int>" << endl;
                 return 1;
             }
             else {
@@ -309,10 +252,6 @@ int main(int argc, const char* argv[]){
             return 1;
         }
 
-        if ((data.CM == true && data.TTP == true) || (data.TTP == true && data.Miao == true) || (data.CM == true && data.Miao == true)){
-            cout << "Choose either CM, TTP or Miao!!" << endl;
-            return 1;
-        }
         if (data.Base){
             cout << "Run base algorithm!!" << endl;
             cout << "Note: if all pairs of rounds are Hamiltonian cycles: never non-Hamiltonian cycles with base algo.." << endl;
@@ -346,7 +285,7 @@ int main(int argc, const char* argv[]){
                 cout << "distribute weight BM over " << data.Moves.at(Move::MinCost_BM) << " and " << data.Moves.at(Move::Random_BM) << endl;
                 data.InputWeights[Move::Random_BM] = BM_weight/2.0;
                 data.InputWeights[Move::MinCost_BM] = BM_weight/2.0;
-            }
+            } 
         }
         if (M_chosen && !data.Base){
             if (MinCostSpecified && !data.MinCost){
@@ -429,13 +368,10 @@ int main(int argc, const char* argv[]){
         }
         cout << "---------------------" << endl;
 
-        cout << "Test cost minimization" << endl;
+        cout << "Parameters" << endl;
         cout << "TimeLimit = " << data.TimeLimit << endl;
         cout << "Max iterations = " << data.MaxIt << endl;
         cout << "HistoryLength = " << data.HistoryLength << endl;
-        if (data.CM){
-            data.Instance = to_string(data.NrTeams) + "_" + to_string(data.NrRounds) + "_" + "k" + to_string(data.k) + "_" + to_string(data.inst);
-        }
         TestCostMinimization(data);
         // GenerateCostMatrices(0);
         // cin.get();

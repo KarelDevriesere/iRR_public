@@ -68,8 +68,8 @@ template <typename Move>
 void MetaBase<Move>::SaveBestSolution(Solution& sol){
             int h,a;
             if (BestSequenceMatches.empty()){
-                cout << "Failed to find a solution, abort.." << endl;
-                std::exit(0);
+                cout << "Failed to find a solution.." << endl;
+                return;
             }
             // first, clear everything
             sol.clear();
@@ -165,7 +165,7 @@ template <typename Move>
 template<typename Move>
 bool LAHC<Move>::Update(Solution& sol, const int obj) {
            // code based on Burke (2017) "The late acceptance Hill-Climbing Heuristic"
-            this->UpdateValues(sol, obj);
+
             bool SolutionAccepted = false;
             int v = this->it % HistoryLength;
             /*
@@ -185,35 +185,111 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
                 this->it_idle++;
             }
             else{
+                cout << "Reset idle to 0" << endl;
                 this->it_idle = 0;
             }
+            bool diff = false;
             if (obj <= this->current_obj || obj < HistoricValues.at(v)){
+#ifdef PRINT
+#if PRINT == 1
+                if (obj != this->current_obj){
+                    cout << "Accept solution of " << obj << endl;
+                    diff = true;
+                }
+#endif
+#endif
                 this->current_obj = obj; 
                 this->it_accepted++;
                 SolutionAccepted = true;
+                this->NrAccepted.at(this->CurrentMove)++;
                 // cout << "Accept solution" << endl;
-#if PRINT == 1
-                this->print_solution();
-#endif
             }
             if (obj < HistoricValues.at(v)){
                 HistoricValues.at(v) = obj;
             }
 
             this->UpdateTimeStamps();
-	
-            if (this->getTimeDiff() > this->TIME_LIMIT || (++this->it > MAX_IT && this->it_idle > this->it*0.02) || (this->LowerBound >= 0 && obj <= this->LowerBoundGap*this->LowerBound)){
-                this->STOP = true;
+#ifdef PRINT
+#if PRINT == 1
+            if (this->it_idle % 1000 == 0){
+                cout << "* It. " << this->it << " Idle: " << this->it_idle << endl;
+            }
+#endif
+#endif
+            ++this->it;
+            if (this->getTimeDiff() > this->TIME_LIMIT || (this->it_idle > MAX_IT) || (this->LowerBound >= 0 && obj <= this->LowerBoundGap*this->LowerBound)){
                 if (this->getTimeDiff() > this->TIME_LIMIT){
                     cout << "Time limit hit" << endl;
+                    this->STOP = true;
                 }
                 else if (this->LowerBound >= 0 && obj <= this->LowerBoundGap*this->LowerBound){
                     cout << "Lower bounds = " << this->LowerBound << ", current objective = " << obj << endl;
+                    this->STOP = true;
                 }
                 else{
+#ifdef PRINT
+#if PRINT == 1
                     cout << "max it_idle hit: " << this->it_idle << endl;
+#endif
+#endif
+                    if (!DynamicHL){
+                        this->STOP = true;
+                    }
+                    else{
+#ifdef PRINT
+#if PRINT == 1
+                        cout << "-------------------------" << endl;
+#endif
+#endif
+                        if (HistoryLength*2 <= 50000){
+                            HistoryLength *= 2;
+#ifdef PRINT
+#if PRINT == 1
+                            cout << "New HistoryLength = " << HistoryLength << endl;
+#endif
+#endif
+                        }
+#ifdef PRINT
+#if PRINT == 1
+                        cout << "Previous HL = " << HistoryLength << endl;
+                        cout << "New HL = " << HistoryLength << endl;
+#endif
+#endif
+                        PerturbeValue += PerturbeIncrease;
+#ifdef PRINT
+#if PRINT == 1
+                        cout << "Previous PerturbValue = " << PerturbeValue << endl;
+                        cout << "New PerturbValue = " << PerturbeValue << endl;
+                        cout << "Initialize list with " << PerturbeValue*this->best_obj << endl;
+#endif
+#endif
+                        InitializeHistoricValues(PerturbeValue*this->best_obj);
+#ifdef PRINT
+#if PRINT == 1
+
+                        cout << "Nr times Neighborhoods are selected" << endl;
+                        for (const auto& [move, nr]: this->NrChosen){
+                            cout << this->Moves.at(move) << " is chosen " << nr << " times, but accepted only " << this->NrAccepted.at(move) << " times" << endl;
+                        }
+                        cout << "-------------------------" << endl;
+#endif
+#endif
+                        // cin.get();
+ 
+                        this->it_idle = 0;
+                        this->it = 0;
+
+                        ResetSolutionAfterMove = true;
+
+                        this->current_obj = this->best_obj;
+                    }
                 }
             }
+
+            if (SolutionAccepted && diff){
+                this->print_solution();
+            }
+
             // cin.get();
             return SolutionAccepted;
 
@@ -254,7 +330,7 @@ bool SA<Move>::Update(Solution& sol, const int obj){
                     // reverse move
                     // We only need to reverse the haps since the matchings are thrown away anyway
                     // cout << "Reject solution with prob " << exp(-(obj-current_obj)/T) << endl;
-                    return false; // CUSTOMIZE WHAT HAPPENS AFTERWARDS
+                    SolutionAccepted = false; // CUSTOMIZE WHAT HAPPENS AFTERWARDS
                 }
             }
             if (SolutionAccepted){
@@ -267,9 +343,13 @@ bool SA<Move>::Update(Solution& sol, const int obj){
 
             this->UpdateTimeStamps();
 
-            if (++this->it % I_temp == 0 || this->it_accepted % I_accept == 0){ 
+            if (++this->it % I_temp == 0 || (this->it_accepted - I_accept >= 0)){ 
                 T *= cooling_rate;
+#ifdef PRINT
+#if PRINT == 1
                 cout << "New T = " << T << endl;
+#endif
+#endif
                 this->it_accepted = 0;
                 this->it = 0;
             }

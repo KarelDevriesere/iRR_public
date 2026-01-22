@@ -22,6 +22,9 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/bellman_ford_shortest_paths.hpp>
 
+#include <boost/graph/floyd_warshall_shortest.hpp>
+#include <boost/graph/johnson_all_pairs_shortest.hpp>
+
 // TODO Overwrite maximum weighted matching with the newest boost file.
 // See https://github.com/boostorg/graph/issues/399
 //#include <boost/graph/maximum_weighted_matching.hpp>
@@ -122,13 +125,15 @@ int MinimizeBreaksCycleBoost(Solution& sol);
 
 vector<array<int,3>> NegativeCycle(Solution& sol);
 
+vector<array<int,3>> NonIncreasingCycle(Solution& sol);
+
 void SwapMatchings(Solution& sol, vector<pair<int,int>>Matching, const int l, const int r, const bool bipartite);
 
 pair<vector<pair<int,int>>,vector<int>>MoveMWPM(Solution& sol, const int r, const bool bipartite, const bool includeHAPs, const bool CM, std::mt19937& gen, const bool MinCostM);
 
-pair<vector<pair<int,int>>,vector<int>>MoveMWPMOneLeague(Solution& sol, const int r, std::mt19937& gen, const int l);
+pair<vector<pair<int,int>>,vector<int>>MoveMWPMOneLeague(Solution& sol, const int r, std::mt19937& gen, const int l, const bool bipartite, const bool MinCostM);
 
-vector<vector<pair<int,int>>>iPRS(Solution& sol, const int r, const bool bipartite, const bool includeHAPs, const bool CM, std::mt19937& gen, const bool MinCostM);
+vector<vector<pair<int,int>>>iPRS(Solution& sol, const int r, const int l, const bool bipartite, const bool includeHAPs, const bool CM, std::mt19937& gen, const bool MinCostM);
 
 vector<vector<array<int,3>>>EvaluateAlternatingCycleWithPaths(Solution& sol, vector<pair<int,int>>& AlternatingCycle, const int r, const bool bipartite, const bool CM, int& delta, std::mt19937& gen, const bool MinCostP, bool NoPathDueTo2RRConstraint);
 
@@ -170,11 +175,11 @@ vector<vector<int>> ReversePathsMatching(Solution& sol, const vector<pair<int,in
 
 void KeepOrientationsAllEdgesLantarn(Solution& sol, Lantarn& lantarn, const vector<vector<HA>>& OrientationsCopy);
 
-bool RepairOrientationsEdgesLantarn_CM(Solution& sol, Lantarn& lantarn, const vector<vector<HA>>& OrientationsCopy, vector<array<int,3>>& path, const bool MinCostP, const bool CM);
+bool RepairOrientationsEdgesLantarn_CM(Solution& sol, Lantarn& lantarn, const vector<vector<HA>>& OrientationsCopy, vector<array<int,3>>& path, const bool MinCostP, const bool CM, std::mt19937& gen);
 
 bool RepairHAPsWithNegativeCycles(Solution& sol, const int l);
 
-bool FindNormalPathOneLeague(const int source, const int sink, Solution& sol, vector<array<int,3>>& path, int& delta, const bool MinCostP);
+bool FindNormalPathOneLeague(const int source, const int sink, Solution& sol, vector<array<int,3>>& path, int& delta, const bool MinCostP, std::mt19937& gen);
 
 bool FindPathLineGraphOneLeague(const int source, const int sink, Solution& sol, vector<array<int,3>>& path);
 

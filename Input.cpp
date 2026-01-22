@@ -54,7 +54,7 @@ void Input::SetDefault(const int NrTeams){
     Teams = vector<int>(NrTeams);
     iota(Teams.begin(), Teams.end(), 0);
     TeamStrength = vector<int>(NrTeams, 1);
-    TeamLeague = vector<int>(NrTeams, 1);
+    TeamLeague = vector<int>(NrTeams, 0);
     TeamClub = vector<int>(NrTeams);
     iota(TeamClub.begin(), TeamClub.end(), 0);
 
@@ -830,6 +830,16 @@ bool Input::HAP_satisfies_all_requirements(const vector<HA>& HAP){
             }
         }
     }
+    if (getSetting() == Setting::TTP){
+        // There was a mistake in the HAPs, some of them contained AAAA in last 4 rounds..
+        for (int h = 3; h < HAP.size(); ++h){
+            if (HAP[h] == HAP[h-1] && HAP[h-1] == HAP[h-2] && HAP[h-2] == HAP[h-3]){
+                // cout << "HHHH or AAAA detected in HAP" << endl;
+                // cin.get();
+                return false;
+            }
+        }
+    }
     if (HAP_requirements.at(HAP_requirement_name::NoBreakBeginningEnd)){
         if (HAP[0] == HAP[1] || HAP[(int)HAP.size()-1] == HAP[(int)HAP.size()-2]){
             // cout << "break beginning or end in HAP" << endl;
@@ -875,17 +885,22 @@ bool Input::HAP_satisfies_all_requirements(const vector<HA>& HAP){
 }
 
 int Input::read_HAPs(){
-    // std::string file_path = "C:\\Users\\kardvrie\\C++\\VSprojects\\test2\\Patterns\\patterns_" + to_string(NrRounds) + "_";
-    std::string file_path = "Patterns" + std::string(PATHSEP) + "patterns_" + to_string(NrRounds) + "_";
-    if (InstanceMiao == MiaoInstance::M){
-        file_path += "c.txt"; // always chose canoncial for this instance
-        BreakLimit = 3; // Teams have max 3 breaks
-    }
-    else if (HAP_requirements.at(HAP_requirement_name::BreakLimit)){
-        file_path += to_string(BreakLimit) + ".txt";
+    std::string file_path = "Patterns" + std::string(PATHSEP);
+    if (Setting_ == Setting::TTP){
+        file_path += "iTTPPattern" + std::string(PATHSEP) + "patterns_" + to_string(NrRounds) + "_ittp.txt";
     }
     else{
-        file_path += "all.txt";
+        file_path += "patterns_" + to_string(NrRounds) + "_";
+        if (InstanceMiao == MiaoInstance::M){
+            file_path += "c.txt"; // always chose canoncial for this instance
+            BreakLimit = 3; // Teams have max 3 breaks
+        }
+        else if (HAP_requirements.at(HAP_requirement_name::BreakLimit)){
+            file_path += to_string(BreakLimit) + ".txt";
+        }
+        else{
+            file_path += "all.txt";
+        }
     }
     // cout << "read " << file_path << endl;
     std::ifstream file(file_path);
@@ -988,7 +1003,7 @@ void Input::DeleteNonPromisingHAPsTTP(const int NrHaps){
         }
     }
     HAPs = std::move(NewHAPs);
-    cout << "Nr of HAPs that will be used = " << HAPs.size() << endl;
+    // cout << "Nr of HAPs that will be used = " << HAPs.size() << endl;
 
     AllHAPsIncluded = false;
 

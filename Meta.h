@@ -185,7 +185,11 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
         vector<int>HistoricValues;
         int HistoryLength = 1; // default: Hill Climbing
 
-        long MAX_IT = 10000000;
+        long MAX_IT = 50000;
+        bool DynamicHL = false;
+        double PerturbeValue = 0;
+        double PerturbeIncrease = 0.005;
+        bool ResetSolutionAfterMove = false;
 
         LAHC(const std::unordered_map<Move, string>& moves, // moves, weights and in are defined in main
            const std::unordered_map<Move, double>& weights, std::mt19937& g): MetaBase<Move>(moves, weights, g){
@@ -196,12 +200,20 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
             HistoryLength = l;
         }
 
+        void SetPerturbeIncrease(const double p){
+            PerturbeIncrease = p;
+        }
+
         void InitializeHistoricValues(const int obj){
             HistoricValues = vector<int>(HistoryLength, obj);
         }
 
         void SetMaxIt(const int limit){
             MAX_IT = limit;
+        }
+
+        void MakeHistoryLengthDynamic(){
+            DynamicHL = true;
         }
 
         bool Update(Solution& sol, const int obj) ;

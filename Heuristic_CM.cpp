@@ -130,7 +130,7 @@ void Heuristic_CM::SelectPTS(Solution& sol){
     // Repair Orientations
     // cout << "Repair orientations!!" << endl;
     vector<array<int,3>>path; // always try to find a path between i and j!! 
-    bool BalanceRepaired = RepairOrientationsEdgesLantarn_CM(sol, lantarn, OrientationsCopy, path, MinCostPR, CM);
+    bool BalanceRepaired = RepairOrientationsEdgesLantarn_CM(sol, lantarn, OrientationsCopy, path, MinCostPR, CM, gen);
     if (!BalanceRepaired){
         throw std::runtime_error("Could not repair imbalance in PTS!");
     }
@@ -206,6 +206,7 @@ void Heuristic_CM::SelectMatching(Solution& sol, const bool bipartite){
     assert(sol.validate());
     // cout << "Travel cost before: " << sol.ComputeTravelCost() << endl;
 
+    const int l = RandomIntegerNumber(0, sol.getNrLeagues()-1); // Chose a random league
     const int r = RandomIntegerNumber(0,sol.getNrRounds()-1); // Chose a random round to do the matching
     // int cost_before = current_obj;
 
@@ -237,7 +238,7 @@ void Heuristic_CM::SelectMatching(Solution& sol, const bool bipartite){
 
     // cout << "do MoveMWPM" << endl;
     // I only do 1 alternating cycle in case of M+PR, because path can use edge of other cycle, did not want to deal with this
-    vector<vector<pair<int,int>>>AlternatingCycles = iPRS(sol, r, bipartite, includeHAPs, CM, gen, MinCostM);
+    vector<vector<pair<int,int>>>AlternatingCycles = iPRS(sol, r, l, bipartite, includeHAPs, CM, gen, MinCostM);
     
     int delta;
     for (auto& AlternatingCycle: AlternatingCycles){
@@ -268,6 +269,7 @@ void Heuristic_CM::SelectMatching(Solution& sol, const bool bipartite){
             assert(cost_before >= sol.ComputeTotalCost());
         }
 #endif
+        
 
         if (!Update(sol, sol.ComputeTotalCost())){
             // reverse paths again
@@ -285,6 +287,13 @@ void Heuristic_CM::SelectMatching(Solution& sol, const bool bipartite){
             assert(cost_before == sol.ComputeTotalCost());
 #endif
         }
+        else{
+            break;
+        }
+    }
+    if (AlternatingCycles.empty()){
+        // do this here because update is not called when cycles are empty
+        Update(sol, sol.ComputeTotalCost());
     }
 
     assert(sol.validate());
@@ -294,10 +303,21 @@ void Heuristic_CM::SelectMatching(Solution& sol, const bool bipartite){
 void Heuristic_CM::SelectBalancedCycle(Solution& sol){
 
     bool NegativeCycleFound = false;
+    int CostReversingCycle = 0;
 
     vector<array<int,3>>Cycle;
     if (MinCostC){
+        cout << "NC" << endl;
         Cycle = NegativeCycle(sol);
+        if (Cycle.empty()){
+            cout << "No NC, try Floyd-Warshall" << endl;
+            cin.get();
+            Cycle = NonIncreasingCycle(sol); // If no negative cycle, find a non-increasing cyclce
+            assert(!Cycle.empty()); // must always return a cycle!!
+        }
+        else{
+            NegativeCycleFound = true;
+        }
     }    
     else {
         Cycle = CycleBalanced(sol, gen);
@@ -312,11 +332,22 @@ void Heuristic_CM::SelectBalancedCycle(Solution& sol){
 #ifndef NDEBUG
     cost_before = sol.ComputeTotalCost();
 #endif
+    cost_before = sol.ComputeTotalCost();
 
-    assert(Cycle[0][0] == Cycle[(int)Cycle.size()-1][1]);
+    // assert(Cycle[0][0] == Cycle[(int)Cycle.size()-1][1]);
     // cout << "Reverse path" << endl;
     ReversePath(sol, Cycle);
     // cout << "done" << endl;
+
+    // cout << "cost before = " << cost_before << ", cost now = " << sol.ComputeTotalCost() << " = " << sol.ComputeTotalHACost() << endl;
+    // cin.get();
+
+#ifndef NDEBUG
+    if (NegativeCycleFound){
+        cout << cost_before << " > " << sol.ComputeTotalCost() << endl;
+        assert(cost_before > sol.ComputeTotalCost());
+    }
+#endif
 
     if (!Update(sol, sol.ComputeTotalCost())){
         // If not better: reverse the cycle again as if nothing happened
@@ -326,11 +357,6 @@ void Heuristic_CM::SelectBalancedCycle(Solution& sol){
         assert(!(MinCostC && NegativeCycleFound)); // If a negative cycle was found, it cannot be that we not accept the solution
 #endif
     }
-#ifndef NDEBUG
-    if (NegativeCycleFound){
-        assert(cost_before > sol.ComputeTotalCost());
-    }
-#endif
     return;
 }
 
@@ -389,17 +415,28 @@ void Heuristic_CM::DoMove(Solution& sol){
         bipartite = false;
         SelectMatching(sol, bipartite);
     }   
-    else if (CurrentMove == Move::MinCost_BM || CurrentMove == Move::Random_BM){
+    else if (CurrentMove == Move::MinCost_BM){
+        MinCostM = true;
+        bipartite = true;
+        SelectMatching(sol, bipartite);
+    }
+    else if (CurrentMove == Move::Random_BM){
+        MinCostM = false;
         bipartite = true;
         SelectMatching(sol, bipartite);
     }
     else if (CurrentMove == Move::NC) {
-        MinCostC = false; // TODO: NC in line graph for TTP!!
+        MinCostC = true; // TODO: NC in line graph for TTP!!
         SelectBalancedCycle(sol);
     }
     else{
         MinCostC = false;
         SelectBalancedCycle(sol);
+    }
+    if (ResetSolutionAfterMove){
+        SaveBestSolution(sol);
+        assert(best_obj == sol.ComputeTotalCost());
+        ResetSolutionAfterMove = false;
     }
     // cout << "done" << endl;
     auto end = std::chrono::high_resolution_clock::now();
@@ -407,12 +444,14 @@ void Heuristic_CM::DoMove(Solution& sol){
     ExecutionTimes.at(CurrentMove).push_back(dur);
     NrChosen.at(CurrentMove)++;
     assert(sol.validate());
+#ifndef NDEBUG
     for (int i = 0; i < sol.getNrTeams(); ++i){
         if (!sol.IsTeamBalanced(i)){
             cout << "Team " << i << " not balanced after doing move " << Moves.at(CurrentMove) << endl;
             return;
         }
     }
+#endif
 }
 
 void Heuristic_CM::solve(Input& in, Solution& sol){

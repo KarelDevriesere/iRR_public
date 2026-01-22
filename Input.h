@@ -27,6 +27,9 @@ const std::unordered_map<Move, double>MiaoWeights = {{Move::InterClubSwap, 1.0/3
 const std::unordered_map<Move, string>MiaoMovesTTP = {{Move::RandomSwap, "RandomSwap"}, {Move::ComplementInsertion, "ComplementInsertion"}};
 const std::unordered_map<Move, double>MiaoWeightsTTP = {{Move::RandomSwap, 1.0/2.0}, {Move::ComplementInsertion, 1.0/2.0}};
 
+const std::unordered_map<Move, string>MiaoMovesTTP_CON = {{Move::ComplementInsertion, "ComplementInsertion"}};
+const std::unordered_map<Move, double>MiaoWeightsTTP_CON = {{Move::ComplementInsertion, 1.0}};
+
 enum class HA{H, A, BYE};
 
 struct InputData{
@@ -40,11 +43,11 @@ struct InputData{
     /*{Move::NC, false},*/
     {Move::MinCost_BM, false}, 
     {Move::Random_BM, false}, 
-    {Move::iPTS_MinCost_PR, false}, 
+    /*{Move::iPTS_MinCost_PR, false},*/
     {Move::iPTS_Random_PR, false}, 
-    {Move::MinCost_M_MinCost_PR, false}, 
+    /*{Move::MinCost_M_MinCost_PR, false},*/ 
     {Move::MinCost_M_Random_PR, false},
-    {Move::Random_M_MinCost_PR, false}, 
+    /*{Move::Random_M_MinCost_PR, false},*/
     {Move::Random_M_Random_PR, false}};
 
     const unordered_map<Move,string>Moves = {{Move::TS, "TS"}, 
@@ -55,11 +58,11 @@ struct InputData{
     /*{Move::NC, "NC"},*/
     {Move::MinCost_BM, "MinCost_BM"}, 
     {Move::Random_BM, "Random_BM"}, 
-    {Move::iPTS_MinCost_PR, "iPTS_MinCost_PR"}, 
+    /*{Move::iPTS_MinCost_PR, "iPTS_MinCost_PR"},*/
     {Move::iPTS_Random_PR, "iPTS_Random_PR"}, 
-    {Move::MinCost_M_MinCost_PR, "MinCost_M_MinCost_PR"}, 
+    /*{Move::MinCost_M_MinCost_PR, "MinCost_M_MinCost_PR"},*/ 
     {Move::MinCost_M_Random_PR, "MinCost_M_Random_PR"},
-    {Move::Random_M_MinCost_PR, "Random_M_MinCost_PR"}, 
+    /*{Move::Random_M_MinCost_PR, "Random_M_MinCost_PR"},*/ 
     {Move::Random_M_Random_PR, "Random_M_Random_PR"}}; 
 
     string Instance;
@@ -67,13 +70,10 @@ struct InputData{
     bool Heuristic = 1;
     bool HistoryLengthProvided = false;
     int HistoryLength = 1;
-    int NrTeams = 36; // CM
+    double PerturbeIncrease = 0.005;
     int NrRounds = 4; // TTP
-    int k = 5; // CM
-    int inst = 0; // CM
     int TimeLimit = 7200;
-    int MaxIt = 10000000;
-    bool CM = true; // CM
+    long MaxIt = 50000;
     bool TTP = false; // TTP
     bool Base = false;
     long ConstrViolationCost = 100000;
@@ -87,9 +87,6 @@ struct InputData{
 
     bool MinCost = false;
     string OutputFolder;
-
-    bool HillClimbingFirst = false;
-    double LowerBoundGap = 1.0;
 
     bool RunMiaoAlgo = false;
     bool RunMiaoRF = false;
@@ -138,8 +135,6 @@ class Input
         vector<int>TeamsHAP;
         vector<int>ComplementHAP;
         int MiaoHAPSetting = -1;
-
-        bool HAP_satisfies_all_requirements(const vector<HA>& HAP);
 
         MiaoInstance InstanceMiao = MiaoInstance::S;
         // pair<TotalNrTeams,NrDummyTeams>
@@ -220,6 +215,14 @@ class Input
         void setHAPIndexTeam(const int i, const int h){TeamsHAP[i] = h;};
         int getHAPIndexTeam(const int i)const{return TeamsHAP[i];};
         int getComplementIndexHAP(const int h)const{return ComplementHAP[h];};
+        void AddHAPWithComplement(const vector<HA>NewHAP, const vector<HA>NewHAP_c){
+            int index = getNrHAPs();
+            HAPs.push_back(NewHAP);
+            HAPs.push_back(NewHAP_c);
+            ComplementHAP.push_back(index+1);
+            ComplementHAP.push_back(index);
+        }
+        bool HAP_satisfies_all_requirements(const vector<HA>& HAP);
 
         Setting getSetting()const{return Setting_;};
 

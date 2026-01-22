@@ -120,6 +120,7 @@ void MiaoAlgo::ReverseMove(Solution& sol){
     else{
         SwapHAPs(sol, team1, team2); // see operators
     }
+
     int i,j,i_,r;
     for (i_ = 0; i_ < sol.getNrTeamsLeague(CurrentLeague); ++i_){
         i = sol.getGlobalIndexTeam(CurrentLeague,i_);
@@ -136,16 +137,16 @@ void MiaoAlgo::Reset(Solution& sol){
     // cout << "Reset" << endl;
     // Such that we can do the matchings again without conflicts
     // But: do not reset the orientations!!
-    int j;
+    int i,j;
     for (int i_ = 0; i_ < sol.getNrTeamsLeague(CurrentLeague); ++i_){
-        int i = sol.getGlobalIndexTeam(CurrentLeague, i_);
+        i = sol.getGlobalIndexTeam(CurrentLeague, i_);
         for (int r = 0; r < sol.getNrRounds(); ++r){
-            j = sol.TeamColorOpp[i][r];
             sol.TeamColorOpp[i][r] = -1;
-            if (j != -1){
-                sol.MatchColor[i][j] = -1;
-                sol.MatchColor[j][i] = -1;
-            }
+        }
+        for (int j_ = 0; j_ < sol.getNrTeamsLeague(CurrentLeague); ++j_){
+            j = sol.getGlobalIndexTeam(CurrentLeague, j_);
+            sol.MatchColor[i][j] = -1;
+            sol.MatchColor[j][i] = -1;
         }
     }
 }
@@ -155,7 +156,7 @@ void MiaoAlgo::ReAssignHAPs(Solution& sol){
     double rnd;
     bool MoveChosen = false;
     sol.NrColouredRounds = sol.getNrRounds(); // such that capacity costs are computed correctly
-    while(!MoveChosen){
+    while(!MoveChosen && !STOP){
         rnd = RandomDoubleNumber(0.0, 1.0);
         auto iterator = WeightsCumul.upper_bound(rnd); 
         CurrentMove = iterator->second;
@@ -195,11 +196,13 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
         const bool CM = false;
         const bool keepHAP = true;
         const bool MinCostM = true;
-        pair<vector<pair<int,int>>, vector<int>>Matching_OpponentMatching = MoveMWPMOneLeague(sol, r, gen, CurrentLeague); // in the file operators
+        pair<vector<pair<int,int>>, vector<int>>Matching_OpponentMatching = MoveMWPMOneLeague(sol, r, gen, CurrentLeague, true, true); // in the file operators
         vector<pair<int,int>>matching = Matching_OpponentMatching.first;
         if ((int)matching.size() < N/2){
             // shuffling rounds does not seem a good idea, instead go back to the old HAP assignement and do a new HAP move
             // cout << "matching failed in round " << s << endl;
+            // cout << "matching has size of only " << (int)matching.size() << endl;
+            // cin.get();
             ++NrInfeasibleMatchings;
             return false;
             // The problem with reshuffling rounds is that in ComputeEdgeWeight of TTP, we assume the rounds go from 0 to R-1 to compute the cost of trips
@@ -235,7 +238,6 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
         }
     }
 
-    // cout << "schedule found" << endl;
     ++NrSuccesfullMatchings;
     assert(sol.ComputeTotalHACost() <= 0);
 
@@ -412,6 +414,7 @@ bool MiaoAlgo::ComplementInsertion(Solution& sol){
         ++j_;
         // Does this complemantray HAP always exists? No, of course not!!
         if (j_ >= sol.getNrTeamsLeague(l)){
+            // cout << "no complement hap found for team " << i << endl;
             return false;
             /*
             cout << "Chosen team = " << i << endl;
@@ -437,6 +440,7 @@ bool MiaoAlgo::ComplementInsertion(Solution& sol){
             */
         }
     }
+
     int j = sol.getGlobalIndexTeam(l,j_);
     if (sol.getNrLeagues()==1 && ((i != i_) || (j != j_))){
         cout << "(i != i_) || (j != j_) in ComplementInsertion()" << endl;
@@ -463,25 +467,78 @@ bool MiaoAlgo::ComplementInsertion(Solution& sol){
     return true;
 }
 
-void AssignsHAPsToTeamsBasedOnSol(Input& in, Solution& sol){
+void AssignsHAPsToTeamsBasedOnSol(Solution& sol){
     // Find the HAP of teams:
-    int i,h,r;
+    int i,h,r,index;
     for (i = 0; i < sol.getNrTeams(); ++i){
-        for (h = 0; h < in.getNrHAPs(); ++h){
+        for (h = 0; h < sol.getNrHAPs(); ++h){
             for (r = 0; r < sol.getNrRounds(); ++r){
-                if (sol.Orientation[i][r] != in.getModeHAPRound(h,r)){
+                if (sol.Orientation[i][r] != sol.getModeHAPRound(h,r)){
                     break;
                 }
             }
             if (r == sol.getNrRounds()){
+#ifdef PRINT
+#if PRINT == 1
                 cout << "Team " << i << " is assigned HAP " << h << endl;
+#endif
+#endif
                 sol.setHAPIndexTeam(i, h);
                 break;
             }
         }
-        if (h == in.getNrHAPs()){
+        if (h == sol.getNrHAPs()){
+            // When r > n/2, we start from Vizing, but it can be that, if we included only promising HAPs, this HAP is not found!!
+#ifdef PRINT
+#if PRINT == 1
             cout << "HAP of " << i << " not found when assign HAPs to teams based on sol" << endl;
-            std::abort();
+#endif
+#endif
+            // This can be because we did not include all HAPs!!
+            vector<HA>NewHAP = vector<HA>(sol.getNrRounds());
+            vector<HA>NewHAP_c = vector<HA>(sol.getNrRounds());
+            for (r = 0; r < sol.getNrRounds(); ++r){
+                if (sol.Orientation[i][r] == HA::H){
+#ifdef PRINT
+#if PRINT == 1
+                    cout << "H";
+#endif
+#endif
+                    NewHAP[r] = HA::H;
+                    NewHAP_c[r] = HA::A;
+                }
+                else{
+#ifdef PRINT
+#if PRINT == 1
+                    cout << "A";
+#endif
+#endif
+                    NewHAP[r] = HA::A;
+                    NewHAP_c[r] = HA::H;
+                }
+            }
+#ifdef PRINT
+#if PRINT == 1
+            cout << endl;
+#endif
+#endif
+
+            if (sol.HAP_satisfies_all_requirements(NewHAP)){
+                sol.AddHAPWithComplement(NewHAP, NewHAP_c);
+#ifdef PRINT
+#if PRINT == 1
+                cout << "HAP added" << endl;
+#endif
+#endif
+            }
+            else{
+#ifdef PRINT
+#if PRINT == 1
+                cout << "Infeasible HAP" << endl;
+#endif
+#endif
+                std::abort();
+            }
         }
     }
 }
@@ -491,33 +548,129 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
     StartTime = std::chrono::high_resolution_clock::now();
     // TODO: Miao is also doing something with byes...
 
-    if (!InitialSolutionGiven || !in.AllHAPsIncluded){
+    Opponents = vector<vector<int>>(sol.getNrTeams(), vector<int>(sol.getNrRounds(), -1));
+
+    if (!InitialSolutionGiven){
         // Assign HAPs such that we respect v+
         cout << "Assign HAPs to teams.." << endl;
-        GurSolver gursol(in);
-        // gursol.AssignHAPsToTeams(sol);
-        const bool relax_x = false, min_travel = false, min_capacity_violations = false;
-        gursol.BuildMiaoFormulation(relax_x, min_travel, min_capacity_violations);
-        gursol.solve();
-        gursol.StoreHAPs(sol);
+        if (in.getNrRounds() > in.getNrTeams()/2){
+            GurSolver gursol(in);
+            // gursol.AssignHAPsToTeams(sol);
+            const bool relax_x = false, min_travel = false, min_capacity_violations = false;
+            // gursol.BuildMiaoFormulation(relax_x, min_travel, min_capacity_violations);
+            gursol.BuildPatternFormulation(); // just assign HAPs to teams without objective!!
+            gursol.solve();
+            gursol.StoreHAPs(sol);
+            // Use Benders here to find feasible opponent schedule?
+            ReAssignHAPs(sol);
+        }
+        else{
+            // We know that this always produces an initial solution!!
+            // If I do not do this, it can be that I never find anything, even if, for example, n=40 and r=20
+            int hc_i = RandomIntegerNumber(0, sol.getNrHAPs()-1);
+            int hc_j = sol.getComplementIndexHAP(hc_i);
+            for (int i = 0; i < in.getNrTeams()/2; ++i){
+                setHAP(sol, i, hc_i);
+            }
+            for (int j = in.getNrTeams()/2; j < in.getNrTeams(); ++j){
+                setHAP(sol, j, hc_j);
+            }
+            sol.NrColouredRounds = sol.getNrRounds();
+            auto it = Moves.begin();
+            CurrentMove = it->first;
+        }
+        cout << "patterns assigned" << endl;
+        /*
+        // This works if r <= n/2
+        GurSolver gur_x(in);
+        gur_x.build_all(false, false);
+        for (int i = 0; i < gur_x.HapFixed.size(); ++i){
+            gur_x.HapFixed[i] = true;
+        }
+        gur_x.FixHAP(sol);
+        gur_x.solve();
+        gur_x.SaveSolution(sol);
+        AssignsHAPsToTeamsBasedOnSol(in, sol);
+        UpdateBestSolution(sol);
+        cout << "opponent schedule found" << endl;
+        */
+        // Full Miao Formulation takes too long!!!
     }
     else{
         best_obj = sol.ComputeTotalCost();
         cout << "Cost HAPs = " << sol.ComputeTotalHACost() << endl;
         current_obj = best_obj;
         cout << "Assign Haps to teams" << endl;
-        AssignsHAPsToTeamsBasedOnSol(in, sol);
+        AssignsHAPsToTeamsBasedOnSol(sol);
         UpdateBestSolution(sol);
+        SetAllOpponents(sol);
         cout << "Ready" << endl;
+        sol.validate();
+        ReAssignHAPs(sol);
+        cout << "Travel cost = " << sol.ComputeTravelCostTTP() << endl;
     }
-    Opponents = vector<vector<int>>(sol.getNrTeams(), vector<int>(sol.getNrRounds()));
-    SetAllOpponents(sol);
-    ReAssignHAPs(sol); // do a HAP move
+
+    // Check if the starting solution contains at leats one pair of complementary HAPs. If not: set this move to 0!!!
+
+    bool PairFound = true;
+
+    for (int i = 0; i < sol.getNrTeams(); ++i){
+        int l = sol.getLeagueTeam(i);
+        // cout << "l = " << l << endl;
+        int h = sol.getHAPIndexTeam(i);
+        int hc = sol.getComplementIndexHAP(h);
+        // cout << "i = " << i << ", h = " << h << ", hc = " << hc << endl;
+        int j_ = 0;
+        while (sol.getHAPIndexTeam(sol.getGlobalIndexTeam(l,j_)) != hc){
+            // cout << "hap of " << sol.getGlobalIndexTeam(l,j_)<< "  = " << sol.getHAPIndexTeam(sol.getGlobalIndexTeam(l,j_)) << endl;
+            ++j_;
+            // Does this complemantray HAP always exists? No, of course not!!
+            if (j_ >= sol.getNrTeamsLeague(l)){
+                // cout << "no complement hap found for team " << i << endl;
+                PairFound = false;
+                break;
+            }
+        }
+        if (PairFound){
+            cout << "Pair of complementary haps found!!!!" << endl;
+            break;
+        }
+    }
+
+    if (!PairFound){
+        cout << "Not one pair of complementary HAPs!!" << endl;
+        if (Moves.size() == 1 && Moves.begin()->first == Move::ComplementInsertion){
+            STOP = true; // in this case, our algorithm is stuck!!
+            cout << "But this is the only move, so we are stuck!!" << endl;
+        }
+        else{
+            cout << "Only swaps, set size of this move to 0" << endl;
+            for (auto it = WeightsCumul.begin(); it != WeightsCumul.end(); ++it) {
+                if (it->second == Move::ComplementInsertion) {
+                    WeightsCumul.erase(it);
+                    break;   // erase only one
+                }
+            }
+            map<Move, double>Weights;
+            for (auto it = WeightsCumul.begin(); it != WeightsCumul.end(); ++it) {
+                Weights[it->second] = 1.0 / (double)WeightsCumul.size();
+            }
+
+            double sum = 0.0;
+            WeightsCumul.clear();
+            for (auto& [move, weight]: Weights){
+                sum += weight;
+                WeightsCumul[sum] = move;
+            }
+            for (auto it = WeightsCumul.begin(); it != WeightsCumul.end(); ++it) {
+                cout << "Weight = " << it->first << ", move = " << Moves.at(it->second) << endl;
+            }
+        }
+    }
+
     Reset(sol);
 
-    // Initial solution is infeasible for tiny!!!
-
-    do{
+    while(!STOP){
         // cout << "solve matchings with following haps" << endl;
         // for (int t = 0; t < sol.getNrTeams(); ++t){
         //    printHAP(sol, t);
@@ -539,17 +692,17 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
             Update(sol, INT_MAX); // infeasible solution but still update values
             ReverseMove(sol); // if schedule phase not succesful: reverse move, and try with new HAP move
         }
-        // cout << "reassign haps" << endl;
         ReAssignHAPs(sol); // do a HAP move
         assert(sol.ComputeTotalHACost() <= 0);
         Reset(sol); // this deletes all the matchups in the rounds of the league chosen by the HAP operator
     }
-    while(!STOP);
 
     // cout << "Miao Algo done" << endl;
     // save into solution
-
-    SaveBestSolution(sol);
+    if (NrSuccesfullMatchings >= 1 || InitialSolutionGiven){
+        cout << "NrSuccesfullMatchings = " << NrSuccesfullMatchings << endl;
+        SaveBestSolution(sol);
+    }
 }
 
 void MiaoAlgo::SolveGivenSeqeuence(Input& in, Solution& sol){
