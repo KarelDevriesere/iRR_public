@@ -1,0 +1,3333 @@
+Starting benders decomposition
+BREAK MAXIMIZATION
+Instance file provided: ../Instances/TTP/CON16_12.xml
+--------------------------------------------------------------------
+--- Starting 2-phase HAP approach for break minimization and maximization ---
+timeLimit: 252000
+solName: ../Instances/TTP/CON16_12_SolBenders.xml
+Complementary: 0
+Lexicographic: 0
+Pattern vars: 0
+--------------------------------------------------------------------
+WARNING IGNORING BA1
+WARNING IGNORING CA1
+WARNING IGNORING CA1
+*******************
+** Create Master **
+*******************
+
+Symmetry breaking structure:
+H 0 1 <         
+H 0 1 <         
+H 0 <          
+H 0 <          
+H 2 <          
+H 2 <          
+H <           
+H <           
+A 0 1 <         
+A 0 1 <         
+A 0 <          
+A 0 <          
+A 2 <          
+A 2 <          
+A <           
+A <           
+Master constructed
+Version identifier: 12.10.0.0 | 2019-11-26 | 843d4de
+CPXPARAM_Threads                                 5
+CPXPARAM_Parallel                                -1
+CPXPARAM_TimeLimit                               252000
+CPXPARAM_WorkMem                                 16000
+Initialize Worker
+Worker initialized
+Lazy constraint(s) or lazy constraint/branch callback is present.
+    Disabling dual reductions (CPX_PARAM_REDUCE) in presolve.
+    Disabling presolve reductions that prevent crushing forms.
+Tried aggregator 2 times.
+MIP Presolve eliminated 105 rows and 64 columns.
+MIP Presolve modified 9 coefficients.
+Aggregator did 27 substitutions.
+Reduced MIP has 1092 rows, 487 columns, and 3611 nonzeros.
+Reduced MIP has 486 binaries, 1 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.00 sec. (4.39 ticks)
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 1
+Total time spend to solve LP subproblems: 41
+Total time spend to solve IP subproblems: 12
+Found a new better solution: 155
+Cost RobinX:              (0,155)
+Found incumbent of value 155.000000 after 0.07 sec. (7.80 ticks)
+Probing fixed 0 vars, tightened 1 bounds.
+Probing time = 0.00 sec. (5.29 ticks)
+Tried aggregator 1 time.
+MIP Presolve eliminated 10 rows and 4 columns.
+Reduced MIP has 1082 rows, 483 columns, and 3583 nonzeros.
+Reduced MIP has 482 binaries, 1 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.00 sec. (3.05 ticks)
+Initialize Worker
+Probing fixed 0 vars, tightened 1 bounds.
+Probing time = 0.00 sec. (2.04 ticks)
+Clique table members: 1262.
+MIP emphasis: balance optimality and feasibility.
+MIP search method: dynamic search.
+Parallel mode: opportunistic, using up to 5 threads.
+Worker initialized
+Initialize Worker
+Worker initialized
+Initialize Worker
+Worker initialized
+Root relaxation solution time = 0.02 sec. (10.53 ticks)
+
+        Nodes                                         Cuts/
+   Node  Left     Objective  IInf  Best Integer    Best Bound    ItCnt     Gap
+
+*     0+    0                          155.0000       26.0000            83.23%
+      0     0      108.3636   483      155.0000      108.3636        7   30.09%
+Initialize Worker
+Initialize Worker
+Worker initialized
+Worker initialized
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 2
+Total time spend to solve LP subproblems: 78
+Total time spend to solve IP subproblems: 23
+Found a new better solution: 154
+Cost RobinX:              (0,154)
+Initialize Worker
+Initialize Worker
+Worker initialized
+Worker initialized
+*     0+    0                          154.0000      108.3636            29.63%
+      0     0      117.2573   483      154.0000     Cuts: 194      301   23.86%
+      0     0      119.8223   483      154.0000     Cuts: 146      711   22.19%
+      0     0      122.2222   483      154.0000      Cuts: 91      891   20.63%
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 3
+Total time spend to solve LP subproblems: 117
+Total time spend to solve IP subproblems: 34
+Found a new better solution: 145
+Cost RobinX:              (0,145)
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 4
+Total time spend to solve LP subproblems: 223
+Total time spend to solve IP subproblems: 45
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 5
+Total time spend to solve LP subproblems: 223
+Total time spend to solve IP subproblems: 56
+      0     0      123.1952   483      154.0000     Cuts: 100     1056   20.00%
+      0     0      123.6552   483      154.0000      Cuts: 99     1165   19.70%
+      0     0      124.8885   483      154.0000      Cuts: 89     1358   18.90%
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 6
+Total time spend to solve LP subproblems: 354
+Total time spend to solve IP subproblems: 67
+*     0+    0                          152.0000      124.8885            17.84%
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 7
+Total time spend to solve LP subproblems: 354
+Total time spend to solve IP subproblems: 78
+      0     0  -1.00000e+75     0      152.0000      124.8885     1358   17.84%
+Found a new better solution: 143
+Cost RobinX:              (0,143)
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 8
+Total time spend to solve LP subproblems: 354
+Total time spend to solve IP subproblems: 99
+      0     0      125.9963   483      152.0000     Cuts: 126     1546   17.11%
+*     0+    0                          143.0000      125.9963            11.89%
+      0     0      127.2608   483      143.0000     Cuts: 122     1817   11.01%
+      0     0      127.5590   483      143.0000      Cuts: 81     1973   10.80%
+      0     0      127.8290   483      143.0000      Cuts: 86     2072   10.61%
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 9
+Total time spend to solve LP subproblems: 446
+Total time spend to solve IP subproblems: 110
+Found a new better solution: 142
+Cost RobinX:              (0,142)
+Total number of Benders feasibility cuts added: 1
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 9
+Total time spend to solve LP subproblems: 474
+Total time spend to solve IP subproblems: 110
+      0     0      128.1966   483      143.0000      Cuts: 32     2084   10.35%
+      0     0      128.4061   483      143.0000      Cuts: 76     2147   10.21%
+      0     0      128.5160   483      143.0000      Cuts: 78     2217   10.13%
+*     0+    0                          142.0000      128.5160             9.50%
+      0     0      128.7393   483      142.0000      Cuts: 63     2359    9.34%
+Total number of Benders feasibility cuts added: 1
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 10
+Total time spend to solve LP subproblems: 474
+Total time spend to solve IP subproblems: 246
+      0     0      128.8350   483      142.0000      Cuts: 60     2416    9.27%
+      0     0      128.9654   483      142.0000      Cuts: 56     2486    9.18%
+      0     0      129.0574   483      142.0000      Cuts: 48     2570    9.11%
+      0     0      129.1059   483      142.0000      Cuts: 41     2635    9.08%
+Total number of Benders feasibility cuts added: 1
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 11
+Total time spend to solve LP subproblems: 535
+Total time spend to solve IP subproblems: 257
+Found a new better solution: 141
+Cost RobinX:              (0,141)
+Total number of Benders feasibility cuts added: 1
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 12
+Total time spend to solve LP subproblems: 535
+Total time spend to solve IP subproblems: 269
+Found a new better solution: 140
+Cost RobinX:              (0,140)
+      0     0      129.1759   483      142.0000      Cuts: 29     2708    9.03%
+      0     0      129.2229   483      142.0000      Cuts: 20     2785    9.00%
+*     0+    0                          140.0000      129.2229             7.70%
+      0     0      129.2412   483      140.0000      Cuts: 42     2844    7.68%
+      0     0      129.2501   483      140.0000      Cuts: 28     2881    7.68%
+Total number of Benders feasibility cuts added: 1
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 13
+Total time spend to solve LP subproblems: 554
+Total time spend to solve IP subproblems: 281
+      0     0      129.2852   483      140.0000      Cuts: 29     2938    7.65%
+Total number of Benders feasibility cuts added: 1
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 14
+Total time spend to solve LP subproblems: 573
+Total time spend to solve IP subproblems: 292
+Found a new better solution: 139
+Cost RobinX:              (0,139)
+      0     0      129.2959   483      140.0000      Cuts: 25     2980    7.65%
+Total number of Benders feasibility cuts added: 1
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 15
+Total time spend to solve LP subproblems: 592
+Total time spend to solve IP subproblems: 303
+      0     0      129.3014   483      140.0000      Cuts: 23     3062    7.64%
+Total number of Benders feasibility cuts added: 2
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 15
+Total time spend to solve LP subproblems: 668
+Total time spend to solve IP subproblems: 303
+Total number of Benders feasibility cuts added: 3
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 15
+Total time spend to solve LP subproblems: 722
+Total time spend to solve IP subproblems: 303
+*     0+    0                          139.0000      129.3014             6.98%
+Initialize Worker
+Initialize WorkerInitialize Worker
+Initialize Worker
+
+Worker initialized
+Worker initialized
+Worker initialized
+Worker initialized
+      0     2      129.3030   332      139.0000      129.3014     3062    6.98%
+Elapsed time = 1.18 sec. (811.53 ticks, tree = 0.02 MB, solutions = 7)
+Total number of Benders feasibility cuts added: 4
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 15
+Total time spend to solve LP subproblems: 772
+Total time spend to solve IP subproblems: 303
+Total number of Benders feasibility cuts added: 4
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 16
+Total time spend to solve LP subproblems: 783
+Total time spend to solve IP subproblems: 315
+Found a new better solution: 138
+Cost RobinX:              (0,138)
+Total number of Benders feasibility cuts added: 5
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 16
+Total time spend to solve LP subproblems: 893
+Total time spend to solve IP subproblems: 315
+Total number of Benders feasibility cuts added: 6
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 16
+Total time spend to solve LP subproblems: 1048
+Total time spend to solve IP subproblems: 315
+Total number of Benders feasibility cuts added: 7
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 16
+Total time spend to solve LP subproblems: 1214
+Total time spend to solve IP subproblems: 315
+Total number of Benders feasibility cuts added: 8
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 16
+Total time spend to solve LP subproblems: 1324
+Total time spend to solve IP subproblems: 315
+Total number of Benders feasibility cuts added: 9
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 16
+Total time spend to solve LP subproblems: 1394
+Total time spend to solve IP subproblems: 315
+Total number of Benders feasibility cuts added: 10
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 16
+Total time spend to solve LP subproblems: 1504
+Total time spend to solve IP subproblems: 315
+Total number of Benders feasibility cuts added: 11
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 16
+Total time spend to solve LP subproblems: 1658
+Total time spend to solve IP subproblems: 315
+Total number of Benders feasibility cuts added: 12
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 16
+Total time spend to solve LP subproblems: 1770
+Total time spend to solve IP subproblems: 315
+Total number of Benders feasibility cuts added: 13
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 16
+Total time spend to solve LP subproblems: 1954
+Total time spend to solve IP subproblems: 315
+Total number of Benders feasibility cuts added: 13
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 17
+Total time spend to solve LP subproblems: 2008
+Total time spend to solve IP subproblems: 417
+Found a new better solution: 135
+Cost RobinX:              (0,135)
+Total number of Benders feasibility cuts added: 14
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 17
+Total time spend to solve LP subproblems: 2115
+Total time spend to solve IP subproblems: 417
+Total number of Benders feasibility cuts added: 14
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 18
+Total time spend to solve LP subproblems: 2115
+Total time spend to solve IP subproblems: 524
+Total number of Benders feasibility cuts added: 14
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 19
+Total time spend to solve LP subproblems: 2115
+Total time spend to solve IP subproblems: 611
+Total number of Benders feasibility cuts added: 15
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 19
+Total time spend to solve LP subproblems: 2166
+Total time spend to solve IP subproblems: 611
+Total number of Benders feasibility cuts added: 15
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 20
+Total time spend to solve LP subproblems: 2263
+Total time spend to solve IP subproblems: 684
+*   273+  217                          137.0000      129.3762             5.56%
+Total number of Benders feasibility cuts added: 15
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 21
+Total time spend to solve LP subproblems: 2263
+Total time spend to solve IP subproblems: 775
+*   281   287      integral     0      136.0000      129.3762    24265    4.87%
+    290   147      134.2092   119      136.0000      129.3762    13411    4.87%
+Total number of Benders feasibility cuts added: 16
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 21
+Total time spend to solve LP subproblems: 2349
+Total time spend to solve IP subproblems: 775
+Total number of Benders feasibility cuts added: 17
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 21
+Total time spend to solve LP subproblems: 2437
+Total time spend to solve IP subproblems: 775
+Total number of Benders feasibility cuts added: 18
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 21
+Total time spend to solve LP subproblems: 2499
+Total time spend to solve IP subproblems: 775
+Total number of Benders feasibility cuts added: 19
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 21
+Total time spend to solve LP subproblems: 2626
+Total time spend to solve IP subproblems: 775
+Total number of Benders feasibility cuts added: 20
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 21
+Total time spend to solve LP subproblems: 2743
+Total time spend to solve IP subproblems: 775
+Total number of Benders feasibility cuts added: 21
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 21
+Total time spend to solve LP subproblems: 2835
+Total time spend to solve IP subproblems: 775
+Total number of Benders feasibility cuts added: 21
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 22
+Total time spend to solve LP subproblems: 2835
+Total time spend to solve IP subproblems: 858
+Found a new better solution: 132
+Cost RobinX:              (0,132)
+*   457   307      integral     0      132.0000      129.4159    34438    1.96%
+Total number of Benders feasibility cuts added: 22
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 22
+Total time spend to solve LP subproblems: 2935
+Total time spend to solve IP subproblems: 858
+Total number of Benders feasibility cuts added: 23
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 22
+Total time spend to solve LP subproblems: 3044
+Total time spend to solve IP subproblems: 858
+Total number of Benders feasibility cuts added: 24
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 22
+Total time spend to solve LP subproblems: 3146
+Total time spend to solve IP subproblems: 858
+Total number of Benders feasibility cuts added: 24
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 3146
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 25
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 3247
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 26
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 3326
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 27
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 3393
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 28
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 3471
+Total time spend to solve IP subproblems: 956
+    776   179      130.6638   219      132.0000      129.4656    43551    1.92%
+Total number of Benders feasibility cuts added: 29
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 3576
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 30
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 3657
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 31
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 3742
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 32
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 3816
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 33
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 3898
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 34
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 3999
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 35
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 4083
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 36
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 4152
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 37
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 4280
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 38
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 4369
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 39
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 4488
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 40
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 4579
+Total time spend to solve IP subproblems: 956
+   1046   203      130.8974   199      132.0000      129.4656    54789    1.92%
+Total number of Benders feasibility cuts added: 41
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 4667
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 42
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 4754
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 43
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 4824
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 44
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 4922
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 45
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 5022
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 46
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 5114
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 47
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 5191
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 48
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 5271
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 49
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 5346
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 50
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 5399
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 51
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 5498
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 52
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 5583
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 53
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 5695
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 54
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 5794
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 55
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 5905
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 56
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 5974
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 57
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 6062
+Total time spend to solve IP subproblems: 956
+   1304   263        cutoff            132.0000      129.6504    63251    1.78%
+Total number of Benders feasibility cuts added: 58
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 6116
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 59
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 6216
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 60
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 6312
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 61
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 6393
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 62
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 6501
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 63
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 6595
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 64
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 6655
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 65
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 6753
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 66
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 6848
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 67
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 6944
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 68
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 7038
+Total time spend to solve IP subproblems: 956
+   1565   417      130.1333   169      132.0000      129.6504    82024    1.78%
+Total number of Benders feasibility cuts added: 69
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 7127
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 70
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 7208
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 71
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 7273
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 72
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 7366
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 73
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 7422
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 74
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 7513
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 75
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 7572
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 76
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 7666
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 77
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 7719
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 78
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 7820
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 79
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 7918
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 80
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 8030
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 81
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 8116
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 82
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 8236
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 83
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 8334
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 84
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 8440
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 85
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 8560
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 86
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 8661
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 87
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 8756
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 88
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 8866
+Total time spend to solve IP subproblems: 956
+   1863   590        cutoff            132.0000      129.7778    99897    1.68%
+Total number of Benders feasibility cuts added: 89
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 8957
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 90
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 9044
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 91
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 9180
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 92
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 9293
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 93
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 9390
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 94
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 9506
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 95
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 9582
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 96
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 9689
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 97
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 9779
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 98
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 9888
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 99
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 9971
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 100
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 10078
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 101
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 10187
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 102
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 10289
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 103
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 10388
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 104
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 10490
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 105
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 10584
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 106
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 10673
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 107
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 10788
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 108
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 10897
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 109
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 10985
+Total time spend to solve IP subproblems: 956
+   2158   714      130.2932    84      132.0000      129.8288   112223    1.64%
+Total number of Benders feasibility cuts added: 110
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 11073
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 111
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 11163
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 112
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 11257
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 113
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 11352
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 114
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 11433
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 115
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 11546
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 116
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 11641
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 117
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 11731
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 118
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 11838
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 119
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 11949
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 120
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 12044
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 121
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 12136
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 122
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 12220
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 123
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 12321
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 124
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 12417
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 125
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 12519
+Total time spend to solve IP subproblems: 956
+   2426   951      130.7043   115      132.0000      129.9053   136376    1.59%
+Total number of Benders feasibility cuts added: 126
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 12630
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 127
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 12729
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 128
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 12823
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 129
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 12929
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 130
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 13029
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 131
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 13126
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 132
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 13226
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 133
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 13343
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 134
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 13431
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 135
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 13540
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 136
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 13631
+Total time spend to solve IP subproblems: 956
+
+Performing restart 1
+
+Repeating presolve.
+Tried aggregator 1 time.
+Reduced MIP has 1082 rows, 483 columns, and 3583 nonzeros.
+Reduced MIP has 482 binaries, 1 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.00 sec. (1.86 ticks)
+Tried aggregator 1 time.
+Reduced MIP has 1082 rows, 483 columns, and 3583 nonzeros.
+Reduced MIP has 482 binaries, 1 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.00 sec. (1.85 ticks)
+Represolve time = 0.02 sec. (12.13 ticks)
+Initialize Worker
+Initialize Worker
+Worker initialized
+Worker initialized
+Initialize Worker
+Initialize Worker
+Worker initialized
+Worker initialized
+   3094     0      130.0000   216      132.0000      Cuts: 37   190972    1.52%
+   3094     0      130.0000   216      132.0000      Cuts: 29   191005    1.52%
+   3094     0      130.0000   216      132.0000 UserPurge1: 3   191322    1.52%
+   3094     0      130.0000   216      132.0000      Cuts: 50   191547    1.52%
+   3094     0      130.0000   216      132.0000     Cuts: 107   191662    1.52%
+   3094     0      130.0000   216      132.0000      Cuts: 56   191756    1.52%
+   3094     0      130.0000   216      132.0000      Cuts: 66   191804    1.52%
+   3094     0      130.0000   216      132.0000      Cuts: 45   191877    1.52%
+   3094     0      130.0000   216      132.0000      Cuts: 42   191910    1.52%
+Total number of Benders feasibility cuts added: 137
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 13719
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 138
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 13776
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 139
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 13885
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 140
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 13975
+Total time spend to solve IP subproblems: 956
+Initialize Worker
+Initialize Worker
+Initialize Worker
+Initialize Worker
+Worker initialized
+Worker initialized
+Worker initialized
+Worker initialized
+   3094     2      130.0000   153      132.0000      130.0000   191910    1.52%
+Elapsed time = 7.77 sec. (5145.54 ticks, tree = 0.02 MB, solutions = 15)
+Total number of Benders feasibility cuts added: 141
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 14042
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 142
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 14116
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 143
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 14180
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 144
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 14240
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 145
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 14315
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 146
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 14397
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 147
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 14472
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 148
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 14553
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 149
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 14636
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 150
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 14775
+Total time spend to solve IP subproblems: 956
+   3305   107    infeasible            132.0000      130.0000   215774    1.52%
+Total number of Benders feasibility cuts added: 151
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 14888
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 152
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 14954
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 153
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 15052
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 154
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 15160
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 155
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 15232
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 156
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 15297
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 157
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 15380
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 158
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 15472
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 159
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 15557
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 160
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 15653
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 161
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 15744
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 162
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 15825
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 163
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 15926
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 164
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 16004
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 165
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 16105
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 166
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 16212
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 167
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 16283
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 168
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 16378
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 169
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 16475
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 170
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 16534
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 171
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 16616
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 172
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 16698
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 173
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 16741
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 174
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 16829
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 175
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 16928
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 176
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 16979
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 177
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 17040
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 178
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 17138
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 179
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 17230
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 180
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 17311
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 181
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 17404
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 182
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 17497
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 183
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 17544
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 184
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 17616
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 185
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 17698
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 186
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 17793
+Total time spend to solve IP subproblems: 956
+   3899   376      131.0000    44      132.0000      130.0000   265490    1.52%
+Total number of Benders feasibility cuts added: 187
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 17879
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 188
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 17992
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 189
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 18097
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 190
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 18193
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 191
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 18251
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 192
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 18351
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 193
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 18449
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 194
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 18548
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 195
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 18649
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 196
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 18743
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 197
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 18836
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 198
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 18951
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 199
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 19059
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 200
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 19146
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 201
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 19211
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 202
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 19273
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 203
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 19377
+Total time spend to solve IP subproblems: 956
+   4432   811      131.0000   127      132.0000      130.0000   348308    1.52%
+Total number of Benders feasibility cuts added: 204
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 19490
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 205
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 19623
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 206
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 19733
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 207
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 19856
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 208
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 19945
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 209
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 20005
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 210
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 20103
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 211
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 20214
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 212
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 20310
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 213
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 20431
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 214
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 20538
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 215
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 20637
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 216
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 20687
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 217
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 20780
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 218
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 20871
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 219
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 20960
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 220
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 21019
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 221
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 21101
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 222
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 21190
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 223
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 21306
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 224
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 21404
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 225
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 21466
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 226
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 21512
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 227
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 21614
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 228
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 21705
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 229
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 21806
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 230
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 21903
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 231
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 21992
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 232
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 22094
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 233
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 22193
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 234
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 22291
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 235
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 22378
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 236
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 22492
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 237
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 22584
+Total time spend to solve IP subproblems: 956
+   4952   982      131.0000    60      132.0000      130.0000   384824    1.52%
+Total number of Benders feasibility cuts added: 238
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 22657
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 239
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 22749
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 240
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 22843
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 241
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 22905
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 242
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 23017
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 243
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 23128
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 244
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 23232
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 245
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 23341
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 246
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 23428
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 247
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 23478
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 248
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 23532
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 249
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 23635
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 250
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 23748
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 251
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 23846
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 252
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 23934
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 253
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 24043
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 254
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 24128
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 255
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 24214
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 256
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 24286
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 257
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 24340
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 258
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 24465
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 259
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 24565
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 260
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 24605
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 261
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 24718
+Total time spend to solve IP subproblems: 956
+   5581  1391        cutoff            132.0000      130.0120   447367    1.51%
+Total number of Benders feasibility cuts added: 262
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 24823
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 263
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 24912
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 264
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 24992
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 265
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 25109
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 266
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 25212
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 267
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 25295
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 268
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 25410
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 269
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 25510
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 270
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 25615
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 271
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 25673
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 272
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 25765
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 273
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 25861
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 274
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 25972
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 275
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 26073
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 276
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 26180
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 277
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 26291
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 278
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 26336
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 279
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 26434
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 280
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 26499
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 281
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 26604
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 282
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 26713
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 283
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 26818
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 284
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 26907
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 285
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 27015
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 286
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 27118
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 287
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 27229
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 288
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 27328
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 289
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 27456
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 290
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 27563
+Total time spend to solve IP subproblems: 956
+   6316  1537        cutoff            132.0000      130.7143   478413    0.97%
+Total number of Benders feasibility cuts added: 291
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 27672
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 292
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 27793
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 293
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 27843
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 294
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 27965
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 295
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 28070
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 296
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 28170
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 297
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 28262
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 298
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 28355
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 299
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 28411
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 300
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 28480
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 301
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 28572
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 302
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 28634
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 303
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 28693
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 304
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 28789
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 305
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 28883
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 306
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 28988
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 307
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 29080
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 308
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 29162
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 309
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 29252
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 310
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 29336
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 311
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 29435
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 312
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 29529
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 313
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 29624
+Total time spend to solve IP subproblems: 956
+   6837  1508    infeasible            132.0000      130.8839   533604    0.85%
+Total number of Benders feasibility cuts added: 314
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 29724
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 315
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 29825
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 316
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 29933
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 317
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 30050
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 318
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 30166
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 319
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 30276
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 320
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 30380
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 321
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 30468
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 322
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 30586
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 323
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 30691
+Total time spend to solve IP subproblems: 956
+   7271  1477      131.0000    73      132.0000      131.0000   583342    0.76%
+Total number of Benders feasibility cuts added: 324
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 30797
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 325
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 30853
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 326
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 30948
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 327
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 31048
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 328
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 31154
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 329
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 31251
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 330
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 31384
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 331
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 31481
+Total time spend to solve IP subproblems: 956
+   7620  1447      131.0000   134      132.0000      131.0000   634547    0.76%
+Total number of Benders feasibility cuts added: 332
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 31570
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 333
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 31682
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 334
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 31800
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 335
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 31905
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 336
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 32014
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 337
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 32128
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 338
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 32224
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 339
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 32330
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 340
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 32456
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 341
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 32573
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 342
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 32633
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 343
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 32740
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 344
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 32811
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 345
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 32911
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 346
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 33001
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 347
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 33097
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 348
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 33190
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 349
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 33289
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 350
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 33404
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 351
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 33502
+Total time spend to solve IP subproblems: 956
+   8052  1432    infeasible            132.0000      131.0000   681742    0.76%
+Elapsed time = 18.87 sec. (14702.12 ticks, tree = 0.85 MB, solutions = 15)
+Total number of Benders feasibility cuts added: 352
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 33637
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 353
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 33730
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 354
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 33826
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 355
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 33947
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 356
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 34035
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 357
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 34125
+Total time spend to solve IP subproblems: 956
+   8494  1522      131.0000    69      132.0000      131.0000   746016    0.76%
+Total number of Benders feasibility cuts added: 358
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 34235
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 359
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 34329
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 360
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 34436
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 361
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 34529
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 362
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 34620
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 363
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 34709
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 364
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 34814
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 365
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 34907
+Total time spend to solve IP subproblems: 956
+   8901  1557    infeasible            132.0000      131.0000   786799    0.76%
+Total number of Benders feasibility cuts added: 366
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 34966
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 367
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 35060
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 368
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 35167
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 369
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 35263
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 370
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 35330
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 371
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 35429
+Total time spend to solve IP subproblems: 956
+   9320  1564      131.0000   160      132.0000      131.0000   854202    0.76%
+Total number of Benders feasibility cuts added: 372
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 35527
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 373
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 35636
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 374
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 35752
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 375
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 35862
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 376
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 35966
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 377
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 36017
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 378
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 36105
+Total time spend to solve IP subproblems: 956
+   9704  1550      131.0000    77      132.0000      131.0000   862241    0.76%
+Total number of Benders feasibility cuts added: 379
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 36217
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 380
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 36262
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 381
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 36352
+Total time spend to solve IP subproblems: 956
+  10162  1530    infeasible            132.0000      131.0000   950086    0.76%
+Total number of Benders feasibility cuts added: 382
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 36465
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 383
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 36512
+Total time spend to solve IP subproblems: 956
+  10538  1538      131.0000    95      132.0000      131.0000   959061    0.76%
+Total number of Benders feasibility cuts added: 384
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 36606
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 385
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 36706
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 386
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 36788
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 387
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 36873
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 388
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 36963
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 389
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 37051
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 390
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 37145
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 391
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 37235
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 392
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 37355
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 393
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 37442
+Total time spend to solve IP subproblems: 956
+  10857  1481    infeasible            132.0000      131.0000  1030621    0.76%
+Total number of Benders feasibility cuts added: 394
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 37527
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 395
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 37637
+Total time spend to solve IP subproblems: 956
+  11260  1458    infeasible            132.0000      131.0000  1098517    0.76%
+Total number of Benders feasibility cuts added: 396
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 37756
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 397
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 37866
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 398
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 37977
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 399
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 38073
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 400
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 38170
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 401
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 38278
+Total time spend to solve IP subproblems: 956
+  11671  1472    infeasible            132.0000      131.0000  1174883    0.76%
+Total number of Benders feasibility cuts added: 402
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 38382
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 403
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 38473
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 404
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 38571
+Total time spend to solve IP subproblems: 956
+  11980  1495    infeasible            132.0000      131.0000  1192708    0.76%
+Elapsed time = 26.54 sec. (24258.75 ticks, tree = 0.99 MB, solutions = 15)
+Total number of Benders feasibility cuts added: 405
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 38665
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 406
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 38728
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 407
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 38825
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 408
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 38941
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 409
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 39038
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 410
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 39141
+Total time spend to solve IP subproblems: 956
+  12340  1484      131.0000    44      132.0000      131.0000  1250829    0.76%
+Total number of Benders feasibility cuts added: 411
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 39264
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 412
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 39317
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 413
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 39408
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 414
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 39501
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 415
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 39573
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 416
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 39701
+Total time spend to solve IP subproblems: 956
+  12721  1506      131.0000    55      132.0000      131.0000  1309060    0.76%
+Total number of Benders feasibility cuts added: 417
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 39799
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 418
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 39905
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 419
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 40010
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 420
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 40112
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 421
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 40208
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 422
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 40301
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 423
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 40407
+Total time spend to solve IP subproblems: 956
+  13066  1391      131.0000    95      132.0000      131.0000  1375343    0.76%
+Total number of Benders feasibility cuts added: 424
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 40528
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 425
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 40640
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 426
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 40724
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 427
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 40824
+Total time spend to solve IP subproblems: 956
+  13444  1436    infeasible            132.0000      131.0000  1466244    0.76%
+Total number of Benders feasibility cuts added: 428
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 40919
+Total time spend to solve IP subproblems: 956
+  13781  1427    infeasible            132.0000      131.0000  1433372    0.76%
+Total number of Benders feasibility cuts added: 429
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 41028
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 430
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 41134
+Total time spend to solve IP subproblems: 956
+  14076  1425    infeasible            132.0000      131.0000  1488970    0.76%
+Total number of Benders feasibility cuts added: 431
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 41234
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 432
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 41327
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 433
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 41423
+Total time spend to solve IP subproblems: 956
+  14438  1413      131.0000    77      132.0000      131.0000  1516664    0.76%
+  14749  1319    infeasible            132.0000      131.0000  1663898    0.76%
+Total number of Benders feasibility cuts added: 434
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 41521
+Total time spend to solve IP subproblems: 956
+  15082  1306    infeasible            132.0000      131.0000  1675161    0.76%
+  15464  1299    infeasible            132.0000      131.0000  1677098    0.76%
+Elapsed time = 33.85 sec. (33815.28 ticks, tree = 0.99 MB, solutions = 15)
+Total number of Benders feasibility cuts added: 435
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 41621
+Total time spend to solve IP subproblems: 956
+  15785  1306    infeasible            132.0000      131.0000  1735760    0.76%
+Total number of Benders feasibility cuts added: 436
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 41729
+Total time spend to solve IP subproblems: 956
+  16079  1262      131.0000    84      132.0000      131.0000  1784265    0.76%
+Total number of Benders feasibility cuts added: 437
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 41774
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 438
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 41859
+Total time spend to solve IP subproblems: 956
+  16320  1228    infeasible            132.0000      131.0000  1822745    0.76%
+Total number of Benders feasibility cuts added: 439
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 41909
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 440
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 41973
+Total time spend to solve IP subproblems: 956
+  16692  1212      131.0000    77      132.0000      131.0000  1889084    0.76%
+Total number of Benders feasibility cuts added: 441
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 42078
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 442
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 42193
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 443
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 42285
+Total time spend to solve IP subproblems: 956
+  17037  1145    infeasible            132.0000      131.0000  1953493    0.76%
+Total number of Benders feasibility cuts added: 444
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 42392
+Total time spend to solve IP subproblems: 956
+  17490  1176    infeasible            132.0000      131.0000  1946430    0.76%
+  17845  1159    infeasible            132.0000      131.0000  1973502    0.76%
+  18148  1064    infeasible            132.0000      131.0000  2128966    0.76%
+Total number of Benders feasibility cuts added: 445
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 42492
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 446
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 42544
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 447
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 42641
+Total time spend to solve IP subproblems: 956
+  18443  1026    infeasible            132.0000      131.0000  2149089    0.76%
+  18738  1055      131.0000    96      132.0000      131.0000  2186678    0.76%
+Elapsed time = 40.73 sec. (43380.39 ticks, tree = 0.75 MB, solutions = 15)
+Total number of Benders feasibility cuts added: 448
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 42782
+Total time spend to solve IP subproblems: 956
+  19095  1042      131.0000    55      132.0000      131.0000  2220302    0.76%
+Total number of Benders feasibility cuts added: 449
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 42836
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 450
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 42898
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 451
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 42992
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 452
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 43106
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 453
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 43202
+Total time spend to solve IP subproblems: 956
+  19428   996    infeasible            132.0000      131.0000  2246549    0.76%
+Total number of Benders feasibility cuts added: 454
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 43296
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 455
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 43396
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 456
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 43445
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 457
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 43539
+Total time spend to solve IP subproblems: 956
+  19809   957      131.0000   106      132.0000      131.0000  2394624    0.76%
+Total number of Benders feasibility cuts added: 458
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 43638
+Total time spend to solve IP subproblems: 956
+  20157   940    infeasible            132.0000      131.0000  2363148    0.76%
+  20502   929    infeasible            132.0000      131.0000  2405253    0.76%
+Total number of Benders feasibility cuts added: 459
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 43763
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 460
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 43857
+Total time spend to solve IP subproblems: 956
+  20784   870    infeasible            132.0000      131.0000  2447306    0.76%
+  21097   847    infeasible            132.0000      131.0000  2517740    0.76%
+  21403   833      131.0000   123      132.0000      131.0000  2558525    0.76%
+Total number of Benders feasibility cuts added: 461
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 43917
+Total time spend to solve IP subproblems: 956
+  21673   814      131.0000    53      132.0000      131.0000  2614162    0.76%
+Total number of Benders feasibility cuts added: 462
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 44017
+Total time spend to solve IP subproblems: 956
+  21996   733    infeasible            132.0000      131.0000  2704021    0.76%
+Elapsed time = 47.45 sec. (52946.13 ticks, tree = 0.52 MB, solutions = 15)
+Total number of Benders feasibility cuts added: 463
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 44120
+Total time spend to solve IP subproblems: 956
+  22291   736    infeasible            132.0000      131.0000  2670523    0.76%
+  22588   672      131.0000   114      132.0000      131.0000  2782878    0.76%
+Total number of Benders feasibility cuts added: 464
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 44215
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 465
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 44312
+Total time spend to solve IP subproblems: 956
+  22887   645    infeasible            132.0000      131.0000  2767914    0.76%
+  23129   615      131.0000    56      132.0000      131.0000  2838156    0.76%
+Total number of Benders feasibility cuts added: 466
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 44419
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 467
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 44525
+Total time spend to solve IP subproblems: 956
+  23388   635      131.0000    72      132.0000      131.0000  2848640    0.76%
+Total number of Benders feasibility cuts added: 468
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 44612
+Total time spend to solve IP subproblems: 956
+  23694   555    infeasible            132.0000      131.0000  2969073    0.76%
+  23961   519      131.0000   175      132.0000      131.0000  3003889    0.76%
+Total number of Benders feasibility cuts added: 469
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 44733
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 470
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 44834
+Total time spend to solve IP subproblems: 956
+  24287   519    infeasible            132.0000      131.0000  3050738    0.76%
+  24562   464    infeasible            132.0000      131.0000  3111497    0.76%
+  24800   456      131.0000   145      132.0000      131.0000  3121745    0.76%
+Elapsed time = 54.12 sec. (62510.15 ticks, tree = 0.36 MB, solutions = 15)
+Total number of Benders feasibility cuts added: 471
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 44928
+Total time spend to solve IP subproblems: 956
+  25100   457      131.0000   163      132.0000      131.0000  3118113    0.76%
+Total number of Benders feasibility cuts added: 472
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 45016
+Total time spend to solve IP subproblems: 956
+  25404   356    infeasible            132.0000      131.0000  3194714    0.76%
+Total number of Benders feasibility cuts added: 473
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 45122
+Total time spend to solve IP subproblems: 956
+  25666   404    infeasible            132.0000      131.0000  3192302    0.76%
+  25910   350    infeasible            132.0000      131.0000  3257628    0.76%
+Total number of Benders feasibility cuts added: 474
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 45222
+Total time spend to solve IP subproblems: 956
+Total number of Benders feasibility cuts added: 475
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 45326
+Total time spend to solve IP subproblems: 956
+  26132   248    infeasible            132.0000      131.0000  3402142    0.76%
+Total number of Benders feasibility cuts added: 476
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 45430
+Total time spend to solve IP subproblems: 956
+  26421   228    infeasible            132.0000      131.0000  3438325    0.76%
+Total number of Benders feasibility cuts added: 477
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 45530
+Total time spend to solve IP subproblems: 956
+  26640   202    infeasible            132.0000      131.0000  3486535    0.76%
+  26859   241    infeasible            132.0000      131.0000  3483345    0.76%
+  27126   220      131.0000   297      132.0000      131.0000  3452974    0.76%
+  27362    79      131.0000    69      132.0000      131.0000  3622246    0.76%
+Elapsed time = 60.99 sec. (72062.78 ticks, tree = 0.13 MB, solutions = 15)
+  27525    92    infeasible            132.0000      131.0000  3632471    0.76%
+  27643    45    infeasible            132.0000      131.0000  3665705    0.76%
+
+GUB cover cuts applied:  5
+Clique cuts applied:  54
+Cover cuts applied:  5
+Implied bound cuts applied:  2
+Zero-half cuts applied:  243
+Lift and project cuts applied:  49
+Gomory fractional cuts applied:  3
+User cuts applied:  396
+
+Root node processing (before b&c):
+  Real time             =    1.14 sec. (808.53 ticks)
+Parallel b&c, 5 threads:
+  Real time             =   60.70 sec. (74065.56 ticks)
+  Sync time (average)   =    0.60 sec.
+  Wait time (average)   =    0.00 sec.
+                          ------------
+Total (root+branch&cut) =   61.84 sec. (74874.09 ticks)
+Solution status master: Optimal
+Objective value master: 132
+Objective bound master: 132
+Optimal HAP set:
+1	1	1	0	0	0	1	1	1	0	0	0	
+1	1	1	0	0	0	1	1	1	0	0	0	
+1	1	0	0	0	1	1	1	0	0	0	1	
+1	1	1	0	0	0	1	1	1	0	0	0	
+1	1	0	0	0	1	0	0	0	1	1	1	
+1	1	1	0	0	0	1	1	1	0	0	0	
+1	0	0	0	1	1	1	0	0	0	1	1	
+1	0	0	0	1	1	1	0	0	0	1	1	
+0	0	1	1	1	0	0	0	1	1	1	0	
+0	0	1	1	1	0	1	1	1	0	0	0	
+0	0	0	1	1	1	0	0	0	1	1	1	
+0	0	0	1	1	1	0	0	0	1	1	1	
+0	1	1	1	0	0	0	1	1	1	0	0	
+0	1	1	1	0	0	0	1	1	1	0	0	
+0	0	0	1	1	1	0	0	0	1	1	1	
+0	0	0	1	1	1	0	0	0	1	1	1	
+Clearing
+Total elapsed time 61 seconds
+
+Total number of Benders feasibility cuts added: 477
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 23
+Total time spend to solve LP subproblems: 45530.000000
+Total time spend to solve IP subproblems: 956.000000
+Two-phase approach done
+---------------------------------------
+--- Two-step approach done ---
+---------------------------------------
