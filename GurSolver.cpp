@@ -137,6 +137,170 @@ bool IsTeamInTrip(const int i, vector<int>& trip){
 	return false;
 }
 
+void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
+	model.set(GRB_DoubleParam_MemLimit, 32.0);
+
+	cout << "build trip model with HAP of teams fixed" << endl;
+
+	const int N = getNrTeams();
+	const int R = getNrRounds();
+
+	TripModelTTP_fixed_HAP = true;
+
+	int t,i,j,r,s,p;
+	int NrConsecutiveA, r_;
+
+	vector<pair<vector<vector<int>>,vector<int>>>Trips_CostTrips(N);
+	Trips = vector<vector<vector<int>>>(N);
+	CostTrips = vector<vector<int>>(N);
+	vector<vector<vector<vector<int>>>>TripsRound = vector<vector<vector<vector<int>>>>(N, vector<vector<vector<int>>>(R));
+	// TripsRound[t][s] = Trips that team t can start in round s
+	// TripsRound[t][s][i] = The i'th trip that t can start in round s
+	// CostTripsRound[t][s][i] = The cost of the i'th trip that t can start in round s
+	vector<vector<vector<int>>>CostTripsRound = vector<vector<vector<int>>>(N, vector<vector<int>>(R));
+	vector<vector<int>>StartRound(N, vector<int>(R, false)); 
+	for (t = 0; t < N; ++t){
+		vector<int>TeamsList(N-1);
+		for (i = 0, j = -1; i < N; ++i){
+			if (i != t){
+				TeamsList[++j] = i;
+			}
+		}
+		Trips_CostTrips[t] = GenerateTrips_TripModel(t, TeamsList, 3);
+		Trips[t] = Trips_CostTrips[t].first;
+		CostTrips[t] = Trips_CostTrips[t].second;
+		for (r = 0; r < R; ++r){
+			if (!((r == 0 && sol.Orientation[t][r] == HA::A) || (r > 0 && sol.Orientation[t][r-1] == HA::H && sol.Orientation[t][r] == HA::A))) {
+				continue;
+			}
+			StartRound[t][r] = true;
+			NrConsecutiveA = 1;
+			r_ = r;
+			while (sol.Orientation[t][++r_] == HA::A){
+				++NrConsecutiveA;
+			}
+			for (p = 0; p < Trips[t].size(); ++p){
+				bool A_found = false;
+				if (Trips[t][p].size() == NrConsecutiveA){
+					for (i = 0; i < Trips[t][p].size(); ++i){
+						if (sol.Orientation[t][r+i] != HA::H){
+							A_found = true;
+							break;
+						}
+					}
+				}
+				if (!A_found){
+					TripsRound[t][r].push_back(Trips[t][p]);
+					CostTripsRound[t][r].push_back(CostTrips[t][p]);
+				}
+			}
+		}
+	}
+
+	int v = 0;
+
+	z_trp = vector<vector<vector<GRBVar>>>(N, vector<vector<GRBVar>>(R));
+	for (t = 0; t < N; ++t){
+		for (r = 0; r < R; ++r){
+			if (!StartRound[t][r]){
+				continue;
+			}
+			z_trp[t][r] = vector<GRBVar>(TripsRound[t][r].size());
+			for (p = 0; r < TripsRound[t][r].size(); ++p){
+				z_trp[t][r][p] = model.addVar(0, 1, 0.0, GRB_BINARY/*, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]"*/);
+				v++;
+			}
+		}
+	}
+
+	cout << "Nr variables = " << v << endl;
+
+	for (t = 0; t < N; ++t){
+		for (r = 0; r < R; ++r){
+			if (!StartRound[t][r]){
+				continue;
+			}
+			GRBLinExpr sum_p = 0;
+			for (p = 0; p < TripsRound[t][r].size(); ++p){
+				sum_p += z_trp[t][r][p];
+			}
+			model.addConstr(sum_p == 1);
+		}
+	}
+
+	for (r = 0; r < R; ++r){
+		for (t = 0; t < N; ++t){
+			if (sol.Orientation[t][r] == HA::A){
+				continue;
+			}
+			GRBLinExpr sum_usp = 0;
+			for (int u = 0; u < N; ++u){
+				if (sol.Orientation[u][r] == HA::H){
+					continue;
+				}
+				for (int s = 0; s < R; ++s){
+					if (StartRound[t][s]){
+						// all trips have same size for a certain team in a certain round
+						if (s <= r && r <= s+TripsRound[t][s][0].size()){
+							for (p = 0; p < TripsRound[t][s].size(); ++p){
+								sum_usp += z_trp[t][s][p];
+							}
+						}
+					}
+				}
+			}
+			model.addConstr(sum_usp == 1);
+		}
+	}
+
+	for (t = 0; t < N; ++t){
+		for (i = t+1; i < N; ++i){
+			GRBLinExpr sum_ti = 0;
+			for (r = 0; r < R; ++r){
+				if (StartRound[t][r]){
+					for (p = 0; p < TripsRound[t][r].size(); ++p){
+						for (auto& j: TripsRound[t][r][p]){
+							if (j == i){
+								sum_ti += z_trp[t][r][p];
+								break;
+							}
+						}
+					}
+				}
+				if (StartRound[i][r]){
+					for (p = 0; p < TripsRound[i][r].size(); ++p){
+						for (auto& j: TripsRound[i][r][p]){
+							if (j == t){
+								sum_ti += z_trp[i][r][p];
+								break;
+							}
+						}
+					}
+				}
+			}
+			model.addConstr(sum_ti <= 1);
+		}
+	}
+
+	GRBLinExpr obj = 0;
+	for (t = 0; t < N; ++t){
+		for (r = 0; r < R; ++r){
+			if (!StartRound[t][r]){
+				continue;
+			}
+			for (p = 0; r < TripsRound[t][r].size(); ++p){
+				obj += CostTripsRound[t][r][p]*z_trp[t][r][p];
+			}
+		}
+	}
+
+	model.setObjective(Objective, GRB_MINIMIZE);
+
+	cout << "done" << endl;
+	cin.get();
+
+}
+
 void GurSolver::iTTP_TripModel(){
 
 	model.set(GRB_DoubleParam_MemLimit, 32.0);
@@ -1440,6 +1604,50 @@ void GurSolver::SaveSolution(Solution& sol){
 							assert(count_hap_j == 1);
 						}
 						// cout << "-------" << endl;
+					}
+				}
+			}
+		}
+		for (int t = 0; t < getNrTeams(); ++t){
+			if (dist_team[t] != sol.ComputeTravelCostTeamTTP(t)){
+				cout << "dist_team " << t << " = " << dist_team[t] << " but real travel dist = " << sol.ComputeTravelCostTeamTTP(t) << endl;
+			}
+		}
+	}
+	else if (TripModelTTP_fixed_HAP){
+		vector<int>dist_team(getNrTeams(),0);
+
+		for (int t = 0; t < getNrTeams(); ++t){
+			// cout << "Trips team " << t << ": " << endl;
+			for (int r = 0; r < getNrRounds(); ++r){
+				if (StartRound[t][r]){
+					continue;
+				}
+				for (int p = 0; p < TripsRound[t][r].size(); ++p){
+					if (z_trp[t][r][p].get(GRB_DoubleAttr_X) > 0.9){
+						cout << "-------" << endl;
+						cout << "start trip in " << r << endl;
+						cout << "cost = " << CostTripsRound[t][r][p] << endl;
+						dist_team[t] += CostTripsRound[t][r][p];
+						// cout << "length = " << Trips[t][r].size() << endl;
+						cout << t << " -> ";
+						for (int l = 0; l < TripsRound[t][r][p].size(); ++l){
+							int j = TripsRound[t][r][p][l];
+							cout << j << " -> ";
+							if (l == TripsRound[t][r][p].size()-1){
+								cout << t;
+							}
+							sol.TeamColorOpp[t][r+l] = j;
+							sol.TeamColorOpp[j][r+l] = t;
+							sol.MatchColor[t][j] = r+l;
+							if (SRR){
+								sol.MatchColor[j][t] = r+l;
+							}
+							sol.Orientation[j][r+l] = HA::H;
+							sol.Orientation[t][r+l] = HA::A;
+						}
+						cout << endl;
+						cout << "-------" << endl;
 					}
 				}
 			}

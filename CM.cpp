@@ -491,6 +491,7 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     else{
         // cout << "Solve Vizing" << endl;
         VizingConstruction(sol, data.seed);
+
         /*
         // Start from best found solution by Miao's algorithm (with 100% of the HAPs)
         path += "TTP" + string(PATHSEP) + "Results" + string(PATHSEP);
@@ -511,6 +512,7 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     string path_seed = path + "_s" + to_string(BestSeed) + ".txt";
     ReadSolution(path_seed, sol);
     */
+
     sol.validate();
 
     cout << "Found initial solution" << endl;
@@ -630,13 +632,27 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
 }
 
 void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data){
+    cout << "gur" << endl;
     GurSolver gur(in);
+    cout << "gur success" << endl;
     Solution sol(in);
     bool HA = true;
     bool relax_x = false;
     const bool min_travel = true, min_cap = false;
     if (in.getSetting() == Setting::TTP){
-        gur.iTTP();
+        bool TripModelHAP_Fixed = true;
+        if (TripModelHAP_Fixed){
+            // First, read solution constant iTTP
+            string path = "Code_Benders" + string(PATHSEP) + "BestNoLex" + string(PATHSEP) + "I_CON" + to_string(sol.getNrTeams()) + "_" + to_string(sol.getNrRounds()) + ".xml";
+            ReadSolution(path, sol);
+            sol.validate();
+            cin.get();
+
+            gur.iTTP_TripModel_HAP_fixed(sol);
+        }
+        else{
+            gur.iTTP();
+        }
         // gur.iTTP_TripModel();
         // gur.Fix_x(sol);
     }
@@ -680,8 +696,6 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     gur.setTimeLimit(data.TimeLimit);
     gur.SetTimeStamps(TimeStamps);
     gur.solve();
-    gur.PrintVariables();
-    cin.get();
     cout << "save solution" << endl;
     gur.SaveSolution(sol);
     cout << "test whether solution is feasible" << endl;
