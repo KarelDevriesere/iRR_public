@@ -682,9 +682,10 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
         if (TripModelHAP_Fixed){
             // First, read solution constant iTTP
             string path = "Code_Benders" + string(PATHSEP) + "BestNoLex" + string(PATHSEP) + "I_CON" + to_string(sol.getNrTeams()) + "_" + to_string(sol.getNrRounds()) + ".xml";
-            ReadSolution(path, sol);
-            sol.validate();
-            cin.get();
+            ReadSolutionXML(path, sol);
+            cout << "Total travel time = " << sol.ComputeTravelCostTTP() << endl;
+            cout << "Cost violations = " << sol.ComputeTotalCostTTPViolations() << endl;
+            cout << "Total cost = " << sol.ComputeTotalCost() << endl;
 
             gur.iTTP_TripModel_HAP_fixed(sol);
         }

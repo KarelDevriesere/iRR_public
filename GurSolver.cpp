@@ -153,12 +153,12 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 	vector<pair<vector<vector<int>>,vector<int>>>Trips_CostTrips(N);
 	Trips = vector<vector<vector<int>>>(N);
 	CostTrips = vector<vector<int>>(N);
-	vector<vector<vector<vector<int>>>>TripsRound = vector<vector<vector<vector<int>>>>(N, vector<vector<vector<int>>>(R));
+	TripsRound = vector<vector<vector<vector<int>>>>(N, vector<vector<vector<int>>>(R));
 	// TripsRound[t][s] = Trips that team t can start in round s
 	// TripsRound[t][s][i] = The i'th trip that t can start in round s
 	// CostTripsRound[t][s][i] = The cost of the i'th trip that t can start in round s
-	vector<vector<vector<int>>>CostTripsRound = vector<vector<vector<int>>>(N, vector<vector<int>>(R));
-	vector<vector<int>>StartRound(N, vector<int>(R, false)); 
+	CostTripsRound = vector<vector<vector<int>>>(N, vector<vector<int>>(R));
+	StartRound = vector<vector<int>>(N, vector<int>(R, false)); 
 	for (t = 0; t < N; ++t){
 		vector<int>TeamsList(N-1);
 		for (i = 0, j = -1; i < N; ++i){
@@ -176,14 +176,14 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 			StartRound[t][r] = true;
 			NrConsecutiveA = 1;
 			r_ = r;
-			while (sol.Orientation[t][++r_] == HA::A){
+			while (r_+1 < R && sol.Orientation[t][++r_] == HA::A){
 				++NrConsecutiveA;
 			}
 			for (p = 0; p < Trips[t].size(); ++p){
 				bool A_found = false;
 				if (Trips[t][p].size() == NrConsecutiveA){
 					for (i = 0; i < Trips[t][p].size(); ++i){
-						if (sol.Orientation[t][r+i] != HA::H){
+						if (sol.Orientation[Trips[t][p][i]][r+i] != HA::H){
 							A_found = true;
 							break;
 						}
@@ -197,6 +197,8 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 		}
 	}
 
+	cout << "Trips done" << endl;
+
 	int v = 0;
 
 	z_trp = vector<vector<vector<GRBVar>>>(N, vector<vector<GRBVar>>(R));
@@ -205,8 +207,9 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 			if (!StartRound[t][r]){
 				continue;
 			}
+			cout << t << " starts a trip in " << r << " and can start " << TripsRound[t][r].size() << " trips " << endl;
 			z_trp[t][r] = vector<GRBVar>(TripsRound[t][r].size());
-			for (p = 0; r < TripsRound[t][r].size(); ++p){
+			for (p = 0; p < TripsRound[t][r].size(); ++p){
 				z_trp[t][r][p] = model.addVar(0, 1, 0.0, GRB_BINARY/*, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]"*/);
 				v++;
 			}
@@ -228,6 +231,8 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 		}
 	}
 
+	cout << "c1 done" << endl;
+
 	for (r = 0; r < R; ++r){
 		for (t = 0; t < N; ++t){
 			if (sol.Orientation[t][r] == HA::A){
@@ -239,11 +244,17 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 					continue;
 				}
 				for (int s = 0; s < R; ++s){
-					if (StartRound[t][s]){
+					if (StartRound[u][s]){
 						// all trips have same size for a certain team in a certain round
-						if (s <= r && r <= s+TripsRound[t][s][0].size()){
-							for (p = 0; p < TripsRound[t][s].size(); ++p){
-								sum_usp += z_trp[t][s][p];
+						if (s <= r && r < s+TripsRound[u][s][0].size()){
+							// assert(s+TripsRound[u][s][0].size()-1 < R);
+							for (p = 0; p < TripsRound[u][s].size(); ++p){
+								for (int j = 0; j < TripsRound[u][s][p].size(); ++j){
+									if (TripsRound[u][s][p][j] == t && s+j == r){
+										sum_usp += z_trp[u][s][p];
+										break;
+									}
+								}
 							}
 						}
 					}
@@ -252,6 +263,8 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 			model.addConstr(sum_usp == 1);
 		}
 	}
+
+	cout << "c2 done" << endl;
 
 	for (t = 0; t < N; ++t){
 		for (i = t+1; i < N; ++i){
@@ -282,22 +295,23 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 		}
 	}
 
+	cout << "c3 done" << endl;
+
 	GRBLinExpr obj = 0;
 	for (t = 0; t < N; ++t){
 		for (r = 0; r < R; ++r){
 			if (!StartRound[t][r]){
 				continue;
 			}
-			for (p = 0; r < TripsRound[t][r].size(); ++p){
+			for (p = 0; p < TripsRound[t][r].size(); ++p){
 				obj += CostTripsRound[t][r][p]*z_trp[t][r][p];
 			}
 		}
 	}
 
-	model.setObjective(Objective, GRB_MINIMIZE);
+	model.setObjective(obj, GRB_MINIMIZE);
 
 	cout << "done" << endl;
-	cin.get();
 
 }
 
@@ -1618,11 +1632,12 @@ void GurSolver::SaveSolution(Solution& sol){
 		vector<int>dist_team(getNrTeams(),0);
 
 		for (int t = 0; t < getNrTeams(); ++t){
-			// cout << "Trips team " << t << ": " << endl;
+			cout << "Trips team " << t << ": " << endl;
 			for (int r = 0; r < getNrRounds(); ++r){
-				if (StartRound[t][r]){
+				if (!StartRound[t][r]){
 					continue;
 				}
+				cout << t << " starts in " << r << endl;
 				for (int p = 0; p < TripsRound[t][r].size(); ++p){
 					if (z_trp[t][r][p].get(GRB_DoubleAttr_X) > 0.9){
 						cout << "-------" << endl;
