@@ -1,0 +1,7 @@
+The following modules were not unloaded:
+  (Use "module --force purge" to unload all):
+
+  1) env/vsc/doduo     3) env/software/doduo
+  2) env/slurm/doduo   4) cluster/doduo
+/var/spool/slurm/slurmd/job59810596/slurm_script: line 43: 3258114 Killed                  ./decompose ../Instances/TTP/CON40_20.xml 252000 3
+slurmstepd: error: Detected 1 oom_kill event in StepId=59810596.batch. Some of the step tasks have been OOM Killed.
