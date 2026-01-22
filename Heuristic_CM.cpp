@@ -265,7 +265,13 @@ void Heuristic_CM::SelectMatching(Solution& sol, const bool bipartite){
 
     // cout << "do MoveMWPM" << endl;
     // I only do 1 alternating cycle in case of M+PR, because path can use edge of other cycle, did not want to deal with this
-    vector<vector<pair<int,int>>>AlternatingCycles = iPRS(sol, r, l, bipartite, includeHAPs, CM, gen, MinCostM);
+    vector<vector<pair<int,int>>>AlternatingCycles;
+    if (sol.getSetting() == Setting::TTP && sol.getNrRounds() <= sol.getNrTeams() && !bipartite && !MinCostM){ // TEST Alternating cycle!!
+        AlternatingCycles = GreedyAlternatingCycle(sol, r, gen);
+    }
+    else{
+        AlternatingCycles = iPRS(sol, r, l, bipartite, includeHAPs, CM, gen, MinCostM);
+    }
     
     int delta;
     for (auto& AlternatingCycle: AlternatingCycles){
