@@ -32,13 +32,19 @@ int main(int argc, const char* argv[]){
         double iPTS_weight = 0.0;
 
         int ComputeBounds = 0;
+	bool teamSwapper = 0;
+	std::string startSol = "";
 
         // Parse command-line arguments
         for (int i = 1; i < argc; ++i) {
             std::string arg = argv[i];
             if (arg == "--Seed"){
                 data.seed = std::stoi(argv[++i]);
-            }
+            } else if (arg == "--TeamSwapper"){
+		    teamSwapper = std::stoi(argv[++i]);
+            } else if (arg == "--StartSol"){
+		    startSol = argv[++i];
+	    }
             else if (arg == "--Heuristic"){
                 data.Heuristic = std::stoi(argv[++i]);
                 if (data.Heuristic != 0 && data.Heuristic != 1){
@@ -76,6 +82,7 @@ int main(int argc, const char* argv[]){
                 //    return 1;
                 //}
                 data.TTP = true;
+		std::cout << "Set data TTP true" << std::endl;
                 data.Miao = false;
                 data.Hockey = false;
             }
@@ -240,6 +247,44 @@ int main(int argc, const char* argv[]){
                 return 1; // Exit with an error code
             }
         }
+
+	if(teamSwapper == 1){
+		if(startSol == ""){
+			std::cout << "Team swapper requires to set --startSol" << std::endl;
+		}
+		std::cout << "Perform the team swapper for " << data.Instance << " and solution " << startSol << std::endl;
+
+		// Read the instance
+		std::cout << "Read the instance" << std::endl;
+		Input in;
+		if (data.TTP && !in.read_TTP(data.Instance)){
+		    cout << "could not read TTP path " << data.Instance << endl;
+		    return -1;
+		}
+		else if ((data.Miao || data.Hockey) && !in.read_Miao_Hockey(data.Instance, data.Miao)){
+		    cout << "could not read Miao or Hockey path " << data.Instance << endl;
+		    return -1;
+		}
+
+		// Read the starting solution
+		Solution sol(in);
+    		sol.SetOneCostAllViolations(data.ConstrViolationCost);
+		ReadSolutionXML(startSol, sol);
+    		sol.validate();
+
+		// Perform the team swapper
+		//sol.SetOneCostAllViolations(data.ConstrViolationCost);
+		int obj = sol.ComputeTotalCost();
+		std::mt19937 gen(data.seed);
+		int HL = 1;
+		if (data.HistoryLengthProvided){
+		    HL = data.HistoryLength;
+		}	
+    		Heuristic_CM algo(data.Moves, data.InputWeights, gen, HL, obj);
+		algo.TeamSwapper(in, sol);
+
+		return 0;
+	}
 
         if (ComputeBounds == 1){
             cout << "Compute TTP bound for " << data.Instance << "_" << data.NrRounds << " with TimeLimit " << data.TimeLimit << endl;

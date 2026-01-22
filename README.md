@@ -64,3 +64,11 @@ For now, tune the following parameters:
 -Weight M,
 -MinCost (1 or 0)
 
+To run the hockey instances with heuristic:
+./irr --InstanceHockey [1..6] --Heuristic 1
+
+To the Miao instances:
+./irr --InstanceMiao [1..6] --Heuristic 1 --MaxNrBreaks [3 100] --CapacitySetting [0,1,2]
+
+To use the team swapper:
+./irr --TeamSwapper 1 --InstanceTTP ./Instances/TTP/CIRC40_30.xml --StartSol ./Code_Benders/Best/I_CON40_30_NoLex_810.000000.xml

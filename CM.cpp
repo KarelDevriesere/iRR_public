@@ -114,6 +114,44 @@ const unordered_map<string,int>InstanceBound = {
     {"I_NFL32_24",297068}
 };
 
+void ReadSolutionXML(const string path, Solution& sol){
+
+    cout << "read the file " << path << endl;
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        std::cerr << "Error opening the file " << path;
+        return;
+    }
+
+
+    std::string line;
+
+    auto getAttr = [](const std::string& s, const std::string& key) -> int {
+        size_t pos = s.find(key + "=\"");
+        if (pos == std::string::npos) return -1;
+        pos += key.size() + 2;
+        size_t end = s.find('"', pos);
+        return std::stoi(s.substr(pos, end - pos));
+    };
+
+    while (std::getline(file, line)) {
+
+        if (line.find("ScheduledMatch") == std::string::npos)
+            continue;
+
+        int h = getAttr(line, "home");
+        int a = getAttr(line, "away");
+        int r = getAttr(line, "slot");
+
+        SetValueCircleMethod(h,a,r,sol);
+        sol.Orientation[h][r] = HA::H;
+        sol.Orientation[a][r] = HA::A;
+    }
+
+    file.close();
+    sol.validate();
+}
+
 void ReadSolution(const string path, Solution& sol){
 
     cout << "read the file " << path << endl;
@@ -147,7 +185,7 @@ void ReadSolution(const string path, Solution& sol){
             SetValueCircleMethod(h,a,r,sol);
             sol.Orientation[h][r] = HA::H;
             sol.Orientation[a][r] = HA::A;
-            // cout << h << " vs " << a << " in " << r << endl;
+             cout << h << " vs " << a << " in " << r << endl;
         }
     }
     file.close();

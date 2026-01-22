@@ -39,4 +39,6 @@ class Heuristic_CM: public LAHC<Move>
 
         // Custom functions already declared in LACH:
         void solve(Input& in, Solution& sol) override;
+
+	void TeamSwapper(Input& in, Solution& sol);
 };
