@@ -490,8 +490,8 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     }
     else{
         // cout << "Solve Vizing" << endl;
-        // VizingConstruction(sol, data.seed);
-
+        VizingConstruction(sol, data.seed);
+        /*
         // Start from best found solution by Miao's algorithm (with 100% of the HAPs)
         path += "TTP" + string(PATHSEP) + "Results" + string(PATHSEP);
         if (sol.getNrRounds() <= sol.getNrTeams()/2){
@@ -501,13 +501,16 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
             path += "MiaoAlgo";
         }
         path += string(PATHSEP) + sol.getInstanceName();
+        */
     }
 
+    /*
     cout << "path = " << path << endl;
     int BestSeed = ReturnBestSeed(path);
 
     string path_seed = path + "_s" + to_string(BestSeed) + ".txt";
     ReadSolution(path_seed, sol);
+    */
     sol.validate();
 
     cout << "Found initial solution" << endl;

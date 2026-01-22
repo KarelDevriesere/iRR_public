@@ -1792,3 +1792,86 @@ void GoBackToOldCycle(Solution& sol, vector<pair<int,int>>& AlternatingCycle, co
     }
 }
 
+
+vector<vector<pair<int,int>>>GreedyAlternatingCycle(Solution& sol, const int r, std::mt19937& gen){
+    const int N = sol.getNrTeams();
+    assert(sol.getNrRounds() <= N/2);
+    const int C = sol.getNrRounds();
+    std::uniform_int_distribution<>dist_team = std::uniform_int_distribution<>(0,N-1);
+    const int start = dist_team(gen);
+    int i = start;
+    vector<int>VisitedTeams(1,i);
+    vector<bool>TeamSeen(N, false);
+    TeamSeen[i] = true;
+    int j;
+    bool STOP = false;
+    vector<pair<int,int>>AlternatingCycle;
+    AlternatingCycle.reserve(sol.getNrTeams());
+    int it = 0;
+    while(!STOP){
+        j = sol.TeamColorOpp[i][r];
+        TeamSeen[j] = true;
+        if (sol.Orientation[i][r] == HA::H){
+            assert(sol.Orientation[j][r] == HA::A);
+            AlternatingCycle.emplace_back(i,j);
+            // cout << i << " <- " << j << endl;
+        }
+        else{
+            assert(sol.Orientation[i][r] == HA::A);
+            assert(sol.Orientation[j][r] == HA::H);
+            AlternatingCycle.emplace_back(j,i);
+            // cout << i << " -> " << j << endl;
+        }
+
+        // check if we can connect to a team that we already visited
+        int k = -1;
+        for (k = 0; k < VisitedTeams.size(); ++k){
+            if (sol.isEligible(j,VisitedTeams[k]) && sol.MatchColor[j][VisitedTeams[k]] == -1){
+                STOP = true;
+                k = VisitedTeams[k];
+                break;
+            }
+        }
+        if (!STOP){
+            // find team k such that {j,k} is fictive
+            for (k = 0; k < sol.getNrTeams(); ++k){
+                if (sol.isEligible(j,k) && sol.MatchColor[j][k] == -1 && !TeamSeen[k]){
+                    break;
+                }
+            }
+            if (k == -1){
+                cout << "no fictive match found, abort" << endl;
+                cin.get();
+            }
+        }
+        AlternatingCycle.emplace_back(j,k);
+        // cout << j << " -f- " << k << endl;
+        VisitedTeams.push_back(k);
+        TeamSeen[k] = true;
+
+        i = k;
+        
+        if (++it > N){
+            cout << "abort, infinite loop in GreedyAlternatingCycle in Operators.cpp" << endl;
+        }
+    }
+    // Cut the cycle
+
+    int end = AlternatingCycle.back().second;
+    if (end != start){
+        it = 0;
+        while(AlternatingCycle[it].second != end){
+            ++it;
+        }
+        AlternatingCycle.erase(AlternatingCycle.begin(), AlternatingCycle.begin()+it+1);
+    }
+
+    // Move every element 1 position (last becomes the first)
+    pair<int,int>E = AlternatingCycle[0];
+    for (int k = 0; k < AlternatingCycle.size()-1; ++k){
+        AlternatingCycle[k] = AlternatingCycle[k+1];
+    }
+    AlternatingCycle.back() = E;
+    return {AlternatingCycle};
+}
+
