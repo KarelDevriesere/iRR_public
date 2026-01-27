@@ -688,6 +688,13 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
             cout << "Total cost = " << sol.ComputeTotalCost() << endl;
 
             gur.iTTP_TripModel_HAP_fixed(sol);
+            /*
+            gur.iTTP();
+            for (int t = 0; t < sol.getNrTeams(); ++t){
+                gur.HapFixed[t] = true;
+            }
+            gur.FixHAP(sol);
+            */
         }
         else{
             gur.iTTP();

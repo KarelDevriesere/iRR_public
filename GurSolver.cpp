@@ -140,7 +140,11 @@ bool IsTeamInTrip(const int i, vector<int>& trip){
 void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 	model.set(GRB_DoubleParam_MemLimit, 32.0);
 
+#ifdef PRINT
+#if PRINT == 1
 	cout << "build trip model with HAP of teams fixed" << endl;
+#endif 
+#endif
 
 	const int N = getNrTeams();
 	const int R = getNrRounds();
@@ -160,13 +164,27 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 	CostTripsRound = vector<vector<vector<int>>>(N, vector<vector<int>>(R));
 	StartRound = vector<vector<int>>(N, vector<int>(R, false)); 
 	for (t = 0; t < N; ++t){
+#ifdef PRINT
+#if PRINT == 1
+		cout << "HAP of " << t << " : ";
+		for (r = 0; r < R; ++r){
+			if (sol.Orientation[t][r] == HA::H){
+				cout << "H";
+			}
+			else{
+				cout << "A";
+			}
+		}
+		cout << endl;
+#endif
+#endif
 		vector<int>TeamsList(N-1);
 		for (i = 0, j = -1; i < N; ++i){
 			if (i != t){
 				TeamsList[++j] = i;
 			}
 		}
-		Trips_CostTrips[t] = GenerateTrips_TripModel(t, TeamsList, 3);
+		Trips_CostTrips[t] = GenerateTrips_TripModel(t, TeamsList, 1); // Minimum trip length is 1!
 		Trips[t] = Trips_CostTrips[t].first;
 		CostTrips[t] = Trips_CostTrips[t].second;
 		for (r = 0; r < R; ++r){
@@ -176,28 +194,28 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 			StartRound[t][r] = true;
 			NrConsecutiveA = 1;
 			r_ = r;
-			while (r_+1 < R && sol.Orientation[t][++r_] == HA::A){
+			while (++r_ < R && sol.Orientation[t][r_] == HA::A){
 				++NrConsecutiveA;
 			}
 			for (p = 0; p < Trips[t].size(); ++p){
-				bool A_found = false;
 				if (Trips[t][p].size() == NrConsecutiveA){
+					bool A_found = false;
 					for (i = 0; i < Trips[t][p].size(); ++i){
 						if (sol.Orientation[Trips[t][p][i]][r+i] != HA::H){
 							A_found = true;
 							break;
 						}
 					}
-				}
-				if (!A_found){
-					TripsRound[t][r].push_back(Trips[t][p]);
-					CostTripsRound[t][r].push_back(CostTrips[t][p]);
+					if (!A_found){
+						TripsRound[t][r].push_back(Trips[t][p]);
+						CostTripsRound[t][r].push_back(CostTrips[t][p]);
+					}
 				}
 			}
 		}
 	}
 
-	cout << "Trips done" << endl;
+	// cout << "Trips done" << endl;
 
 	int v = 0;
 
@@ -207,16 +225,28 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 			if (!StartRound[t][r]){
 				continue;
 			}
+#ifdef PRINT
+#if PRINT == 1
 			cout << t << " starts a trip in " << r << " and can start " << TripsRound[t][r].size() << " trips " << endl;
+#endif 
+#endif
 			z_trp[t][r] = vector<GRBVar>(TripsRound[t][r].size());
 			for (p = 0; p < TripsRound[t][r].size(); ++p){
+				/*
+				cout << "Trip " << p << " in " << r << endl;
+				cout << t << " -> ";
+				for (auto& j: TripsRound[t][r][p]){
+					cout << j << " -> ";
+				}
+				cout << t << endl;
+				*/
 				z_trp[t][r][p] = model.addVar(0, 1, 0.0, GRB_BINARY/*, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]"*/);
 				v++;
 			}
 		}
 	}
 
-	cout << "Nr variables = " << v << endl;
+	// cout << "Nr variables = " << v << endl;
 
 	for (t = 0; t < N; ++t){
 		for (r = 0; r < R; ++r){
@@ -231,7 +261,7 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 		}
 	}
 
-	cout << "c1 done" << endl;
+	// cout << "c1 done" << endl;
 
 	for (r = 0; r < R; ++r){
 		for (t = 0; t < N; ++t){
@@ -264,7 +294,7 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 		}
 	}
 
-	cout << "c2 done" << endl;
+	// cout << "c2 done" << endl;
 
 	for (t = 0; t < N; ++t){
 		for (i = t+1; i < N; ++i){
@@ -295,7 +325,7 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 		}
 	}
 
-	cout << "c3 done" << endl;
+	// cout << "c3 done" << endl;
 
 	GRBLinExpr obj = 0;
 	for (t = 0; t < N; ++t){
@@ -311,7 +341,7 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 
 	model.setObjective(obj, GRB_MINIMIZE);
 
-	cout << "done" << endl;
+	// cout << "done" << endl;
 
 }
 
