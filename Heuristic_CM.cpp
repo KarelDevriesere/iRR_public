@@ -75,6 +75,33 @@ void Heuristic_CM::SelectTS(Solution& sol){ // use TS for perturbation move!!
     return;
 }
 
+
+void Heuristic_CM::TeamSwapper(Input& in, Solution& sol){
+    bool stop = false;
+    int nrTeams  = sol.getNrTeams();
+    int cost_before = sol.ComputeTotalCost();
+    std::cout << "Initial cost: " << cost_before << std::endl;
+    int cost_after;
+    while(!stop){
+	    stop = true;
+	    for (int i = 0; i < nrTeams; ++i) {
+	    	for (int j = 0; j < nrTeams; ++j) {
+    			TS(sol, i, j);
+			cost_after = sol.ComputeTotalCost();
+			if(cost_after > cost_before){
+				// Reset
+        			TS(sol, i, j); 
+			} else if(cost_after < cost_before) {
+				std::cout << "New cost: " << cost_after << std::endl;	
+				cost_before = cost_after;
+				stop = false;
+			}
+		}	
+	    }
+    }
+    std::cout << "Final cost: " << sol.ComputeTotalCost() << std::endl;
+}
+
 vector<vector<HA>> MakeOrientationsCopy_CM(const Solution& sol){ // also in ILS: maybe define in Algo?
     vector<vector<HA>>OrientationsCopy(sol.getNrTeams(), vector<HA>(sol.getNrRounds(), HA::BYE));
     for (int t = 0; t < sol.getNrTeams(); ++t){
@@ -238,7 +265,13 @@ void Heuristic_CM::SelectMatching(Solution& sol, const bool bipartite){
 
     // cout << "do MoveMWPM" << endl;
     // I only do 1 alternating cycle in case of M+PR, because path can use edge of other cycle, did not want to deal with this
-    vector<vector<pair<int,int>>>AlternatingCycles = iPRS(sol, r, l, bipartite, includeHAPs, CM, gen, MinCostM);
+    vector<vector<pair<int,int>>>AlternatingCycles;
+    if (/*sol.getSetting() == Setting::TTP && sol.getNrRounds() <= sol.getNrTeams() && !bipartite && !MinCostM*/ false){ // TEST Alternating cycle!!
+        AlternatingCycles = GreedyAlternatingCycle(sol, r, gen);
+    }
+    else{
+        AlternatingCycles = iPRS(sol, r, l, bipartite, includeHAPs, CM, gen, MinCostM);
+    }
     
     int delta;
     for (auto& AlternatingCycle: AlternatingCycles){

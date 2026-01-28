@@ -187,4 +187,6 @@ tuple<vector<Edge>,vector<Edge>,vector<int>> MakeLineGraph(Solution& sol, const 
 
 bool Check2RRConstraintsPTS(Solution& sol, Lantarn& lantarn);
 
+vector<vector<pair<int,int>>>GreedyAlternatingCycle(Solution& sol, const int r, std::mt19937& gen);
+
 #endif

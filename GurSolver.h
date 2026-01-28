@@ -30,11 +30,15 @@ class GurSolver : public Input
         vector<vector<GRBVar>>y;
         vector<vector<vector<GRBVar>>>z; // for TTP
         vector<vector<GRBVar>>z_tr; // TTP trip model
+        vector<vector<vector<GRBVar>>>z_trp; // TTP trip model
         vector<vector<vector<GRBVar>>>z_trs; // TTP trip model
         vector<vector<HA>>Orientation;
 
         vector<vector<vector<int>>>Trips;
 	    vector<vector<int>>CostTrips;
+        vector<vector<vector<vector<int>>>>TripsRound;
+	    vector<vector<vector<int>>>CostTripsRound;
+        vector<vector<int>>StartRound;
 	    int NrTrips;
 
         vector<vector<vector<GRBConstr>>>Constraints_fixed_variables; // per team per round
@@ -145,6 +149,8 @@ class GurSolver : public Input
         }
 
         bool TripModelTTP = false;
+        bool TripModelTTP_fixed_HAP = false;
+        void iTTP_TripModel_HAP_fixed(Solution& sol);
         void iTTP_TripModel();
 
         // For TTP bounds:

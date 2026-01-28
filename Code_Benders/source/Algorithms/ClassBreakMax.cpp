@@ -5,7 +5,7 @@
 // Some parameters of the algorithm
 const int maxDepthFrac = -1;
 const int numThreadsMaster = 5;
-// const int TreeMemory = 16000;
+const int TreeMemory = 16000;
 const int WorkMem = 16000;
 bool complementary = true;
 bool lexicographic = true;
@@ -255,12 +255,12 @@ void BreakMax::createMasterILP(){
 
 	// Instead of limiting the size of the tree, we opt to write the tree out to node files
 	// from as soon as it exceeds the work memory
-	//masterCplex.setParam(IloCplex::Param::MIP::Limits::TreeMemory, TreeMemory);
+	masterCplex.setParam(IloCplex::Param::MIP::Limits::TreeMemory, TreeMemory);
 	// Best to use a single node to run Cplex on, as SCRATCH NODE is 
 	// only accessible by the workers from the same node
 	// TODO TODO TODO
-	//masterCplex.setParam(IloCplex::Param::WorkDir, std::getenv("VSC_SCRATCH_NODE"));
-	//masterCplex.setParam(IloCplex::Param::MIP::Strategy::File, 3);
+	masterCplex.setParam(IloCplex::Param::WorkDir, std::getenv("VSC_SCRATCH_NODE"));
+	masterCplex.setParam(IloCplex::Param::MIP::Strategy::File, 3);
 
 	// Avoid cplex from running out of time
 	masterCplex.setParam(IloCplex::Param::TimeLimit, timeLimit);
@@ -473,12 +473,12 @@ void BreakMax::createMasterILPPatterns(const int firstNewPattern, const int last
 
 	// Instead of limiting the size of the tree, we opt to write the tree out to node files
 	// from as soon as it exceeds the work memory
-	//masterCplex.setParam(IloCplex::Param::MIP::Limits::TreeMemory, TreeMemory);
+	masterCplex.setParam(IloCplex::Param::MIP::Limits::TreeMemory, TreeMemory);
 	// Best to use a single node to run Cplex on, as SCRATCH NODE is 
 	// only accessible by the workers from the same node
 	// TODO TODO TODO
-	//masterCplex.setParam(IloCplex::Param::WorkDir, std::getenv("VSC_SCRATCH_NODE"));
-	//masterCplex.setParam(IloCplex::Param::MIP::Strategy::File, 3);
+	masterCplex.setParam(IloCplex::Param::WorkDir, std::getenv("VSC_SCRATCH_NODE"));
+	masterCplex.setParam(IloCplex::Param::MIP::Strategy::File, 3);
 
 	// Avoid cplex from running out of time
 	masterCplex.setParam(IloCplex::Param::TimeLimit, timeLimit);

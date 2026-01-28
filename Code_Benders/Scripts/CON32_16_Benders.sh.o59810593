@@ -1,0 +1,381 @@
+Starting benders decomposition
+BREAK MAXIMIZATION
+Instance file provided: ../Instances/TTP/CON32_16.xml
+--------------------------------------------------------------------
+--- Starting 2-phase HAP approach for break minimization and maximization ---
+timeLimit: 252000
+solName: ../Instances/TTP/CON32_16_SolBenders.xml
+Complementary: 0
+Lexicographic: 0
+Pattern vars: 0
+--------------------------------------------------------------------
+WARNING IGNORING BA1
+WARNING IGNORING CA1
+WARNING IGNORING CA1
+*******************
+** Create Master **
+*******************
+
+Symmetry breaking structure:
+H 0 1 2 <            
+H 0 1 2 <            
+H 0 1 <             
+H 0 1 <             
+H 0 3 <             
+H 0 3 <             
+H 0 <              
+H 0 <              
+H 4 5 <             
+H 4 5 <             
+H 4 <              
+H 4 <              
+H 6 <              
+H 6 <              
+H <               
+H <               
+A 0 1 2 <            
+A 0 1 2 <            
+A 0 1 <             
+A 0 1 <             
+A 0 3 <             
+A 0 3 <             
+A 0 <              
+A 0 <              
+A 4 5 <             
+A 4 5 <             
+A 4 <              
+A 4 <              
+A 6 <              
+A 6 <              
+A <               
+A <               
+Master constructed
+Version identifier: 12.10.0.0 | 2019-11-26 | 843d4de
+CPXPARAM_Threads                                 5
+CPXPARAM_Parallel                                -1
+CPXPARAM_TimeLimit                               252000
+CPXPARAM_WorkMem                                 16000
+Initialize Worker
+Worker initialized
+Lazy constraint(s) or lazy constraint/branch callback is present.
+    Disabling dual reductions (CPX_PARAM_REDUCE) in presolve.
+    Disabling presolve reductions that prevent crushing forms.
+Tried aggregator 2 times.
+MIP Presolve eliminated 211 rows and 128 columns.
+MIP Presolve modified 11 coefficients.
+Aggregator did 67 substitutions.
+Reduced MIP has 3070 rows, 1343 columns, and 10270 nonzeros.
+Reduced MIP has 1342 binaries, 1 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.01 sec. (12.14 ticks)
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 1
+Total time spend to solve LP subproblems: 94
+Total time spend to solve IP subproblems: 51
+Found a new better solution: 503
+Cost RobinX:              (0,503)
+Found incumbent of value 503.000000 after 0.20 sec. (36.17 ticks)
+Initialize Worker
+Initialize Worker
+Initialize Worker
+Worker initialized
+Worker initialized
+Worker initialized
+Probing fixed 0 vars, tightened 1 bounds.
+Probing time = 0.06 sec. (2.31 ticks)
+Tried aggregator 1 time.
+MIP Presolve eliminated 6 rows and 3 columns.
+Reduced MIP has 3064 rows, 1340 columns, and 10255 nonzeros.
+Reduced MIP has 1339 binaries, 1 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.01 sec. (7.98 ticks)
+Initialize Worker
+Initialize Worker
+Initialize Worker
+Initialize Worker
+Worker initialized
+Worker initialized
+Worker initialized
+Initialize Worker
+Worker initialized
+Probing fixed 0 vars, tightened 1 bounds.
+Probing time = 0.07 sec. (2.48 ticks)
+Clique table members: 4370.
+MIP emphasis: balance optimality and feasibility.
+MIP search method: dynamic search.
+Parallel mode: opportunistic, using up to 5 threads.
+Worker initialized
+Initialize Worker
+Root relaxation solution time = 0.07 sec. (33.24 ticks)
+
+        Nodes                                         Cuts/
+   Node  Left     Objective  IInf  Best Integer    Best Bound    ItCnt     Gap
+
+*     0+    0                          503.0000       52.0000            89.66%
+Worker initialized
+      0     0      280.5333  1340      503.0000      280.5333       12   44.23%
+Initialize Worker
+Initialize Worker
+Worker initialized
+Worker initialized
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 2
+Total time spend to solve LP subproblems: 163
+Total time spend to solve IP subproblems: 103
+Found a new better solution: 481
+Cost RobinX:              (0,481)
+Initialize Worker
+Initialize Worker
+Worker initialized
+Worker initialized
+*     0+    0                          481.0000      280.5333            41.68%
+      0     0      296.8780  1340      481.0000     Cuts: 641      767   38.28%
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 3
+Total time spend to solve LP subproblems: 273
+Total time spend to solve IP subproblems: 147
+Found a new better solution: 471
+Cost RobinX:              (0,471)
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 4
+Total time spend to solve LP subproblems: 343
+Total time spend to solve IP subproblems: 200
+*     0+    0                          471.0000      296.8780            36.97%
+      0     0      303.9907  1340      471.0000     Cuts: 367     1756   35.46%
+      0     0      311.7999  1340      471.0000     Cuts: 342     2468   33.80%
+      0     0      317.2234  1340      471.0000     Cuts: 351     3303   32.65%
+      0     0      323.5481  1340      471.0000     Cuts: 407     4009   31.31%
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 5
+Total time spend to solve LP subproblems: 623
+Total time spend to solve IP subproblems: 247
+Found a new better solution: 463
+Cost RobinX:              (0,463)
+      0     0      330.0115  1340      471.0000     Cuts: 436     4808   29.93%
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 6
+Total time spend to solve LP subproblems: 1730
+Total time spend to solve IP subproblems: 293
+Found a new better solution: 388
+Cost RobinX:              (0,388)
+      0     0      333.5382  1340      471.0000     Cuts: 443     5460   29.19%
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 7
+Total time spend to solve LP subproblems: 1730
+Total time spend to solve IP subproblems: 340
+Found a new better solution: 377
+Cost RobinX:              (0,377)
+*     0+    0                          377.0000      333.5382            11.53%
+      0     0      337.6450  1340      377.0000     Cuts: 378     5970   10.44%
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 8
+Total time spend to solve LP subproblems: 2404
+Total time spend to solve IP subproblems: 380
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 9
+Total time spend to solve LP subproblems: 2970
+Total time spend to solve IP subproblems: 425
+Found a new better solution: 375
+Cost RobinX:              (0,375)
+*     0+    0                          375.0000      337.6450             9.96%
+      0     0      340.0034  1340      375.0000     Cuts: 368     6569    9.33%
+      0     0      342.1346  1340      375.0000     Cuts: 342     7004    8.76%
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 10
+Total time spend to solve LP subproblems: 3601
+Total time spend to solve IP subproblems: 468
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 11
+Total time spend to solve LP subproblems: 4180
+Total time spend to solve IP subproblems: 513
+      0     0      344.0496  1340      375.0000     Cuts: 310     8381    8.25%
+      0     0      345.2787  1340      375.0000     Cuts: 365     9219    7.93%
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 12
+Total time spend to solve LP subproblems: 4798
+Total time spend to solve IP subproblems: 567
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 13
+Total time spend to solve LP subproblems: 5391
+Total time spend to solve IP subproblems: 618
+Found a new better solution: 374
+Cost RobinX:              (0,374)
+      0     0      346.5964  1340      375.0000     Cuts: 302    10081    7.57%
+*     0+    0                          374.0000      346.5964             7.33%
+      0     0      347.1506  1340      374.0000     Cuts: 369    10579    7.18%
+      0     0      348.1453  1340      374.0000     Cuts: 257    11535    6.91%
+      0     0      348.3617  1340      374.0000     Cuts: 207    11811    6.86%
+      0     0      348.9055  1340      374.0000     Cuts: 221    12226    6.71%
+      0     0      349.2600  1340      374.0000     Cuts: 182    13039    6.61%
+      0     0      349.6878  1340      374.0000     Cuts: 262    13600    6.50%
+      0     0      349.9576  1340      374.0000     Cuts: 229    14049    6.43%
+      0     0      350.1267  1340      374.0000     Cuts: 272    14392    6.38%
+      0     0      350.1664  1340      374.0000     Cuts: 214    14949    6.37%
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 14
+Total time spend to solve LP subproblems: 6065
+Total time spend to solve IP subproblems: 663
+      0     0      350.3070  1340      374.0000     Cuts: 224    15435    6.34%
+      0     0      350.4808  1340      374.0000     Cuts: 208    15814    6.29%
+      0     0      350.7769  1340      374.0000     Cuts: 211    16352    6.21%
+      0     0      350.7882  1340      374.0000     Cuts: 248    16681    6.21%
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 15
+Total time spend to solve LP subproblems: 6148
+Total time spend to solve IP subproblems: 709
+Found a new better solution: 363
+Cost RobinX:              (0,363)
+*     0+    0                          363.0000      350.7882             3.36%
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 16
+Total time spend to solve LP subproblems: 6431
+Total time spend to solve IP subproblems: 763
+Found a new better solution: 362
+Cost RobinX:              (0,362)
+Initialize Worker
+Initialize Worker
+Initialize Worker
+Initialize Worker
+Worker initialized
+Worker initialized
+Worker initialized
+Worker initialized
+      0     2      350.7882   569      363.0000      350.7882    16681    3.36%
+Elapsed time = 5.77 sec. (4635.96 ticks, tree = 0.02 MB, solutions = 7)
+     37    34      351.2913   247      363.0000      350.8003    22577    3.36%
+     73    25      351.6934   301      363.0000      350.8119    21506    3.36%
+    210   164      354.5069   569      363.0000      350.8119    40386    3.36%
+    331   326      352.6248   213      363.0000      350.8119    53198    3.36%
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 17
+Total time spend to solve LP subproblems: 6495
+Total time spend to solve IP subproblems: 809
+Found a new better solution: 355
+Cost RobinX:              (0,355)
+*   451+  376                          355.0000      350.8119             1.18%
+    453   347      351.9379   375      355.0000      350.8119    55589    1.18%
+    576   394      351.0833   378      355.0000      350.8119    67625    1.18%
+    667   403      351.3270   747      355.0000      350.8484    78427    1.17%
+    755   549      353.8889    70      355.0000      350.8484    99988    1.17%
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 18
+Total time spend to solve LP subproblems: 6533
+Total time spend to solve IP subproblems: 861
+Found a new better solution: 353
+Cost RobinX:              (0,353)
+*   796   554      integral     0      353.0000      350.8484   103429    0.61%
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 19
+Total time spend to solve LP subproblems: 6578
+Total time spend to solve IP subproblems: 905
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 20
+Total time spend to solve LP subproblems: 6629
+Total time spend to solve IP subproblems: 957
+Found a new better solution: 352
+Cost RobinX:              (0,352)
+*  1030   415      integral     0      352.0000      350.8721   131278    0.32%
+   1128   484      350.9704   358      352.0000      350.9720   138251    0.29%
+Elapsed time = 8.84 sec. (7609.80 ticks, tree = 0.67 MB, solutions = 11)
+
+Clique cuts applied:  150
+Implied bound cuts applied:  245
+Mixed integer rounding cuts applied:  3
+Zero-half cuts applied:  638
+Gomory fractional cuts applied:  1
+
+Root node processing (before b&c):
+  Real time             =    5.62 sec. (4617.48 ticks)
+Parallel b&c, 5 threads:
+  Real time             =    3.21 sec. (3159.39 ticks)
+  Sync time (average)   =    0.22 sec.
+  Wait time (average)   =    0.00 sec.
+                          ------------
+Total (root+branch&cut) =    8.84 sec. (7776.87 ticks)
+Solution status master: Optimal
+Objective value master: 352
+Objective bound master: 352
+Optimal HAP set:
+1	1	0	0	0	1	1	1	0	0	1	1	1	0	0	0	
+1	1	0	0	0	1	1	1	0	0	1	1	1	0	0	0	
+1	1	0	0	0	1	1	1	0	0	0	1	1	1	0	0	
+1	1	0	0	1	1	1	0	0	0	1	1	1	0	0	0	
+1	1	0	0	0	1	1	1	0	0	0	1	1	1	0	0	
+1	1	0	0	1	1	1	0	0	0	1	1	1	0	0	0	
+1	1	0	0	1	1	1	0	0	0	1	1	1	0	0	0	
+1	1	1	0	0	0	1	1	1	0	0	0	1	1	0	0	
+1	1	1	0	0	1	1	1	0	0	0	1	1	0	0	0	
+1	1	1	0	0	0	1	1	0	0	0	1	1	1	0	0	
+1	1	0	0	0	1	1	1	0	0	0	1	1	1	0	0	
+1	1	1	0	0	1	1	0	0	0	1	1	1	0	0	0	
+1	1	0	0	1	1	1	0	0	0	1	1	1	0	0	0	
+1	1	1	0	0	0	1	1	0	0	1	1	1	0	0	0	
+1	1	1	0	0	1	1	0	0	0	1	1	1	0	0	0	
+1	1	1	0	0	0	1	1	1	0	0	1	1	0	0	0	
+0	0	1	1	0	0	0	1	1	1	0	0	0	1	1	1	
+0	0	1	1	1	0	0	0	1	1	1	0	0	0	1	1	
+0	0	1	1	1	0	0	0	1	1	0	0	0	1	1	1	
+0	0	1	1	0	0	0	1	1	1	0	0	0	1	1	1	
+0	0	0	1	1	0	0	0	1	1	1	0	0	1	1	1	
+0	0	0	1	1	1	0	0	1	1	1	0	0	0	1	1	
+0	0	0	1	1	1	0	0	0	1	1	1	0	0	1	1	
+0	0	1	1	0	0	0	1	1	1	0	0	0	1	1	1	
+0	0	0	1	1	0	0	1	1	1	0	0	0	1	1	1	
+0	0	0	1	1	1	0	0	0	1	1	0	0	1	1	1	
+0	0	1	1	1	0	0	0	1	1	0	0	0	1	1	1	
+0	0	1	1	1	0	0	0	1	1	0	0	0	1	1	1	
+0	0	0	1	1	1	0	0	1	1	1	0	0	0	1	1	
+0	0	0	1	1	0	0	1	1	1	0	0	0	1	1	1	
+0	0	1	1	0	0	0	1	1	1	0	0	0	1	1	1	
+0	0	1	1	1	0	0	0	1	1	1	0	0	0	1	1	
+Clearing
+Total elapsed time 8 seconds
+
+Total number of Benders feasibility cuts added: 0
+Total number of Benders optimality cuts added: 0
+Total number of no-good feasiblity cuts added: 0
+Total number of feasible solutions found: 20
+Total time spend to solve LP subproblems: 6629.000000
+Total time spend to solve IP subproblems: 957.000000
+Two-phase approach done
+---------------------------------------
+--- Two-step approach done ---
+---------------------------------------

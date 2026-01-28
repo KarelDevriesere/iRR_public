@@ -23,5 +23,7 @@ void TestCostMinimization(InputData& data);
 void BoundsTTP();
 void BoundsTTP_OneInstance(InputData& data);
 void BoundsTTP_All(const InputData& data);
+void ReadSolution(const string path, Solution& sol);
+void ReadSolutionXML(const string path, Solution& sol);
 
 #endif

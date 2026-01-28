@@ -114,6 +114,44 @@ const unordered_map<string,int>InstanceBound = {
     {"I_NFL32_24",297068}
 };
 
+void ReadSolutionXML(const string path, Solution& sol){
+
+    cout << "read the file " << path << endl;
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        std::cerr << "Error opening the file " << path;
+        return;
+    }
+
+
+    std::string line;
+
+    auto getAttr = [](const std::string& s, const std::string& key) -> int {
+        size_t pos = s.find(key + "=\"");
+        if (pos == std::string::npos) return -1;
+        pos += key.size() + 2;
+        size_t end = s.find('"', pos);
+        return std::stoi(s.substr(pos, end - pos));
+    };
+
+    while (std::getline(file, line)) {
+
+        if (line.find("ScheduledMatch") == std::string::npos)
+            continue;
+
+        int h = getAttr(line, "home");
+        int a = getAttr(line, "away");
+        int r = getAttr(line, "slot");
+
+        SetValueCircleMethod(h,a,r,sol);
+        sol.Orientation[h][r] = HA::H;
+        sol.Orientation[a][r] = HA::A;
+    }
+
+    file.close();
+    sol.validate();
+}
+
 void ReadSolution(const string path, Solution& sol){
 
     cout << "read the file " << path << endl;
@@ -147,7 +185,7 @@ void ReadSolution(const string path, Solution& sol){
             SetValueCircleMethod(h,a,r,sol);
             sol.Orientation[h][r] = HA::H;
             sol.Orientation[a][r] = HA::A;
-            // cout << h << " vs " << a << " in " << r << endl;
+             cout << h << " vs " << a << " in " << r << endl;
         }
     }
     file.close();
@@ -490,8 +528,9 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     }
     else{
         // cout << "Solve Vizing" << endl;
-        // VizingConstruction(sol, data.seed);
+        VizingConstruction(sol, data.seed);
 
+        /*
         // Start from best found solution by Miao's algorithm (with 100% of the HAPs)
         path += "TTP" + string(PATHSEP) + "Results" + string(PATHSEP);
         if (sol.getNrRounds() <= sol.getNrTeams()/2){
@@ -501,13 +540,17 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
             path += "MiaoAlgo";
         }
         path += string(PATHSEP) + sol.getInstanceName();
+        */
     }
 
+    /*
     cout << "path = " << path << endl;
     int BestSeed = ReturnBestSeed(path);
 
     string path_seed = path + "_s" + to_string(BestSeed) + ".txt";
     ReadSolution(path_seed, sol);
+    */
+
     sol.validate();
 
     cout << "Found initial solution" << endl;
@@ -627,13 +670,35 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
 }
 
 void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data){
+    cout << "gur" << endl;
     GurSolver gur(in);
+    cout << "gur success" << endl;
     Solution sol(in);
     bool HA = true;
     bool relax_x = false;
     const bool min_travel = true, min_cap = false;
     if (in.getSetting() == Setting::TTP){
-        gur.iTTP();
+        bool TripModelHAP_Fixed = true;
+        if (TripModelHAP_Fixed){
+            // First, read solution constant iTTP
+            string path = "Code_Benders" + string(PATHSEP) + "BestNoLex" + string(PATHSEP) + "I_CON" + to_string(sol.getNrTeams()) + "_" + to_string(sol.getNrRounds()) + ".xml";
+            ReadSolutionXML(path, sol);
+            cout << "Total travel time = " << sol.ComputeTravelCostTTP() << endl;
+            cout << "Cost violations = " << sol.ComputeTotalCostTTPViolations() << endl;
+            cout << "Total cost = " << sol.ComputeTotalCost() << endl;
+
+            gur.iTTP_TripModel_HAP_fixed(sol);
+            /*
+            gur.iTTP();
+            for (int t = 0; t < sol.getNrTeams(); ++t){
+                gur.HapFixed[t] = true;
+            }
+            gur.FixHAP(sol);
+            */
+        }
+        else{
+            gur.iTTP();
+        }
         // gur.iTTP_TripModel();
         // gur.Fix_x(sol);
     }
@@ -677,8 +742,6 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     gur.setTimeLimit(data.TimeLimit);
     gur.SetTimeStamps(TimeStamps);
     gur.solve();
-    gur.PrintVariables();
-    cin.get();
     cout << "save solution" << endl;
     gur.SaveSolution(sol);
     cout << "test whether solution is feasible" << endl;

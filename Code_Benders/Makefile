@@ -11,14 +11,14 @@ HOMEDIR = $(shell pwd)
 ROBINX = $(HOMEDIR)/source/include
 
 # CPLEX SUPPORT: Change the following paths as needed
-CONCERTDIR = /opt/ibm/ILOG/CPLEX_Studio221/concert
-CPLEXDIR = /opt/ibm/ILOG/CPLEX_Studio221/cplex
-CPOPTDIR = /opt/ibm/ILOG/CPLEX_Studio221/cpoptimizer
+#CONCERTDIR = /opt/ibm/ILOG/CPLEX_Studio221/concert
+#CPLEXDIR = /opt/ibm/ILOG/CPLEX_Studio221/cplex
+#CPOPTDIR = /opt/ibm/ILOG/CPLEX_Studio221/cpoptimizer
 
 # HPC paths
-#CONCERTDIR = /apps/gent/CO7/haswell-ib/software/CPLEX/12.10-GCCcore-8.3.0-Python-3.7.4/concert
-#CPLEXDIR = /apps/gent/CO7/haswell-ib/software/CPLEX/12.10-GCCcore-8.3.0-Python-3.7.4/cplex
-#CPOPTDIR = /apps/gent/CO7/haswell-ib/software/CPLEX/12.10-GCCcore-8.3.0-Python-3.7.4/cpoptimizer
+CONCERTDIR = /apps/gent/CO7/haswell-ib/software/CPLEX/12.10-GCCcore-8.3.0-Python-3.7.4/concert
+CPLEXDIR = /apps/gent/CO7/haswell-ib/software/CPLEX/12.10-GCCcore-8.3.0-Python-3.7.4/cplex
+CPOPTDIR = /apps/gent/CO7/haswell-ib/software/CPLEX/12.10-GCCcore-8.3.0-Python-3.7.4/cpoptimizer
 
 # TODO TODO TODO
 # Do not forget 
@@ -33,8 +33,8 @@ CFLAGS += ${INCLUDECPLEX} -DPERFECT_MATCHING_DOUBLE ${RELEASE}
 CFLAGS +=  -fno-strict-aliasing
 LDFLAGS += ${LINKCPLEX}
 
-CC = g++-11
-LD = g++-11
+CC = g++
+LD = g++
 
 CFLAGS += -std=c++11 -I${ROBINX}
 LDFLAGS += -lpthread -ldl -I${ROBINX}
