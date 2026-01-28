@@ -442,6 +442,12 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
     if (miao_algo.NrSuccesfullMatchings >= 1 || miao_algo.InitialSolutionGiven){
         miao_algo.SaveSolutionsTimeStamps(output_file);
         SaveSolution(output_file, sol);
+
+	    // Replace txt extension with XML
+	    FilePath.replace(FilePath.size() - 4, 4, ".xml");
+	    cout << "Save XML file as " << FilePath << endl;
+	    std::ofstream output_fileXML(FilePath);
+	    SaveSolutionXML(output_fileXML, sol);
     }
     output_file.close();
     cout << "Close file" << endl;
@@ -681,8 +687,12 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
         bool TripModelHAP_Fixed = true;
         if (TripModelHAP_Fixed){
             // First, read solution constant iTTP
-            string path = "Code_Benders" + string(PATHSEP) + "BestNoLex" + string(PATHSEP) + "I_CON" + to_string(sol.getNrTeams()) + "_" + to_string(sol.getNrRounds()) + ".xml";
-            ReadSolutionXML(path, sol);
+	    if(data.startSol.empty()){
+            	string path = "Code_Benders" + string(PATHSEP) + "BestNoLex" + string(PATHSEP) + "I_CON" + to_string(sol.getNrTeams()) + "_" + to_string(sol.getNrRounds()) + ".xml";
+            	ReadSolutionXML(path, sol);
+	    } else {
+            	ReadSolutionXML(data.startSol, sol);
+	    }
             cout << "Total travel time = " << sol.ComputeTravelCostTTP() << endl;
             cout << "Cost violations = " << sol.ComputeTotalCostTTPViolations() << endl;
             cout << "Total cost = " << sol.ComputeTotalCost() << endl;

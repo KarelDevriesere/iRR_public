@@ -88,6 +88,8 @@ struct InputData{
     bool MinCost = false;
     string OutputFolder;
 
+    string startSol = "";
+
     bool RunMiaoAlgo = false;
     bool RunMiaoRF = false;
 
