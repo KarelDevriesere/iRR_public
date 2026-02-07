@@ -33,7 +33,6 @@ int main(int argc, const char* argv[]){
 
         int ComputeBounds = 0;
 	bool teamSwapper = 0;
-	std::string startSol = "";
 
         // Parse command-line arguments
         for (int i = 1; i < argc; ++i) {
@@ -43,7 +42,7 @@ int main(int argc, const char* argv[]){
             } else if (arg == "--TeamSwapper"){
 		    teamSwapper = std::stoi(argv[++i]);
             } else if (arg == "--StartSol"){
-		    startSol = argv[++i];
+		    data.startSol = argv[++i];
 	    }
             else if (arg == "--Heuristic"){
                 data.Heuristic = std::stoi(argv[++i]);
@@ -252,10 +251,10 @@ int main(int argc, const char* argv[]){
         }
 
 	if(teamSwapper == 1){
-		if(startSol == ""){
+		if(data.startSol.empty()){
 			std::cout << "Team swapper requires to set --startSol" << std::endl;
 		}
-		std::cout << "Perform the team swapper for " << data.Instance << " and solution " << startSol << std::endl;
+		std::cout << "Perform the team swapper for " << data.Instance << " and solution " << data.startSol << std::endl;
 
 		// Read the instance
 		std::cout << "Read the instance" << std::endl;
@@ -272,7 +271,7 @@ int main(int argc, const char* argv[]){
 		// Read the starting solution
 		Solution sol(in);
     		sol.SetOneCostAllViolations(data.ConstrViolationCost);
-		ReadSolutionXML(startSol, sol);
+		ReadSolutionXML(data.startSol, sol);
     		sol.validate();
 
 		// Perform the team swapper

@@ -239,6 +239,20 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 				*/
 				z_trp[t][r][p] = model.addVar(0, 1, 0.0, GRB_BINARY/*, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]"*/);
 				v++;
+
+				// Warm start the current solution
+				bool active = true;
+				int cntr = 0;
+				for (auto& j: TripsRound[t][r][p]){
+					if(sol.TeamColorOpp[t][r+cntr] != j){
+						active = false;
+						break;
+					}
+					cntr++;
+				}
+				if(active){
+					z_trp[t][r][p].set(GRB_DoubleAttr_Start, 1);
+				}
 			}
 		}
 	}
@@ -344,7 +358,7 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 
 void GurSolver::iTTP_TripModel(){
 
-	model.set(GRB_DoubleParam_MemLimit, 32.0);
+	//model.set(GRB_DoubleParam_MemLimit, 32.0);
 
 	cout << "build trip model" << endl;
 

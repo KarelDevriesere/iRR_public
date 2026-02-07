@@ -421,6 +421,12 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
     if (miao_algo.NrSuccesfullMatchings >= 1 || miao_algo.InitialSolutionGiven){
         miao_algo.SaveSolutionsTimeStamps(output_file);
         SaveSolution(output_file, sol);
+
+	    // Replace txt extension with XML
+	    FilePath.replace(FilePath.size() - 4, 4, ".xml");
+	    cout << "Save XML file as " << FilePath << endl;
+	    std::ofstream output_fileXML(FilePath);
+	    SaveSolutionXML(output_fileXML, sol);
     }
     output_file.close();
     cout << "Close file" << endl;
