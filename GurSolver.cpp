@@ -60,9 +60,6 @@ pair<vector<vector<int>>,vector<int>>GurSolver::GenerateTrips(const int t, const
 					continue;
 				}
 				Trips.push_back({TeamsList[i], TeamsList[k], TeamsList[j]});
-				if (t == 10){
-					cout << "{" << TeamsList[i] << "," << TeamsList[k] << "," << TeamsList[j] << "}" << endl;
-				}
 				dist = getDistanceTeams(t,TeamsList[i]) + getDistanceTeams(TeamsList[i],TeamsList[k]) + getDistanceTeams(TeamsList[k],TeamsList[j]) + getDistanceTeams(TeamsList[j],t);
 				CostTrips.push_back(dist);
 			}
@@ -138,7 +135,7 @@ bool IsTeamInTrip(const int i, vector<int>& trip){
 }
 
 void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
-	model.set(GRB_DoubleParam_MemLimit, 32.0);
+	// model.set(GRB_DoubleParam_MemLimit, 64.0);
 
 #ifdef PRINT
 #if PRINT == 1
@@ -242,6 +239,20 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 				*/
 				z_trp[t][r][p] = model.addVar(0, 1, 0.0, GRB_BINARY/*, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]"*/);
 				v++;
+
+				// Warm start the current solution
+				bool active = true;
+				int cntr = 0;
+				for (auto& j: TripsRound[t][r][p]){
+					if(sol.TeamColorOpp[t][r+cntr] != j){
+						active = false;
+						break;
+					}
+					cntr++;
+				}
+				if(active){
+					z_trp[t][r][p].set(GRB_DoubleAttr_Start, 1);
+				}
 			}
 		}
 	}
@@ -347,7 +358,7 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 
 void GurSolver::iTTP_TripModel(){
 
-	model.set(GRB_DoubleParam_MemLimit, 32.0);
+	//model.set(GRB_DoubleParam_MemLimit, 32.0);
 
 	cout << "build trip model" << endl;
 
@@ -583,7 +594,7 @@ void GurSolver::iTTP_TripModel(){
 	cout << "done" << endl;
 }
 
-void GurSolver::BoundTTP_AllTeams(const int minTrips){
+void GurSolver::BoundTTP_AllTeams(const bool addMinTripConstraint, const int minTrips){
 
 	const int N = getNrTeams();
 
@@ -664,13 +675,16 @@ void GurSolver::BoundTTP_AllTeams(const int minTrips){
 		model.addConstr(sum_it == getNrRounds()/2);
 	}
 
-	GRBLinExpr sum_tr = 0;
-	for (t = 0; t < N; ++t){
-		for (r = 0; r < NrTrips; ++r){
-			sum_tr += (Trips[t][r].size()+1)*z_tr[t][r];
+	if (addMinTripConstraint){
+		GRBLinExpr sum_tr = 0;
+		for (t = 0; t < N; ++t){
+			for (r = 0; r < NrTrips; ++r){
+				sum_tr += (Trips[t][r].size()+1)*z_tr[t][r];
+			}
 		}
+		cout << "minTrips = " << minTrips << endl;
+		model.addConstr(sum_tr >= minTrips);
 	}
-	model.addConstr(sum_tr >= minTrips);
 
 	Objective = 0;
 	for (t = 0; t < N; ++t){
