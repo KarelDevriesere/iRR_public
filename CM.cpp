@@ -678,7 +678,7 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     bool relax_x = false;
     const bool min_travel = true, min_cap = false;
     if (in.getSetting() == Setting::TTP){
-        bool TripModelHAP_Fixed = true;
+        bool TripModelHAP_Fixed = false;
         if (TripModelHAP_Fixed){
             // First, read solution constant iTTP
             string path = "Code_Benders" + string(PATHSEP) + "BestNoLex" + string(PATHSEP) + "I_CON" + to_string(sol.getNrTeams()) + "_" + to_string(sol.getNrRounds()) + ".xml";
@@ -698,6 +698,7 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
         }
         else{
             gur.iTTP();
+            // gur.Min2Factor();
         }
         // gur.iTTP_TripModel();
         // gur.Fix_x(sol);
@@ -742,6 +743,9 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     gur.setTimeLimit(data.TimeLimit);
     gur.SetTimeStamps(TimeStamps);
     gur.solve();
+    cin.get();
+    gur.PrintVariables();
+    cin.get();
     cout << "save solution" << endl;
     gur.SaveSolution(sol);
     cout << "test whether solution is feasible" << endl;
@@ -867,11 +871,7 @@ void TestCostMinimization(InputData& data){
         in.read_HAPs();
     }
 
-    if (data.TTP && !data.HistoryLengthProvided){
-        data.HistoryLength = InstanceHL.at(in.getInstanceName()); 
-    }
-
-    if (data.TTP /*&& data.RunMiaoAlgo*/){ // Do this also for IP!!!
+    if (data.TTP && in.getNrRounds() >= 4 /*&& data.RunMiaoAlgo*/){ // Do this also for IP!!!
         in.read_HAPs();
         if (data.PercentageHAPs < 100){
             double NrPromisingHAPs = in.getNrHAPs()*((double)data.PercentageHAPs/100.0);
@@ -895,6 +895,7 @@ void TestCostMinimization(InputData& data){
         SolveMiaoHeuristic(in,TimeStamps,folder_path,data);
     }
     else{
+        cout << "Solve IP" << endl;
         SolveIP(in,TimeStamps,folder_path,data);
     }
 }

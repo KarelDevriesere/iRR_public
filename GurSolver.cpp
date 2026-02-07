@@ -770,13 +770,46 @@ void GurSolver::BoundTTP(const int t){
 	*/
 }
 
+void GurSolver::Min2Factor(){
+	// y[i][j] = 1 if i and j are matched in the minimum 2-factor
+
+	int i,j;
+
+	y = vector<vector<GRBVar>>(getNrTeams(), vector<GRBVar>(getNrTeams()));
+	for (i = 0; i < getNrTeams(); ++i){
+		for (j = i+1; j < getNrTeams(); ++j){
+			y[i][j] = model.addVar(0, 1, 0.0, GRB_CONTINUOUS);
+		}
+	}
+
+	for (i = 0; i < getNrTeams(); ++i){
+		GRBLinExpr sum_j = 0;
+		for (j = i+1; j < getNrTeams(); ++j){
+			sum_j += y[i][j];
+		}
+		for (j = 0; j < i; ++j){
+			sum_j += y[j][i];
+		}
+		model.addConstr(sum_j == 2);
+	}
+
+	Objective = 0;
+	for (i = 0; i < getNrTeams(); ++i){
+		for (j = i+1; j < getNrTeams(); ++j){
+			Objective += std::min(getDistanceTeams(i,j),getDistanceTeams(j,i))*y[i][j];
+		}
+	}
+	model.setObjective(Objective, GRB_MINIMIZE);
+}
+
 void GurSolver::iTTP(){
 
 	int t,i,j,r;
 	const bool HA = true;
-	const bool relax_x = false;
+	const bool relax_x = true;
 	build_base(HA, relax_x); // all base constraints
 
+	/*
 	if (getNrRounds() < 4){
 		cout << "WARNING: iTTP constraints not needed because NrRounds is " << getNrRounds() << endl;
 
@@ -796,14 +829,18 @@ void GurSolver::iTTP(){
 
 		return;
 	}
+	*/
 
 	// z_tij = 1 if t travels from the home venue of i to that of j
 	z = vector<vector<vector<GRBVar>>>(getNrTeams(), vector<vector<GRBVar>>(getNrTeams(), vector<GRBVar>(getNrTeams())));
 	for (t = 0; t < getNrTeams(); ++t){
 		for (i = 0; i < getNrTeams(); ++i){
 			for (j = 0; j < getNrTeams(); ++j){
+				if (i == j){
+					continue;
+				}
 				std::string varName = "z_" + std::to_string(t) + "_" + std::to_string(i) + "_" + std::to_string(j);
-				z[t][i][j] = model.addVar(0, 1, 0.0, GRB_BINARY, varName);	   
+				z[t][i][j] = model.addVar(0, 1, 0.0, GRB_CONTINUOUS, varName);	   
 			}
 		}
     }
@@ -877,19 +914,21 @@ void GurSolver::iTTP(){
 
 	// C6 and C7: In any 4 consecutive time slots, a team cannot play more than 3 A games or less than 1 H game
 
-	for (t = 0; t < getNrTeams(); ++t){
-		for (r = 0; r <= getNrRounds()-4; ++r){
-			GRBLinExpr sum_kj = 0;
-			for (int k = r; k < r+4; ++k){
-				for (j = 0; j < getNrTeams(); ++j){
-					if (t == j){
-						continue;
+	if (getNrRounds() >= 4){
+		for (t = 0; t < getNrTeams(); ++t){
+			for (r = 0; r <= getNrRounds()-4; ++r){
+				GRBLinExpr sum_kj = 0;
+				for (int k = r; k < r+4; ++k){
+					for (j = 0; j < getNrTeams(); ++j){
+						if (t == j){
+							continue;
+						}
+						sum_kj += x[j][t][k];
 					}
-					sum_kj += x[j][t][k];
 				}
+				model.addConstr(sum_kj <= 3);
+				model.addConstr(sum_kj >= 1);
 			}
-			model.addConstr(sum_kj <= 3);
-			model.addConstr(sum_kj >= 1);
 		}
 	}
 
@@ -905,6 +944,19 @@ void GurSolver::iTTP(){
 			}
 		}
 	}
+	/*
+	Objective = 0;
+	for (r = 0; r < getNrRounds(); ++r){
+		for (i = 0; i < getNrTeams(); ++i){
+			for (j = 0; j < getNrTeams(); ++j){
+				if (i == j){
+					continue;
+				}
+				Objective += getDistanceTeams(i,j)*x[i][j][r];
+			}
+		}
+	}
+	*/
 	model.setObjective(Objective, GRB_MINIMIZE);
 }
 
@@ -1220,17 +1272,17 @@ void GurSolver::build_base(const bool HA, const bool relax_x){
 	int nrA = nrH;
 	for (i = 0; i < getNrTeams(); ++i){
 		GRBLinExpr sum_jr_H = 0;
-		// GRBLinExpr sum_jr_A = 0;
+		GRBLinExpr sum_jr_A = 0;
 		for (j = 0; j < getNrTeams(); ++j){
 			if (isEligible(i, j) /*true*/){
 				for (r = 0; r < getNrRounds(); ++r){
 					sum_jr_H += x[i][j][r];
-					// sum_jr_A += x[j][i][r];
+					sum_jr_A += x[j][i][r];
 				}
 			}
 		}
 		model.addConstr(sum_jr_H == nrH, "c_3H");
-		// model.addConstr(sum_jr_A == nrA, "c_3A");
+		model.addConstr(sum_jr_A == nrA, "c_3A");
 	}
 
 	// cout << "base done" << endl;
@@ -2007,12 +2059,12 @@ void GurSolver::PrintVariables(){
 			cout << "Round " << r << endl;
 			cout << "-------" << endl;
 			for (int i = 0; i < getNrTeams(); ++i){
-				for (int j = i+1; j < getNrTeams(); ++j){
-					if (x[i][j][r].get(GRB_DoubleAttr_X) > 0.01){
-						cout << "x[" << i << "][" << j << "][" << r << "] = " << x[i][j][r].get(GRB_DoubleAttr_X) << endl;
+				for (int j = 0; j < getNrTeams(); ++j){
+					if (!isEligible(i,j)){
+						continue;
 					}
-					if (x[j][i][r].get(GRB_DoubleAttr_X) > 0.01){
-						cout << "x[" << j << "][" << i << "][" << r << "] = " << x[j][i][r].get(GRB_DoubleAttr_X) << endl;
+					if (x[i][j][r].get(GRB_DoubleAttr_X) > 0.001){
+						cout << "x[" << i << "][" << j << "][" << r << "] = " << x[i][j][r].get(GRB_DoubleAttr_X) << endl;
 					}
 				}
 			}
@@ -2023,11 +2075,25 @@ void GurSolver::PrintVariables(){
 		cout << "TRIP variables: " << endl;
 		cout << "-----" << endl;
 		for (int t = 0; t < getNrTeams(); ++t){
+			// cout << "Trips of " << t << endl;
 			for (int i = 0; i < getNrTeams(); ++i){
 				for (int j = 0; j < getNrTeams(); ++j){
+					if (i == j){
+						continue;
+					}
 					if (z[t][i][j].get(GRB_DoubleAttr_X) > 0.01){
-						cout << "z[" << t << "][" << i << "][" << j << "] = " << z[t][i][j].get(GRB_DoubleAttr_X) << endl;
+						cout << "z[" << t << "][" << i << "][" << j << "] = " << z[t][i][j].get(GRB_DoubleAttr_X) << "(" << getDistanceTeams(i,j) << ")" << endl;
+						// cout << t << ": " << i << " -> (" << getDistanceTeams(i,j) << ") " << j << endl;
 					}	   
+				}
+			}
+		}
+	}
+	if (!y.empty()){
+		for (int t = 0; t < getNrTeams(); ++t){
+			for (int h = 0; h < getNrHAPs(); ++h){
+				if (y[t][h].get(GRB_DoubleAttr_X) > 0.01){
+					cout << "y[" << t << "][" << h << "] = " << y[t][h].get(GRB_DoubleAttr_X) << endl;
 				}
 			}
 		}

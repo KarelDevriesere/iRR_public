@@ -73,6 +73,9 @@ void Input::SetDefault(const int NrTeams){
     iota(SingleTeamClubs.begin(), SingleTeamClubs.end(), 0);
     
     Eligible = vector<vector<bool>>(getNrTeams(), vector<bool>(getNrTeams(), true));
+    for (int i = 0; i < getNrTeams(); ++i){
+        Eligible[i][i] = false;
+    }
     TeamLeagueIndex = vector<int>(NrTeams); // index of the team in its league
     iota(TeamLeagueIndex.begin(), TeamLeagueIndex.end(), 0);
     IsTeamDummy = vector<bool>(NrTeams, false);

@@ -152,6 +152,7 @@ class GurSolver : public Input
         bool TripModelTTP_fixed_HAP = false;
         void iTTP_TripModel_HAP_fixed(Solution& sol);
         void iTTP_TripModel();
+        void Min2Factor();
 
         // For TTP bounds:
         pair<vector<vector<int>>,vector<int>>GenerateTrips(const int t, const vector<int>& TeamsList);
