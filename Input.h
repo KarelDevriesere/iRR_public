@@ -79,6 +79,7 @@ struct InputData{
     long ConstrViolationCost = 100000;
     unordered_map<Move, double>InputWeights;
     unordered_map<Move, bool>MoveSeen;
+    bool addMinTripConstraint = false;
 
     bool Miao = false; // Miao
     bool ConstantCapacity = true; // Miao

@@ -230,6 +230,9 @@ int main(int argc, const char* argv[]){
                 ComputeBounds = std::stoi(argv[++i]);
                 data.TTP = true;
             }
+            else if (arg == "--addMinTripConstraint"){
+                data.addMinTripConstraint = std::stoi(argv[++i]);
+            }
             else if (arg == "--OutputFolder"){
                 data.OutputFolder = argv[++i];
                 if (!std::filesystem::is_directory(data.OutputFolder)){

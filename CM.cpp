@@ -78,40 +78,19 @@ const unordered_map<string,int>InstanceHL = {
     {"I_NFL32_24",1000}
 };
 
-const unordered_map<string,int>InstanceBound = {
-    {"I_BRA24_6",38745},
-    {"I_BRA24_12",98815},
-    {"I_BRA24_18",167657},
-    {"I_CIRC40_10",560},
-    {"I_CIRC40_20",1760},
-    {"I_CIRC40_30",3600},
-    {"I_CON16_4",48}, 		// Via Benders
+const unordered_map<string,int>ConSolutions = {
+    {"I_CON16_4",48}, 		// Via Benders -> optimal values, see map Code_Benders/Best
     {"I_CON16_8",96}, 		// Via Benders
     {"I_CON16_12",132}, 	// Via Benders
     {"I_CON24_6",96}, 		// Via Benders
     {"I_CON24_12",192}, 	// Via Benders
-    {"I_CON24_18",291}, 	// Via Benders, running on HPC
+    {"I_CON24_18",294}, 	// Via Benders, running on HPC
     {"I_CON32_8",192}, 		// Via Benders
     {"I_CON32_16",352}, 	// Via Benders
-    {"I_CON32_24",516}, 	// Via Benders, running on HPC
+    {"I_CON32_24",520}, 	// Via Benders, running on HPC
     {"I_CON40_10",280}, 	// Via Benders
-    {"I_CON40_20",560},
-    {"I_CON40_30",803}, 	// Via Benders, running on HPC
-    {"I_GAL40_10",23617},
-    {"I_GAL40_20",50962},
-    {"I_GAL40_30",81661},
-    {"I_INCR40_10",13284},
-    {"I_INCR40_20",46402},
-    {"I_INCR40_30",102306},
-    {"I_LINE40_10",656},
-    {"I_LINE40_20",2322},
-    {"I_LINE40_30",5118},
-    {"I_NL16_4",23625},
-    {"I_NL16_8",57263},
-    {"I_NL16_12",92580},
-    {"I_NFL32_8",70127},
-    {"I_NFL32_16",173493},
-    {"I_NFL32_24",297068}
+    {"I_CON40_20",560},     // Via Benders
+    {"I_CON40_30",810} 	// Via Benders, running on HPC
 };
 
 void ReadSolutionXML(const string path, Solution& sol){
@@ -185,7 +164,7 @@ void ReadSolution(const string path, Solution& sol){
             SetValueCircleMethod(h,a,r,sol);
             sol.Orientation[h][r] = HA::H;
             sol.Orientation[a][r] = HA::A;
-             cout << h << " vs " << a << " in " << r << endl;
+            // cout << h << " vs " << a << " in " << r << endl;
         }
     }
     file.close();
@@ -573,9 +552,6 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     algo.setTimeLimit_meta(TL);
     algo.SetMaxIt(data.MaxIt);
     algo.SetTimeStamps(TimeStamps);
-
-    // algo.AddLowerBound(InstanceBound.at(in.getInstanceName()));
-    // algo.AddLowerBoundStoppingCriterion(data.LowerBoundGap);
     algo.solve(in, sol);
 
     int NrViolations = 0;
@@ -680,9 +656,20 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     if (in.getSetting() == Setting::TTP){
         bool TripModelHAP_Fixed = true;
         if (TripModelHAP_Fixed){
-            // First, read solution constant iTTP
-            string path = "Code_Benders" + string(PATHSEP) + "BestNoLex" + string(PATHSEP) + "I_CON" + to_string(sol.getNrTeams()) + "_" + to_string(sol.getNrRounds()) + ".xml";
-            ReadSolutionXML(path, sol);
+            // First, read best found solution so far by greedy matching
+            // string path = "Code_Benders" + string(PATHSEP) + "BestNoLex" + string(PATHSEP) + "I_CON" + to_string(sol.getNrTeams()) + "_" + to_string(sol.getNrRounds()) + ".xml";
+            // ReadSolutionXML(path, sol);
+            // Start from best found solution by Miao's algorithm (with 100% of the HAPs)
+            string path = "Instances" + string(PATHSEP) + "TTP" + string(PATHSEP) + "Results" + string(PATHSEP);
+            path += "MiaoAlgo08_01_2026";
+            path += string(PATHSEP) + sol.getInstanceName();
+
+            cout << "path = " << path << endl;
+            int BestSeed = ReturnBestSeed(path);
+
+            string path_seed = path + "_s" + to_string(BestSeed) + ".txt";
+            ReadSolution(path_seed, sol);
+
             cout << "Total travel time = " << sol.ComputeTravelCostTTP() << endl;
             cout << "Cost violations = " << sol.ComputeTotalCostTTPViolations() << endl;
             cout << "Total cost = " << sol.ComputeTotalCost() << endl;
@@ -779,7 +766,7 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     string config;
     
     if (in.getSetting() == Setting::TTP){
-        FilePath = FolderPath + "Results" + std::string(PATHSEP) + "IP_TripModel" + std::string(PATHSEP) + sol.getInstanceName() + "_" + to_string(data.PercentageHAPs) + ".txt";
+        FilePath = FolderPath + "Results" + std::string(PATHSEP) + "IP_TripModel" + std::string(PATHSEP) + sol.getInstanceName() + ".txt";
         config = to_string(data.seed) + ",IP_TripModel," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
     }
     else if (in.getSetting() == Setting::Miao){
@@ -899,12 +886,9 @@ void TestCostMinimization(InputData& data){
     }
 }
 
-void BoundTTP(const int TimeLimit, const string Instance, const int NrRoundsTTP, std::ofstream& output_file){
+void BoundTTP(const int TimeLimit, const string Instance, const int NrRoundsTTP, std::ofstream& output_file, const bool addMinTripConstraint){
 
     Input in;
-    InputData data;
-    data.TTP = true;
-
     if (!in.read_TTP(Instance)){
         cout << "could not read " << Instance << endl;
         return;
@@ -917,7 +901,7 @@ void BoundTTP(const int TimeLimit, const string Instance, const int NrRoundsTTP,
     double gap = 0;
     gur.setTimeLimit(TimeLimit); 
     // This assumes that a bound is known for the corresponding constant distance ttp instance
-    gur.BoundTTP_AllTeams(InstanceBound.at("I_CON" + std::to_string(in.getNrTeams()) + "_" + std::to_string(in.getNrRounds())));
+    gur.BoundTTP_AllTeams(addMinTripConstraint, ConSolutions.at("I_CON" + std::to_string(in.getNrTeams()) + "_" + std::to_string(in.getNrRounds())));
     gur.solve();
     LB = gur.getBestBound();
     UB = gur.getBestObjValue();
@@ -937,10 +921,22 @@ void BoundTTP(const int TimeLimit, const string Instance, const int NrRoundsTTP,
 }
 
 void BoundsTTP_OneInstance(InputData& data){
-    string OutputFilePath = "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP) + "Bound_" + data.Instance + "_" + to_string(data.NrRounds) + ".txt";
+    Input in;
+    if (!in.read_TTP(data.Instance)){
+        cout << "could not read " << data.Instance << endl;
+        return;
+    }
+    string OutputFilePath = "Instances" + std::string(PATHSEP) + "TTP" + std::string(PATHSEP) + "Bounds" + std::string(PATHSEP);
+    if (data.addMinTripConstraint){
+        OutputFilePath += "DLB_MinTrip_";
+    }
+    else{
+        OutputFilePath += "DLB_";
+    }
+    OutputFilePath += in.getInstanceName() + ".txt";
     cout << "Save file as " << OutputFilePath << endl;
     std::ofstream output_file(OutputFilePath);
-    BoundTTP(data.TimeLimit, data.Instance, data.NrRounds, output_file);
+    BoundTTP(data.TimeLimit, data.Instance, data.NrRounds, output_file, data.addMinTripConstraint);
     output_file.close();
 }
 
@@ -986,7 +982,7 @@ void BoundsTTP_All(const InputData& data){
         }
 
         for (int NrRoundsTTP: Rounds){
-            BoundTTP(data.TimeLimit, Instance, NrRoundsTTP, output_file);
+            BoundTTP(data.TimeLimit, Instance, NrRoundsTTP, output_file, data.addMinTripConstraint);
         }
     }
 

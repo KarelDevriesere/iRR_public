@@ -46,15 +46,16 @@ def ResultsInstances(InstanceSetting, iTTP=False):
     PathRoot = os.path.join(PathRoot, "Results")
 
     if iTTP:
-        Table = {inst: {"IP_value": -1, "IP_bound": -1, "IP_time": -1, "IP_gap": -1, "MiaoAlgo_Avg_value": [],        "MiaoAlgo_Avg_time": [], "MiaoAlgo_seed": [], "Miao_gap": -1} for inst in instances}
+        Table = {inst: {"IP_value": -1, "IP_gap": -1, "Initial_Avg_value": [], "Initial_seed": [], "Initial_gap": -1, "MiaoAlgo_Avg_value": [], "MiaoAlgo_Avg_time": [], "MiaoAlgo_seed": [], "Ip_TripModel_value": -1, "IP_TripModel_gap": -1, "Miao_gap": -1} for inst in instances}
     else:
         Table = {inst: {"IP_value": -1, "IP_bound": -1, "IP_time": -1, "MiaoAlgo_Avg_value": [],        "MiaoAlgo_Avg_time": [], "MiaoAlgo_seed": [], "Heuristic_Avg_value": [], "Heuristic_Avg_time": [], "Heuristic_HL": []} for inst in instances}
     TableMatchings = {inst: {"NrSuccesfullMatchings": [], "NrInfeasibleMatchings": []} for inst in instances}
     PathIP = os.path.join(PathRoot, "IP")
     PathHeuristic = os.path.join(PathRoot, "Heuristic") # HeuristicStartingFromMiao
-    PathMiaoAlgo = os.path.join(PathRoot, "MiaoAlgo")
+    PathMiaoAlgo = os.path.join(PathRoot, "MiaoAlgo08_01_2026")
+    PathTripModel = os.path.join(PathRoot, "IP_TripModel")
     if iTTP:
-        Paths = [PathIP, PathMiaoAlgo]
+        Paths = [PathIP, PathMiaoAlgo, PathTripModel]
     else:
         Paths = [PathIP, PathMiaoAlgo, PathHeuristic]
     for Path in Paths:
@@ -123,6 +124,12 @@ def ResultsInstances(InstanceSetting, iTTP=False):
                                 Table[Instance]["IP_time"] = 7200
                             else:
                                 Table[Instance]["IP_time"] = max_time
+                        elif method == "IP_TripModel":
+                            Table[Instance]["IP_TripModel_value"] = int(row[1])
+                            if abs(int(row[1]) - int(row[2])) > 1:
+                                Table[Instance]["IP_TripModel_time"] = 7200
+                            else:
+                                Table[Instance]["IP_TripModel_time"] = max_time
                         elif method == "MiaoAlgo":
                             Table[Instance]["MiaoAlgo_Avg_value"].append(int(row[1]))
                             Table[Instance]["MiaoAlgo_Avg_time"].append(int(row[2]))
@@ -138,6 +145,11 @@ def ResultsInstances(InstanceSetting, iTTP=False):
                             print(f'Unknown method = {method}')
                             breakpoint()
                         break
+                    elif iTTP and i > 1 and (row[0] == "0" or row[0] == 0):
+                        if method == "MiaoAlgo":
+                            Table[Instance]["Initial_Avg_value"].append(int(row[1]))
+                            Table[Instance]["Initial_seed"].append(seed)
+
 
 
     for inst in TableMatchings.keys():
@@ -169,7 +181,7 @@ def ResultsInstances(InstanceSetting, iTTP=False):
             output_file.write("Instance & IP_v & IP_b & IP_t & Miao_{av} & Miao_{at} & Miao_{bv} & Miao_{bt} & Heur_{av} & Heur_{at} & Heur_{bv} & Heur_{bt} & Heur_{bHL}\n")
         else:
             if iTTP:
-                output_file.write("Instance & Bound & IP_v & IP_b & IP_t & IP_gap & Miao_{av} & Miao_{at} & Miao_{bv} & Miao_{bt} & Miao_gap\n")
+                output_file.write("Instance & Bound & IP_v & IP_gap & Init_v & Init_gap & Miao_{av} & Miao_{at} & Miao_{bv} & Miao_{bt} & Miao_gap\n")
             else:
                 output_file.write("Instance & Bound & IP_v & IP_b & IP_t & Miao_{av} & Miao_{at} & Miao_{bv} & Miao_{bt} & Heur_{av} & Heur_{at} & Heur_{bv} & Heur_{bt} & Heur_{bHL}\n")
 
@@ -192,6 +204,9 @@ def ResultsInstances(InstanceSetting, iTTP=False):
             Heuristic_Best_value = -1
             Heuristic_Best_time = -1
             Heuristic_best_HL = -1
+            Initial_Avg_value = -1
+            Initial_Best_value = -1
+            InitialBestSeed = -1
             if not iTTP and len(Table[Instance]["Heuristic_Avg_value"]) > 0:
                 Heuristic_Avg_value = round(sum(Table[Instance]["Heuristic_Avg_value"]) / len(Table[Instance]["Heuristic_Avg_value"]),2)
                 Heuristic_Avg_time = round(sum(Table[Instance]["Heuristic_Avg_time"]) / len(Table[Instance]["Heuristic_Avg_time"]),2)
@@ -218,6 +233,16 @@ def ResultsInstances(InstanceSetting, iTTP=False):
                         MiaoAlgo_Best_time = Table[Instance]["MiaoAlgo_Avg_time"][i]
                         MiaoAlgoBestSeed = Table[Instance]["MiaoAlgo_seed"][i]
 
+            if iTTP and len(Table[Instance]["Initial_Avg_value"]) > 0:
+                Initial_Avg_value = round(sum(Table[Instance]["Initial_Avg_value"]) / len(Table[Instance]["Initial_Avg_value"]))
+                Initial_Best_value = Table[Instance]["Initial_Avg_value"][0]
+                InitialBestSeed = Table[Instance]["Initial_seed"][0]
+    
+                for i in range(1,len(Table[Instance]["Initial_Avg_value"])):
+                    if Table[Instance]["MiaoAlgo_Avg_value"][i] < MiaoAlgo_Best_value:
+                        Initial_Best_value = Table[Instance]["Initial_Avg_value"][i]
+                        InitialBestSeed = Table[Instance]["Initial_seed"][i]
+
             # print(f'{{"{Instance}",{MiaoAlgoBestSeed}}},')
             
             line = Instance + " & "
@@ -242,48 +267,66 @@ def ResultsInstances(InstanceSetting, iTTP=False):
                 
             line += str(bound) + " & "
 
-            if (Table[Instance]["IP_value"] <= MiaoAlgo_Best_value or MiaoAlgo_Best_value == -1) and (Table[Instance]["IP_value"] <= Heuristic_Best_value or Heuristic_Best_value == -1) and Table[Instance]["IP_value"] != -1:
+            if (Table[Instance]["IP_value"] <= MiaoAlgo_Best_value or MiaoAlgo_Best_value == -1) and (Table[Instance]["IP_value"] <= Heuristic_Best_value or Heuristic_Best_value == -1) and Table[Instance]["IP_value"] != -1 :
                 # line += "\\cellcolor{green!25}" 
-                line += "\\textbf{" + str(Table[Instance]["IP_value"]) + "}"
+                if not iTTP or (iTTP and Table[Instance]["IP_value"] <= Table[Instance]["IP_TripModel_value"]):
+                    line += "\\textbf{" + str(Table[Instance]["IP_value"]) + "}"
+                else:
+                    line += str(Table[Instance]["IP_value"])
             elif Table[Instance]["IP_value"] >= MiaoAlgo_Best_value and Table[Instance]["IP_value"] >= Heuristic_Best_value:
                 # line += "\\cellcolor{red!25}" 
-                line += "\\emph{" + str(Table[Instance]["IP_value"]) + "}"
+                if not iTTP or (iTTP and Table[Instance]["IP_value"] >= Table[Instance]["IP_TripModel_value"]):
+                    line += "\\emph{" + str(Table[Instance]["IP_value"]) + "}"
+                else:
+                    line += str(Table[Instance]["IP_value"]) 
             else:
                 line += str(Table[Instance]["IP_value"])  
 
-            if iTTP:
-                line += " & " + str(Table[Instance]["IP_bound"]) + " & " + str(Table[Instance]["IP_time"]) 
             # if iTTP:
             gap_ip = round(((Table[Instance]["IP_value"] - int(bound)) / Table[Instance]["IP_value"])*100,2)
             line += " & " + str(gap_ip) + " & "
 
-            # if iTTP:
-            line += str(MiaoAlgo_Avg_value)  +" & " + str(MiaoAlgo_Avg_time)  + " & "
+            if iTTP:
+                gap_initial = round(((Initial_Best_value - int(bound)) / Initial_Best_value)*100,2)
+                line += str(Initial_Best_value)  +" & " + str(gap_initial)  + " & "
             
             if (MiaoAlgo_Best_value <= Table[Instance]["IP_value"] or Table[Instance]["IP_value"] == -1) and (MiaoAlgo_Best_value <= Heuristic_Best_value or Heuristic_Best_value == -1) and MiaoAlgo_Best_value != -1:
                 # line += "\\cellcolor{green!25}" 
-                line += "\\textbf{" + str(MiaoAlgo_Best_value) + "}"
+                if not iTTP or (iTTP and MiaoAlgo_Best_value <= Table[Instance]["IP_TripModel_value"]):
+                    line += "\\textbf{" + str(MiaoAlgo_Best_value) + "}"
+                else:
+                    line += str(MiaoAlgo_Best_value) 
             elif MiaoAlgo_Best_value >= Table[Instance]["IP_value"] and MiaoAlgo_Best_value >= Heuristic_Best_value:
                 # line += "\\cellcolor{red!25}" 
-                line += "\\emph{" + str(MiaoAlgo_Best_value) + "}"
+                if not iTTP or (iTTP and MiaoAlgo_Best_value >= Table[Instance]["IP_TripModel_value"]):
+                    line += "\\emph{" + str(MiaoAlgo_Best_value) + "}"
+                else:
+                    line += str(MiaoAlgo_Best_value) 
             else:
                 line += str(MiaoAlgo_Best_value) 
 
-            if iTTP:
-                line += " & " + str(MiaoAlgo_Best_time)
-
-            # if iTTP:
             gap_miao = round(((MiaoAlgo_Best_value - int(bound)) / MiaoAlgo_Best_value)*100,2)
-            line += " & " + str(gap_miao) + " & "
+            line += " & " + str(gap_miao)
+
+            line += " & " + str(MiaoAlgo_Avg_value)  +" & " + str(MiaoAlgo_Avg_time)
+
             # line += " \\\\ \n"
 
             if iTTP:
+                gap_trip_model = round(((Table[Instance]["IP_TripModel_value"] - int(bound)) /  Table[Instance]["IP_TripModel_value"])*100,2)
+                if Table[Instance]["IP_TripModel_value"] <= MiaoAlgo_Best_value and Table[Instance]["IP_TripModel_value"] <= Table[Instance]["IP_value"]:
+                    line += " & \\textbf{" + str(Table[Instance]["IP_TripModel_value"]) + "}"
+                elif Table[Instance]["IP_TripModel_value"] <= MiaoAlgo_Best_value and Table[Instance]["IP_TripModel_value"] <= Table[Instance]["IP_value"]:
+                    line += " & \\emph{" + str(Table[Instance]["IP_TripModel_value"]) + "}"
+                else:
+                    line += " & " + str(Table[Instance]["IP_TripModel_value"])
+                line += " & " + str(gap_trip_model) + " & " + str(Table[Instance]["IP_TripModel_time"])
                 line += " \\\\ \n"
             else:
             
                 # line +=  " & " + str(Heuristic_Avg_value)  +" & " + str(Heuristic_Avg_time) + " & " 
 
-                line += str(Heuristic_Avg_value) + " & "
+                line += + " & " + str(Heuristic_Avg_value) + " & "
                 
                 if (Heuristic_Best_value <= Table[Instance]["IP_value"] or Table[Instance]["IP_value"] == -1) and (Heuristic_Best_value <= MiaoAlgo_Best_value or MiaoAlgo_Best_value == -1) and Heuristic_Best_value != -1:
                     # line += "\\cellcolor{green!25}" + str(Heuristic_Best_value)  
@@ -662,13 +705,14 @@ def Analyze(CM,TTP,FolderPathIP, FolderPathHeuristic, FolderPathBase):
 def AblationBoxPlots(InstanceSetting):
 
     instances = []
-    for key in NrRoundsTTP.keys():
-        for r in NrRoundsTTP[key]:
-            instances.append(key + "_" + str(r))
-    Bounds = {inst: -1 for inst in instances}
+    Bounds = {}
 
     bound = -1
     if InstanceSetting == "TTP" or InstanceSetting == "Hockey":
+        for key in NrRoundsTTP.keys():
+            for r in NrRoundsTTP[key]:
+                instances.append(key + "_" + str(r))
+        Bounds = {inst: -1 for inst in instances}
         if InstanceSetting == "TTP":
             FilePathBounds = os.path.join(os.path.join(os.path.join("Instances", "TTP"), "Bounds"), "BestBounds.txt")
         else:
@@ -681,56 +725,113 @@ def AblationBoxPlots(InstanceSetting):
             for i, row in enumerate(reader):
                 Bounds[row[0]]  = row[1]
                 print(f'Bound of {row[0]} = {row[1]}')
-                
-    Path_source = os.path.join("Ablation", "Source")
-    Path_source_bm = os.path.join("Ablation", "Source_BM")
-    Path_source_m = os.path.join("Ablation", "Source_M")
-    Path_source_ipts = os.path.join("Ablation", "Source_iPTS")
-    Path_source_ipts_bm = os.path.join("Ablation", "Source_iPTS_BM")
-    Path_source_ipts_m = os.path.join("Ablation", "Source_iPTS_M")
+
+    if InstanceSetting == "Miao":
+        instances = []
+        PathRoot = os.path.join("Instances", "Miao")
+        I = ["i01", "i02", "i03", "i04", "i05", "i06"]
+        S = ["0","1","2"]
+        B = ["3", "100"]
+        for i in I:
+            for s in S:
+                for b in B:
+                    instances.append(i+"_s"+s+"_b"+b)
+        Bounds = {inst: -1 for inst in instances}
+
+        PathIP = os.path.join(os.path.join(os.path.join("Instances", "Miao"), "Results"), "IP")
+
+        Instances = ""
+        for file_index, filename in enumerate(os.listdir(PathIP)):
+            if not filename.endswith(".txt"):
+                continue
+            FilePath = os.path.join(PathIP, filename)
+            if not os.path.exists(FilePath):
+                raise FileNotFoundError(f"The file '{FilePath}' does not exist.")
+                sys.exit(0)
+            with open(FilePath, 'r', newline="") as file:
+                reader = csv.reader(file)
+                max_time = 0
+                for i, row in enumerate(reader):
+                    if i == 0:
+                        inst = row[2]
+                        setting = str(row[3])
+                        nr_breaks = str(row[4])
+                        Instance = inst + "_s" + setting + "_b" + nr_breaks
+                    if i > 1 and (row[0] == "Final"): # or method == "Heuristic" and int(row[0]) == TIME_LIMIT): # row[0] == "Final"
+                        Bounds[Instance] = row[2]
+                        print(f'Bound {Instance} = {row[2]}')
+                        break
+    Path_base = "Ablation"
+    if InstanceSetting == "Miao":
+        Path_base = os.path.join(Path_base, "Miao")
+
+    Path_source = os.path.join(Path_base, "Source")
+    Path_source_bm = os.path.join(Path_base, "Source_BM")
+    Path_source_m = os.path.join(Path_base, "Source_M")
+    Path_source_ipts = os.path.join(Path_base, "Source_iPTS")
+    Path_source_ipts_bm = os.path.join(Path_base, "Source_iPTS_BM")
+    Path_source_ipts_m = os.path.join(Path_base, "Source_iPTS_M")
     Path_source_all = os.path.join(os.path.join(os.path.join(os.path.join("Instances"), "TTP"), "Results"), "Heuristic")
 
-    Config = ["Source", "BM", "M", "iPTS", "iPTS+BM", "iPTS+M", "iPTS+BM+M"]
-    Paths = [Path_source, Path_source_bm, Path_source_m, Path_source_ipts, Path_source_ipts_bm, Path_source_ipts_m, Path_source_all]
+    if InstanceSetting == "Miao":
+        Config = ["Source", "BM", "M", "iPTS"]
+        Paths = [Path_source, Path_source_bm, Path_source_m, Path_source_ipts]
+    else:
+        Config = ["Source", "BM", "M", "iPTS", "iPTS+BM", "iPTS+M", "iPTS+BM+M"]
+        Paths = [Path_source, Path_source_bm, Path_source_m, Path_source_ipts, Path_source_ipts_bm, Path_source_ipts_m, Path_source_all]
 
     data = []
 
     for Path, setting in zip(Paths, Config):
         for file_index, filename in enumerate(os.listdir(Path)):
-            if not filename.endswith(".txt"):
+            if not (filename.endswith("seed0.txt") or filename.endswith("seed11.txt") or filename.endswith("seed42.txt")): # miao instances were not all ready!
                 continue
             FilePath = os.path.join(Path, filename)
             if not os.path.exists(FilePath):
                 raise FileNotFoundError(f"The file '{FilePath}' does not exist.")
                 sys.exit(0)
-            pattern = re.compile(r'(?:^|_)([A-Z]+[0-9]+_[0-9]+)(?:_|\.|$)')
-            match = pattern.search(filename)
-            if match:
-                Instance = match.group(1)
-                if Instance == "N16_4":
-                    Instance = "NL16_4"
-                elif Instance == "N16_8":
-                    Instance = "NL16_8"
-                elif Instance == "N16_12":
-                    Instance = "NL16_12"
+            if InstanceSetting == "TTP":
+                pattern = re.compile(r'(?:^|_)([A-Z]+[0-9]+_[0-9]+)(?:_|\.|$)')
+                match = pattern.search(filename)
+                if match:
+                    Instance = match.group(1)
+                    if Instance == "N16_4":
+                        Instance = "NL16_4"
+                    elif Instance == "N16_8":
+                        Instance = "NL16_8"
+                    elif Instance == "N16_12":
+                        Instance = "NL16_12"
                 # print(f'Extracted {Instance} from {filename}')
-            else:
-                print(f'No match for {filename} in path {FilePath}')
-                return
+                else:
+                    print(f'No match for {filename} in path {FilePath}')
+                    return
             # print(FilePath)
             with open(FilePath, 'r', newline="") as file:
                 reader = csv.reader(file)
                 max_time = 0
                 for i, row in enumerate(reader):
+                    if InstanceSetting == "Miao" and i == 0:
+                        inst = row[2]
+                        if inst not in {"i03", "i04", "i05"}:
+                            break
+                        cap_setting = str(row[3])
+                        nr_breaks = str(row[4])
+                        Instance = inst + "_s" + cap_setting + "_b" + nr_breaks
                     if row[0] == "Final":
-                        data.append([setting, round(((int(row[1])-int(Bounds[Instance]))/int(row[1]))*100,2)])
+                        gap = round(((int(row[1])-int(Bounds[Instance]))/int(row[1])),2)
+                        if gap < 0.9:
+                            data.append([setting, gap])
+                        else:
+                            print(f'Gap in {filename} is {gap}!!')
                         # print(setting)
                         break
 
-    df = pd.DataFrame(data, columns=["Setting", "Gap"])
-    sns.boxplot(x="Setting", y="Gap", data=df)
-    plt.title("Boxplot by Category")
-    plt.savefig("test_ablation.png")
+    df = pd.DataFrame(data, columns=["Configuration", "Gap"])
+    sns.boxplot(x="Configuration", y="Gap", data=df)
+    if InstanceSetting == "Miao":
+        plt.savefig("ablation_Miao.png")
+    else:
+        plt.savefig("ablation_iTTP.png")
     plt.show()
 
 
@@ -796,8 +897,7 @@ if __name__ == "__main__":
     MakeLinePlotInstTimeL()
     breakpoint()
     '''
-    AblationBoxPlots("TTP")
-    breakpoint()
+    # AblationBoxPlots("Miao")
     # ResultsPercHAPs()
     # breakpoint()
     setting = sys.argv[1]
@@ -826,7 +926,7 @@ if __name__ == "__main__":
         # Create the folder if it doesn't exist
         print(f"The folder {FolderPath} does not exists")
 
-    ResultsInstances(setting, iTTP=False)
+    ResultsInstances(setting, iTTP=True)
     breakpoint()
     
     FolderPathIP = os.path.join(FolderPath, "IP")
