@@ -12,72 +12,6 @@ string PathInitialSolutionMiao(InputData data){
     return path;
 }
 
-unordered_map<string, int>BestSeedsMiaoAlgo = { // see Plotter
-    {"i01_s0_b3",0},
-    {"i01_s0_b100",2},
-    {"i01_s1_b3",2},
-    {"i01_s1_b100",2},
-    {"i01_s2_b3",4},
-    {"i01_s2_b100",3},
-    {"i02_s0_b3",4},
-    {"i02_s0_b100",4},
-    {"i02_s1_b3",2},
-    {"i02_s1_b100",0},
-    {"i02_s2_b3",4},
-    {"i02_s2_b100",3},
-    {"i03_s0_b3",-1},
-    {"i03_s0_b100",4},
-    {"i03_s1_b3",3},
-    {"i03_s1_b100",3},
-    {"i03_s2_b3",0},
-    {"i03_s2_b100",2},
-    {"i04_s0_b3",2},
-    {"i04_s0_b100",2},
-    {"i04_s1_b3",4},
-    {"i04_s1_b100",0},
-    {"i04_s2_b3",2},
-    {"i04_s2_b100",1},
-    {"i05_s0_b3",3},
-    {"i05_s0_b100",1},
-    {"i05_s1_b3",0},
-    {"i05_s1_b100",3},
-    {"i05_s2_b3",4},
-    {"i05_s2_b100",3},
-    {"i06_s0_b3",3},
-    {"i06_s0_b100",3},
-    {"i06_s1_b3",0},
-    {"i06_s1_b100",4},
-    {"i06_s2_b3",3},
-    {"i06_s2_b100",3}
-};
-
-const unordered_map<string,int>InstanceHL = {
-    {"I_BRA24_6",100000},
-    {"I_BRA24_12",10000},
-    {"I_BRA24_18",10000},
-    {"I_CIRC40_10",500},
-    {"I_CIRC40_20",500},
-    {"I_CIRC40_30",500},
-    {"I_CON40_10",1},
-    {"I_CON40_20",100},
-    {"I_CON40_30",1},
-    {"I_GAL40_10",1000},
-    {"I_GAL40_20",500},
-    {"I_GAL40_30",500},
-    {"I_INCR40_10",1000},
-    {"I_INCR40_20",500},
-    {"I_INCR40_30",500},
-    {"I_LINE40_10",1000},
-    {"I_LINE40_20",1000},
-    {"I_LINE40_30",500},
-    {"I_NL16_4",1000},
-    {"I_NL16_8",10000},
-    {"I_NL16_12",10000},
-    {"I_NFL32_8",1000},
-    {"I_NFL32_16",1000},
-    {"I_NFL32_24",1000}
-};
-
 const unordered_map<string,int>ConSolutions = {
     {"I_CON16_4",48}, 		// Via Benders -> optimal values, see map Code_Benders/Best
     {"I_CON16_8",96}, 		// Via Benders
@@ -691,6 +625,7 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
         }
         else{
             gur.iTTP();
+            gur.AddMinTripLowerBoundiTTP();
             // gur.Min2Factor();
         }
         // gur.iTTP_TripModel();
@@ -907,7 +842,34 @@ void BoundTTP(const int TimeLimit, const string Instance, const int NrRoundsTTP,
     int UB = 0;
     double gap = 0;
     gur.setTimeLimit(TimeLimit); 
-    // This assumes that a bound is known for the corresponding constant distance ttp instance
+
+    GurSolver gur_relax(in);
+    gur_relax.BoundTTP_AllTeams(addMinTripConstraint, ConSolutions.at("I_CON" + std::to_string(in.getNrTeams()) + "_" + std::to_string(in.getNrRounds())));
+    gur_relax.solve();
+    cin.get();
+
+    /*
+    // Generate initial solution with Vizing:
+    VizingConstruction(sol, 0);
+    cout << "travel distance = " << sol.ComputeTravelCostTTP() << endl;
+    gur.InitializeMasterProblem(sol);
+    int it = 0;
+    while (true){
+        gur.solve();
+        if (it++ % 1 == 0){
+            cout << "Travel time = " << gur.getBestObjValue() << endl;
+        }
+        if (!gur.getDualVariablesiTTPBounds()){
+            break;
+        }
+    }
+    cout << "CONVERGED" << endl;
+    // Solve problem with all variables as binary
+    gur.ConvertVariablesToBinary();
+    gur.solve();
+    cin.get();
+    */
+
     gur.BoundTTP_AllTeams(addMinTripConstraint, ConSolutions.at("I_CON" + std::to_string(in.getNrTeams()) + "_" + std::to_string(in.getNrRounds())));
     gur.solve();
     LB = gur.getBestBound();
@@ -923,6 +885,7 @@ void BoundTTP(const int TimeLimit, const string Instance, const int NrRoundsTTP,
     */
 
     cout << "LB for instance " << Instance << " with " << NrRoundsTTP << " = " << LB << ", UB = " << UB << ", gap = " << gap << endl;
+    cin.get();
 
     output_file << Instance << "," << LB << "," << UB << "," << gap << "," << NrRoundsTTP << "\n";
 }

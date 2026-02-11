@@ -9,7 +9,7 @@
 Heuristic_CM::Heuristic_CM(const std::unordered_map<Move, string>& moves, // moves, weights and in are defined in main
            const std::unordered_map<Move, double>& weights, std::mt19937& g, const int HistoryLength, const int obj): LAHC<Move>(moves, weights, g){
             SetHistoryLength(HistoryLength);
-            InitializeHistoricValues(obj);
+            InitializeHistoricValues(obj,obj);
 
             std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
             setStartTime(start_time);
@@ -266,8 +266,18 @@ void Heuristic_CM::SelectMatching(Solution& sol, const bool bipartite){
     // cout << "do MoveMWPM" << endl;
     // I only do 1 alternating cycle in case of M+PR, because path can use edge of other cycle, did not want to deal with this
     vector<vector<pair<int,int>>>AlternatingCycles;
-    if (/*sol.getSetting() == Setting::TTP && sol.getNrRounds() <= sol.getNrTeams() && !bipartite && !MinCostM*/ false){ // TEST Alternating cycle!!
-        AlternatingCycles = GreedyAlternatingCycle(sol, r, gen);
+    if (sol.getSetting() == Setting::TTP && !MinCostM){ // TEST Alternating cycle!!
+        // cout << "Greedy alternating cycle!" << endl;
+        if (!bipartite || sol.getNrRounds() <= 2){
+            AlternatingCycles = GreedyAlternatingCycle(sol, r, gen, bipartite);
+            if (AlternatingCycles.empty()){
+                cout << "No alternating cycle" << endl;
+                std::abort();
+            }
+        }
+        else{
+            AlternatingCycles = iPRS(sol, r, l, bipartite, includeHAPs, CM, gen, MinCostM);
+        }
     }
     else{
         AlternatingCycles = iPRS(sol, r, l, bipartite, includeHAPs, CM, gen, MinCostM);
@@ -320,9 +330,6 @@ void Heuristic_CM::SelectMatching(Solution& sol, const bool bipartite){
             assert(cost_before == sol.ComputeTotalCost());
 #endif
         }
-        else{
-            break;
-        }
     }
     if (AlternatingCycles.empty()){
         // do this here because update is not called when cycles are empty
@@ -365,7 +372,6 @@ void Heuristic_CM::SelectBalancedCycle(Solution& sol){
 #ifndef NDEBUG
     cost_before = sol.ComputeTotalCost();
 #endif
-    cost_before = sol.ComputeTotalCost();
 
     // assert(Cycle[0][0] == Cycle[(int)Cycle.size()-1][1]);
     // cout << "Reverse path" << endl;

@@ -34,8 +34,11 @@ class GurSolver : public Input
         vector<vector<vector<GRBVar>>>z_trs; // TTP trip model
         vector<vector<HA>>Orientation;
 
-        vector<vector<vector<int>>>Trips;
-	    vector<vector<int>>CostTrips;
+        vector<GRBConstr> C1; // iTTP bounds
+	    vector<GRBConstr> C2; // iTTP bounds
+	    vector<vector<GRBConstr>> C3; // iTTP bounds
+        vector<vector<vector<int>>>Trips; // iTTP bounds
+        vector<vector<int>>CostTrips; // iTTP bounds
         vector<vector<vector<vector<int>>>>TripsRound;
 	    vector<vector<vector<int>>>CostTripsRound;
         vector<vector<int>>StartRound;
@@ -158,9 +161,20 @@ class GurSolver : public Input
         pair<vector<vector<int>>,vector<int>>GenerateTrips(const int t, const vector<int>& TeamsList);
         pair<vector<vector<int>>,vector<int>>GenerateTrips_TripModel(const int t, const vector<int>& TeamsList, const int MinTripLength);
         void BoundTTP_AllTeams(const bool addMinTripConstraint, const int minTrips);
+
+        void InitializeMasterProblem(Solution& sol);
+        void UpdateMasterProblem(const int t, const vector<int>& Trip, const int TripCost);
+        bool getDualVariablesiTTPBounds();
+        bool SubProblemiTTPBounds(const int t, const int alpha, const vector<double>& beta, const vector<vector<double>>& gamma);
+        void ConvertVariablesToBinary();
+
         void BoundTTP(const int t);
         // Add LB to the model
         void AddLowerBoundiTTP(const int LB);
+        void AddMinTripLowerBoundiTTP();
+        void AddOddSetConstraint(const int r, const vector<bool>InSubset, const int U);
+
+        bool AddCliqueConstraint();
 };
 
 #endif

@@ -99,9 +99,11 @@ class MetaBase{ // Everything that can be used for all metaheuristics
             if (current_obj <= best_obj){
                 std::cout << Moves.at(CurrentMove) << ": " << "\033[32m" << current_obj << "\033[0m" << std::endl;
             }
+            /*
             else{
                 std::cout << Moves.at(CurrentMove) << ": " << "\033[31m" << current_obj << "\033[0m" << std::endl;
             }
+            */
         }
 
         void setTimeLimit_meta(const double TL){
@@ -185,7 +187,7 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
         vector<int>HistoricValues;
         int HistoryLength = 1; // default: Hill Climbing
 
-        long MAX_IT = 50000;
+        long MAX_IT = 100000;
         bool DynamicHL = false;
         double PerturbeValue = 1;
         double PerturbeIncrease = 0.005;
@@ -204,8 +206,17 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
             PerturbeIncrease = p;
         }
 
-        void InitializeHistoricValues(const int obj){
-            HistoricValues = vector<int>(HistoryLength, obj);
+        void InitializeHistoricValues(const int Lb, const int Ub){
+            HistoricValues = vector<int>(HistoryLength);
+            std::uniform_int_distribution<>dist_HL_value = std::uniform_int_distribution<>(Lb,Ub);
+            for (int v = 0; v < HistoryLength; ++v){
+                if (Lb != Ub){
+                    HistoricValues[v] = dist_HL_value(this->gen);
+                }
+                else{
+                    HistoricValues[v] = Lb;
+                }
+            }
         }
 
         void SetMaxIt(const int limit){

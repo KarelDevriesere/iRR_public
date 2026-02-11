@@ -62,7 +62,7 @@ struct InputData{
     {Move::iPTS_Random_PR, "iPTS_Random_PR"}, 
     /*{Move::MinCost_M_MinCost_PR, "MinCost_M_MinCost_PR"},*/ 
     {Move::MinCost_M_Random_PR, "MinCost_M_Random_PR"},
-    /*{Move::Random_M_MinCost_PR, "Random_M_MinCost_PR"},*/ 
+    /*{Move::Random_M_MinCost_PR, "Random_M_MinCost_PR"},*/
     {Move::Random_M_Random_PR, "Random_M_Random_PR"}}; 
 
     string Instance;
@@ -73,7 +73,7 @@ struct InputData{
     double PerturbeIncrease = 0.005;
     int NrRounds = 4; // TTP
     int TimeLimit = 7200;
-    long MaxIt = 50000;
+    long MaxIt = 100000;
     bool TTP = false; // TTP
     bool Base = false;
     long ConstrViolationCost = 100000;

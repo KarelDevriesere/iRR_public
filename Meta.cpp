@@ -182,22 +182,25 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
             cout << "Found obj = " << obj << ", current_obj = " << this->current_obj << ", it_idle = " << this->it_idle << endl;
             */
             if (obj >= this->current_obj){
+                /*
+                if (PerturbeValue > 1){
+                    cout << "obj = " << obj << endl;
+                    cout << "current_obj = " << this->current_obj << endl;
+                }
+                */
                 this->it_idle++;
             }
             else{
-                cout << "Reset idle to 0" << endl;
+                // cout << "Reset idle to 0" << endl;
                 this->it_idle = 0;
             }
             bool diff = false;
             if (obj <= this->current_obj || obj < HistoricValues.at(v)){
-#ifdef PRINT
-#if PRINT == 1
+
                 if (obj != this->current_obj){
-                    cout << "Accept solution of " << obj << endl;
                     diff = true;
                 }
-#endif
-#endif
+
                 this->current_obj = obj; 
                 this->it_accepted++;
                 SolutionAccepted = true;
@@ -207,13 +210,18 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
             if (obj < HistoricValues.at(v)){
                 HistoricValues.at(v) = obj;
             }
+            if (obj < this->best_obj){
+                this->best_obj = obj;
+            }
 
             this->UpdateTimeStamps();
 #ifdef PRINT
 #if PRINT == 1
+/*
             if (this->it_idle % 1000 == 0){
                 cout << "* It. " << this->it << " Idle: " << this->it_idle << endl;
             }
+*/
 #endif
 #endif
             ++this->it;
@@ -253,19 +261,29 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
 #if PRINT == 1
                         cout << "Previous HL = " << HistoryLength << endl;
                         cout << "New HL = " << HistoryLength << endl;
+                        cout << "Previous PerturbValue = " << PerturbeValue << endl;
 #endif
 #endif
                         PerturbeValue += PerturbeIncrease;
 #ifdef PRINT
 #if PRINT == 1
-                        cout << "Previous PerturbValue = " << PerturbeValue << endl;
                         cout << "New PerturbValue = " << PerturbeValue << endl;
-                        cout << "Initialize list with " << PerturbeValue*this->best_obj << endl;
+                        cout << "Best obj = " << this->best_obj << endl;
+                        // cout << "Initialize list with " << PerturbeValue*this->best_obj << endl;
+
+                        int Lb = 1.005*this->best_obj;
+                        int Ub = 1.25*this->best_obj;
 #endif
 #endif
-                        InitializeHistoricValues(PerturbeValue*this->best_obj);
+                        InitializeHistoricValues(Lb, Ub);
 #ifdef PRINT
 #if PRINT == 1
+                        cout << "---- Historic values ----" << endl;
+                        for (auto& v: HistoricValues){
+                            cout << v << ", ";
+                        }
+                        cout << endl;
+                        cout << "-------------------------" << endl;
 
                         cout << "Nr times Neighborhoods are selected" << endl;
                         for (const auto& [move, nr]: this->NrChosen){
@@ -279,9 +297,8 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
                         this->it_idle = 0;
                         this->it = 0;
 
-                        ResetSolutionAfterMove = true;
-
-                        this->current_obj = this->best_obj;
+                        ResetSolutionAfterMove = false;
+                        // cin.get();
                     }
                 }
             }
