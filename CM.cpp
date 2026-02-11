@@ -843,11 +843,6 @@ void BoundTTP(const int TimeLimit, const string Instance, const int NrRoundsTTP,
     double gap = 0;
     gur.setTimeLimit(TimeLimit); 
 
-    GurSolver gur_relax(in);
-    gur_relax.BoundTTP_AllTeams(addMinTripConstraint, ConSolutions.at("I_CON" + std::to_string(in.getNrTeams()) + "_" + std::to_string(in.getNrRounds())));
-    gur_relax.solve();
-    cin.get();
-
     /*
     // Generate initial solution with Vizing:
     VizingConstruction(sol, 0);
@@ -885,8 +880,6 @@ void BoundTTP(const int TimeLimit, const string Instance, const int NrRoundsTTP,
     */
 
     cout << "LB for instance " << Instance << " with " << NrRoundsTTP << " = " << LB << ", UB = " << UB << ", gap = " << gap << endl;
-    cin.get();
-
     output_file << Instance << "," << LB << "," << UB << "," << gap << "," << NrRoundsTTP << "\n";
 }
 

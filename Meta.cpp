@@ -270,11 +270,11 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
                         cout << "New PerturbValue = " << PerturbeValue << endl;
                         cout << "Best obj = " << this->best_obj << endl;
                         // cout << "Initialize list with " << PerturbeValue*this->best_obj << endl;
-
+#endif
+#endif
                         int Lb = 1.005*this->best_obj;
                         int Ub = 1.25*this->best_obj;
-#endif
-#endif
+                        
                         InitializeHistoricValues(Lb, Ub);
 #ifdef PRINT
 #if PRINT == 1
