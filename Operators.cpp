@@ -1795,7 +1795,6 @@ void GoBackToOldCycle(Solution& sol, vector<pair<int,int>>& AlternatingCycle, co
 
 vector<vector<pair<int,int>>>GreedyAlternatingCycle(Solution& sol, const int r, std::mt19937& gen, const bool bipartite){
     const int N = sol.getNrTeams();
-    const int C = sol.getNrRounds();
     std::uniform_int_distribution<>dist_team = std::uniform_int_distribution<>(0,N-1);
     const int start = dist_team(gen);
     int i = start;
@@ -1886,5 +1885,79 @@ vector<vector<pair<int,int>>>GreedyAlternatingCycle(Solution& sol, const int r, 
     }
     AlternatingCycle.back() = E;
     return {AlternatingCycle};
+}
+
+bool DFS(int u, int p){
+    /****** *******/
+    /* TODO  TODO */
+    /****** *******/
+    return true;
+}
+
+void AlternatingCycleBM(Solution& sol, const int r, std::mt19937& gen){
+    // Here, we prove a general wat for finding an alternating cycle where edges have "the same orientation"
+    // We first construct nodes for every uncolored edge and every colored edge
+
+    const int N = sol.getNrTeams();
+    const int C = N/2;
+    const int R = sol.getNrRounds();
+
+    vector<array<int,2>>Edges; // first N/2 edges are colored edges
+
+    int i,j,k;
+    vector<bool>NodeSeen(N, false);
+    for (i = 0; i < N; ++i){
+        if (!NodeSeen[i]){
+            j = sol.TeamColorOpp[i][r];
+            NodeSeen[j] = true;
+            if (sol.Orientation[i][r] == HA::H){
+                Edges.push_back({i,j});
+                // cout << i << "<-" << j << endl;
+            }
+            else{
+                Edges.push_back({j,i});
+                // cout << i << "->" << j << endl;
+            }
+        }
+    }
+
+    assert(Edges.size() == C);
+
+    for (i = 0; i < N; ++i){
+        for (k = i+1; k < N; ++k){
+            if (sol.MatchColor[i][k] == -1){
+                Edges.push_back({i,k});
+                // cout << i << "--" << k << endl;
+            }
+        }
+    }
+
+    vector<vector<int>>Adj(Edges.size());
+
+    for (i = 0; i < C; ++i){
+        for (int i1: Edges[i]){
+            for (j = C; j < Edges.size(); ++j){
+                for (int j1 = 0; j1 < 2; ++j1){
+                    if (i1 == Edges[j][j1] && (sol.Orientation[i1][r] != sol.Orientation[Edges[j][(j1+1)%2]][r])){
+                        Adj[i].push_back(j);
+                        Adj[j].push_back(i);
+                        // cout << "(" << Edges[i][0] << ", " << Edges[i][1] << ") ---- " << "{" << Edges[j][0] << ", " << Edges[j][1] << "}" << endl;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    vector<int>Cycle;
+    vector<bool>Visited;
+
+    for (i = 0; i < N; ++i){
+        if (!Visited[i]){
+            if (DFS(i,-1)){
+                break;
+            }
+        }
+    }
 }
 

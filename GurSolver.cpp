@@ -48,6 +48,17 @@ void GurSolver::WarmStart(Solution& sol){
 	}
 }
 
+bool IsTeamInTrip(const int t, const vector<int>& trip){
+	bool TeamFound = false;
+	for (auto& opp: trip){
+		if (opp == t){
+			TeamFound = true;
+			break;
+		}
+	}
+	return TeamFound;
+}
+
 pair<vector<vector<int>>,vector<int>>ExtractTripsCurrentSolution(const int t, Solution& sol){
 	int r = 0;
 	vector<vector<int>>Trips;
@@ -472,16 +483,19 @@ void GurSolver::iTTP_TripModel(){
 
 	cout << "NrTrips = " << NrTrips << endl;
 
+	int NrTripVariables = 0;
+
 	z_trs = vector<vector<vector<GRBVar>>>(N, vector<vector<GRBVar>>(NrTrips, vector<GRBVar>(R)));
 	for (t = 0; t < N; ++t){
 		for (r = 0; r < NrTrips; ++r){
-			for (s = 0; s < LastStartRoundTrip[t][r]; ++s){
-				z_trs[t][r][s] = model.addVar(0, 1, 0.0, GRB_BINARY/*, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]"*/);
+			for (s = 0; s <= LastStartRoundTrip[t][r]; ++s){
+				z_trs[t][r][s] = model.addVar(0, 1, 0.0, GRB_BINARY /*, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]"*/);
+				NrTripVariables++;
 			}
 		}
 	}
 
-	cout << "Nr of trip variables = " << N*R*NrTrips << endl;
+	cout << "Nr of trip variables = " << NrTripVariables << endl;
 
 	y = vector<vector<GRBVar>>(N, vector<GRBVar>(NrHaps));
 	for (t = 0; t < N; ++t){
@@ -502,46 +516,19 @@ void GurSolver::iTTP_TripModel(){
 		model.addConstr(sum_h == 1/*, "c1"*/); // each team is assigned to exactly 1 hap
 	}
 
-	z_trs = vector<vector<vector<GRBVar>>>(N, vector<vector<GRBVar>>(NrTrips, vector<GRBVar>(R)));
-	for (t = 0; t < N; ++t){
-		for (r = 0; r < NrTrips; ++r){
-			int L = Trips[t][r].size();
-			for (s = 0; s < R; ++s){
-				z_trs[t][r][s] = model.addVar(0, 1, 0.0, GRB_CONTINUOUS, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]");
-				if (s+L > R){
-					z_trs[t][r][s].set(GRB_DoubleAttr_UB, 0.0); // trip cannot start in this round
-				}
-			}
-		}
-	}
-
 	cout << "c2" << endl;
 
 	for (t = 0; t < N; ++t){
 		for (i = t+1; i < N; ++i){
 			GRBLinExpr sum_rs = 0;
 			for (r = 0; r < NrTrips; r++){
-				bool team_found = false;
-				for (auto& opp: Trips[i][r]){
-					if (opp == t){
-						team_found = true;
-						break;
-					}
-				}
-				if (team_found){
-					for (s = 0; s < LastStartRoundTrip[i][r]; s++){
+				if (IsTeamInTrip(t, Trips[i][r])){
+					for (s = 0; s <= LastStartRoundTrip[i][r]; s++){
 						sum_rs += z_trs[i][r][s];
 					}
 				}
-				team_found = false;
-				for (auto& opp: Trips[t][r]){
-					if (opp == i){
-						team_found = true;
-						break;
-					}
-				}
-				if (team_found){
-					for (s = 0; s < LastStartRoundTrip[t][r]; s++){
+				if (IsTeamInTrip(i, Trips[t][r])){
+					for (s = 0; s <= LastStartRoundTrip[t][r]; s++){
 						sum_rs += z_trs[t][r][s];
 					}
 				}
@@ -573,13 +560,16 @@ void GurSolver::iTTP_TripModel(){
 		}
 	}
 
-	cout << "c$" << endl;
+	cout << "c4" << endl;
 
 	for (t = 0; t < N; ++t){
 		for (s = 0; s < R; s++){
 			GRBLinExpr sum_rsh = 0;
 			for (i = 0; i < N; ++i){
 				for (r = 0; r < NrTrips; ++r){
+					if (!IsTeamInTrip(t, Trips[i][r])){
+						continue;
+					}
 					int L = Trips[i][r].size();
 					for (int s_ = max(s-L+1, 0); s_ <= s; s_++){
 						if (s_ > LastStartRoundTrip[i][r]){
@@ -607,7 +597,7 @@ void GurSolver::iTTP_TripModel(){
 
 	for (t = 0; t < getNrTeams(); ++t){
 		for (r = 0; r < NrTrips; ++r){
-			for (s = 1; s < R; ++s){
+			for (s = 1; s <= LastStartRoundTrip[t][r]; ++s){
 				GRBLinExpr sum_h = 0;
 				for (h = 0; h < getNrHAPs(); ++h){
 					if (getModeHAPRound(h,s-1) == HA::H){
@@ -625,7 +615,7 @@ void GurSolver::iTTP_TripModel(){
 	Objective = 0;
 	for (t = 0; t < N; ++t){
 		for (r = 0; r < NrTrips; ++r){
-			for (s = 0; s < LastStartRoundTrip[t][r]; ++s){
+			for (s = 0; s <= LastStartRoundTrip[t][r]; ++s){
 				Objective += CostTrips[t][r]*z_trs[t][r][s];
 			}
 		}
@@ -636,122 +626,108 @@ void GurSolver::iTTP_TripModel(){
 	cout << "done" << endl;
 }
 
-bool IsTeamInTrip(const int t, const vector<int>& trip){
-	bool TeamFound = false;
-	for (auto& opp: trip){
-		if (opp == t){
-			TeamFound = true;
-			break;
-		}
-	}
-	return TeamFound;
-}
-
-bool TripsConflict(
-    int t1, int r1,
-    int t2, int r2,
-    const vector<vector<vector<int>>>& Trips)
-{
-    // Same trip
-    if (t1 == t2 && r1 == r2)
-        return false;
-
-    // Case 1: same team, overlapping opponents
-    if (t1 == t2) {
-        for (int opp1 : Trips[t1][r1]) {
-            for (int opp2 : Trips[t2][r2]) {
-                if (opp1 == opp2)
-                    return true;
-            }
-        }
-    }
-
-    // Case 2: mutual containment (pair conflict)
-    bool t1_contains_t2 = false;
-    bool t2_contains_t1 = false;
-
-    for (int opp : Trips[t1][r1])
-        if (opp == t2)
-            t1_contains_t2 = true;
-
-    for (int opp : Trips[t2][r2])
-        if (opp == t1)
-            t2_contains_t1 = true;
-
-    if (t1_contains_t2 && t2_contains_t1)
-        return true;
-
-    return false;
-}
-
-bool GurSolver::AddCliqueConstraint(){
-	const int N = getNrTeams();
-	vector<pair<int,int>> fractionalVars;
-	int v,t,r;
-	int NrCliquesAdded = 0;
-	for (t = 0; t < N; ++t){
-		for (r = 0; r < Trips[t].size(); ++r){
-			if (z_tr[t][r].get(GRB_DoubleAttr_X) > 0.000001){
-				// cout << "z[" << t << "][" << r << "] = " << z_tr[t][r].get(GRB_DoubleAttr_X) << endl;
-				fractionalVars.emplace_back(t,r);
+void LabelOpponents(const int i, const int N, vector<bool>& NodeSeen, int& NrClique, const vector<vector<int>>& v){
+	for (int j = 0; j < N; ++j){
+		if ((i < j && v[i][j] > 0.00001) || (j < i && v[j][i] > 0.00001)){
+			if (!NodeSeen[j]){
+				NodeSeen[j] = true;
+				NrClique++;
+				LabelOpponents(j, N, NodeSeen, NrClique, v);
 			}
 		}
 	}
-	for (int v = 0; v < fractionalVars.size(); ++v){
-		vector<pair<int,int>> clique;
-    	clique.push_back(fractionalVars[v]);
+}
 
-    	double cliqueSum = z_tr[fractionalVars[v].first][fractionalVars[v].second].get(GRB_DoubleAttr_X);
+class CliqueCallback : public GRBCallback {
+public:
+    int N;
+	int R;
+    vector<vector<GRBVar>> x;
 
-		for (int j = v + 1; j < fractionalVars.size(); ++j) {
+    CliqueCallback(int n, int r, vector<vector<GRBVar>> vars) : N(n), R(r), x(vars) {}
 
-			bool compatible = true;
-
-			for (auto& v : clique) {
-				if (!TripsConflict(
-						v.first, v.second,
-						fractionalVars[j].first,
-						fractionalVars[j].second,
-						Trips)) {
-					compatible = false;
+protected:
+    void callback() {
+        if (where == GRB_CB_MIPSOL) { // Found a new integer solution
+            // 1. Get current solution values
+			// cout << "Cliquer" << endl;
+			int i,j;
+			vector<vector<int>>v(N, vector<int>(N, 0));
+			for (i = 0; i < N; ++i) {
+                for (j = i+1; j < N; ++j) {
+					v[i][j] = getSolution(x[i][j]);
+                }
+            }
+            // 2. Identify cliques (e.g., using a simple Greedy search)
+			vector<bool>NodeSeen(N, false);
+			i = 0;
+			int NrVisited = 0;
+			int NrClique = 0;
+			// cout << "Check opponents" << endl;
+			while (true){
+				LabelOpponents(i, N, NodeSeen, NrClique, v);
+				NrVisited += NrClique;
+				if (NrVisited >= N || NrClique % 2 == 1){
 					break;
 				}
+				else{
+					for (i = 0; i < N; ++i){
+						if (!NodeSeen[i]){
+							break;
+						}
+					}
+					for (j = 0; j < N; ++j){
+						NodeSeen[j] = false;
+					}
+					NrClique = 0;
+				}
 			}
+			
+            if (NrClique % 2 == 1){
+				// cout << "NrClique = " << NrClique << endl;
+				// cout << "Clique constraint: ";
+				GRBLinExpr expr = 0;
+				for (i = 0; i < N; ++i) {
+					if (!NodeSeen[i]){
+						continue;
+					}
+					for (j = i+1; j < N; ++j) {
+						if (!NodeSeen[j]){
+							continue;
+						}
+						expr += x[i][j];
+						// cout << "+ x[" << i << "][" << j << "]";
+					}
+				}
+				// cout << endl;
+				addLazy(expr <= NrClique*(R/2) - R/2); 
+				// cin.get();
+			}
+        }
+    }
+};
 
-			if (compatible) {
-				clique.push_back(fractionalVars[j]);
-				cliqueSum +=
-					z_tr[fractionalVars[j].first]
-						[fractionalVars[j].second]
-							.get(GRB_DoubleAttr_X);
+void GurSolver::AddSymmetryBreakingLINE(){
+	const int N = getNrTeams(), R = getNrRounds();
+	int i,j,r,s;
+	for (i = 0; i < N/2; ++i){
+		j = N-i-1;
+		GRBLinExpr expr = 0;
+		for (r = 0; r < Trips[i].size(); ++r){
+			for (s = 0; s < R; ++s){
+				expr += CostTrips[i][r]*z_tr[i][r];
 			}
 		}
-
-		if (cliqueSum > 1.0 + 1e-6) {
-
-			GRBLinExpr cut = 0;
-
-			for (auto& v : clique) {
-				cut += z_tr[v.first][v.second];
+		for (r = 0; r < Trips[j].size(); ++r){
+			for (s = 0; s < R; ++s){
+				expr -= CostTrips[j][r]*z_tr[j][r];
 			}
-
-			model.addConstr(cut <= 1);
-
-			NrCliquesAdded++;
-
-			// cout << "Added clique cut of size " << clique.size() << " with sum = " << cliqueSum << endl;
 		}
-	}
-	model.update();
-	if (NrCliquesAdded > 0){
-		return true;
-	}
-	else{
-		return false;
+		model.addConstr(expr >= 0);
 	}
 }
 
-void GurSolver::BoundTTP_AllTeams(const bool addMinTripConstraint, const int minTrips){
+void GurSolver::BoundTTP_AllTeams(const bool addMinTripConstraint, const int minTrips, const bool addColoringConstraint){
 
 	const int N = getNrTeams();
 
@@ -845,6 +821,88 @@ void GurSolver::BoundTTP_AllTeams(const bool addMinTripConstraint, const int min
 		}
 	}
 	model.setObjective(Objective, GRB_MINIMIZE);
+
+	// Extend model: matches should be colorable!!
+
+	// LOWER BOUND //
+
+	const int R = getNrRounds();
+	int s;
+
+	if (addColoringConstraint){ // callback is destroyed after if function, so put model.optimize() in if block
+		vector<vector<GRBVar>>u = vector<vector<GRBVar>>(N, vector<GRBVar>(N));
+		for (t = 0; t < N; ++t){
+			for (i = t+1; i < N; ++i){
+				u[t][i] = model.addVar(0, 1, 0.0, GRB_BINARY);
+				GRBLinExpr sum_ij = 0;
+				for (r = 0; r < Trips[t].size(); ++r){
+					if (IsTeamInTrip(i, Trips[t][r])){
+						sum_ij += z_tr[t][r];
+					}
+				}
+				for (r = 0; r < Trips[i].size(); ++r){
+					if (IsTeamInTrip(t, Trips[i][r])){
+						sum_ij += z_tr[i][r];
+					}
+				}
+				sum_ij -= u[t][i];
+				model.addConstr(sum_ij == 0);
+			}
+		} 
+
+		model.set(GRB_IntParam_LazyConstraints, 1);
+		CliqueCallback cb(N, R, u);
+		model.setCallback(&cb);
+
+		model.optimize();
+	}
+	else{
+		model.optimize();
+	}
+
+	/*
+	x = vector<vector<vector<GRBVar>>>(N, vector<vector<GRBVar>>(N, vector<GRBVar>(R)));
+	for (t = 0; t < N; ++t){
+		for (i = t+1; i < N; ++i){
+			for (s = 0; s < R; ++s){
+				x[t][i][s] = model.addVar(0, 1, 0.0, GRB_BINARY);
+			}
+			GRBLinExpr sum_ij = 0;
+			for (r = 0; r < Trips[t].size(); ++r){
+				if (IsTeamInTrip(i, Trips[t][r])){
+					sum_ij += z_tr[t][r];
+				}
+			}
+			for (r = 0; r < Trips[i].size(); ++r){
+				if (IsTeamInTrip(t, Trips[i][r])){
+					sum_ij += z_tr[i][r];
+				}
+			}
+			for (s = 0; s < R; ++s){
+				sum_ij -= x[t][i][s];
+			}
+			model.addConstr(sum_ij == 0);
+		}
+	} 
+
+	for (t = 0; t < N; ++t){
+		for (s = 0; s < R; ++s){
+			GRBLinExpr sum_t = 0;
+			for (i = 0; i < t; ++i){
+				sum_t += x[i][t][s];
+			}
+			for (i = t+1; i < N; ++i){
+				sum_t += x[t][i][s];
+			}
+			model.addConstr(sum_t == 1);
+		}
+	}
+	*/
+
+	// AddSymmetryBreakingLINE();
+
+	// model.optimize();
+
 }
 
 void GurSolver::InitializeMasterProblem(Solution& sol) {
@@ -2214,6 +2272,9 @@ void GurSolver::SaveSolution(Solution& sol){
 			// cout << "Trips team " << t << ": " << endl;
 			for (int r = 0; r < NrTrips; ++r){
 				for (int s = 0; s < getNrRounds(); ++s){
+					if (s > getNrRounds()-Trips[t][r].size()){
+						continue;
+					}
 					if (z_trs[t][r][s].get(GRB_DoubleAttr_X) > 0.9){
 						// cout << "-------" << endl;
 						// cout << "start trip in " << s << endl;

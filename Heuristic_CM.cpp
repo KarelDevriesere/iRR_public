@@ -275,6 +275,9 @@ void Heuristic_CM::SelectMatching(Solution& sol, const bool bipartite){
                 std::abort();
             }
         }
+        else if (bipartite && !MinCostM){
+            AlternatingCycleBM(sol, r, gen);
+        }
         else{
             AlternatingCycles = iPRS(sol, r, l, bipartite, includeHAPs, CM, gen, MinCostM);
         }

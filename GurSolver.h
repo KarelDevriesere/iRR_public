@@ -160,7 +160,7 @@ class GurSolver : public Input
         // For TTP bounds:
         pair<vector<vector<int>>,vector<int>>GenerateTrips(const int t, const vector<int>& TeamsList);
         pair<vector<vector<int>>,vector<int>>GenerateTrips_TripModel(const int t, const vector<int>& TeamsList, const int MinTripLength);
-        void BoundTTP_AllTeams(const bool addMinTripConstraint, const int minTrips);
+        void BoundTTP_AllTeams(const bool addMinTripConstraint, const int minTrips, const bool addColoringConstraint);
 
         void InitializeMasterProblem(Solution& sol);
         void UpdateMasterProblem(const int t, const vector<int>& Trip, const int TripCost);
@@ -174,7 +174,7 @@ class GurSolver : public Input
         void AddMinTripLowerBoundiTTP();
         void AddOddSetConstraint(const int r, const vector<bool>InSubset, const int U);
 
-        bool AddCliqueConstraint();
+        void AddSymmetryBreakingLINE();
 };
 
 #endif

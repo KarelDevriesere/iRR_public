@@ -586,9 +586,7 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
 }
 
 void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data){
-    cout << "gur" << endl;
     GurSolver gur(in);
-    cout << "gur success" << endl;
     Solution sol(in);
     bool HA = true;
     bool relax_x = false;
@@ -624,9 +622,10 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
             */
         }
         else{
-            gur.iTTP();
-            gur.AddMinTripLowerBoundiTTP();
+            // gur.iTTP();
+            // gur.AddMinTripLowerBoundiTTP();
             // gur.Min2Factor();
+            gur.iTTP_TripModel();
         }
         // gur.iTTP_TripModel();
         // gur.Fix_x(sol);
@@ -671,9 +670,6 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     gur.setTimeLimit(data.TimeLimit);
     gur.SetTimeStamps(TimeStamps);
     gur.solve();
-    cin.get();
-    gur.PrintVariables();
-    cin.get();
     cout << "save solution" << endl;
     gur.SaveSolution(sol);
     cout << "test whether solution is feasible" << endl;
@@ -828,7 +824,7 @@ void TestCostMinimization(InputData& data){
     }
 }
 
-void BoundTTP(const int TimeLimit, const string Instance, const int NrRoundsTTP, std::ofstream& output_file, const bool addMinTripConstraint){
+void BoundTTP(const int TimeLimit, const string Instance, const int NrRoundsTTP, std::ofstream& output_file, const bool addMinTripConstraint, const bool addColoringConstraint){
 
     Input in;
     if (!in.read_TTP(Instance)){
@@ -865,8 +861,8 @@ void BoundTTP(const int TimeLimit, const string Instance, const int NrRoundsTTP,
     cin.get();
     */
 
-    gur.BoundTTP_AllTeams(addMinTripConstraint, ConSolutions.at("I_CON" + std::to_string(in.getNrTeams()) + "_" + std::to_string(in.getNrRounds())));
-    gur.solve();
+    gur.BoundTTP_AllTeams(addMinTripConstraint, ConSolutions.at("I_CON" + std::to_string(in.getNrTeams()) + "_" + std::to_string(in.getNrRounds())), addColoringConstraint);
+    // gur.solve();
     LB = gur.getBestBound();
     UB = gur.getBestObjValue();
     gap = gur.getMipGap();
@@ -893,13 +889,16 @@ void BoundsTTP_OneInstance(InputData& data){
     if (data.addMinTripConstraint){
         OutputFilePath += "DLB_MinTrip_";
     }
+    else if (data.addColoringConstraint){
+        OutputFilePath += "DLB_Coloring_";
+    }
     else{
         OutputFilePath += "DLB_";
     }
     OutputFilePath += in.getInstanceName() + ".txt";
     cout << "Save file as " << OutputFilePath << endl;
     std::ofstream output_file(OutputFilePath);
-    BoundTTP(data.TimeLimit, data.Instance, data.NrRounds, output_file, data.addMinTripConstraint);
+    BoundTTP(data.TimeLimit, data.Instance, data.NrRounds, output_file, data.addMinTripConstraint, data.addColoringConstraint);
     output_file.close();
 }
 
@@ -945,7 +944,7 @@ void BoundsTTP_All(const InputData& data){
         }
 
         for (int NrRoundsTTP: Rounds){
-            BoundTTP(data.TimeLimit, Instance, NrRoundsTTP, output_file, data.addMinTripConstraint);
+            BoundTTP(data.TimeLimit, Instance, NrRoundsTTP, output_file, data.addMinTripConstraint, data.addColoringConstraint);
         }
     }
 
