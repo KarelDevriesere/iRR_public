@@ -1887,11 +1887,34 @@ vector<vector<pair<int,int>>>GreedyAlternatingCycle(Solution& sol, const int r, 
     return {AlternatingCycle};
 }
 
-bool DFS(int u, int p){
-    /****** *******/
-    /* TODO  TODO */
-    /****** *******/
-    return true;
+bool DFS(int u, int p, vector<bool>& Visited, vector<int>& Cycle, vector<int>& Parent, vector<vector<int>>& Adj){
+    Visited[u] = true;
+    Parent[u] = p;
+    for (int v: Adj[u]){
+        if (v == p){
+            continue;
+        }
+        assert(v != u);
+        if (Visited[v]){
+            cout << v << " already visited!" << endl;
+            // Cycle found!
+            Cycle.push_back(v);
+            cout << v << " <- ";
+            int cur = u;
+            while (cur != v){
+                cout << cur << " <- ";
+                Cycle.push_back(cur);
+                cur = Parent[cur];
+            }
+            cout << v << endl;
+            return true;
+        }
+        
+        if (DFS(v,u, Visited, Cycle, Parent, Adj)){
+            return true;
+        }
+    }
+    return false;
 }
 
 void AlternatingCycleBM(Solution& sol, const int r, std::mt19937& gen){
@@ -1932,11 +1955,15 @@ void AlternatingCycleBM(Solution& sol, const int r, std::mt19937& gen){
         }
     }
 
-    vector<vector<int>>Adj(Edges.size());
+    const int E = Edges.size();
+
+    vector<vector<int>>Adj(E);
+
+    // Is this enough for the directed graph??
 
     for (i = 0; i < C; ++i){
         for (int i1: Edges[i]){
-            for (j = C; j < Edges.size(); ++j){
+            for (j = C; j < E; ++j){
                 for (int j1 = 0; j1 < 2; ++j1){
                     if (i1 == Edges[j][j1] && (sol.Orientation[i1][r] != sol.Orientation[Edges[j][(j1+1)%2]][r])){
                         Adj[i].push_back(j);
@@ -1949,15 +1976,36 @@ void AlternatingCycleBM(Solution& sol, const int r, std::mt19937& gen){
         }
     }
 
+    vector<int>Parent(N, -1);
     vector<int>Cycle;
-    vector<bool>Visited;
+    vector<bool>Visited(N, false);
 
-    for (i = 0; i < N; ++i){
+    for (i = 0; i < E; ++i){
         if (!Visited[i]){
-            if (DFS(i,-1)){
+            if (DFS(i,-1, Visited, Cycle, Parent, Adj)){
                 break;
             }
         }
     }
+    if (!Cycle.empty()){
+        for (int i: Cycle){
+            if (sol.MatchColor[Edges[i][0]][Edges[i][1]] == -1){
+                cout << Edges[i][0] << " -- " << Edges[i][1] << endl;
+            }
+            else{
+                if (sol.Orientation[Edges[i][0]][r] == HA::H){
+                    cout << Edges[i][0] << " <- " << Edges[i][1] << endl;
+                }
+                else{
+                    cout << Edges[i][0] << " -> " << Edges[i][1] << endl;
+                }
+            }
+        }
+        cout << "Cycle done" << endl;
+    }
+    else{
+        cout << "No alternating cycle!!" << endl;
+    }
+    cin.get();
 }
 

@@ -419,6 +419,230 @@ void GurSolver::iTTP_TripModel(){
 
 	const int N = getNrTeams();
 	const int R = getNrRounds();
+ 	int t,i,j,r,s,h,L;
+
+	const int MinTripLength = 1;
+
+	cout << "MinTripLength = " << MinTripLength << endl;
+
+	vector<pair<vector<vector<int>>,vector<int>>>Trips_CostTrips(N);
+	Trips = vector<vector<vector<int>>>(N);
+	CostTrips = vector<vector<int>>(N);
+	for (t = 0; t < N; ++t){
+		vector<int>TeamsList(N-1);
+		for (i = 0, j = -1; i < N; ++i){
+			if (i != t){
+				TeamsList[++j] = i;
+			}
+		}
+		Trips_CostTrips[t] = GenerateTrips_TripModel(t, TeamsList, MinTripLength);
+		Trips[t] = Trips_CostTrips[t].first;
+		CostTrips[t] = Trips_CostTrips[t].second;
+		NrTrips = CostTrips[t].size();
+		if (t > 0){
+			assert(NrTrips ==  CostTrips[t-1].size());
+		}
+	}
+
+	vector<vector<int>>LastStartRoundTrip = vector<vector<int>>(N, vector<int>(NrTrips, -1));
+	for (t = 0; t < N; ++t){
+		for (r = 0; r < NrTrips; ++r){
+			L = Trips[t][r].size();
+			LastStartRoundTrip[t][r] = R-L;
+		}
+	}
+
+	cout << "NrTrips = " << NrTrips << endl;
+
+	int NrTripVariables = 0;
+
+	z_trs = vector<vector<vector<GRBVar>>>(N, vector<vector<GRBVar>>(NrTrips, vector<GRBVar>(R)));
+	for (t = 0; t < N; ++t){
+		for (r = 0; r < NrTrips; ++r){
+			for (s = 0; s <= LastStartRoundTrip[t][r]; ++s){
+				z_trs[t][r][s] = model.addVar(0, 1, 0.0, GRB_BINARY /*, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]"*/);
+				NrTripVariables++;
+			}
+		}
+	}
+
+	cout << "Nr of trip variables = " << NrTripVariables << endl;
+
+	cout << "c1" << endl;
+
+	// Teams face each other at most once
+
+	for (t = 0; t < N; ++t){
+		for (i = t+1; i < N; ++i){
+			GRBLinExpr sum_rs = 0;
+			for (r = 0; r < NrTrips; r++){
+				if (IsTeamInTrip(t, Trips[i][r])){
+					for (s = 0; s <= LastStartRoundTrip[i][r]; s++){
+						sum_rs += z_trs[i][r][s];
+					}
+				}
+				if (IsTeamInTrip(i, Trips[t][r])){
+					for (s = 0; s <= LastStartRoundTrip[t][r]; s++){
+						sum_rs += z_trs[t][r][s];
+					}
+				}
+			}
+			model.addConstr(sum_rs <= 1/*, "c2"*/);
+		}
+	}
+
+	cout << "c2" << endl;
+
+	// Teams play exactly r/2 away games
+
+	for (t = 0; t < N; ++t){
+		GRBLinExpr sum_t = 0;
+		for (r = 0; r < NrTrips; ++r){
+			L = Trips[t][r].size();
+			for (s = 0; s <= LastStartRoundTrip[t][r]; ++s){
+				sum_t += L*z_trs[t][r][s];
+			}
+		}
+		model.addConstr(sum_t == R/2);
+	}
+
+	cout << "c3a" << endl;
+
+	// If a team starts a road trip in s, it cannot start a road trip in earlier round such that this road trip is still active in round s-1 (we need to play home in round s-1)
+
+	for (t = 0; t < N; ++t){
+		for (s = 1; s < R; s++){
+			GRBLinExpr sum_rsh = 0;
+			for (r = 0; r < NrTrips; ++r){
+				L = Trips[t][r].size();
+				for (int s_ = max(0, s-L); s_ <= s-1; s_++){
+					if (s_ > LastStartRoundTrip[t][r]){
+						break;
+					}
+					sum_rsh += z_trs[t][r][s_];
+				}
+			}
+			for (r = 0; r < NrTrips; ++r){
+				if (s > LastStartRoundTrip[t][r]){
+					break;
+				}
+				sum_rsh += z_trs[t][r][s];
+			}
+			model.addConstr(sum_rsh <= 1);
+		}
+	}
+
+	cout << "c3b" << endl;
+
+	// If a team starts a road trip in s, it cannot start a road trip in a later round such that this road trip overlaps with the current road trip
+
+	for (t = 0; t < N; ++t){
+		for (s = 0; s < R-1; s++){
+			GRBLinExpr sum_rsh = 0;
+			for (r = 0; r < NrTrips; ++r){
+				L = Trips[t][r].size();
+				for (int s_ = s+1; s_ <= min(LastStartRoundTrip[t][r], s+L); s_++){
+					if (s_ > LastStartRoundTrip[t][r]){
+						break;
+					}
+					sum_rsh += z_trs[t][r][s_];
+				}
+			}
+			for (r = 0; r < NrTrips; ++r){
+				if (s > LastStartRoundTrip[t][r]){
+					break;
+				}
+				sum_rsh += z_trs[t][r][s];
+			}
+			model.addConstr(sum_rsh <= 1);
+		}
+	}
+
+	cout << "c4" << endl;
+
+	// If a team plays H in a round, there must be an active trip from another team such that this team visits our team in the right round
+
+	for (t = 0; t < N; ++t){
+		for (s = 0; s < R; s++){
+			GRBLinExpr sum_rsh = 0;
+			for (i = 0; i < N; ++i){
+				for (r = 0; r < NrTrips; ++r){
+					if (!IsTeamInTrip(t, Trips[i][r])){
+						continue;
+					}
+					int L = Trips[i][r].size();
+					for (int s_ = max(s-L+1, 0); s_ <= s; s_++){
+						if (s_ > LastStartRoundTrip[i][r]){
+							break;
+						}
+						for (int l = 0; l < L; ++l){
+							if (Trips[i][r][l] == t && s_+l == s){
+								sum_rsh += z_trs[i][r][s_];
+							}
+						}
+					}
+				}
+			}
+			for (r = 0; r < NrTrips; ++r){
+				L = Trips[t][r].size();
+				for (int s_ = max(0, s-L+1); s_<= s; ++s_){
+					if (s_ > LastStartRoundTrip[t][r]){
+						break;
+					}
+					sum_rsh += z_trs[t][r][s_];
+				}
+			}
+			model.addConstr(sum_rsh <= 1);
+		}
+	}
+
+	cout << "c5" << endl;
+
+	// In every 4 consecutive slots: at least 1 road trip must be started!
+
+	for (t = 0; t < getNrTeams(); ++t){
+		for (r = 0; r < NrTrips; ++r){
+			for (s = 0; s <= LastStartRoundTrip[t][r]-3; ++s){
+				GRBLinExpr sum_a = 0;
+				for (r = 0; r < NrTrips; ++r){
+					for (int s_ = s; s_<= 3; ++s_){
+						if (s+s_ > LastStartRoundTrip[t][r]){
+							break;
+						}
+						sum_a += z_trs[t][r][s+s_];
+					}
+				}
+				model.addConstr(sum_a >= 1, "c5");
+			}
+		}
+	}
+
+	cout << "objective" << endl;
+
+	Objective = 0;
+	for (t = 0; t < N; ++t){
+		for (r = 0; r < NrTrips; ++r){
+			for (s = 0; s <= LastStartRoundTrip[t][r]; ++s){
+				Objective += CostTrips[t][r]*z_trs[t][r][s];
+			}
+		}
+	}
+	
+	model.setObjective(Objective, GRB_MINIMIZE);
+
+	cout << "done" << endl;
+}
+
+void GurSolver::iTTP_TripModel_HAP_driven(){
+
+	//model.set(GRB_DoubleParam_MemLimit, 32.0);
+
+	cout << "build trip model" << endl;
+
+	TripModelTTP = true;
+
+	const int N = getNrTeams();
+	const int R = getNrRounds();
 	int NrHaps = getNrHAPs();
 	cout << "NrHaps included in model = " << NrHaps << endl;
  	int t,i,j,r,s,h,L;
@@ -829,6 +1053,8 @@ void GurSolver::BoundTTP_AllTeams(const bool addMinTripConstraint, const int min
 	const int R = getNrRounds();
 	int s;
 
+	/*
+
 	if (addColoringConstraint){ // callback is destroyed after if function, so put model.optimize() in if block
 		vector<vector<GRBVar>>u = vector<vector<GRBVar>>(N, vector<GRBVar>(N));
 		for (t = 0; t < N; ++t){
@@ -859,8 +1085,8 @@ void GurSolver::BoundTTP_AllTeams(const bool addMinTripConstraint, const int min
 	else{
 		model.optimize();
 	}
+		*/
 
-	/*
 	x = vector<vector<vector<GRBVar>>>(N, vector<vector<GRBVar>>(N, vector<GRBVar>(R)));
 	for (t = 0; t < N; ++t){
 		for (i = t+1; i < N; ++i){
@@ -897,11 +1123,10 @@ void GurSolver::BoundTTP_AllTeams(const bool addMinTripConstraint, const int min
 			model.addConstr(sum_t == 1);
 		}
 	}
-	*/
 
 	// AddSymmetryBreakingLINE();
 
-	// model.optimize();
+	model.optimize();
 
 }
 
