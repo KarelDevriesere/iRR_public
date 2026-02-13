@@ -97,6 +97,8 @@ struct InputData{
 
     bool Hockey = false;
     int PercentageHAPs = 100;
+
+    bool SolveTripModel = false; // iTTP
 };
 
 class Input

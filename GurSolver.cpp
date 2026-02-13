@@ -1499,11 +1499,9 @@ void GurSolver::Min2Factor(){
 
 void GurSolver::iTTP(){
 
-	model.set(GRB_IntParam_MIPFocus, 1); // focus on improving bound
-
 	int t,i,j,r;
 	const bool HA = true;
-	const bool relax_x = true;
+	const bool relax_x = false;
 	build_base(HA, relax_x); // all base constraints
 
 	/*
@@ -1537,7 +1535,7 @@ void GurSolver::iTTP(){
 					continue;
 				}
 				std::string varName = "z_" + std::to_string(t) + "_" + std::to_string(i) + "_" + std::to_string(j);
-				z[t][i][j] = model.addVar(0, 1, 0.0, GRB_CONTINUOUS, varName);	   
+				z[t][i][j] = model.addVar(0, 1, 0.0, GRB_BINARY, varName);	   
 			}
 		}
     }

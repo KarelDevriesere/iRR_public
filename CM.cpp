@@ -625,7 +625,13 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
             // gur.iTTP();
             // gur.AddMinTripLowerBoundiTTP();
             // gur.Min2Factor();
-            gur.iTTP_TripModel();
+            if (data.SolveTripModel){
+                gur.iTTP_TripModel();
+            }
+            else{
+                gur.iTTP();
+                gur.AddMinTripLowerBoundiTTP();
+            }
         }
         // gur.iTTP_TripModel();
         // gur.Fix_x(sol);
@@ -707,8 +713,20 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     string config;
     
     if (in.getSetting() == Setting::TTP){
-        FilePath = FolderPath + "Results" + std::string(PATHSEP) + "IP_TripModel" + std::string(PATHSEP) + sol.getInstanceName() + ".txt";
-        config = to_string(data.seed) + ",IP_TripModel," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
+        FilePath = FolderPath + "Results" + std::string(PATHSEP);
+        if (data.SolveTripModel){
+            FilePath += "IP_TripModel";
+        }
+        else{
+            FilePath += "IP";
+        }
+        FilePath += std::string(PATHSEP) + sol.getInstanceName() + ".txt";
+        if (data.SolveTripModel){
+            config = to_string(data.seed) + ",IP_TripModel," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
+        }
+        else{
+            config = to_string(data.seed) + ",IP," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
+        }
     }
     else if (in.getSetting() == Setting::Miao){
         FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "IP" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
