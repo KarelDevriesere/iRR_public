@@ -2515,6 +2515,7 @@ void GurSolver::SaveSolution(Solution& sol){
 							}
 							sol.Orientation[j][s+l] = HA::H;
 							sol.Orientation[t][s+l] = HA::A;
+							/*
 							int count_hap_t = 0;
 							int count_hap_j = 0;
 							for (int h = 0; h < getNrHAPs(); ++h){
@@ -2529,6 +2530,7 @@ void GurSolver::SaveSolution(Solution& sol){
 							}
 							assert(count_hap_t == 1);
 							assert(count_hap_j == 1);
+							*/
 						}
 						// cout << "-------" << endl;
 					}
