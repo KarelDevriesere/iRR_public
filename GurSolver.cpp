@@ -601,19 +601,17 @@ void GurSolver::iTTP_TripModel(){
 	// In every 4 consecutive slots: at least 1 road trip must be started!
 
 	for (t = 0; t < getNrTeams(); ++t){
-		for (r = 0; r < NrTrips; ++r){
-			for (s = 0; s <= LastStartRoundTrip[t][r]-3; ++s){
-				GRBLinExpr sum_a = 0;
-				for (r = 0; r < NrTrips; ++r){
-					for (int s_ = s; s_<= 3; ++s_){
-						if (s+s_ > LastStartRoundTrip[t][r]){
-							break;
-						}
-						sum_a += z_trs[t][r][s+s_];
+		for (s = 0; s < R-3; ++s){
+			GRBLinExpr sum_a = 0;
+			for (r = 0; r < NrTrips; ++r){
+				for (int s_ = 0; s_<= 3; ++s_){
+					if (s_+s > LastStartRoundTrip[t][r]){
+						break;
 					}
+					sum_a += z_trs[t][r][s+s_];
 				}
-				model.addConstr(sum_a >= 1, "c5");
 			}
+			model.addConstr(sum_a >= 1);
 		}
 	}
 
