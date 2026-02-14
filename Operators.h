@@ -189,6 +189,6 @@ bool Check2RRConstraintsPTS(Solution& sol, Lantarn& lantarn);
 
 vector<vector<pair<int,int>>>GreedyAlternatingCycle(Solution& sol, const int r, std::mt19937& gen, const bool bipartite);
 
-void AlternatingCycleBM(Solution& sol, const int r, std::mt19937& gen);
+vector<vector<pair<int,int>>>AlternatingCycleBM(Solution& sol, const int r, std::mt19937& gen);
 
 #endif

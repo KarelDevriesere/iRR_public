@@ -1887,15 +1887,17 @@ vector<vector<pair<int,int>>>GreedyAlternatingCycle(Solution& sol, const int r, 
     return {AlternatingCycle};
 }
 
-bool DFS(int u, int p, vector<bool>& Visited, vector<int>& Cycle, vector<int>& Parent, vector<vector<int>>& Adj){
-    Visited[u] = true;
-    Parent[u] = p;
+bool DFS(int u, vector<int>& Cycle, vector<int>& Parent, vector<vector<int>>& Adj, vector<int>& State, std::mt19937& gen){
+    State[u] = 1;
+    shuffle(Adj[u].begin(), Adj[u].end(), gen);
     for (int v: Adj[u]){
-        if (v == p){
-            continue;
+        if (State[v] == 0){
+            Parent[v] = u;
+            if (DFS(v, Cycle, Parent, Adj, State, gen)){
+                return true;
+            }
         }
-        assert(v != u);
-        if (Visited[v]){
+        else if (State[v] == 1){
             cout << v << " already visited!" << endl;
             // Cycle found!
             Cycle.push_back(v);
@@ -1909,15 +1911,12 @@ bool DFS(int u, int p, vector<bool>& Visited, vector<int>& Cycle, vector<int>& P
             cout << v << endl;
             return true;
         }
-        
-        if (DFS(v,u, Visited, Cycle, Parent, Adj)){
-            return true;
-        }
     }
+    State[u] = 2;
     return false;
 }
 
-void AlternatingCycleBM(Solution& sol, const int r, std::mt19937& gen){
+vector<vector<pair<int,int>>>AlternatingCycleBM(Solution& sol, const int r, std::mt19937& gen){
     // Here, we prove a general wat for finding an alternating cycle where edges have "the same orientation"
     // We first construct nodes for every uncolored edge and every colored edge
 
@@ -1945,6 +1944,7 @@ void AlternatingCycleBM(Solution& sol, const int r, std::mt19937& gen){
     }
 
     assert(Edges.size() == C);
+    shuffle(Edges.begin(), Edges.end(), gen);
 
     for (i = 0; i < N; ++i){
         for (k = i+1; k < N; ++k){
@@ -1959,16 +1959,21 @@ void AlternatingCycleBM(Solution& sol, const int r, std::mt19937& gen){
 
     vector<vector<int>>Adj(E);
 
-    // Is this enough for the directed graph??
+    // Directed graph, so Adj[i] contains only the nodes where i has an outgoing edge to!!!
 
     for (i = 0; i < C; ++i){
         for (int i1: Edges[i]){
             for (j = C; j < E; ++j){
                 for (int j1 = 0; j1 < 2; ++j1){
-                    if (i1 == Edges[j][j1] && (sol.Orientation[i1][r] != sol.Orientation[Edges[j][(j1+1)%2]][r])){
+                    if (i1 == Edges[j][j1] && sol.Orientation[i1][r] == HA::H){
+                        // Only outgoing edges!!
                         Adj[i].push_back(j);
+                        cout << "(" << Edges[i][0] << ", " << Edges[i][1] << ") --> " << "{" << Edges[j][0] << ", " << Edges[j][1] << "}" << endl;
+                        break;
+                    }
+                    else if (i1 == Edges[j][j1] && sol.Orientation[i1][r] == HA::A){
                         Adj[j].push_back(i);
-                        // cout << "(" << Edges[i][0] << ", " << Edges[i][1] << ") ---- " << "{" << Edges[j][0] << ", " << Edges[j][1] << "}" << endl;
+                        cout << "(" << Edges[i][0] << ", " << Edges[i][1] << ") <-- " << "{" << Edges[j][0] << ", " << Edges[j][1] << "}" << endl;
                         break;
                     }
                 }
@@ -1978,34 +1983,47 @@ void AlternatingCycleBM(Solution& sol, const int r, std::mt19937& gen){
 
     vector<int>Parent(N, -1);
     vector<int>Cycle;
-    vector<bool>Visited(N, false);
+    vector<int>State(N, 0);
 
     for (i = 0; i < E; ++i){
-        if (!Visited[i]){
-            if (DFS(i,-1, Visited, Cycle, Parent, Adj)){
+        if (State[i] == 0){
+            if (DFS(i, Cycle, Parent, Adj, State, gen)){
                 break;
             }
         }
     }
+
+    vector<pair<int,int>>AlternatingCycle;
     if (!Cycle.empty()){
         for (int i: Cycle){
             if (sol.MatchColor[Edges[i][0]][Edges[i][1]] == -1){
                 cout << Edges[i][0] << " -- " << Edges[i][1] << endl;
+                AlternatingCycle.emplace_back(Edges[i][0], Edges[i][1]);
             }
             else{
                 if (sol.Orientation[Edges[i][0]][r] == HA::H){
                     cout << Edges[i][0] << " <- " << Edges[i][1] << endl;
+                    AlternatingCycle.emplace_back(Edges[i][0], Edges[i][1]);
                 }
                 else{
                     cout << Edges[i][0] << " -> " << Edges[i][1] << endl;
+                    AlternatingCycle.emplace_back(Edges[i][1], Edges[i][0]);
                 }
             }
         }
         cout << "Cycle done" << endl;
+        if (sol.MatchColor[AlternatingCycle[0].first][AlternatingCycle[0].second] != -1){
+            pair<int,int>E = AlternatingCycle[0];
+            for (int k = 0; k < AlternatingCycle.size()-1; ++k){
+                AlternatingCycle[k] = AlternatingCycle[k+1];
+            }
+            AlternatingCycle.back() = E;
+        }
     }
     else{
         cout << "No alternating cycle!!" << endl;
     }
     cin.get();
+    return {AlternatingCycle};
 }
 
