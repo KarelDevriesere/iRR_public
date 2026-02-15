@@ -678,6 +678,7 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     gur.solve();
     cout << "save solution" << endl;
     gur.SaveSolution(sol);
+    /*
     cout << "test whether solution is feasible" << endl;
     sol.validate();
     cout << "Travel cost = " << sol.ComputeTotalCostTTP() << endl;
@@ -686,6 +687,7 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     gur_validate.Fix_x(sol);
     gur_validate.solve();
     cout << "feasible!!" << endl;
+    */
 
     // Save solution in file:
     if (in.getSetting() == Setting::Miao || (in.getSetting() == Setting::Hockey && min_cap)){
@@ -706,8 +708,8 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
         cout << "Save " << gur.getBestObjValue() << " in file " << FilePathVcr << endl;
         return;
     } 
-    cout << "validate" << endl;
-    sol.validate();
+    // cout << "validate" << endl;
+    // sol.validate();
 
     string FilePath;
     string config;
@@ -720,7 +722,7 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
         else{
             FilePath += "IP";
         }
-        FilePath += std::string(PATHSEP) + sol.getInstanceName() + ".txt";
+        FilePath += std::string(PATHSEP) + sol.getInstanceName() + "_LP.txt";
         if (data.SolveTripModel){
             config = to_string(data.seed) + ",IP_TripModel," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
         }

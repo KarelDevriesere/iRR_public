@@ -460,7 +460,7 @@ void GurSolver::iTTP_TripModel(){
 	for (t = 0; t < N; ++t){
 		for (r = 0; r < NrTrips; ++r){
 			for (s = 0; s <= LastStartRoundTrip[t][r]; ++s){
-				z_trs[t][r][s] = model.addVar(0, 1, 0.0, GRB_BINARY /*, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]"*/);
+				z_trs[t][r][s] = model.addVar(0, 1, 0.0, GRB_CONTINUOUS /*, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]"*/);
 				NrTripVariables++;
 			}
 		}
@@ -532,10 +532,11 @@ void GurSolver::iTTP_TripModel(){
 		}
 	}
 
-	cout << "c3b" << endl;
+	// cout << "c3b" << endl;
 
-	// If a team starts a road trip in s, it cannot start a road trip in a later round such that this road trip overlaps with the current road trip
+	// If a team starts a road trip in s, it cannot start a road trip in a later round such that this road trip overlaps with the current road trip -> implied by c3b!!!
 
+	/*
 	for (t = 0; t < N; ++t){
 		for (s = 0; s < R-1; s++){
 			GRBLinExpr sum_rsh = 0;
@@ -557,15 +558,19 @@ void GurSolver::iTTP_TripModel(){
 			model.addConstr(sum_rsh <= 1);
 		}
 	}
+		*/
 
 	cout << "c4" << endl;
 
-	// If a team plays H in a round, there must be an active trip from another team such that this team visits our team in the right round
+	// If a team plays H in a round, there must be an active trip from another team such that this team visits our team in the right round -> hence write this as an equality
 
 	for (t = 0; t < N; ++t){
 		for (s = 0; s < R; s++){
 			GRBLinExpr sum_rsh = 0;
 			for (i = 0; i < N; ++i){
+				if (t == i){
+					continue;
+				}
 				for (r = 0; r < NrTrips; ++r){
 					if (!IsTeamInTrip(t, Trips[i][r])){
 						continue;
@@ -592,7 +597,7 @@ void GurSolver::iTTP_TripModel(){
 					sum_rsh += z_trs[t][r][s_];
 				}
 			}
-			model.addConstr(sum_rsh <= 1);
+			model.addConstr(sum_rsh == 1);
 		}
 	}
 
@@ -627,6 +632,14 @@ void GurSolver::iTTP_TripModel(){
 	}
 	
 	model.setObjective(Objective, GRB_MINIMIZE);
+
+	// Symmetry breaking:
+
+	GRBLinExpr sym = 0;
+	for (r = 0; r < NrTrips; ++r){
+		sym += z_trs[0][r][0];
+	}
+	model.addConstr(sym == 1);
 
 	cout << "done" << endl;
 }
