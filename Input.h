@@ -99,6 +99,7 @@ struct InputData{
     int PercentageHAPs = 100;
 
     bool SolveTripModel = false; // iTTP
+    bool TripModelHAP_Fixed = false; //iTTP
 };
 
 class Input

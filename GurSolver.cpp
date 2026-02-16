@@ -282,14 +282,16 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 #endif
 			z_trp[t][r] = vector<GRBVar>(TripsRound[t][r].size());
 			for (p = 0; p < TripsRound[t][r].size(); ++p){
-				/*
+#ifdef PRINT
+#if PRINT == 1				
 				cout << "Trip " << p << " in " << r << endl;
 				cout << t << " -> ";
 				for (auto& j: TripsRound[t][r][p]){
 					cout << j << " -> ";
 				}
 				cout << t << endl;
-				*/
+#endif 
+#endif
 				z_trp[t][r][p] = model.addVar(0, 1, 0.0, GRB_BINARY/*, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]"*/);
 				v++;
 
@@ -460,7 +462,7 @@ void GurSolver::iTTP_TripModel(){
 	for (t = 0; t < N; ++t){
 		for (r = 0; r < NrTrips; ++r){
 			for (s = 0; s <= LastStartRoundTrip[t][r]; ++s){
-				z_trs[t][r][s] = model.addVar(0, 1, 0.0, GRB_CONTINUOUS /*, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]"*/);
+				z_trs[t][r][s] = model.addVar(0, 1, 0.0, GRB_BINARY /*, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]"*/);
 				NrTripVariables++;
 			}
 		}
@@ -2548,36 +2550,40 @@ void GurSolver::SaveSolution(Solution& sol){
 				}
 			}
 		}
+		/*
 		for (int t = 0; t < getNrTeams(); ++t){
 			if (dist_team[t] != sol.ComputeTravelCostTeamTTP(t)){
 				cout << "dist_team " << t << " = " << dist_team[t] << " but real travel dist = " << sol.ComputeTravelCostTeamTTP(t) << endl;
 			}
 		}
+			*/
 	}
 	else if (TripModelTTP_fixed_HAP){
 		vector<int>dist_team(getNrTeams(),0);
 
 		for (int t = 0; t < getNrTeams(); ++t){
-			cout << "Trips team " << t << ": " << endl;
+			// cout << "Trips team " << t << ": " << endl;
 			for (int r = 0; r < getNrRounds(); ++r){
 				if (!StartRound[t][r]){
 					continue;
 				}
-				cout << t << " starts in " << r << endl;
+				// cout << t << " starts in " << r << endl;
 				for (int p = 0; p < TripsRound[t][r].size(); ++p){
 					if (z_trp[t][r][p].get(GRB_DoubleAttr_X) > 0.9){
-						cout << "-------" << endl;
-						cout << "start trip in " << r << endl;
-						cout << "cost = " << CostTripsRound[t][r][p] << endl;
+						// cout << "-------" << endl;
+						// cout << "start trip in " << r << endl;
+						// cout << "cost = " << CostTripsRound[t][r][p] << endl;
 						dist_team[t] += CostTripsRound[t][r][p];
 						// cout << "length = " << Trips[t][r].size() << endl;
-						cout << t << " -> ";
+						// cout << t << " -> ";
 						for (int l = 0; l < TripsRound[t][r][p].size(); ++l){
 							int j = TripsRound[t][r][p][l];
+							/*
 							cout << j << " -> ";
 							if (l == TripsRound[t][r][p].size()-1){
 								cout << t;
 							}
+							*/
 							sol.TeamColorOpp[t][r+l] = j;
 							sol.TeamColorOpp[j][r+l] = t;
 							sol.MatchColor[t][j] = r+l;
@@ -2587,17 +2593,19 @@ void GurSolver::SaveSolution(Solution& sol){
 							sol.Orientation[j][r+l] = HA::H;
 							sol.Orientation[t][r+l] = HA::A;
 						}
-						cout << endl;
-						cout << "-------" << endl;
+						// cout << endl;
+						// cout << "-------" << endl;
 					}
 				}
 			}
 		}
+		/*
 		for (int t = 0; t < getNrTeams(); ++t){
 			if (dist_team[t] != sol.ComputeTravelCostTeamTTP(t)){
 				cout << "dist_team " << t << " = " << dist_team[t] << " but real travel dist = " << sol.ComputeTravelCostTeamTTP(t) << endl;
 			}
 		}
+		*/
 	}
 	else{
 		for (int r = 0; r < getNrRounds(); ++r){ 

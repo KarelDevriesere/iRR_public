@@ -238,6 +238,9 @@ int main(int argc, const char* argv[]){
             else if (arg == "--TripModel"){
                 data.SolveTripModel = std::stoi(argv[++i]);
             }
+            else if (arg == "--TripModelHAPFixed"){
+                data.TripModelHAP_Fixed = std::stoi(argv[++i]);
+            }
             else if (arg == "--OutputFolder"){
                 data.OutputFolder = argv[++i];
                 if (!std::filesystem::is_directory(data.OutputFolder)){

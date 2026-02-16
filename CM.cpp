@@ -592,8 +592,7 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     bool relax_x = false;
     const bool min_travel = true, min_cap = false;
     if (in.getSetting() == Setting::TTP){
-        bool TripModelHAP_Fixed = false;
-        if (TripModelHAP_Fixed){
+        if (data.TripModelHAP_Fixed){
             // First, read best found solution so far by greedy matching
             // string path = "Code_Benders" + string(PATHSEP) + "BestNoLex" + string(PATHSEP) + "I_CON" + to_string(sol.getNrTeams()) + "_" + to_string(sol.getNrRounds()) + ".xml";
             // ReadSolutionXML(path, sol);
@@ -678,7 +677,6 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     gur.solve();
     cout << "save solution" << endl;
     gur.SaveSolution(sol);
-    /*
     cout << "test whether solution is feasible" << endl;
     sol.validate();
     cout << "Travel cost = " << sol.ComputeTotalCostTTP() << endl;
@@ -687,7 +685,6 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     gur_validate.Fix_x(sol);
     gur_validate.solve();
     cout << "feasible!!" << endl;
-    */
 
     // Save solution in file:
     if (in.getSetting() == Setting::Miao || (in.getSetting() == Setting::Hockey && min_cap)){
@@ -716,13 +713,16 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     
     if (in.getSetting() == Setting::TTP){
         FilePath = FolderPath + "Results" + std::string(PATHSEP);
-        if (data.SolveTripModel){
+        if (data.TripModelHAP_Fixed){
+            FilePath += "IP_TripModel_HAP_fixed";
+        }
+        else if (data.SolveTripModel){
             FilePath += "IP_TripModel";
         }
         else{
             FilePath += "IP";
         }
-        FilePath += std::string(PATHSEP) + sol.getInstanceName() + "_LP.txt";
+        FilePath += std::string(PATHSEP) + sol.getInstanceName() + ".txt";
         if (data.SolveTripModel){
             config = to_string(data.seed) + ",IP_TripModel," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
         }
