@@ -84,6 +84,7 @@ void MetaBase<Move>::SaveBestSolution(Solution& sol){
                 }
             }
             assert(sol.validate());
+            cout << "saved solution" << endl;
         }
 
 template <typename Move>
@@ -278,12 +279,14 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
                         InitializeHistoricValues(Lb, Ub);
 #ifdef PRINT
 #if PRINT == 1
+                        /*
                         cout << "---- Historic values ----" << endl;
                         for (auto& v: HistoricValues){
                             cout << v << ", ";
                         }
                         cout << endl;
                         cout << "-------------------------" << endl;
+                        */
 
                         cout << "Nr times Neighborhoods are selected" << endl;
                         for (const auto& [move, nr]: this->NrChosen){
@@ -374,9 +377,53 @@ bool SA<Move>::Update(Solution& sol, const int obj){
 }
 
 
+template<typename Move>
+bool HC<Move>::Update(Solution& sol, const int obj){
+            
+            // cout << "prev_obj = " << this->current_obj << ", new obj = " << obj << endl;
+
+            if (obj >= this->current_obj){
+                this->it_idle++;
+                if (this->it_idle % 10000 == 0 && this->it_idle > 0){
+                    cout << "it_idle = " << this->it_idle << endl;
+                }
+            }
+            else{
+                this->it_idle = 0;
+                #ifdef PRINT
+#if PRINT == 1
+                    this->print_solution();
+#endif
+#endif
+            }
+
+            if (this->getTimeDiff() > this->TIME_LIMIT){
+                cout << "Time limit of " << this->TIME_LIMIT << " hit" << endl;
+                this->STOP = true;
+            }
+            else if (this->it_idle > MAX_IT){
+                cout << "it_idle = " << this->it_idle << ", MAX_IT = " << MAX_IT << endl;
+                this->STOP = true;
+            }
+
+            this->UpdateValues(sol, obj);
+            bool SolutionAccepted = false;
+            if (obj <= this->current_obj){
+                this->current_obj = obj; 
+                this->it_accepted++;
+                SolutionAccepted = true;
+            }
+
+            this->UpdateTimeStamps();
+
+            return SolutionAccepted;
+}
+
+
 // Explicit instantiations
 template class MetaBase<FO_move>;
 template class MetaBase<Move>;
 template class LAHC<Move>;
 template class SA<FO_move>;
 template class SA<Move>;
+template class HC<Move>;

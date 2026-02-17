@@ -1887,32 +1887,38 @@ vector<vector<pair<int,int>>>GreedyAlternatingCycle(Solution& sol, const int r, 
     return {AlternatingCycle};
 }
 
-bool DFS(int u, vector<int>& Cycle, vector<int>& Parent, vector<vector<int>>& Adj, vector<int>& State, std::mt19937& gen){
-    State[u] = 1;
+bool DFS(int u, vector<int>& Cycle, vector<int>& Parent, vector<vector<int>>& Adj, vector<bool>& Stack, vector<bool>& Visited, std::mt19937& gen){
+
+    if (Stack[u]){
+        // cout << u << " already visited!" << endl;
+        // Cycle found!
+        Cycle.push_back(u);
+        // cout << u << " <- ";
+        int cur = Parent[u];
+        while (cur != u){
+            // cout << cur << " <- ";
+            Cycle.push_back(cur);
+            cur = Parent[cur];
+        }
+        // cout << u << endl;
+        return true;
+    }
+
+    if (Visited[u]){
+        return false;
+    }
+
+    Visited[u] = true;
+    Stack[u] = true;
+
     shuffle(Adj[u].begin(), Adj[u].end(), gen);
     for (int v: Adj[u]){
-        if (State[v] == 0){
-            Parent[v] = u;
-            if (DFS(v, Cycle, Parent, Adj, State, gen)){
-                return true;
-            }
-        }
-        else if (State[v] == 1){
-            cout << v << " already visited!" << endl;
-            // Cycle found!
-            Cycle.push_back(v);
-            cout << v << " <- ";
-            int cur = u;
-            while (cur != v){
-                cout << cur << " <- ";
-                Cycle.push_back(cur);
-                cur = Parent[cur];
-            }
-            cout << v << endl;
+        Parent[u] = v;
+        if (DFS(v, Cycle, Parent, Adj, Stack, Visited, gen)){
             return true;
         }
     }
-    State[u] = 2;
+    Stack[u] = false;
     return false;
 }
 
@@ -1968,12 +1974,12 @@ vector<vector<pair<int,int>>>AlternatingCycleBM(Solution& sol, const int r, std:
                     if (i1 == Edges[j][j1] && sol.Orientation[i1][r] == HA::H){
                         // Only outgoing edges!!
                         Adj[i].push_back(j);
-                        cout << "(" << Edges[i][0] << ", " << Edges[i][1] << ") --> " << "{" << Edges[j][0] << ", " << Edges[j][1] << "}" << endl;
+                        // cout << "(" << Edges[i][0] << ", " << Edges[i][1] << ") --> " << "{" << Edges[j][0] << ", " << Edges[j][1] << "}" << endl;
                         break;
                     }
                     else if (i1 == Edges[j][j1] && sol.Orientation[i1][r] == HA::A){
                         Adj[j].push_back(i);
-                        cout << "(" << Edges[i][0] << ", " << Edges[i][1] << ") <-- " << "{" << Edges[j][0] << ", " << Edges[j][1] << "}" << endl;
+                        // cout << "(" << Edges[i][0] << ", " << Edges[i][1] << ") <-- " << "{" << Edges[j][0] << ", " << Edges[j][1] << "}" << endl;
                         break;
                     }
                 }
@@ -1981,13 +1987,14 @@ vector<vector<pair<int,int>>>AlternatingCycleBM(Solution& sol, const int r, std:
         }
     }
 
-    vector<int>Parent(N, -1);
+    vector<int>Parent(E, -1);
     vector<int>Cycle;
-    vector<int>State(N, 0);
+    vector<bool>Visited(E, false);
+    vector<bool>Stack(E, false);
 
     for (i = 0; i < E; ++i){
-        if (State[i] == 0){
-            if (DFS(i, Cycle, Parent, Adj, State, gen)){
+        if (!Visited[i]){
+            if (DFS(i, Cycle, Parent, Adj, Stack, Visited, gen)){
                 break;
             }
         }
@@ -1997,21 +2004,21 @@ vector<vector<pair<int,int>>>AlternatingCycleBM(Solution& sol, const int r, std:
     if (!Cycle.empty()){
         for (int i: Cycle){
             if (sol.MatchColor[Edges[i][0]][Edges[i][1]] == -1){
-                cout << Edges[i][0] << " -- " << Edges[i][1] << endl;
+                // cout << Edges[i][0] << " -- " << Edges[i][1] << endl;
                 AlternatingCycle.emplace_back(Edges[i][0], Edges[i][1]);
             }
             else{
                 if (sol.Orientation[Edges[i][0]][r] == HA::H){
-                    cout << Edges[i][0] << " <- " << Edges[i][1] << endl;
+                    // cout << Edges[i][0] << " <- " << Edges[i][1] << endl;
                     AlternatingCycle.emplace_back(Edges[i][0], Edges[i][1]);
                 }
                 else{
-                    cout << Edges[i][0] << " -> " << Edges[i][1] << endl;
+                    // cout << Edges[i][0] << " -> " << Edges[i][1] << endl;
                     AlternatingCycle.emplace_back(Edges[i][1], Edges[i][0]);
                 }
             }
         }
-        cout << "Cycle done" << endl;
+        // cout << "Cycle done" << endl;
         if (sol.MatchColor[AlternatingCycle[0].first][AlternatingCycle[0].second] != -1){
             pair<int,int>E = AlternatingCycle[0];
             for (int k = 0; k < AlternatingCycle.size()-1; ++k){
@@ -2021,9 +2028,8 @@ vector<vector<pair<int,int>>>AlternatingCycleBM(Solution& sol, const int r, std:
         }
     }
     else{
-        cout << "No alternating cycle!!" << endl;
+        // cout << "No alternating cycle!!" << endl;
     }
-    cin.get();
     return {AlternatingCycle};
 }
 

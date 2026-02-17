@@ -14,7 +14,8 @@ enum class Move{TS,PTS,RS,PRS,C,NC,
     MinCost_BM, Random_BM,
     iPTS_MinCost_PR, iPTS_Random_PR,
     MinCost_M_MinCost_PR, MinCost_M_Random_PR, Random_M_MinCost_PR, Random_M_Random_PR,
-    InterClubSwap, IntraClubSwap, RandomSwap, ComplementInsertion}; // Miao's HAP operators
+    InterClubSwap, IntraClubSwap, RandomSwap, ComplementInsertion, // Miao's HAP operators
+    HomeAwaySwap}; 
 
 enum class Setting{Miao,Hockey,CM,TTP};
 enum class InstanceSetCM{Karel, Jasper, Uthus}; // Instances Cost Minimization
@@ -24,8 +25,10 @@ enum class MiaoInstance{S, U13, U15, U17, U21, M, Tiny}; // Instances paper Miao
 const std::unordered_map<Move, string>MiaoMoves = {{Move::InterClubSwap, "InterClubSwap"}, {Move::IntraClubSwap, "IntraClubSwap"}, {Move::RandomSwap, "RandomSwap"}, {Move::ComplementInsertion, "ComplementInsertion"}};
 const std::unordered_map<Move, double>MiaoWeights = {{Move::InterClubSwap, 1.0/3.0}, {Move::IntraClubSwap, 1.0/3.0}, {Move::RandomSwap, 1.0/6.0}, {Move::ComplementInsertion, 1.0/6.0}};
 
-const std::unordered_map<Move, string>MiaoMovesTTP = {{Move::RandomSwap, "RandomSwap"}, {Move::ComplementInsertion, "ComplementInsertion"}};
-const std::unordered_map<Move, double>MiaoWeightsTTP = {{Move::RandomSwap, 1.0/2.0}, {Move::ComplementInsertion, 1.0/2.0}};
+// Removed ComplementInsertion because it will give problems with complementary pairs of HAPs!!!
+
+const std::unordered_map<Move, string>MiaoMovesTTP = {{Move::RandomSwap, "RandomSwap"}, {Move::HomeAwaySwap, "HomeAwaySwap"}};
+const std::unordered_map<Move, double>MiaoWeightsTTP = {{Move::RandomSwap, 1.0/2.0}, {Move::HomeAwaySwap, 1.0/2.0}};
 
 const std::unordered_map<Move, string>MiaoMovesTTP_CON = {{Move::ComplementInsertion, "ComplementInsertion"}};
 const std::unordered_map<Move, double>MiaoWeightsTTP_CON = {{Move::ComplementInsertion, 1.0}};

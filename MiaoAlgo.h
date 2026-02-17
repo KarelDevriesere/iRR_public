@@ -4,7 +4,7 @@
 #include "Algo.h"
 #include "Meta.h"
 
-class MiaoAlgo: public SA<Move>{
+class MiaoAlgo: public HC<Move>{
     private:
         void MakeForbiddenEdges(const int l, const int r, Solution& sol);
         // see page 216 in Miao
@@ -14,6 +14,9 @@ class MiaoAlgo: public SA<Move>{
         int team2;
         int hap_index1;
         int hap_index2;
+
+        int round1; // HomeAwaySwap
+        int round2; 
 
         vector<vector<int>>Opponents; // Opponents[i][r] = j means that j is the opponent of j in round r
 
@@ -30,6 +33,7 @@ class MiaoAlgo: public SA<Move>{
 
         vector<int>Rounds;
 
+        bool HomeAwaySwap(Solution& sol); // our own neighborhood
         bool InterClubSwap(Solution& sol);
         bool IntraClubSwap(Solution& sol);
         bool RandomSwap(Solution& sol);

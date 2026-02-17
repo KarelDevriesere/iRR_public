@@ -268,7 +268,7 @@ void Heuristic_CM::SelectMatching(Solution& sol, const bool bipartite){
     vector<vector<pair<int,int>>>AlternatingCycles;
     if (sol.getSetting() == Setting::TTP && !MinCostM){ // TEST Alternating cycle!!
         // cout << "Greedy alternating cycle!" << endl;
-        if (!bipartite || sol.getNrRounds() <= 2){
+        if (sol.getNrRounds() <= 2){
             AlternatingCycles = GreedyAlternatingCycle(sol, r, gen, bipartite);
             if (AlternatingCycles.empty()){
                 cout << "No alternating cycle" << endl;
@@ -276,7 +276,7 @@ void Heuristic_CM::SelectMatching(Solution& sol, const bool bipartite){
             }
         }
         else if (bipartite && !MinCostM){
-            AlternatingCycleBM(sol, r, gen);
+            AlternatingCycles = AlternatingCycleBM(sol, r, gen);
         }
         else{
             AlternatingCycles = iPRS(sol, r, l, bipartite, includeHAPs, CM, gen, MinCostM);
@@ -313,6 +313,9 @@ void Heuristic_CM::SelectMatching(Solution& sol, const bool bipartite){
         }
         if (MinCostM && bipartite){
             assert(cost_before >= sol.ComputeTotalCost());
+        }
+        if (bipartite){
+            assert(sol.ComputeTotalHACost() == 0);
         }
 #endif
         

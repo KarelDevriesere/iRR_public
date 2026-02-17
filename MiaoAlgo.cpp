@@ -76,7 +76,7 @@ void MiaoAlgo::SetOpponentsCurrentLeague(Solution& sol){
 }
 
 MiaoAlgo::MiaoAlgo(const std::unordered_map<Move, string>& moves, // moves, weights and in are defined in main
-           const std::unordered_map<Move, double>& weights, const int NrRounds, std::mt19937& g): SA<Move>(moves, weights, g){
+           const std::unordered_map<Move, double>& weights, const int NrRounds, std::mt19937& g): HC<Move>(moves, weights, g){
     Rounds = vector<int>(NrRounds);
     for (int r = 0; r < NrRounds; ++r){
         Rounds[r] = r;
@@ -116,6 +116,10 @@ void MiaoAlgo::ReverseMove(Solution& sol){
     if (CurrentMove == Move::ComplementInsertion){
         setHAP(sol, team1, hap_index1);
         setHAP(sol, team2, hap_index2);
+    }
+    else if (CurrentMove == Move::HomeAwaySwap){
+        swap(sol.Orientation[team1][round1], sol.Orientation[team2][round1]);
+        swap(sol.Orientation[team1][round2], sol.Orientation[team2][round2]);
     }
     else{
         SwapHAPs(sol, team1, team2); // see operators
@@ -169,6 +173,9 @@ void MiaoAlgo::ReAssignHAPs(Solution& sol){
         else if (CurrentMove == Move::RandomSwap){
             MoveChosen = RandomSwap(sol);
         }
+        else if (CurrentMove == Move::HomeAwaySwap){
+            MoveChosen = HomeAwaySwap(sol);
+        }
         else{
             MoveChosen = ComplementInsertion(sol);
         }
@@ -195,8 +202,8 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
         // cout << "find matching" << endl;
         const bool CM = false;
         const bool keepHAP = true;
-        const bool MinCostM = true;
-        pair<vector<pair<int,int>>, vector<int>>Matching_OpponentMatching = MoveMWPMOneLeague(sol, r, gen, CurrentLeague, true, true); // in the file operators
+        bool MinCostM = true;
+        pair<vector<pair<int,int>>, vector<int>>Matching_OpponentMatching = MoveMWPMOneLeague(sol, r, gen, CurrentLeague, bipartite, MinCostM); // in the file operators
         vector<pair<int,int>>matching = Matching_OpponentMatching.first;
         if ((int)matching.size() < N/2){
             // shuffling rounds does not seem a good idea, instead go back to the old HAP assignement and do a new HAP move
@@ -249,6 +256,63 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
     }
     else{
         assert(sol.ComputeTravelCostTTP() == sol.ComputeTotalCost());
+    }
+    return true;
+}
+
+bool MiaoAlgo::HomeAwaySwap(Solution& sol){
+    // pick a random league + random team
+    int l = RandomIntegerNumber(0, sol.getNrLeagues()-1);
+    CurrentLeague = l;
+    int i_ = RandomIntegerNumber(0, sol.getNrTeamsLeague(l)-1);
+    int i = sol.getGlobalIndexTeam(l,i_);
+    // pick a random round
+    int r = RandomIntegerNumber(0, sol.getNrRounds()-1);
+    // find a team that plays the opposite home in round r
+    int j_ = RandomIntegerNumber(0, sol.getNrTeamsLeague(l)-1);
+    int j = sol.getGlobalIndexTeam(l,j_);
+    int start_j = j;
+    while (sol.Orientation[j][r] == sol.Orientation[i][r]){
+        j_ = (j_+1)%sol.getNrTeamsLeague(l);
+        j = sol.getGlobalIndexTeam(l,j_);
+        if (start_j == j){
+            cout << "Infinite loop over j in HomeAwaySwap!!" << endl;
+        }
+    }
+    // Now pick randomly another round s, such that in this round i plays the opposite home-away status
+    int s = RandomIntegerNumber(0, sol.getNrRounds()-1);
+    int start_s = s;
+    while ((sol.Orientation[i][r] == sol.Orientation[i][s]) || (sol.Orientation[j][r] == sol.Orientation[j][s])){
+        s = (s+1)%sol.getNrRounds();
+        if (start_s == s){
+            cout << "Infinite loop over s in HomeAwaySwap!!" << endl;
+        }
+    }
+    team1 = i, team2 = j;
+    round1 = r, round2 = s;
+    swap(sol.Orientation[i][r], sol.Orientation[j][r]);
+    swap(sol.Orientation[i][s], sol.Orientation[j][s]);
+
+    for (int k: {i,j}){
+        for (int q: {r,s}){
+            for (int v = max(0, q-3); v <= q; ++v){
+                int NrH = 0, NrA = 0;
+                for (int w = v; w < min(sol.getNrRounds(), v+4); ++w){
+                    if (sol.Orientation[k][w] == HA::H){
+                        NrH++;
+                    }
+                    else{
+                        NrA++;
+                    }
+                }
+                if (NrH > 3 || NrA > 3){
+                    swap(sol.Orientation[i][r], sol.Orientation[j][r]);
+                    swap(sol.Orientation[i][s], sol.Orientation[j][s]);
+                    return false;
+                }
+            }
+        }
+        assert(sol.ComputeHACostTeam(k) == 0);
     }
     return true;
 }
@@ -567,6 +631,7 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
         else{
             // We know that this always produces an initial solution!!
             // If I do not do this, it can be that I never find anything, even if, for example, n=40 and r=20
+            // So random complementary HAPs!!!
             int hc_i = RandomIntegerNumber(0, sol.getNrHAPs()-1);
             int hc_j = sol.getComplementIndexHAP(hc_i);
             for (int i = 0; i < in.getNrTeams()/2; ++i){

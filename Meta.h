@@ -38,6 +38,7 @@ class MetaBase{ // Everything that can be used for all metaheuristics
         int it_accepted;
         int it_idle; // nr of iterations without improvement
         bool STOP = false;
+        bool CONVERGED = false;
         bool StartTimeSet = false;
 
         int LowerBound = -1;
@@ -103,7 +104,7 @@ class MetaBase{ // Everything that can be used for all metaheuristics
             else{
                 std::cout << Moves.at(CurrentMove) << ": " << "\033[31m" << current_obj << "\033[0m" << std::endl;
             }
-            */
+                */
         }
 
         void setTimeLimit_meta(const double TL){
@@ -270,6 +271,26 @@ class SA: public MetaBase<Move>{ // Simulated Annealing
         void set_I_accept(const int nr){
             I_accept = nr;
         }
+};
+
+template<typename Move>
+class HC: public MetaBase<Move>{ // Hill Climbing
+    private:
+        // Everything public for easy access
+    public:
+        long MAX_IT = 10000;
+
+        HC(const std::unordered_map<Move, string>& moves, // moves, weights and in are defined in main
+           const std::unordered_map<Move, double>& weights, std::mt19937& g): MetaBase<Move>(moves, weights, g){
+
+        }
+
+        void SetMaxIt(const int limit){
+            MAX_IT = limit;
+        }
+
+        bool Update(Solution& sol, const int obj) ;
+
 };
 
 #endif
