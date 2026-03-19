@@ -1,6 +1,6 @@
 #include "Meta.h"
 #include "FO.h"
-#include "MiaoAlgo.h"
+#include "GreedyMatching.h"
 
 template <typename Move>
 MetaBase<Move>::MetaBase(const std::unordered_map<Move, string>& moves, const std::unordered_map<Move, double>& weights, std::mt19937& g): 
@@ -18,6 +18,7 @@ MetaBase<Move>::MetaBase(const std::unordered_map<Move, string>& moves, const st
                 NrImprovBestObj[move] = 0; 
                 Reward[move] = 0;
                 NrAccepted[move] = 0;
+                SelectionProbabilityMAB[move] = 0;
                 Improv[move]; // vector is default constructed
                 ExecutionTimes[move];
             }
@@ -32,18 +33,13 @@ MetaBase<Move>::MetaBase(const std::unordered_map<Move, string>& moves, const st
 
 template <typename Move>
 void MetaBase<Move>::UpdateBestSolution(Solution& sol){
-            if (BestSequenceMatches.empty()){
-                BestSequenceMatches = vector<vector<pair<int,int>>>(sol.getNrRounds(), vector<pair<int,int>>(sol.getNrTeams()/2));
-            }
-            int m, j, h, a;
+            int j,h,a;
             for (int r = 0; r < sol.getNrRounds(); ++r){
-                vector<bool>TeamSeen(sol.getNrTeams(), false);
-                m = 0;
                 for (int i = 0; i < sol.getNrTeams(); ++i){
-                    if (TeamSeen[i]){
+                    j = sol.TeamColorOpp[i][r];
+                    if (i < j){
                         continue;
                     }
-                    j = sol.TeamColorOpp[i][r];
                     if (!sol.ViolationEligibleOpponents_allowed){
                         assert(sol.isEligible(i,j));
                     }
@@ -56,35 +52,43 @@ void MetaBase<Move>::UpdateBestSolution(Solution& sol){
                         assert(sol.Orientation[i][r] == HA::A);
                         h = j, a = i;
                     }
-                    TeamSeen[h] = true;
-                    TeamSeen[a] = true;
-                    BestSequenceMatches[r][m++] = {h,a};
+                    BestOrientation[h][r] = HA::H;
+                    BestOrientation[a][r] = HA::A;
+                    BestTeamColorOpp[h][r] = a;
+                    BestTeamColorOpp[a][r] = h;
                 }
             }
+            // cout << "New best solution value = " << sol.ComputeTotalCost() << endl;
         }
 
 
 template <typename Move>
 void MetaBase<Move>::SaveBestSolution(Solution& sol){
-            int h,a;
-            if (BestSequenceMatches.empty()){
-                cout << "Failed to find a solution.." << endl;
-                return;
-            }
+            int h,a,j;
             // first, clear everything
             sol.clear();
             for (int r = 0; r < sol.getNrRounds(); ++r){
-                assert(BestSequenceMatches[r].size() == sol.getNrTeams()/2);
-                for (auto& pair: BestSequenceMatches[r]){
-                    h = pair.first, a = pair.second;
-                    assert(sol.isEligible(h,a));
+                for (int i = 0; i < sol.getNrTeams(); ++i){
+                    j = BestTeamColorOpp[i][r];
+                    if (i < j){
+                        continue;
+                    }
+                    if (BestOrientation[i][r] == HA::H){
+                        assert(BestOrientation[j][r] == HA::A);
+                        h = i, a = j;
+                    }
+                    else{
+                        assert(BestOrientation[i][r] == HA::A);
+                        assert(BestOrientation[j][r] == HA::H);
+                        h = j, a = i;
+                    }
                     SetValueCircleMethod(h, a, r, sol);
-                    sol.Orientation[h][r] = HA::H; // the orientation in this solution is also different!
+                    sol.Orientation[h][r] = HA::H; 
                     sol.Orientation[a][r] = HA::A;
                 }
             }
             assert(sol.validate());
-            cout << "saved solution" << endl;
+            // cout << "saved solution" << endl;
         }
 
 template <typename Move>
@@ -112,9 +116,9 @@ template <typename Move>
             if (obj <= current_obj){
                 // cout << "Accept solution" << endl;
                 if (obj < current_obj){
-                    Reward.at(CurrentMove) += (current_obj-obj);
                     NrImprov.at(CurrentMove)++;
                     Improv.at(CurrentMove).push_back(current_obj-obj);
+                    UpdateReward(CurrentMove);
                 }
             }
 
@@ -163,6 +167,21 @@ template <typename Move>
             file2.close();
         }
 
+
+template<typename Move>
+void MetaBase<Move>::UpdateBest(Solution& sol, const int obj){
+    NewBestSolutionFound = false;
+    if (obj < best_obj){
+        best_obj = obj;
+        UpdateBestSolution(sol);
+        it_idle_best = 0;
+        NewBestSolutionFound = true;
+    }
+    else{
+        ++it_idle_best;
+    }
+}
+
 template<typename Move>
 bool LAHC<Move>::Update(Solution& sol, const int obj) {
            // code based on Burke (2017) "The late acceptance Hill-Climbing Heuristic"
@@ -182,6 +201,9 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
             cout << endl;
             cout << "Found obj = " << obj << ", current_obj = " << this->current_obj << ", it_idle = " << this->it_idle << endl;
             */
+
+            // this->UpdateValues(sol, obj); -> UpdateBestSolution is now in other function!
+
             if (obj >= this->current_obj){
                 /*
                 if (PerturbeValue > 1){
@@ -211,34 +233,44 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
             if (obj < HistoricValues.at(v)){
                 HistoricValues.at(v) = obj;
             }
-            if (obj < this->best_obj){
-                this->best_obj = obj;
-            }
 
             this->UpdateTimeStamps();
 #ifdef PRINT
 #if PRINT == 1
-/*
-            if (this->it_idle % 1000 == 0){
-                cout << "* It. " << this->it << " Idle: " << this->it_idle << endl;
+            if (SolutionAccepted && diff){
+                this->print_solution();
             }
-*/
 #endif
 #endif
+
             ++this->it;
-            if (this->getTimeDiff() > this->TIME_LIMIT || (this->it_idle > MAX_IT) || (this->LowerBound >= 0 && obj <= this->LowerBoundGap*this->LowerBound)){
+            return SolutionAccepted;
+
+}
+
+template<typename Move>
+bool LAHC<Move>::UpdateListLength(Solution& sol) {
+
+            if (this->NewBestSolutionFound){
+               HistoryLength = 10;
+               // it_same_HL = 0;
+               PerturbeValue = PerturbeValue_INITIAL;
+               this->it = 0;
+               int lb = this->best_obj;
+               int ub = PerturbeValue*this->best_obj;
+               InitializeHistoricValues(lb, ub, HistoryLength);
+            }
+
+            ++this->it;
+            if (this->getTimeDiff() > this->TIME_LIMIT || (this->it_idle > MAX_IT)){
                 if (this->getTimeDiff() > this->TIME_LIMIT){
                     cout << "Time limit hit" << endl;
-                    this->STOP = true;
-                }
-                else if (this->LowerBound >= 0 && obj <= this->LowerBoundGap*this->LowerBound){
-                    cout << "Lower bounds = " << this->LowerBound << ", current objective = " << obj << endl;
                     this->STOP = true;
                 }
                 else{
 #ifdef PRINT
 #if PRINT == 1
-                    cout << "max it_idle hit: " << this->it_idle << endl;
+                    // cout << "max it_idle hit: " << this->it_idle << endl;
 #endif
 #endif
                     if (!DynamicHL){
@@ -247,36 +279,58 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
                     else{
 #ifdef PRINT
 #if PRINT == 1
-                        cout << "-------------------------" << endl;
-#endif
-#endif
-                        if (HistoryLength*2 <= 50000){
-                            HistoryLength *= 2;
+                        // cout << "-------------------------" << endl;
+#endif  
+#endif                  
+
+                        if (HistoryLength*HistoryMultiplier < MAX_HL){
+                            HistoryLength *= HistoryMultiplier;
+                            /*
+                            I manually tried different things here, i.e. x2, additively add HL (+10 everytime), gradually increase HL (+10 till HL = 100, +100 till HL = 1000, +1000 til HL = 10000) on 3 instances, but they did not directly seem to result in better solutions
+                            I similarly tried different things with PerturbeIncrease (e.g. trying the same HL but with different values for PerturbeIncrease, but this seemed too slow). 
+                            */
 #ifdef PRINT
 #if PRINT == 1
                             cout << "New HistoryLength = " << HistoryLength << endl;
 #endif
 #endif
                         }
+                        else{
+                            // reinitialize
+                            this->SaveBestSolution(sol);
+                            this->current_obj = this->best_obj;
+                            HistoryLength = 10;
+                            // it_same_HL = 0;
+                            PerturbeValue = 1.20;
+                            this->it = 0;
+                            int lb = this->best_obj;
+                            int ub = PerturbeValue*this->best_obj;
+                            InitializeHistoricValues(lb, ub, HistoryLength);
+                        }
 #ifdef PRINT
 #if PRINT == 1
-                        cout << "Previous HL = " << HistoryLength << endl;
-                        cout << "New HL = " << HistoryLength << endl;
-                        cout << "Previous PerturbValue = " << PerturbeValue << endl;
+                        // cout << "Previous HL = " << HistoryLength << endl;
+                        // cout << "New HL = " << HistoryLength << endl;
+                        // cout << "Previous PerturbValue = " << PerturbeValue << endl;
 #endif
 #endif
-                        PerturbeValue += PerturbeIncrease;
+
 #ifdef PRINT
 #if PRINT == 1
-                        cout << "New PerturbValue = " << PerturbeValue << endl;
-                        cout << "Best obj = " << this->best_obj << endl;
+                        // cout << "New PerturbValue = " << PerturbeValue << endl;
+                        // cout << "Best obj = " << this->best_obj << endl;
                         // cout << "Initialize list with " << PerturbeValue*this->best_obj << endl;
 #endif
-#endif
-                        int Lb = 1.005*this->best_obj;
-                        int Ub = 1.25*this->best_obj;
+#endif                  
+                        PerturbeValue += PerturbeIncrease;
+                        // cout << "current_obj = " << this->current_obj << ", TotalCost = " << sol.ComputeTotalCost() << endl;
+                        this->SaveBestSolution(sol);
+                        this->current_obj = this->best_obj;
+                        // cout << "current_obj = " << this->current_obj << ", TotalCost = " << sol.ComputeTotalCost() << endl;
+                        int Lb = this->current_obj;
+                        int Ub = PerturbeValue*this->current_obj;
                         
-                        InitializeHistoricValues(Lb, Ub);
+                        InitializeHistoricValues(Lb, Ub, HistoryLength);
 #ifdef PRINT
 #if PRINT == 1
                         /*
@@ -288,11 +342,13 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
                         cout << "-------------------------" << endl;
                         */
 
+                        /*
                         cout << "Nr times Neighborhoods are selected" << endl;
                         for (const auto& [move, nr]: this->NrChosen){
                             cout << this->Moves.at(move) << " is chosen " << nr << " times, but accepted only " << this->NrAccepted.at(move) << " times" << endl;
                         }
                         cout << "-------------------------" << endl;
+                        */
 #endif
 #endif
                         // cin.get();
@@ -306,12 +362,8 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
                 }
             }
 
-            if (SolutionAccepted && diff){
-                this->print_solution();
-            }
-
             // cin.get();
-            return SolutionAccepted;
+            return true;
 
 }
 
@@ -419,6 +471,36 @@ bool HC<Move>::Update(Solution& sol, const int obj){
             return SolutionAccepted;
 }
 
+template<typename Move>
+bool ILS<Move>::Update(Solution& sol, const int obj){
+
+            bool SolutionAccepted = false;
+
+            if (this->current_obj < obj && !this->PERTURBE){
+                ++this->it_idle;
+            }
+            if (this->current_obj >= obj || (this->PERTURBE && obj < 3*sol.getCostTTPViolation()-100)){
+                this->current_obj = obj;
+                SolutionAccepted = true;
+
+                if (this->PERTURBE){
+                    it_accepted_perturbation++;
+                }
+#if PRINT == 1
+                    this->print_solution();
+#endif
+            }
+
+            if (this->getTimeDiff() > this->TIME_LIMIT){
+                cout << "Time limit of " << this->TIME_LIMIT << " hit" << endl;
+                this->STOP = true;
+            }
+
+            this->UpdateTimeStamps();
+
+            return SolutionAccepted;
+}
+
 
 // Explicit instantiations
 template class MetaBase<FO_move>;
@@ -427,3 +509,4 @@ template class LAHC<Move>;
 template class SA<FO_move>;
 template class SA<Move>;
 template class HC<Move>;
+template class ILS<Move>;

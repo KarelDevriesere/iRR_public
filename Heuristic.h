@@ -10,7 +10,7 @@
 
 using namespace std;
 
-class Heuristic_CM: public LAHC<Move>
+class Heuristic: public LAHC<Move>
 {
     private:
         array<int,3>SelectTwoTeamsAndColorMinCost(Solution& sol);
@@ -19,26 +19,31 @@ class Heuristic_CM: public LAHC<Move>
         pair<int,int>SelectTwoRounds(Solution& sol);
         // Moves for cost minimization
         void SelectTS(Solution& sol);
-        void SelectPTS(Solution& sol);
+        void SelectiPTS(Solution& sol);
         void SelectRS(Solution& sol);
         void SelectPRS(Solution& sol);
-        void SelectMatching(Solution& sol, const bool bipartite);
+        void SelectiPRS(Solution& sol, const bool bipartite);
         void SelectBalancedCycle(Solution& sol);
 
         bool MinCostPR = false; // MinCost Path
-        bool MinCostM = false; // MinCost Matching
+        bool MinCostAC = false; // MinCost Alternating Cycle
         bool MinCostC = false; // MinCost cycle
 
-        bool CM = false;
+        // Helpers (construct these once to avoid overhead):
+        vector<int>ColoredRoundsLantern; // iPTS
+        vector<HA>OrientationCopy_i; // iPTS
+        vector<HA>OrientationCopy_j; // iPTS
 
     public:
-        Heuristic_CM(const std::unordered_map<Move, string>& moves, const std::unordered_map<Move, double>& weights, std::mt19937& g, const int HistoryLength, const int obj);
-        ~Heuristic_CM();
+        Heuristic(const std::unordered_map<Move, string>& moves, const std::unordered_map<Move, double>& weights, std::mt19937& g, const int HistoryLength, const int obj);
+        ~Heuristic();
         
         void DoMove(Solution& sol);
 
-        // Custom functions already declared in LACH:
+        // Custom functions already declared in LAHC:
         void solve(Input& in, Solution& sol) override;
+
+        // void Perturbe(Solution& sol) override; // ILS
 
 	void TeamSwapper(Input& in, Solution& sol);
 };

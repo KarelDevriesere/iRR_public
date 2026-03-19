@@ -4,12 +4,9 @@
 #include "Algo.h"
 #include "Meta.h"
 
-class MiaoAlgo: public HC<Move>{
+class GreedyMatching: public HC<Move>{
     private:
         void MakeForbiddenEdges(const int l, const int r, Solution& sol);
-        // see page 216 in Miao
-        // The weighs change depending on the instance
-
         int team1; // if InterClubSwap, IntraClubSwap or RandomSwap, the haps of team1 and team2 are switched
         int team2;
         int hap_index1;
@@ -21,8 +18,8 @@ class MiaoAlgo: public HC<Move>{
         vector<vector<int>>Opponents; // Opponents[i][r] = j means that j is the opponent of j in round r
 
     public:
-        MiaoAlgo(const std::unordered_map<Move, string>& moves, const std::unordered_map<Move, double>& weights, const int NrRounds, std::mt19937& g);
-        ~MiaoAlgo();
+        GreedyMatching(const std::unordered_map<Move, string>& moves, const std::unordered_map<Move, double>& weights, const int NrRounds, std::mt19937& g);
+        ~GreedyMatching();
 
         int NrInfeasibleMatchings = 0;
         bool InitialOnly = false;
@@ -41,7 +38,6 @@ class MiaoAlgo: public HC<Move>{
         bool SchedulePhase(Solution& sol);
         void ReAssignHAPs(Solution& sol);
         void Reset(Solution& sol); // delete all opponents
-        void SaveBestSequenceMatches(Solution& sol);
         void ReverseMove(Solution& sol);
         void SetAllOpponents(Solution& sol);
         void SetOpponentsCurrentLeague(Solution& sol);

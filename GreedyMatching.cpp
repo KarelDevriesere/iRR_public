@@ -1,4 +1,4 @@
-#include "MiaoAlgo.h"
+#include "GreedyMatching.h"
 #include "assert.h"
 #include <algorithm>
 
@@ -16,7 +16,7 @@ void FindScheduleWithIP(Input& in, Solution& sol){
     gur.solve();
 }
 
-// Miao's HAP operators:
+// HAP operators of Li et al:
 
 void printHAP(Solution& sol, const int i){
     cout << "Team " << i << " has HAP index " << sol.getHAPIndexTeam(i) << " : ";
@@ -58,7 +58,7 @@ void setHAP(Solution& sol, const int i, const int h){
     sol.setHAPIndexTeam(i, h);
 }
 
-void MiaoAlgo::SetAllOpponents(Solution& sol){
+void GreedyMatching::SetAllOpponents(Solution& sol){
     for (int i = 0; i < sol.getNrTeams(); ++i){
         for (int r = 0; r < sol.getNrRounds(); ++r){
             Opponents[i][r] = sol.TeamColorOpp[i][r];
@@ -66,7 +66,7 @@ void MiaoAlgo::SetAllOpponents(Solution& sol){
     }
 }
 
-void MiaoAlgo::SetOpponentsCurrentLeague(Solution& sol){
+void GreedyMatching::SetOpponentsCurrentLeague(Solution& sol){
     for (int i = 0; i < sol.getNrTeamsLeague(CurrentLeague); ++i){
         int i_ = sol.getGlobalIndexTeam(CurrentLeague, i);
         for (int r = 0; r < sol.getNrRounds(); ++r){
@@ -75,7 +75,7 @@ void MiaoAlgo::SetOpponentsCurrentLeague(Solution& sol){
     }
 }
 
-MiaoAlgo::MiaoAlgo(const std::unordered_map<Move, string>& moves, // moves, weights and in are defined in main
+GreedyMatching::GreedyMatching(const std::unordered_map<Move, string>& moves, // moves, weights and in are defined in main
            const std::unordered_map<Move, double>& weights, const int NrRounds, std::mt19937& g): HC<Move>(moves, weights, g){
     Rounds = vector<int>(NrRounds);
     for (int r = 0; r < NrRounds; ++r){
@@ -83,36 +83,9 @@ MiaoAlgo::MiaoAlgo(const std::unordered_map<Move, string>& moves, // moves, weig
     }
 }
 
-MiaoAlgo::~MiaoAlgo(){}
+GreedyMatching::~GreedyMatching(){}
 
-void MiaoAlgo::SaveBestSequenceMatches(Solution& sol){
-    int m, j, h, a;
-    for (int r = 0; r < sol.getNrRounds(); ++r){
-        vector<bool>TeamSeen(sol.getNrTeams(), false);
-        m = 0;
-        for (int i = 0; i < sol.getNrTeams(); ++i){
-            if (TeamSeen[i]){
-                continue;
-            }
-            j = sol.TeamColorOpp[i][r];
-            assert(sol.isEligible(i,j));
-            if (sol.Orientation[i][r] == HA::H){
-                assert(sol.Orientation[j][r] == HA::A);
-                h = i, a = j;
-            }
-            else{
-                assert(sol.Orientation[j][r] == HA::H);
-                assert(sol.Orientation[i][r] == HA::A);
-                h = j, a = i;
-            }
-            TeamSeen[h] = true;
-            TeamSeen[a] = true;
-            BestSequenceMatches[r][m++] = {h,a};
-        }
-    }
-}
-
-void MiaoAlgo::ReverseMove(Solution& sol){
+void GreedyMatching::ReverseMove(Solution& sol){
     if (CurrentMove == Move::ComplementInsertion){
         setHAP(sol, team1, hap_index1);
         setHAP(sol, team2, hap_index2);
@@ -137,7 +110,7 @@ void MiaoAlgo::ReverseMove(Solution& sol){
     }
 }
 
-void MiaoAlgo::Reset(Solution& sol){
+void GreedyMatching::Reset(Solution& sol){
     // cout << "Reset" << endl;
     // Such that we can do the matchings again without conflicts
     // But: do not reset the orientations!!
@@ -155,7 +128,7 @@ void MiaoAlgo::Reset(Solution& sol){
     }
 }
 
-void MiaoAlgo::ReAssignHAPs(Solution& sol){
+void GreedyMatching::ReAssignHAPs(Solution& sol){
     // cout << "ReAssign HAPs" << endl;
     double rnd;
     bool MoveChosen = false;
@@ -184,7 +157,7 @@ void MiaoAlgo::ReAssignHAPs(Solution& sol){
     // cout << "Move = " << Moves.at(CurrentMove) << endl;
 }
 
-bool MiaoAlgo::SchedulePhase(Solution& sol){
+bool GreedyMatching::SchedulePhase(Solution& sol){
     assert(sol.ComputeTotalHACost() <= 0);
     const int N = sol.getNrTeamsLeague(CurrentLeague);
     const bool bipartite = true;
@@ -251,7 +224,7 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
     assert(sol.validate());
     // cout << "Total travel cost = " << sol.ComputeTravelCost() << endl;
     // cout << "Total cost = " << sol.ComputeTotalCost() << endl;
-    if (sol.getSetting() == Setting::Miao || sol.getSetting() == Setting::Hockey){
+    if (sol.getSetting() == Setting::Football || sol.getSetting() == Setting::Hockey){
         assert(sol.ComputeTravelCost() == sol.ComputeTotalCost());
     }
     else{
@@ -260,7 +233,7 @@ bool MiaoAlgo::SchedulePhase(Solution& sol){
     return true;
 }
 
-bool MiaoAlgo::HomeAwaySwap(Solution& sol){
+bool GreedyMatching::HomeAwaySwap(Solution& sol){
     // pick a random league + random team
     int l = RandomIntegerNumber(0, sol.getNrLeagues()-1);
     CurrentLeague = l;
@@ -317,7 +290,7 @@ bool MiaoAlgo::HomeAwaySwap(Solution& sol){
     return true;
 }
 
-bool MiaoAlgo::InterClubSwap(Solution& sol){
+bool GreedyMatching::InterClubSwap(Solution& sol){
     // Must they be of the same league->yes?
     // So modify code!!!
 
@@ -364,7 +337,7 @@ bool MiaoAlgo::InterClubSwap(Solution& sol){
     return true;
 }
 
-bool MiaoAlgo::IntraClubSwap(Solution& sol){
+bool GreedyMatching::IntraClubSwap(Solution& sol){
     assert(sol.ComputeCostCapacities() <= 0);
     /*
     int c_ = RandomIntegerNumber(0, sol.getMultiTeamClubs().size()-1);
@@ -410,7 +383,7 @@ bool MiaoAlgo::IntraClubSwap(Solution& sol){
     return true;
 }
 
-bool MiaoAlgo::RandomSwap(Solution& sol){
+bool GreedyMatching::RandomSwap(Solution& sol){
     int i,j,c1,c2;
     if (sol.getNrLeagues() <= 1){
         c1 = RandomIntegerNumber(0, sol.getNrClubs()-1);
@@ -441,7 +414,7 @@ bool MiaoAlgo::RandomSwap(Solution& sol){
 
     team1 = i;
     team2 = j;
-    if (sol.getSetting() == Setting::Miao){
+    if (sol.getSetting() == Setting::Football){
         assert(sol.getTeamClub(i) != sol.getTeamClub(j));
     }
     // cout << "RandomSwap: swap HAPs of teams " << i << " and " << j << " of clubs << " << c1 << " and " << c2 << endl;
@@ -456,7 +429,7 @@ bool MiaoAlgo::RandomSwap(Solution& sol){
     return true;
 }
 
-bool MiaoAlgo::ComplementInsertion(Solution& sol){
+bool GreedyMatching::ComplementInsertion(Solution& sol){
     // TODO
     // Also fill TeamsHAP!!
     // Given two teams with complementary HAPs, replace their patterns with a newly chosen pair of 
@@ -607,10 +580,9 @@ void AssignsHAPsToTeamsBasedOnSol(Solution& sol){
     }
 }
 
-void MiaoAlgo::solve(Input& in, Solution& sol){
+void GreedyMatching::solve(Input& in, Solution& sol){
 
     StartTime = std::chrono::high_resolution_clock::now();
-    // TODO: Miao is also doing something with byes...
 
     Opponents = vector<vector<int>>(sol.getNrTeams(), vector<int>(sol.getNrRounds(), -1));
 
@@ -659,7 +631,7 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
         UpdateBestSolution(sol);
         cout << "opponent schedule found" << endl;
         */
-        // Full Miao Formulation takes too long!!!
+        // Full Formulation takes too long!!!
     }
     else{
         best_obj = sol.ComputeTotalCost();
@@ -762,7 +734,7 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
         Reset(sol); // this deletes all the matchups in the rounds of the league chosen by the HAP operator
     }
 
-    // cout << "Miao Algo done" << endl;
+    // cout << "done" << endl;
     // save into solution
     if (NrSuccesfullMatchings >= 1 || InitialSolutionGiven){
         cout << "NrSuccesfullMatchings = " << NrSuccesfullMatchings << endl;
@@ -770,7 +742,7 @@ void MiaoAlgo::solve(Input& in, Solution& sol){
     }
 }
 
-void MiaoAlgo::SolveGivenSeqeuence(Input& in, Solution& sol){
+void GreedyMatching::SolveGivenSeqeuence(Input& in, Solution& sol){
     cout << "Solve given sequence" << endl;
     string file_path = "Instances" + std::string(PATHSEP) + "Miao";
 

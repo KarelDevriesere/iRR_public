@@ -28,17 +28,17 @@ class Solution: public Input{
         vector<vector<int>>WeightsBF; // weights for the Bellman Ford
         vector<vector<HA>>Orientation;
 
-        int NonEligibleCost = 100000;
-        int CostCapacityViol = 100000;
-        int CostSameClub = 100000;
-        int HighCostHAPs = 100000;
+        int NonEligibleCost = 1000000;
+        int CostCapacityViol = 1000000;
+        int CostSameClub = 1000000;
+        int HighCostHAPs = 1000000;
         int TravelCost = 1;
 
-        int Cost2RRSameHalf = 100000;
-        int Cost2RRSameMode = 100000;
+        int Cost2RRSameHalf = 1000000;
+        int Cost2RRSameMode = 1000000;
 
-        int CostTTPViolation = 100000;
-        int CostImbalance = 100000;
+        int CostTTPViolation = 1000000;
+        int CostImbalance = 1000000;
 
         int getCostTTPViolation()const{return CostTTPViolation;};
         int getCostImbalance()const{return CostImbalance;};
@@ -57,10 +57,11 @@ class Solution: public Input{
         bool IsMatchFeasible2RR(const int h, const int a, const int r);
 
         int ComputeTotalCost();
-        int ComputeTotalCostMiaoHockey();
+        int ComputeTotalCostYSTP();
         int ComputeTotalHACost();
-        int ComputeCapacityClubRound(const int c, const int r);
+        int ComputeCapacityClubRound(const int c, const int r)const;
         int ComputeCostCapacities();
+        int ComputeTravelCostTeam(const int i);
         int ComputeTravelCost();
         int ComputeCostNonEligibleOpponents();
         int ComputeCostSameClub();
@@ -79,8 +80,9 @@ class Solution: public Input{
         int ComputeTotalCostTTP();
         int ComputeTotalCostTTPViolations();
         int ComputeCostMatchRoundTTP(const int h, const int a, const int r);
-        int ComputeTravelCostTeamTTP(const int t);
+        int ComputeTravelCostTeamTTP(const int t)const;
         int ComputeTravelCostTTP();
+        int ComputeTotalCostTeamTTP(const int i);
 
         int ComputeCostGeneralMatrix();
 

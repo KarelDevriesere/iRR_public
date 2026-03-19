@@ -14,24 +14,15 @@ enum class Move{TS,PTS,RS,PRS,C,NC,
     MinCost_BM, Random_BM,
     iPTS_MinCost_PR, iPTS_Random_PR,
     MinCost_M_MinCost_PR, MinCost_M_Random_PR, Random_M_MinCost_PR, Random_M_Random_PR,
-    InterClubSwap, IntraClubSwap, RandomSwap, ComplementInsertion, // Miao's HAP operators
+    InterClubSwap, IntraClubSwap, RandomSwap, ComplementInsertion, // Li et al HAP operators
     HomeAwaySwap}; 
 
-enum class Setting{Miao,Hockey,CM,TTP};
-enum class InstanceSetCM{Karel, Jasper, Uthus}; // Instances Cost Minimization
+enum class Setting{Football,Hockey,TTP};
 enum class HAP_requirement_name{NoThreeConsecutive, NoBreakBeginningEnd, BreakLimit, QuarterBalanced};
-enum class MiaoInstance{S, U13, U15, U17, U21, M, Tiny}; // Instances paper Miao
+enum class FootballInstance{S, U13, U15, U17, U21, M, Tiny}; // Instances paper Li et al
 
-const std::unordered_map<Move, string>MiaoMoves = {{Move::InterClubSwap, "InterClubSwap"}, {Move::IntraClubSwap, "IntraClubSwap"}, {Move::RandomSwap, "RandomSwap"}, {Move::ComplementInsertion, "ComplementInsertion"}};
-const std::unordered_map<Move, double>MiaoWeights = {{Move::InterClubSwap, 1.0/3.0}, {Move::IntraClubSwap, 1.0/3.0}, {Move::RandomSwap, 1.0/6.0}, {Move::ComplementInsertion, 1.0/6.0}};
-
-// Removed ComplementInsertion because it will give problems with complementary pairs of HAPs!!!
-
-const std::unordered_map<Move, string>MiaoMovesTTP = {{Move::RandomSwap, "RandomSwap"}, {Move::HomeAwaySwap, "HomeAwaySwap"}};
-const std::unordered_map<Move, double>MiaoWeightsTTP = {{Move::RandomSwap, 1.0/2.0}, {Move::HomeAwaySwap, 1.0/2.0}};
-
-const std::unordered_map<Move, string>MiaoMovesTTP_CON = {{Move::ComplementInsertion, "ComplementInsertion"}};
-const std::unordered_map<Move, double>MiaoWeightsTTP_CON = {{Move::ComplementInsertion, 1.0}};
+const std::unordered_map<Move, string>GreedyMatchingMoves = {{Move::InterClubSwap, "InterClubSwap"}, {Move::IntraClubSwap, "IntraClubSwap"}, {Move::RandomSwap, "RandomSwap"}, {Move::ComplementInsertion, "ComplementInsertion"}};
+const std::unordered_map<Move, double>GreedyMatchingWeights = {{Move::InterClubSwap, 1.0/3.0}, {Move::IntraClubSwap, 1.0/3.0}, {Move::RandomSwap, 1.0/6.0}, {Move::ComplementInsertion, 1.0/6.0}};
 
 enum class HA{H, A, BYE};
 
@@ -39,7 +30,7 @@ struct InputData{
     // All input that we get from the command line
     // If nothing specified, we get the default value
     const unordered_map<Move,bool>IsMoveInBase = {{Move::TS, true}, 
-    {Move::PTS, true}, 
+    /*{Move::PTS, true},*/ 
     {Move::RS, true}, 
     {Move::PRS, true}, 
     {Move::C, false}, 
@@ -49,12 +40,12 @@ struct InputData{
     /*{Move::iPTS_MinCost_PR, false},*/
     {Move::iPTS_Random_PR, false}, 
     /*{Move::MinCost_M_MinCost_PR, false},*/ 
-    {Move::MinCost_M_Random_PR, false},
+    /*{Move::MinCost_M_Random_PR, false},*/
     /*{Move::Random_M_MinCost_PR, false},*/
     {Move::Random_M_Random_PR, false}};
 
     const unordered_map<Move,string>Moves = {{Move::TS, "TS"}, 
-    {Move::PTS, "PTS"}, 
+    /*{Move::PTS, "PTS"},*/ 
     {Move::RS, "RS"}, 
     {Move::PRS, "PRS"}, 
     {Move::C, "C"}, 
@@ -64,7 +55,7 @@ struct InputData{
     /*{Move::iPTS_MinCost_PR, "iPTS_MinCost_PR"},*/
     {Move::iPTS_Random_PR, "iPTS_Random_PR"}, 
     /*{Move::MinCost_M_MinCost_PR, "MinCost_M_MinCost_PR"},*/ 
-    {Move::MinCost_M_Random_PR, "MinCost_M_Random_PR"},
+    /*{Move::MinCost_M_Random_PR, "MinCost_M_Random_PR"},*/
     /*{Move::Random_M_MinCost_PR, "Random_M_MinCost_PR"},*/
     {Move::Random_M_Random_PR, "Random_M_Random_PR"}}; 
 
@@ -78,25 +69,23 @@ struct InputData{
     int TimeLimit = 7200;
     long MaxIt = 100000;
     bool TTP = false; // TTP
-    bool Base = false;
     long ConstrViolationCost = 100000;
     unordered_map<Move, double>InputWeights;
-    unordered_map<Move, bool>MoveSeen;
     bool addMinTripConstraint = false;
     bool addColoringConstraint = false;
 
-    bool Miao = false; // Miao
-    bool ConstantCapacity = true; // Miao
-    int MaxNrBreaks = 100; // Miao
-    int CapacitySetting = 0; // Miao
+    bool Football = false; // YSTP, football
+    bool ConstantCapacity = true; // YSTP, football
+    int MaxNrBreaks = 100; // YSTP, football
+    int CapacitySetting = 0; // YSTP, football
 
     bool MinCost = false;
     string OutputFolder;
 
     string startSol = "";
 
-    bool RunMiaoAlgo = false;
-    bool RunMiaoRF = false;
+    bool RunGM = false;
+    bool RunRF = false;
 
     bool Hockey = false;
     int PercentageHAPs = 100;
@@ -146,10 +135,10 @@ class Input
         vector<int>ComplementHAP;
         int MiaoHAPSetting = -1;
 
-        MiaoInstance InstanceMiao = MiaoInstance::S;
+        FootballInstance InstanceFootball = FootballInstance::S;
         // pair<TotalNrTeams,NrDummyTeams>
-        std::unordered_map<MiaoInstance, std::pair<int,int>>NrTeamsMiaoInstances = {{MiaoInstance::S, {50,0}}, {MiaoInstance::U13, {184,18}}, {MiaoInstance::U15, {216,49}},
-            {MiaoInstance::U17, {144,14}}, {MiaoInstance::U21, {64,6}}, {MiaoInstance::M, {608,87}}, {MiaoInstance::Tiny, {16,1}}};
+        std::unordered_map<FootballInstance, std::pair<int,int>>NrTeamsFootballInstances = {{FootballInstance::S, {50,0}}, {FootballInstance::U13, {184,18}}, {FootballInstance::U15, {216,49}},
+            {FootballInstance::U17, {144,14}}, {FootballInstance::U21, {64,6}}, {FootballInstance::M, {608,87}}, {FootballInstance::Tiny, {16,1}}};
 
         vector<vector<vector<int>>>CostMatchRound;
 
@@ -159,9 +148,8 @@ class Input
         Input();
         ~Input();
         int read_TTP(const std::string file_path);
-        int read_CostMinimization(const string file_path, InstanceSetCM inst);
         int read_CostMinimizationJasper(const string file_path);
-        int read_Miao_Hockey(const string file_path, const bool Miao);
+        int read_YSTP(const string file_path, const bool Miao);
         void readAllowedNrCapacityViolations(const int num);
         int getNrTeams()const{return NrTeams;}
         int getNrLeagues()const{return NrLeagues;}
@@ -169,7 +157,7 @@ class Input
         int getNrRounds()const{return NrRounds;}
         int getNrClubs()const{return NrClubs;}
         int getDistanceClubs(const int c1, const int c2)const{return DistanceClubs[c1][c2];}
-        int getDistanceTeams(const int i, const int j);
+        int getDistanceTeams(const int i, const int j)const;
         vector<int> getTeamsClub(const int c)const{return ClubTeams[c];}
         vector<int> getTeamsClubLeague(const int c, const int l)const{return ClubTeamsLeague[c][l];}
         vector<int> getSingleTeamClubs()const{return SingleTeamClubs;};
@@ -236,7 +224,7 @@ class Input
 
         Setting getSetting()const{return Setting_;};
 
-        MiaoInstance getMiaoInstance();
+        FootballInstance getFootballInstance();
 
         void SetDefault(const int NrTeams);
 

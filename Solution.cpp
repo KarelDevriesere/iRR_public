@@ -221,7 +221,7 @@ int Solution::ComputeCostReversingOrientationTeam(const int i, const int r1, con
     if (getSetting() == Setting::TTP){
         cost -= (getCostTTPViolation()*ComputeTTPViolations(i) + ComputeTravelCostTeamTTP(i));
     }
-    else if (getSetting() == Setting::Miao || getSetting() == Setting::Hockey){
+    else if (getSetting() == Setting::Football || getSetting() == Setting::Hockey){
         cost -= ComputeHACostTeam(i) + ComputeCost2RRConstraintTeam(i); //  not possible to take capacity violations into account because multiple teams in same club!!
         // Also, then we get negative costs which is not allowed for dijkstra shortest paths
     }
@@ -230,7 +230,7 @@ int Solution::ComputeCostReversingOrientationTeam(const int i, const int r1, con
     if (getSetting() == Setting::TTP){
         cost += (getCostTTPViolation()*ComputeTTPViolations(i) + ComputeTravelCostTeamTTP(i));
     }
-    else if (getSetting() == Setting::Miao || getSetting() == Setting::Hockey){
+    else if (getSetting() == Setting::Football || getSetting() == Setting::Hockey){
         cost += ComputeHACostTeam(i) + ComputeCost2RRConstraintTeam(i); //  not possible to take capacity violations into account because multiple teams in same club!!
         // Also, then we get negative costs which is not allowed for dijkstra shortest paths
     }
@@ -312,6 +312,14 @@ int Solution::ComputeCostSameClub(){
     return CostSameClub*max(0, NrSameClub - getMaxSameClub());
 }
 
+int Solution::ComputeTravelCostTeam(const int i){
+    int cost = 0;
+    for (int c = 0; c < NrColouredRounds; c++){
+        cost += getDistanceTeams(i, TeamColorOpp[i][c]);
+    }
+    return cost;
+}
+
 int Solution::ComputeTravelCost(){
     int cost = 0;
     for (int c = 0; c < NrColouredRounds; c++){
@@ -345,7 +353,7 @@ int Solution::ComputeTravelCost(){
     return TravelCost*cost;
 }
 
-int Solution::ComputeCapacityClubRound(const int c, const int r){
+int Solution::ComputeCapacityClubRound(const int c, const int r)const{
     int cap = 0;
     for (auto& i: getTeamsClub(c)){
         if (Orientation[i][r] == HA::H){
@@ -486,7 +494,7 @@ int Solution::ComputeTotalHACost(){
     return cost;
 }
 
-int Solution::ComputeTotalCostMiaoHockey(){
+int Solution::ComputeTotalCostYSTP(){
     // cout << "Compute total cost" << endl;
     int travel_cost = ComputeTravelCost();
     // cout << "Travel cost = " << travel_cost << endl;
@@ -548,7 +556,7 @@ int Solution::ComputeTotalCostTTPViolations(){
 }
 
 
-int Solution::ComputeTravelCostTeamTTP(const int t){
+int Solution::ComputeTravelCostTeamTTP(const int t)const{
     int i,j,r;
     int CostOfTrips = 0;
     for (r = 1; r < NrColouredRounds; ++r){
@@ -592,6 +600,12 @@ int Solution::ComputeTravelCostTTP(){
     return CostOfTrips;
 }
 
+int Solution::ComputeTotalCostTeamTTP(const int i){
+    // cout << "Travel cost = " << ComputeTravelCostTTP() << endl;
+    // cout << "TTP cost = " << ComputeTotalCostTTPViolations() << endl;
+    return ComputeTravelCostTeamTTP(i)+getCostTTPViolation()*ComputeTTPViolations(i);
+}
+
 int Solution::ComputeTotalCostTTP(){
     // cout << "Travel cost = " << ComputeTravelCostTTP() << endl;
     // cout << "TTP cost = " << ComputeTotalCostTTPViolations() << endl;
@@ -624,11 +638,8 @@ int Solution::ComputeTotalCost(){
     if (getSetting() == Setting::TTP){
         cost = ComputeTotalCostTTP();
     }
-    else if (getSetting() == Setting::CM){
-        cost = ComputeCostGeneralMatrix();
-    }
-    else if (getSetting() == Setting::Miao || getSetting() == Setting::Hockey){
-        cost = ComputeTotalCostMiaoHockey();
+    else if (getSetting() == Setting::Football || getSetting() == Setting::Hockey){
+        cost = ComputeTotalCostYSTP();
     }
     else{
         std::cerr << "Unknown setting" << std::endl;

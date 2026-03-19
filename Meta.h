@@ -16,7 +16,7 @@
 // this way, it works with any type of Moves
 
 
-// TODO TODO Whenever you use the template for a class, iniitialize at the bottom of Meta.cpp!
+// TODO TODO Whenever you use the template for a class, initialize at the bottom of Meta.cpp!
 template<typename Move> 
 class MetaBase{ // Everything that can be used for all metaheuristics
     private:
@@ -37,9 +37,13 @@ class MetaBase{ // Everything that can be used for all metaheuristics
         int it; // current iteration
         int it_accepted;
         int it_idle; // nr of iterations without improvement
+        int it_idle_best = 0;
         bool STOP = false;
         bool CONVERGED = false;
         bool StartTimeSet = false;
+        bool MAB = false; // Whether we update the selection probabilities with multi-armed bandit or not
+        bool PERTURBE = false;
+        bool NewBestSolutionFound = false;
 
         int LowerBound = -1;
         double LowerBoundGap;
@@ -57,7 +61,10 @@ class MetaBase{ // Everything that can be used for all metaheuristics
         unordered_map<Move, vector<int>>Improv; // stores the improvements: to make boxplots
         unordered_map<Move, vector<std::chrono::microseconds>>ExecutionTimes;
 
-        vector<vector<pair<int,int>>>BestSequenceMatches;
+        unordered_map<Move, double>SelectionProbabilityMAB;
+
+        vector<vector<HA>>BestOrientation;
+        vector<vector<int>>BestTeamColorOpp;
 
         int CurrentTimeStampIndex = 0;
         vector<int>TimeStamps;
@@ -68,6 +75,8 @@ class MetaBase{ // Everything that can be used for all metaheuristics
         ~MetaBase(){};
 
         virtual void solve(Input& in, Solution& sol) = 0; // CUSTOMIZE
+
+        void UpdateBest(Solution& sol, const int obj); // Check if we need to update the best solution
 
         void UpdateBestSolution(Solution& sol);
 
@@ -81,6 +90,7 @@ class MetaBase{ // Everything that can be used for all metaheuristics
             it = 0;
             it_accepted = 0;
             it_idle = 0;
+            it_idle_best = 0;
             best_obj = INT_MAX;
             current_obj = INT_MAX;
             STOP=false;
@@ -176,27 +186,64 @@ class MetaBase{ // Everything that can be used for all metaheuristics
             cout << "Total time = " << (int)this->getTimeDiff() << endl;
             output_file << "Final, " << this->best_obj << "," << (int)this->getTimeDiff() << "\n" << endl;
         }
+
+        // MAB
+        double epsilon = 1.0; // default, select neighborhoods according to their preset weight (uniform)
+
+        Move SelectNB(){
+            Move BestMove;
+            double rnd = RandomDoubleNumber(0.0, 1.0);
+            if (rnd < epsilon){
+                rnd = RandomDoubleNumber(0.0, 1.0);
+                auto iterator = WeightsCumul.upper_bound(rnd);
+                BestMove = iterator->second;
+            }
+            else{
+                double BestValue = -1;
+                // sample a value, if less than epsilon, select a move uniformly, otherwise select the move with the best reward
+                for (auto& [move, value]: SelectionProbabilityMAB){
+                    // cout << Moves.at(move) << ": " << value << endl;
+                    if (NrChosen.at(move) == 0){
+                        BestValue = value;
+                        BestMove = move;
+                        break;
+                    }
+                    else if (value > BestValue){
+                        BestValue = value;
+                        BestMove = move;
+                    }
+                }
+            }
+            return BestMove;
+        }
+
+        void UpdateReward(Move move){
+            SelectionProbabilityMAB.at(move) = NrImprov.at(move) / (double)NrChosen.at(move);
+        }
 };
 
-// TODO TODO Whenever you use the template for a class, iniitialize at the bottom of Meta.cpp!
+// TODO TODO Whenever you use the template for a class, initialize at the bottom of Meta.cpp!
 template<typename Move>
 class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
     private:
         // Everything public for easy access
     public:
 
-        vector<int>HistoricValues;
         int HistoryLength = 1; // default: Hill Climbing
-
-        long MAX_IT = 100000;
+        double HistoryMultiplier = 1.5;
+        int MAX_IT = 100000;
         bool DynamicHL = false;
-        double PerturbeValue = 1;
+        double PerturbeValue_INITIAL = 1.005;
+        double PerturbeValue = PerturbeValue_INITIAL;
         double PerturbeIncrease = 0.005;
         bool ResetSolutionAfterMove = false;
 
+        static constexpr int MAX_HL = 1000;
+        // after MAX_HL iterations, we shrink the list length again (at this point, it is more a random walk then anything else)
+        array<int, MAX_HL>HistoricValues;
+
         LAHC(const std::unordered_map<Move, string>& moves, // moves, weights and in are defined in main
            const std::unordered_map<Move, double>& weights, std::mt19937& g): MetaBase<Move>(moves, weights, g){
-
         }
 
         void SetHistoryLength(const int l){
@@ -207,14 +254,15 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
             PerturbeIncrease = p;
         }
 
-        void InitializeHistoricValues(const int Lb, const int Ub){
-            HistoricValues = vector<int>(HistoryLength);
-            std::uniform_int_distribution<>dist_HL_value = std::uniform_int_distribution<>(Lb,Ub);
-            for (int v = 0; v < HistoryLength; ++v){
-                if (Lb != Ub){
+        void InitializeHistoricValues(const int Lb, const int Ub, const int HistoryLength){
+            if (Lb != Ub){
+                for (int v = 0; v < HistoryLength; ++v){
+                    std::uniform_int_distribution<>dist_HL_value = std::uniform_int_distribution<>(Lb,Ub);
                     HistoricValues[v] = dist_HL_value(this->gen);
                 }
-                else{
+            }
+            else{
+                for (int v = 0; v < HistoryLength; ++v){
                     HistoricValues[v] = Lb;
                 }
             }
@@ -229,10 +277,11 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
         }
 
         bool Update(Solution& sol, const int obj) ;
+        bool UpdateListLength(Solution& sol);
 
 };
 
-// TODO TODO Whenever you use the template for a class, iniitialize at the bottom of Meta.cpp!
+// TODO TODO Whenever you use the template for a class, initialize at the bottom of Meta.cpp!
 template<typename Move>
 class SA: public MetaBase<Move>{ // Simulated Annealing
     private:
@@ -251,8 +300,6 @@ class SA: public MetaBase<Move>{ // Simulated Annealing
 
         double MinWeight = 0.01; // for dynamic updates
         double lambda = 0.093; // for dynamic updates
-
-        vector<vector<pair<int,int>>>BestSequenceMatches;
 
         SA(const std::unordered_map<Move, string>& moves, // moves, weights and in are defined in main
            const std::unordered_map<Move, double>& weights, std::mt19937& g): MetaBase<Move>(moves, weights, g){
@@ -289,7 +336,31 @@ class HC: public MetaBase<Move>{ // Hill Climbing
             MAX_IT = limit;
         }
 
-        bool Update(Solution& sol, const int obj) ;
+        bool Update(Solution& sol, const int obj);
+
+};
+
+template<typename Move>
+class ILS: public MetaBase<Move>{ // Hill Climbing
+    private:
+        // Everything public for easy access
+    public:
+
+        double INITIAL_INCR = 0.001;
+        double incr = INITIAL_INCR;
+
+        int it_idle_current = 0;
+
+        int it_accepted_perturbation = 0;
+
+        ILS(const std::unordered_map<Move, string>& moves, // moves, weights and in are defined in main
+           const std::unordered_map<Move, double>& weights, std::mt19937& g): MetaBase<Move>(moves, weights, g){
+
+        }
+
+        bool Update(Solution& sol, const int obj);
+
+        virtual void Perturbe(Solution& sol) = 0; // CUSTOMIZE
 
 };
 

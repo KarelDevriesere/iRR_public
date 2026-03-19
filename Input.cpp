@@ -34,7 +34,7 @@ void Input::setBaseAlgo(){
         */
 }
 
-int Input::getDistanceTeams(const int i, const int j){
+int Input::getDistanceTeams(const int i, const int j)const{
     if (i > IsTeamDummy.size() || j > IsTeamDummy.size() || i < 0 || j < 0){
         cout << "i = " << i << ", j = " << j << " in getDistanceTeams()" << endl;
         std::abort();
@@ -178,95 +178,37 @@ int Input::read_TTP(const std::string file_path){
     return 1;
 }
 
-int Input::read_CostMinimization(const std::string file_path, InstanceSetCM inst){
-    Setting_ = Setting::CM;
-    cout << "This function is intended ONLY for cost minimization!!" << endl;
-
-    std::ifstream file(file_path);
-    if (!file.is_open()) {
-        std::cerr << "Error opening the file!";
-        return 0;
+FootballInstance Input::getFootballInstance(){
+    if (NrTeams == NrTeamsFootballInstances.at(FootballInstance::S).first){
+        return FootballInstance::S;
     }
-
-    std::string line;
-    char comma;
-    getline(file, line);
-    std::istringstream iss(line);  
-    if (inst == InstanceSetCM::Karel){
-        iss >> NrTeams >> comma >> NrRounds;
+    else if (NrTeams == NrTeamsFootballInstances.at(FootballInstance::U13).first){
+        return FootballInstance::U13;
     }
-    else if (inst == InstanceSetCM::Jasper){
-        iss >> NrTeams;
-        NrRounds = NrTeams-1;
+    else if (NrTeams == NrTeamsFootballInstances.at(FootballInstance::U15).first){
+        return FootballInstance::U15;
     }
-    else if (inst == InstanceSetCM::Uthus){
-        iss >> NrTeams;
-        NrRounds = NrTeams-1;
+    else if (NrTeams == NrTeamsFootballInstances.at(FootballInstance::U17).first){
+        return FootballInstance::U17;
+    }
+    else if (NrTeams == NrTeamsFootballInstances.at(FootballInstance::U21).first){
+        return FootballInstance::U21;
+    }
+    else if (NrTeams == NrTeamsFootballInstances.at(FootballInstance::M).first){
+        return FootballInstance::M;
+    }
+    else if (NrTeams == NrTeamsFootballInstances.at(FootballInstance::Tiny).first){
+        return FootballInstance::Tiny;
     }
     else{
-        std::cerr << "Instance set should be Karel, Jasper or Uthus!!";
-        return 0;
-    }
-    cout << "NrTeams = " << NrTeams << ", NrRounds =  " << NrRounds  << endl;
-    CostMatchRound = vector<vector<vector<int>>>(NrTeams,vector<vector<int>>(NrTeams,vector<int>(NrRounds, 0)));
-    int i,j,r,c;
-    MaxEdgeCost = 0;
-    while (getline(file, line)){
-        std::istringstream iss(line);
-        if (inst == InstanceSetCM::Karel){
-            iss >> i >> comma >> j >> comma >> r >> comma >> c;
-        }
-        else if (inst == InstanceSetCM::Jasper){
-            iss >> i >> j >> r >> c;
-        }
-        else if (inst == InstanceSetCM::Uthus){
-            iss >> i >> j >> r >> c;
-            r -= 1;
-        }
-        if (r < NrRounds){
-            CostMatchRound.at(i).at(j).at(r) = c; 
-            // cout << "cost of " << i << " vs " << j << " in " << r << " = " << c << endl;
-            if (c > MaxEdgeCost){
-                MaxEdgeCost = c;
-            }
-        }
-    }
-    
-    SetDefault(NrTeams);
-    return 1;
-}
-
-MiaoInstance Input::getMiaoInstance(){
-    if (NrTeams == NrTeamsMiaoInstances.at(MiaoInstance::S).first){
-        return MiaoInstance::S;
-    }
-    else if (NrTeams == NrTeamsMiaoInstances.at(MiaoInstance::U13).first){
-        return MiaoInstance::U13;
-    }
-    else if (NrTeams == NrTeamsMiaoInstances.at(MiaoInstance::U15).first){
-        return MiaoInstance::U15;
-    }
-    else if (NrTeams == NrTeamsMiaoInstances.at(MiaoInstance::U17).first){
-        return MiaoInstance::U17;
-    }
-    else if (NrTeams == NrTeamsMiaoInstances.at(MiaoInstance::U21).first){
-        return MiaoInstance::U21;
-    }
-    else if (NrTeams == NrTeamsMiaoInstances.at(MiaoInstance::M).first){
-        return MiaoInstance::M;
-    }
-    else if (NrTeams == NrTeamsMiaoInstances.at(MiaoInstance::Tiny).first){
-        return MiaoInstance::Tiny;
-    }
-    else{
-        cout << "NrTeams = " << NrTeams << " did not match any instance of Miao, abort" << endl;
+        cout << "NrTeams = " << NrTeams << " did not match any football instance, abort" << endl;
         std::exit(0);
     }
 }
 
 void Input::setAllowedNrCapacityViolations1RR(const InputData& data){
     string FilePath = "Instances" + string(PATHSEP);
-    if (data.Miao){
+    if (data.Football){
         FilePath += "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
         FilePath += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
     }
@@ -292,7 +234,7 @@ void Input::setAllowedNrCapacityViolations1RR(const InputData& data){
     int s,b,v;
     char comma;
     getline(ss, i, ',');
-    if (data.Miao){
+    if (data.Football){
         if (ss >> s >> comma >> b >> comma >> v) {
             AllowedNrCapacityViolations = v;
         }
@@ -304,140 +246,12 @@ void Input::setAllowedNrCapacityViolations1RR(const InputData& data){
     }
 }
 
-void Input::setAllowedNrCapacityViolations2RR(){
-    if (HAP_requirements.at(HAP_requirement_name::BreakLimit)){
-        assert(BreakLimit == 0 || BreakLimit == 1 || BreakLimit == 2 || BreakLimit == 3);
-    }
-    if (!ConstantCapacity){
-        assert(MiaoHAPSetting == 1 || MiaoHAPSetting == 2);
-    }
-    if (ConstantCapacity){ // constant
-        if (InstanceMiao == MiaoInstance::U15){ 
-            AllowedNrCapacityViolations = 14;
-        }
-        else if (InstanceMiao == MiaoInstance::M){
-            AllowedNrCapacityViolations = 175;
-        }
-        else{
-            AllowedNrCapacityViolations = 0;
-        }
-    }
-    else{
-        if (MiaoHAPSetting == 2){
-            if (InstanceMiao == MiaoInstance::Tiny){ // Tiny
-                if (BreakLimit == 0){
-                    AllowedNrCapacityViolations = 28;
-                }
-                else if (BreakLimit == 1){
-                    AllowedNrCapacityViolations = 4;
-                }
-                else{
-                    AllowedNrCapacityViolations = 0;
-                }
-            }
-            else{
-                AllowedNrCapacityViolations = 0;
-            }
-        }
-        else{
-            if (InstanceMiao == MiaoInstance::Tiny){
-                if (BreakLimit == 0){
-                    AllowedNrCapacityViolations = 44;
-                }
-                else if (BreakLimit == 1){
-                    AllowedNrCapacityViolations = 31;
-                }
-                else if (BreakLimit == 2) {
-                    AllowedNrCapacityViolations = 24;
-                }
-                else if (BreakLimit == 3) {
-                    AllowedNrCapacityViolations = 21;
-                }
-            }
-            else if (InstanceMiao == MiaoInstance::S){ // S
-                if (BreakLimit == 0){
-                    AllowedNrCapacityViolations = 167;
-                }
-                else if (BreakLimit == 1){
-                    AllowedNrCapacityViolations = 140;
-                }
-                else if (BreakLimit == 2){
-                    AllowedNrCapacityViolations = 108;
-                }
-                else if (BreakLimit == 3){
-                    AllowedNrCapacityViolations = 96;
-                }
-            }
-            else if (InstanceMiao == MiaoInstance::U21){ // U21
-                if (BreakLimit == 0){
-                    AllowedNrCapacityViolations = 164;
-                }
-                else if (BreakLimit == 1){
-                    AllowedNrCapacityViolations = 127;
-                }
-                else if (BreakLimit == 2){
-                    AllowedNrCapacityViolations = 100;
-                }
-                else if (BreakLimit == 3){
-                    AllowedNrCapacityViolations = 87;
-                }
-            }
-            else if (InstanceMiao == MiaoInstance::U17){ // U17
-                if (BreakLimit == 0){
-                    AllowedNrCapacityViolations = 359;
-                }
-                else if (BreakLimit == 1){
-                    AllowedNrCapacityViolations = 271;
-                }
-                else if (BreakLimit == 2){
-                    AllowedNrCapacityViolations = 224;
-                }
-                else if (BreakLimit == 3){
-                    AllowedNrCapacityViolations = 194;
-                }
-            }
-            else if (InstanceMiao == MiaoInstance::U13){ // U13
-                if (BreakLimit == 0){
-                    AllowedNrCapacityViolations = 453;
-                }
-                else if (BreakLimit == 1){
-                    AllowedNrCapacityViolations = 333;
-                }
-                else if (BreakLimit == 2){
-                    AllowedNrCapacityViolations = 267;
-                }
-                else if (BreakLimit == 3){
-                    AllowedNrCapacityViolations = 233;
-                }
-            }
-            else if (InstanceMiao == MiaoInstance::U15){ // U15
-                if (BreakLimit == 0){
-                    AllowedNrCapacityViolations = 497;
-                }
-                else if (BreakLimit == 1){
-                    AllowedNrCapacityViolations = 376;
-                }
-                else if (BreakLimit == 2){
-                    AllowedNrCapacityViolations = 301;
-                }
-                else if (BreakLimit == 3){
-                    AllowedNrCapacityViolations = 264;
-                }
-            }
-            else {
-                assert(InstanceMiao == MiaoInstance::M);
-                AllowedNrCapacityViolations = 807;
-            }
-        }
-    }
-}
-
-int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
+int Input::read_YSTP(const std::string file_path, const bool Miao){
 
     cout << "This function is intended ONLY for Hockey and Miao instances!!" << endl;
 
     if (Miao){
-        Setting_ = Setting::Miao;
+        Setting_ = Setting::Football;
     }
     else{
         Setting_ = Setting::Hockey;
@@ -468,7 +282,7 @@ int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
                     TeamClub = vector<int>(NrTeams);
                     TeamLeague = vector<int>(NrTeams); // TODO: multiple leagues
                     if (Miao){
-                        InstanceMiao = getMiaoInstance();
+                        InstanceFootball = getFootballInstance();
                     }
                 }
                 else if (j == 1){
@@ -484,7 +298,7 @@ int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
                     for (int clb = 0; clb < NrClubs; ++clb){
                         ClubTeamsLeague[clb] = vector<vector<int>>(NrLeagues);
                     }
-                    DistanceClubs = vector<vector<int>>(NrClubs+1, vector<int>(NrClubs+1));
+                    DistanceClubs = vector<vector<int>>(NrClubs+1, vector<int>(NrClubs+1, 0));
                     DistanceClubs[IndexDummyClub] = vector<int>(NrClubs+1, 0);
                 }
                 else if (j == 3){
@@ -533,11 +347,11 @@ int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
             assert(k != IndexDummyClub);
             DistanceClubs[k] = vector<int>(NrClubs+1);
             while (iss >> num) { 
-                if (!(Miao && InstanceMiao == MiaoInstance::M)){
+                if (!(Miao && InstanceFootball == FootballInstance::M)){
                     DistanceClubs[k][j++] = num;
                 }
-                else if (k < NrTeamsMiaoInstances.at(MiaoInstance::U13).first-NrTeamsMiaoInstances.at(MiaoInstance::U13).second
-                    && j < NrTeamsMiaoInstances.at(MiaoInstance::U13).first-NrTeamsMiaoInstances.at(MiaoInstance::U13).second){
+                else if (k < NrTeamsFootballInstances.at(FootballInstance::U13).first-NrTeamsFootballInstances.at(FootballInstance::U13).second
+                    && j < NrTeamsFootballInstances.at(FootballInstance::U13).first-NrTeamsFootballInstances.at(FootballInstance::U13).second){
                     // cout << "dist = " << DistanceClubs[TeamClub[k]][TeamClub[j]] << endl;
                     if (DistanceClubs[TeamClub[k]][TeamClub[j]] > 0){
                         /*
@@ -555,7 +369,7 @@ int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
                     MaxDistanceClubs = num;
                 }
             }
-            if (!(Miao && InstanceMiao == MiaoInstance::M)){
+            if (!(Miao && InstanceFootball == FootballInstance::M)){
                 assert(j == IndexDummyClub);
                 DistanceClubs[k][j] = 0;
             }
@@ -574,7 +388,7 @@ int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
                     assert(l == 0);
                 }
                 TeamStrength[t] = num-1;
-                if (!(Miao && InstanceMiao == MiaoInstance::M)){
+                if (!(Miao && InstanceFootball == FootballInstance::M)){
                     LeagueTeams[l].push_back(t); // TODO: only 1 league now, with eligible opponents
                     TeamLeague[t] = l;
                 }
@@ -614,7 +428,7 @@ int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
     // go over the teams and specify which teams are dummy teams and which are not!
     int NrNonDummyTeams = 0;
     if (Miao){
-        NrNonDummyTeams = NrTeams - NrTeamsMiaoInstances.at(InstanceMiao).second;
+        NrNonDummyTeams = NrTeams - NrTeamsFootballInstances.at(InstanceFootball).second;
     }
     else{
         NrNonDummyTeams = NrTeams;
@@ -638,56 +452,10 @@ int Input::read_Miao_Hockey(const std::string file_path, const bool Miao){
     }
     std::fill(ClubCapacity[IndexDummyClub].begin(), ClubCapacity[IndexDummyClub].end(), DummyCapacity);
 
-    if (Miao && InstanceMiao == MiaoInstance::M){
-        LeagueTeams.resize(4);
-        // for the Merged instance in Miao, we need something else!
-        for (int p = 0; p < NrTeams; ++p){
-            // Teams are ordered in this order: U13->U15->U17->U21
-            if (p < NrTeamsMiaoInstances.at(MiaoInstance::U13).first - NrTeamsMiaoInstances.at(MiaoInstance::U13).second){
-                // Put teams into first league
-                LeagueTeams[0].push_back(t); 
-                TeamLeague[t] = 0;
-            } 
-            else if (p < NrTeamsMiaoInstances.at(MiaoInstance::U13).first){
-                LeagueTeams[0].push_back(t); 
-                TeamLeague[t] = 0;
-                IsTeamDummy[t] = true;
-            }
-            if (p < NrTeamsMiaoInstances.at(MiaoInstance::U15).first - NrTeamsMiaoInstances.at(MiaoInstance::U15).second){
-                LeagueTeams[1].push_back(t); 
-                TeamLeague[t] = 1;
-            } 
-            else if (p < NrTeamsMiaoInstances.at(MiaoInstance::U15).first){
-                LeagueTeams[1].push_back(t); 
-                TeamLeague[t] = 1;
-                IsTeamDummy[t] = true;
-            }
-            if (p < NrTeamsMiaoInstances.at(MiaoInstance::U17).first - NrTeamsMiaoInstances.at(MiaoInstance::U17).second){
-                LeagueTeams[2].push_back(t); 
-                TeamLeague[t] = 2;
-            } 
-            else if (p < NrTeamsMiaoInstances.at(MiaoInstance::U17).first){
-                LeagueTeams[2].push_back(t); 
-                TeamLeague[t] = 2;
-                IsTeamDummy[t] = true;
-            }
-            if (p < NrTeamsMiaoInstances.at(MiaoInstance::U21).first - NrTeamsMiaoInstances.at(MiaoInstance::U21).second){
-                LeagueTeams[3].push_back(t); 
-                TeamLeague[t] = 3;
-            } 
-            else if (p < NrTeamsMiaoInstances.at(MiaoInstance::U21).first){
-                LeagueTeams[3].push_back(t); 
-                TeamLeague[t] = 3;
-                IsTeamDummy[t] = true;
-            }
-        }
-    }
-    else{
-        IsTeamDummy = vector<bool>(NrTeams, false);
-        for (int p = NrNonDummyTeams; p < IsTeamDummy.size(); p++){
-            IsTeamDummy[p] = true;
-        }   
-    }
+    IsTeamDummy = vector<bool>(NrTeams, false);
+    for (int p = NrNonDummyTeams; p < IsTeamDummy.size(); p++){
+        IsTeamDummy[p] = true;
+    }   
 
     for (int c = 0; c < NrClubs; ++c){
         if (ClubTeams[c].size() == 1){
@@ -894,7 +662,7 @@ int Input::read_HAPs(){
     }
     else{
         file_path += "patterns_" + to_string(NrRounds) + "_";
-        if (InstanceMiao == MiaoInstance::M){
+        if (InstanceFootball == FootballInstance::M){
             file_path += "c.txt"; // always chose canoncial for this instance
             BreakLimit = 3; // Teams have max 3 breaks
         }
@@ -951,7 +719,7 @@ int Input::read_HAPs(){
     int index = 0;
     cout << "Nr of HAPs listed = " << h << endl;
     for (h = 0; h < HAPs_even.size(); ++h){
-        if (InstanceMiao != MiaoInstance::M && !HAP_satisfies_all_requirements(HAPs_even[h])){ // preprocess the haps!
+        if (InstanceFootball != FootballInstance::M && !HAP_satisfies_all_requirements(HAPs_even[h])){ // preprocess the haps!
             // Do do not preprocess for the canoncial HAP set
             // cout << "HAP with index " << h << " not satisfactory " << endl;
             continue;
