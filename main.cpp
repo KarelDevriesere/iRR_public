@@ -224,8 +224,8 @@ if(teamSwapper == 1){
     if (data.HistoryLengthProvided){
         HL = data.HistoryLength;
     }	
-        Heuristic algo(data.Moves, data.InputWeights, gen, HL, obj);
-    algo.TeamSwapper(in, sol);
+        Heuristic algo(data.Moves, data.InputWeights, gen, HL, obj, sol);
+        algo.TeamSwapper();
 
     return 0;
 }

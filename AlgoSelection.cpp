@@ -511,7 +511,7 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
         HL = data.HistoryLength;
     }
     int TL = data.TimeLimit;
-    Heuristic algo(data.Moves, data.InputWeights, gen, HL, obj);
+    Heuristic algo(data.Moves, data.InputWeights, gen, HL, obj, sol);
     // LAHC
     if (!data.HistoryLengthProvided){
         algo.MakeHistoryLengthDynamic();

@@ -238,7 +238,7 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
         double PerturbeIncrease = 0.005;
         bool ResetSolutionAfterMove = false;
 
-        static constexpr int MAX_HL = 1000;
+        static constexpr int MAX_HL = 100000;
         // after MAX_HL iterations, we shrink the list length again (at this point, it is more a random walk then anything else)
         array<int, MAX_HL>HistoricValues;
 
@@ -256,8 +256,8 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
 
         void InitializeHistoricValues(const int Lb, const int Ub, const int HistoryLength){
             if (Lb != Ub){
+                std::uniform_int_distribution<>dist_HL_value(Lb,Ub);
                 for (int v = 0; v < HistoryLength; ++v){
-                    std::uniform_int_distribution<>dist_HL_value = std::uniform_int_distribution<>(Lb,Ub);
                     HistoricValues[v] = dist_HL_value(this->gen);
                 }
             }

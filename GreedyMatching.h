@@ -30,6 +30,8 @@ class GreedyMatching: public HC<Move>{
 
         vector<int>Rounds;
 
+        vector<pair<int,int>> MWPBM(const int r, std::mt19937& gen, const int l, Solution& sol);
+
         bool HomeAwaySwap(Solution& sol); // our own neighborhood
         bool InterClubSwap(Solution& sol);
         bool IntraClubSwap(Solution& sol);
@@ -46,4 +48,6 @@ class GreedyMatching: public HC<Move>{
         void solve(Input& in, Solution& sol) override;
 
         void SolveGivenSeqeuence(Input& in, Solution& sol);
+
+        
 };

@@ -7,7 +7,7 @@
 #include "Operators.h"
 
 Heuristic::Heuristic(const std::unordered_map<Move, string>& moves, // moves, weights and in are defined in main
-           const std::unordered_map<Move, double>& weights, std::mt19937& g, const int HistoryLength, const int obj): LAHC<Move>(moves, weights, g){
+           const std::unordered_map<Move, double>& weights, std::mt19937& g, const int HistoryLength, const int obj, Solution& current_sol): LAHC<Move>(moves, weights, g), Operator(current_sol, g){
             SetHistoryLength(HistoryLength); // LAHC
             InitializeHistoricValues(obj,obj,HistoryLength); // LAHC
 
@@ -17,7 +17,7 @@ Heuristic::Heuristic(const std::unordered_map<Move, string>& moves, // moves, we
 
 Heuristic::~Heuristic(){}
 
-pair<int,int>Heuristic::SelectTwoTeams(Solution& sol){
+pair<int,int>Heuristic::SelectTwoTeams(){
     int l = 0;
     if (sol.getNrLeagues() > 1){
         l = RandomIntegerNumber(0, sol.getNrLeagues()-1);
@@ -28,9 +28,9 @@ pair<int,int>Heuristic::SelectTwoTeams(Solution& sol){
     return {sol.getGlobalIndexTeam(l, i), sol.getGlobalIndexTeam(l, j)};
 }
 
-array<int,3>Heuristic::SelectTwoTeamsAndColor(Solution& sol){
-    pair<int,int>teams = SelectTwoTeams(sol);
-    int i = teams.first, j = teams.second;
+array<int,3>Heuristic::SelectTwoTeamsAndColor(){
+    PairOfTeams = SelectTwoTeams();
+    int i = PairOfTeams.first, j = PairOfTeams.second;
     int C = sol.getNrColouredRounds();
     int c = RandomIntegerNumber(0, C-1);
     while (c == sol.MatchColor[i][j] || c == sol.MatchColor[j][i]){
@@ -40,34 +40,34 @@ array<int,3>Heuristic::SelectTwoTeamsAndColor(Solution& sol){
     return {i,j,c};
 }
 
-pair<int,int>Heuristic::SelectTwoRounds(Solution& sol){
+pair<int,int>Heuristic::SelectTwoRounds(){
     const int r = RandomIntegerNumber(0,sol.getNrColouredRounds()-1);
     const int s = ((r+1)+(RandomIntegerNumber(0,sol.getNrColouredRounds()-2)))%sol.getNrColouredRounds();
     assert(r != s);
     return {r,s};
 }
 
-void Heuristic::SelectTS(Solution& sol){ // use TS for perturbation move!!
+void Heuristic::SelectTS(){ // use TS for perturbation move!!
     // Andrea doet TS net zoals mij, dus enkel de HAPs van i en j veranderen!!
-    // I do not use Eligible opponents since teams i and j do not necessarily need to be eligible..
+    // I do not use Eligiblein opponents since teams i and j do not necessarily need to be eligible..
     // For example, i can be of strength 1 and j of strength 3 if they share opponents of only strength 2..
-    pair<int,int> pair = SelectTwoTeams(sol);
-    int i = pair.first, j = pair.second; 
+    PairOfTeams = SelectTwoTeams();
+    int i = PairOfTeams.first, j = PairOfTeams.second; 
     int cost_before;
     int delta = 0;
     int cost_after = 0;
     if (sol.getSetting() == Setting::TTP){
-        delta += CostTSTeamsTTP(i, j, sol);
+        delta += CostTSTeamsTTP(i, j);
     }
     else{
-        delta += CostTSTeamsYSTP(i, j, sol);
+        delta += CostTSTeamsYSTP(i, j);
     }
     cost_after = current_obj + delta;
 #ifndef NDEBUG
         cost_before = sol.ComputeTotalCost();
 #endif
     if (Update(sol, cost_after)){
-        TS(sol, i, j); 
+        TS(i, j); 
         UpdateBest(sol, cost_after);
 #ifndef NDEBUG
         int cost_after_sol = sol.ComputeTotalCost();
@@ -81,7 +81,7 @@ void Heuristic::SelectTS(Solution& sol){ // use TS for perturbation move!!
 }
 
 
-void Heuristic::TeamSwapper(Input& in, Solution& sol){
+void Heuristic::TeamSwapper(){
     bool stop = false;
     int nrTeams  = sol.getNrTeams();
     int cost_before = sol.ComputeTotalCost();
@@ -91,11 +91,11 @@ void Heuristic::TeamSwapper(Input& in, Solution& sol){
 	    stop = true;
 	    for (int i = 0; i < nrTeams; ++i) {
 	    	for (int j = 0; j < nrTeams; ++j) {
-    			TS(sol, i, j);
+    			TS(i, j);
 			cost_after = sol.ComputeTotalCost();
 			if(cost_after > cost_before){
 				// Reset
-        			TS(sol, i, j); 
+        			TS(i, j); 
 			} else if(cost_after < cost_before) {
 				std::cout << "New cost: " << cost_after << std::endl;	
 				cost_before = cost_after;
@@ -107,10 +107,10 @@ void Heuristic::TeamSwapper(Input& in, Solution& sol){
     std::cout << "Final cost: " << sol.ComputeTotalCost() << std::endl;
 }
 
-void Heuristic::SelectiPTS(Solution& sol){
+void Heuristic::SelectiPTS(){
 
-    array<int,3>triple = SelectTwoTeamsAndColor(sol);
-    int i = triple[0], j = triple[1], StartColor = triple[2];
+    PairOfTeamsAndColor = SelectTwoTeamsAndColor();
+    int i = PairOfTeamsAndColor[0], j = PairOfTeamsAndColor[1], StartColor = PairOfTeamsAndColor[2];
     // cout << "i : " << i << " and j = " << j << ", start color = " << StartColor << endl;
 
 #ifndef NDEBUG
@@ -126,9 +126,9 @@ void Heuristic::SelectiPTS(Solution& sol){
 
     // int cost_before = current_obj;
     int delta = 0;
-    Lantarn lantarn = CreateLantarn(sol, i, j, StartColor, delta);
+    CreateLantarn(i, j, StartColor, delta);
     // cout << "lantarn created" << endl;
-    // PrintLantarn(sol, lantarn);
+    // PrintLantarn(lantarn);
 
     if (CurrentMove == Move::PTS && lantarn.InfeasibleColor){
         return; // In base algo: PTS only if feasible colours!!
@@ -155,7 +155,7 @@ void Heuristic::SelectiPTS(Solution& sol){
             }
             std::sort(ColoredRoundsLantern.begin(), ColoredRoundsLantern.end());
             for (int t: {i,j}){
-                delta -= PTSCurrentTravelDelta(ColoredRoundsLantern, t, sol);
+                delta -= PTSCurrentTravelDelta(ColoredRoundsLantern, t);
             }
         }
         else{
@@ -164,13 +164,13 @@ void Heuristic::SelectiPTS(Solution& sol){
     }
 
     // First swap colors because path may use an edge in the lantern
-    SwapColorsLantarn(sol, lantarn, OrientationCopy_i, OrientationCopy_j);
+    SwapColorsLantarn(OrientationCopy_i, OrientationCopy_j);
     // PrintLantarn(sol, lantarn);
 
     // Repair Orientations
     // cout << "Repair orientations!!" << endl;
-    vector<array<int,3>>path; // always try to find a path between i and j!! 
-    bool BalanceRepaired = RepairOrientationsEdgesLantarn(sol, lantarn, path, MinCostPR, delta, gen);
+    clearPath(); // always try to find a path between i and j!! 
+    bool BalanceRepaired = RepairOrientationsEdgesLantarn(MinCostPR, delta);
     if (!BalanceRepaired){
         throw std::runtime_error("Could not repair imbalance in PTS!");
     }
@@ -178,7 +178,7 @@ void Heuristic::SelectiPTS(Solution& sol){
     // add new cost
     if (!lantarn.PathReversalNeeded){
         for (int t: {i,j}){
-            delta += PTSCurrentTravelDelta(ColoredRoundsLantern, t, sol);
+            delta += PTSCurrentTravelDelta(ColoredRoundsLantern, t);
         }
     }
     else{
@@ -219,9 +219,9 @@ void Heuristic::SelectiPTS(Solution& sol){
     
     if (!Update(sol, cost_after)){
         // first, set back all orientations
-        ReversePath(sol, path, true, true);
+        ReversePath(true, true);
         // Then, swap back the colors
-        SwapColorsLantarn(sol, lantarn, OrientationCopy_i, OrientationCopy_j);
+        SwapColorsLantarn(OrientationCopy_i, OrientationCopy_j);
         assert(sol.ComputeTotalCost() == cost_before);
 
         /*
@@ -236,10 +236,10 @@ void Heuristic::SelectiPTS(Solution& sol){
     return;
 }
 
-void Heuristic::SelectRS(Solution& sol){
+void Heuristic::SelectRS(){
     // rounds in current schedule
-    pair<int,int>pair = SelectTwoRounds(sol);
-    int r = pair.first, s = pair.second;
+    PairOfRounds = SelectTwoRounds();
+    int r = PairOfRounds.first, s = PairOfRounds.second;
     int cost_before;
 #ifndef NDEBUG
         cost_before = sol.ComputeTotalCost();
@@ -250,22 +250,22 @@ void Heuristic::SelectRS(Solution& sol){
     int delta = 0;
     int cost_after = 0;
     if (sol.getSetting() == Setting::TTP){
-        for (int i = 0; i < sol.getNrTeams(); ++i){
-            delta += CostRoundSwapTeamiTTP(i, r, s, sol);
+        for (int i = 0; i < N; ++i){
+            delta += CostRoundSwapTeamiTTP(i, r, s);
         }
         cost_after = current_obj + delta;
     }
     else{
-        RS(sol, r, s);
+        RS(r, s);
         cost_after = sol.ComputeTotalCost();
     }
 
     if (sol.getSetting() != Setting::TTP && !Update(sol, cost_after)){
-        RS(sol, r, s);
+        RS(r, s);
         assert(sol.ComputeTotalCost() == cost_before);
     }
     else if (sol.getSetting() == Setting::TTP && Update(sol, cost_after)){
-        RS(sol, r, s); 
+        RS(r, s); 
         UpdateBest(sol, cost_after);
 #ifndef NDEBUG
         int cost_after_sol = sol.ComputeTotalCost();
@@ -279,11 +279,11 @@ void Heuristic::SelectRS(Solution& sol){
     return;
 }
 
-void Heuristic::SelectPRS(Solution& sol){
+void Heuristic::SelectPRS(){
     // rounds in current schedule
-    pair<int,int>pair = SelectTwoRounds(sol);
+    pair<int,int>pair = SelectTwoRounds();
     int r = pair.first, s = pair.second;
-    const int StartNode = RandomIntegerNumber(0,sol.getNrTeams()-1);
+    const int StartNode = RandomIntegerNumber(0,N-1);
     int cost_before;
 #ifndef NDEBUG
         cost_before = sol.ComputeTotalCost();
@@ -291,20 +291,20 @@ void Heuristic::SelectPRS(Solution& sol){
     int delta = 0;
     int cost_after = 0;
     if (sol.getSetting() == Setting::TTP){
-        delta = DeltaPRS_TTP(sol, r, s, StartNode);
+        delta = DeltaPRS_TTP(r, s, StartNode);
     }
     else{
-        delta = DeltaPRS_YSTP(sol, r, s, StartNode);
+        delta = DeltaPRS_YSTP(r, s, StartNode);
     }
     cost_after = current_obj + delta;
 #ifndef NDEBUG
-    PRS(sol, r, s, StartNode);
+    PRS(r, s, StartNode);
     assert(cost_after == sol.ComputeTotalCost());
-    PRS(sol, r, s, StartNode);
+    PRS(r, s, StartNode);
 #endif
 
     if (Update(sol, cost_after)){
-        PRS(sol, r, s, StartNode);
+        PRS(r, s, StartNode);
         UpdateBest(sol, cost_after);
 #ifndef NDEBUG
         int cost_after_sol = sol.ComputeTotalCost();
@@ -315,7 +315,7 @@ void Heuristic::SelectPRS(Solution& sol){
     return;
 }
 
-void Heuristic::SelectiPRS(Solution& sol, const bool bipartite){
+void Heuristic::SelectiPRS(const bool bipartite){
 
     // Matching only of one league
     // bipartite matching: throw away the matching in round r but keep orientations of the teams. Then, find a new matching
@@ -354,34 +354,27 @@ void Heuristic::SelectiPRS(Solution& sol, const bool bipartite){
     // cout << "Rounds before matching in round " << r << endl;
     // sol.PrintAllRoundsLeague(l);
 
-    vector<vector<pair<int,int>>>AlternatingCycles;
+    clearAlternatingCycle();
     if (!MinCostAC){ 
-        if (sol.getNrRounds() <= sol.getNrTeams()/2){
-            AlternatingCycles = AlternatingCycleBM(sol, r, bipartite, gen); // Greedy is fun but maybe best to use same function for everything!!
-            if (AlternatingCycles.empty()){
-                cout << "No alternating cycle" << endl;
-                std::abort();
-            }
-        }
-        else {
-            AlternatingCycles = AlternatingCycleBM(sol, r, bipartite, gen);
+        AlternatingCycleBM(r, bipartite);
+        if (AlternatingCycle.empty()){
+            cout << "No alternating cycle" << endl;
+            std::abort();
         }
     }
     else{
         assert(bipartite);
         // cout << "FindMinCostBalancedCycle" << endl;
-        AlternatingCycles = FindMinCostBalancedACycle(sol, r, gen);
+        FindMinCostBalancedACycle(r);
     }
 
-    vector<int>CostBeforeTTPTeams;
     if (!bipartite){
-        CostBeforeTTPTeams.resize(sol.getNrTeams());
-        for (int t = 0; t < sol.getNrTeams(); ++t){
+        std::fill(CostBeforeTTPTeams.begin(), CostBeforeTTPTeams.end(), 0);
+        for (int t = 0; t < N; ++t){
             CostBeforeTTPTeams[t] = -sol.ComputeTotalCostTeamTTP(t);
         }
     }
     
-    for (auto& AlternatingCycle: AlternatingCycles){
         // cout << "AlternatingCycle found!!" << endl;
         // a_cycle contains only initially uncoloured edges!!!
 #ifndef NDEBUG
@@ -391,11 +384,11 @@ void Heuristic::SelectiPRS(Solution& sol, const bool bipartite){
         bool NoPathDueTo2RRConstraint = false;
 
         int delta = 0;
-        vector<vector<array<int,3>>>Paths = EvaluateAlternatingCycleWithPaths(sol, AlternatingCycle, r, bipartite, delta, gen, MinCostPR, NoPathDueTo2RRConstraint);
+        EvaluateAlternatingCycleWithPaths(r, bipartite, delta, MinCostPR, NoPathDueTo2RRConstraint);
 
         if (!bipartite && NoPathDueTo2RRConstraint){
             assert(!sol.SRR);
-            GoBackToOldCycle(sol, AlternatingCycle, r);
+            GoBackToOldCycle(r);
 #ifndef NDEBUG
             assert(cost_before == sol.ComputeTotalCost());
 #endif
@@ -404,7 +397,7 @@ void Heuristic::SelectiPRS(Solution& sol, const bool bipartite){
         }
 
 #ifndef NDEBUG
-        for (int i = 0; i < sol.getNrTeams(); ++i){
+        for (int i = 0; i < N; ++i){
             assert(sol.IsTeamBalanced(i));
         }
         if (bipartite){
@@ -412,68 +405,70 @@ void Heuristic::SelectiPRS(Solution& sol, const bool bipartite){
         }
 #endif
 
-        if (!bipartite && sol.getSetting() == Setting::TTP){
-            assert(delta == 0);
-            vector<bool>NodeSeen(sol.getNrTeams(), false);
-            int t1,t2,e;
-            for (e = 1; e < AlternatingCycle.size(); e+=2){
-                t1 = AlternatingCycle[e].first, t2 = AlternatingCycle[e].second;
-                delta += (CostBeforeTTPTeams[t1] + sol.ComputeTotalCostTeamTTP(t1));
-                delta += (CostBeforeTTPTeams[t2] + sol.ComputeTotalCostTeamTTP(t2));
-                NodeSeen[t1] = true, NodeSeen[t2] = true;
-            }
-            for (auto& path: Paths){
-                for (e = 0; e < path.size(); ++e){
-                    t1 = path[e][0], t2 = path[e][1];
-                    if (!NodeSeen[t1]){
-                        delta += (CostBeforeTTPTeams[t1] + sol.ComputeTotalCostTeamTTP(t1));
-                        NodeSeen[t1] = true;
-                    }
-                    if (!NodeSeen[t2]){
-                        delta += (CostBeforeTTPTeams[t2] + sol.ComputeTotalCostTeamTTP(t2));
-                        NodeSeen[t2] = true;
-                    }
+    if (!bipartite && sol.getSetting() == Setting::TTP){
+        assert(delta == 0);
+        clearVisited();
+        int t1,t2,e;
+        for (e = 1; e < AlternatingCycle.size(); e+=2){
+            t1 = AlternatingCycle[e].first, t2 = AlternatingCycle[e].second;
+            delta += (CostBeforeTTPTeams[t1] + sol.ComputeTotalCostTeamTTP(t1));
+            delta += (CostBeforeTTPTeams[t2] + sol.ComputeTotalCostTeamTTP(t2));
+            Visited[t1] = 1, Visited[t2] = 1;
+        }
+        for (auto& current_path: PathsAC){
+            path = current_path;
+            for (e = 0; e < path.size(); ++e){
+                t1 = path[e][0], t2 = path[e][1];
+                if (!Visited[t1]){
+                    delta += (CostBeforeTTPTeams[t1] + sol.ComputeTotalCostTeamTTP(t1));
+                    Visited[t1] = 1;
+                }
+                if (!Visited[t2]){
+                    delta += (CostBeforeTTPTeams[t2] + sol.ComputeTotalCostTeamTTP(t2));
+                    Visited[t2] = 1;
                 }
             }
         }
+    }
 
-        int cost_after;
-        if (sol.getSetting() == Setting::TTP){
-            cost_after = current_obj+delta;
-        }
-        else if (bipartite){
-            cost_after = current_obj+delta;
-        }
-        else {
-            cost_after = sol.ComputeTotalCost();
-        }
+    int cost_after;
+    if (sol.getSetting() == Setting::TTP){
+        cost_after = current_obj+delta;
+    }
+    else if (bipartite){
+        cost_after = current_obj+delta;
+    }
+    else {
+        cost_after = sol.ComputeTotalCost();
+    }
 
 #ifndef NDEBUG
-        // cout << "cost_after = " << cost_after << ", total_cost = " << sol.ComputeTotalCost() << endl;
-        assert(cost_after == sol.ComputeTotalCost());
+    // cout << "cost_after = " << cost_after << ", total_cost = " << sol.ComputeTotalCost() << endl;
+    assert(cost_after == sol.ComputeTotalCost());
 #endif  
 
-        if (!Update(sol, cost_after)){
-            // reverse paths again
-            /*
-            IMPORTANT: first reverse the paths
-            Why? Bc path can contain an edge from the new matching, so the color of this edge in the path is WRONG if we go back to the old matching
-            However, this is not an issue if we first reverse the paths, bc afterwards we can go overwite everything in round r with GoBackToOldCycle!
-            */
-            for (auto& path: Paths){
-                ReversePath(sol, path, true, false);
-            }
-            // take back the old matching
-            GoBackToOldCycle(sol, AlternatingCycle, r);
+    if (!Update(sol, cost_after)){
+        // reverse paths again
+        /*
+        IMPORTANT: first reverse the paths
+        Why? Bc path can contain an edge from the new matching, so the color of this edge in the path is WRONG if we go back to the old matching
+        However, this is not an issue if we first reverse the paths, bc afterwards we can go overwite everything in round r with GoBackToOldCycle!
+        */
+        for (auto& current_path: PathsAC){
+            path = current_path;
+            ReversePath(true, false);
+        }
+        // take back the old matching
+        GoBackToOldCycle(r);
 #ifndef NDEBUG
-            assert(cost_before == sol.ComputeTotalCost());
+        assert(cost_before == sol.ComputeTotalCost());
 #endif
-        }
-        else{
-            UpdateBest(sol, cost_after);
-        }
     }
-    if (AlternatingCycles.empty()){
+    else{
+        UpdateBest(sol, cost_after);
+    }
+
+    if (AlternatingCycle.empty()){
         // do this here because update is not called when cycles are empty
         Update(sol, sol.ComputeTotalCost());
     }
@@ -481,15 +476,10 @@ void Heuristic::SelectiPRS(Solution& sol, const bool bipartite){
     return;
 } 
 
-void Heuristic::SelectBalancedCycle(Solution& sol){
+void Heuristic::SelectBalancedCycle(){
 
-    bool NegativeCycleFound = false;
-    int CostReversingCycle = 0;
-
-    vector<vector<pair<int,int>>>ForbiddenPairs;
-
-    vector<array<int,3>>Cycle = CycleBalanced(sol, gen);
-    assert(!Cycle.empty());
+    CycleBalanced();
+    assert(!path.empty());
  
     int cost_before;
 #ifndef NDEBUG
@@ -499,7 +489,7 @@ void Heuristic::SelectBalancedCycle(Solution& sol){
 
     // assert(Cycle[0][0] == Cycle[(int)Cycle.size()-1][1]);
     // cout << "Reverse path" << endl;
-    int delta = ReversePath(sol, Cycle, false, true);
+    int delta = ReversePath(false, true);
     // cout << "Cost after = " << sol.ComputeTotalCost() << endl;
     // cout << "Cost delta = " << cost_before + delta << endl;
     // cout << "done" << endl;
@@ -517,7 +507,7 @@ void Heuristic::SelectBalancedCycle(Solution& sol){
 
     if (!Update(sol, cost_after)){
         // If not better: reverse the cycle again as if nothing happened
-        ReversePath(sol, Cycle, false, false);
+        ReversePath(false, false);
 #ifndef NDEBUG
         assert(sol.ComputeTotalCost() == cost_before);
 #endif
@@ -528,51 +518,51 @@ void Heuristic::SelectBalancedCycle(Solution& sol){
     return;
 }
 
-void Heuristic::DoMove(Solution& sol){
+void Heuristic::DoMove(){
     bool bipartite;
     CurrentMove = SelectNB();
-    auto beg = std::chrono::high_resolution_clock::now();
+    // auto beg = std::chrono::high_resolution_clock::now();
     // cout << "Select " << Moves.at(CurrentMove) << endl; 
     NrChosen.at(CurrentMove)++;
 #ifndef NDEBUG
     // cout << "Select " << Moves.at(CurrentMove) << endl; 
 #endif
     if (CurrentMove == Move::TS){
-        SelectTS(sol);
+        SelectTS();
     }
     else if (CurrentMove == Move::PTS){
         MinCostPR = false;
-        SelectiPTS(sol);
+        SelectiPTS();
     }
     else if (CurrentMove == Move::iPTS_Random_PR){
         MinCostPR = false;
-        SelectiPTS(sol);
+        SelectiPTS();
     }
     else if (CurrentMove == Move::RS){
-        SelectRS(sol);
+        SelectRS();
     }
     else if (CurrentMove == Move::PRS){
-        SelectPRS(sol);
+        SelectPRS();
     }
     else if (CurrentMove == Move::Random_M_Random_PR){
         MinCostPR = false;
         MinCostAC = false;
         bipartite = false;
-        SelectiPRS(sol, bipartite);
+        SelectiPRS(bipartite);
     }   
     else if (CurrentMove == Move::MinCost_BM){
         MinCostAC = true;
         bipartite = true;
-        SelectiPRS(sol, bipartite);
+        SelectiPRS(bipartite);
     }
     else if (CurrentMove == Move::Random_BM){
         MinCostAC = false;
         bipartite = true;
-        SelectiPRS(sol, bipartite);
+        SelectiPRS(bipartite);
     }
     else{
         MinCostC = false;
-        SelectBalancedCycle(sol);
+        SelectBalancedCycle();
     }
     // LAHC
     /*
@@ -588,7 +578,7 @@ void Heuristic::DoMove(Solution& sol){
     // ExecutionTimes.at(CurrentMove).push_back(dur);
     assert(sol.validate());
 #ifndef NDEBUG
-    for (int i = 0; i < sol.getNrTeams(); ++i){
+    for (int i = 0; i < N; ++i){
         if (!sol.IsTeamBalanced(i)){
             cout << "Team " << i << " not balanced after doing move " << Moves.at(CurrentMove) << endl;
             return;
@@ -626,6 +616,7 @@ void Heuristic::solve(Input& in, Solution& sol){
 
     BestOrientation = vector<vector<HA>>(sol.getNrTeams(), vector<HA>(sol.getNrRounds()));
     BestTeamColorOpp = vector<vector<int>>(sol.getNrTeams(), vector<int>(sol.getNrRounds()));
+    CostBeforeTTPTeams.resize(sol.getNrTeams());
     OrientationCopy_i.resize(sol.getNrRounds());
     OrientationCopy_j.resize(sol.getNrRounds());
     cout << "start solve" << endl;
@@ -639,7 +630,7 @@ void Heuristic::solve(Input& in, Solution& sol){
     // cout << "Start" << endl;
 
     do {
-        DoMove(sol); // do random move
+        DoMove(); // do random move
         /*
         if (it_idle > 100000){ // ILS
             // perturbe

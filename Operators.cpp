@@ -8,7 +8,7 @@ using namespace std;
 
 // ----- TTP ----- TTP ----- TTP ----- TTP ----- TTP ----- TTP ----- TTP ----- TTP ----- TTP //
 
-int getLocSwapped(const int i, const int round, const Solution& sol) {
+int Operator::getLocSwapped(const int i, const int round) {
     if (round < 0 || round >= sol.getNrRounds()){
         // Dist[i][i] = 0!
         return i; 
@@ -23,7 +23,7 @@ int getLocSwapped(const int i, const int round, const Solution& sol) {
 };
 
 // Helper to get location of team i in any round (handles home city)
-int getLoc(const int i, const int round, const Solution& sol) {
+int Operator::getLoc(const int i, const int round) {
     if (round < 0 || round >= sol.getNrRounds() || sol.Orientation[i][round] == HA::H){
         // Dist[i][i] = 0!
         return i; 
@@ -33,24 +33,23 @@ int getLoc(const int i, const int round, const Solution& sol) {
     }
 };
 
-int DeltaTravelOrientationSwapTeam(const int i, const int r, const int s, const Solution& sol) {
-    const int R = sol.getNrRounds();
+int Operator::DeltaTravelOrientationSwapTeam(const int i, const int r, const int s) {
     // Ensure r is the earlier round for easier logic
     int MinRound = std::min(r, s);
     int MaxRound = std::max(r, s);
     
     int delta = 0;
 
-    int L_r_prev = getLoc(i, MinRound - 1, sol);
-    int L_r      = getLoc(i, MinRound, sol);
-    int L_r_next = getLoc(i, MinRound + 1, sol);
+    int L_r_prev = getLoc(i, MinRound - 1);
+    int L_r      = getLoc(i, MinRound);
+    int L_r_next = getLoc(i, MinRound + 1);
 
-    int L_s_prev = getLoc(i, MaxRound - 1, sol);
-    int L_s      = getLoc(i, MaxRound, sol);
-    int L_s_next = getLoc(i, MaxRound + 1, sol);
+    int L_s_prev = getLoc(i, MaxRound - 1);
+    int L_s      = getLoc(i, MaxRound);
+    int L_s_next = getLoc(i, MaxRound + 1);
 
-    int L_r_swp = getLocSwapped(i, MinRound, sol);
-    int L_s_swp = getLocSwapped(i, MaxRound, sol);
+    int L_r_swp = getLocSwapped(i, MinRound);
+    int L_s_swp = getLocSwapped(i, MaxRound);
 
     if (MaxRound == MinRound + 1) {
         // --- CASE 1: ADJACENT SWAP ---
@@ -81,21 +80,20 @@ int DeltaTravelOrientationSwapTeam(const int i, const int r, const int s, const 
     return delta;
 }
 
-int DeltaTravelRoundSwapTeam(const int i, const int r, const int s, const Solution& sol) {
-    const int R = sol.getNrRounds();
+int Operator::DeltaTravelRoundSwapTeam(const int i, const int r, const int s) {
     // Ensure r is the earlier round for easier logic
     int MinRound = std::min(r, s);
     int MaxRound = std::max(r, s);
     
     int delta = 0;
 
-    int L_r_prev = getLoc(i, MinRound - 1, sol);
-    int L_r      = getLoc(i, MinRound, sol);
-    int L_r_next = getLoc(i, MinRound + 1, sol);
+    int L_r_prev = getLoc(i, MinRound - 1);
+    int L_r      = getLoc(i, MinRound);
+    int L_r_next = getLoc(i, MinRound + 1);
 
-    int L_s_prev = getLoc(i, MaxRound - 1, sol);
-    int L_s      = getLoc(i, MaxRound, sol);
-    int L_s_next = getLoc(i, MaxRound + 1, sol);
+    int L_s_prev = getLoc(i, MaxRound - 1);
+    int L_s      = getLoc(i, MaxRound);
+    int L_s_next = getLoc(i, MaxRound + 1);
 
     if (MaxRound == MinRound + 1) {
         // --- CASE 1: ADJACENT SWAP ---
@@ -127,9 +125,8 @@ int DeltaTravelRoundSwapTeam(const int i, const int r, const int s, const Soluti
 }
 
 
-int CostNrConsecutiveHA(const int i, const int min_round, const int max_round, const Solution& sol){
+int Operator::CostNrConsecutiveHA(const int i, const int min_round, const int max_round){
     int cost = 0;
-    const int R = sol.getNrRounds();
     int NrH = 0, NrA = 0;
     for (int k = min_round; k <= max_round; ++k){
         if (sol.Orientation[i][k] == HA::H){
@@ -147,10 +144,9 @@ int CostNrConsecutiveHA(const int i, const int min_round, const int max_round, c
     return cost;
 }
 
-int DeltaHACostOrientationSwapTeam(const int i, const int r, const int s, Solution& sol){
+int Operator::DeltaHACostOrientationSwapTeam(const int i, const int r, const int s){
     int delta = 0;
     int min_round, max_round;
-    const int R = sol.getNrRounds();
 
     if (sol.Orientation[i][r] == sol.Orientation[i][s]){
         return delta;
@@ -162,10 +158,10 @@ int DeltaHACostOrientationSwapTeam(const int i, const int r, const int s, Soluti
                 min_round = std::max(0, z-3);
                 max_round = std::min(R-1, z+3);
                 if (q == 0){
-                    delta -= CostNrConsecutiveHA(i, min_round, max_round, sol);
+                    delta -= CostNrConsecutiveHA(i, min_round, max_round);
                 }
                 else{
-                    delta += CostNrConsecutiveHA(i, min_round, max_round, sol);
+                    delta += CostNrConsecutiveHA(i, min_round, max_round);
                 }
             }
         }
@@ -175,10 +171,10 @@ int DeltaHACostOrientationSwapTeam(const int i, const int r, const int s, Soluti
             max_round = std::max(r,s);
             max_round = std::min(R-1, max_round+3);
             if (q == 0){
-                delta -= CostNrConsecutiveHA(i, min_round, max_round, sol);
+                delta -= CostNrConsecutiveHA(i, min_round, max_round);
             }
             else{
-                delta += CostNrConsecutiveHA(i, min_round, max_round, sol);
+                delta += CostNrConsecutiveHA(i, min_round, max_round);
             }
         }
         std::swap(sol.Orientation[i][r], sol.Orientation[i][s]);
@@ -186,7 +182,7 @@ int DeltaHACostOrientationSwapTeam(const int i, const int r, const int s, Soluti
     return delta;
 }
 
-int CostOrientationSwapTeamiTTP(const int i, const int r, const int s, Solution& sol){
+int Operator::CostOrientationSwapTeamiTTP(const int i, const int r, const int s){
 
     assert(r > -1 && s > -1);
 
@@ -194,11 +190,11 @@ int CostOrientationSwapTeamiTTP(const int i, const int r, const int s, Solution&
 
     // Travel distance:
     
-    int delta_travel = DeltaTravelOrientationSwapTeam(i, r, s, sol);
+    int delta_travel = DeltaTravelOrientationSwapTeam(i, r, s);
 
     // HA cost:
 
-    int delta_HA = DeltaHACostOrientationSwapTeam(i, r, s, sol);
+    int delta_HA = DeltaHACostOrientationSwapTeam(i, r, s);
     
 
     // cout << "delta_HA = " << delta_HA << ", delta_travel = " << delta_travel << endl;
@@ -206,7 +202,7 @@ int CostOrientationSwapTeamiTTP(const int i, const int r, const int s, Solution&
     return delta_travel + delta_HA;
 }
 
-int CostRoundSwapTeamiTTP(const int i, const int r, const int s, Solution& sol){
+int Operator::CostRoundSwapTeamiTTP(const int i, const int r, const int s){
 
     assert(r > -1 && s > -1);
 
@@ -214,11 +210,11 @@ int CostRoundSwapTeamiTTP(const int i, const int r, const int s, Solution& sol){
 
     // Travel distance:
     
-    int delta_travel = DeltaTravelRoundSwapTeam(i, r, s, sol);
+    int delta_travel = DeltaTravelRoundSwapTeam(i, r, s);
 
     // HA cost:
 
-    int delta_HA = DeltaHACostOrientationSwapTeam(i, r, s, sol);
+    int delta_HA = DeltaHACostOrientationSwapTeam(i, r, s);
 
     // cout << "delta_HA = " << delta_HA << ", delta_travel = " << delta_travel << endl;
     // cout << "New cost team " << i << " : " << sol.ComputeTotalCostTeamTTP(i)+delta_HA+delta_travel << endl;
@@ -226,7 +222,7 @@ int CostRoundSwapTeamiTTP(const int i, const int r, const int s, Solution& sol){
     return delta_travel+delta_HA;
 }
 
-int CostUncoloredRoundSwapTeamiTTP(const int i, const int UncoloredOpponent_i, const int r, const int s, const Solution& sol){
+int Operator::CostUncoloredRoundSwapTeamiTTP(const int i, const int UncoloredOpponent_i, const int r, const int s){
     int delta = 0;
     // Exactly one must be uncolored and one must be colored!
 
@@ -246,9 +242,9 @@ int CostUncoloredRoundSwapTeamiTTP(const int i, const int UncoloredOpponent_i, c
         return delta;
     }
 
-    int L_c_prev = getLoc(i, c - 1, sol);
-    int L_c = getLoc(i, c, sol);
-    int L_c_next = getLoc(i, c + 1, sol);
+    int L_c_prev = getLoc(i, c - 1);
+    int L_c = getLoc(i, c);
+    int L_c_next = getLoc(i, c + 1);
 
     delta -= (sol.getDistanceTeams(L_c_prev, L_c) + sol.getDistanceTeams(L_c, L_c_next));
     // cout << "initial travel for team " << i << ": " << L_c_prev << " -> (" << sol.getDistanceTeams(L_c_prev, L_c) << ")" << L_c << " -> (" << sol.getDistanceTeams(L_c, L_c_next) << ")" << L_c_next << endl;
@@ -260,12 +256,10 @@ int CostUncoloredRoundSwapTeamiTTP(const int i, const int UncoloredOpponent_i, c
     return delta; 
 }
 
-int CostTSTeamsTTP(const int i, const int j, const Solution& sol){
+int Operator::CostTSTeamsTTP(const int i, const int j){
     // cout << "Costs after delta computation" << endl;
     // cout << "i = " << i << ", j = " << j << endl;
     int delta = 0;
-    const int N = sol.getNrTeams();
-    const int R = sol.getNrRounds();
     int k,k2;
     for (int t: {i,j}){
         for (int r = 0; r < R; ++r){
@@ -287,18 +281,18 @@ int CostTSTeamsTTP(const int i, const int j, const Solution& sol){
                 int s = sol.MatchColor[k][j];
                 if (abs(r-s) > 1){
                     if (sol.Orientation[k][r] == HA::A){
-                        int L_r_prev = getLoc(k,r-1,sol);
-                        int L_r = getLoc(k,r,sol);
-                        int L_r_next = getLoc(k,r+1,sol);
+                        int L_r_prev = getLoc(k,r-1);
+                        int L_r = getLoc(k,r);
+                        int L_r_next = getLoc(k,r+1);
 
                         delta_k -= (sol.getDistanceTeams(L_r_prev, L_r) + sol.getDistanceTeams(L_r, L_r_next));
                         delta_k += (sol.getDistanceTeams(L_r_prev, j) + sol.getDistanceTeams(j, L_r_next));
                     }
 
                     if (sol.Orientation[k][s] == HA::A){
-                        int L_s_prev = getLoc(k,s-1,sol);
-                        int L_s = getLoc(k,s,sol);
-                        int L_s_next = getLoc(k,s+1,sol);
+                        int L_s_prev = getLoc(k,s-1);
+                        int L_s = getLoc(k,s);
+                        int L_s_next = getLoc(k,s+1);
 
                         delta_k -= (sol.getDistanceTeams(L_s_prev, L_s) + sol.getDistanceTeams(L_s, L_s_next));
                         delta_k += (sol.getDistanceTeams(L_s_prev, i) + sol.getDistanceTeams(i, L_s_next));
@@ -313,10 +307,10 @@ int CostTSTeamsTTP(const int i, const int j, const Solution& sol){
                     else{
                         min_team = j, max_team = i;
                     }
-                    int L_r_prev = getLoc(k,min_round-1,sol);
-                    int L_r = getLoc(k,min_round,sol);
-                    int L_r_next = getLoc(k,min_round+1,sol);
-                    int L_r_next2 = getLoc(k,min_round+2,sol);
+                    int L_r_prev = getLoc(k,min_round-1);
+                    int L_r = getLoc(k,min_round);
+                    int L_r_next = getLoc(k,min_round+1);
+                    int L_r_next2 = getLoc(k,min_round+2);
 
                     delta_k -= (sol.getDistanceTeams(L_r_prev, L_r) + sol.getDistanceTeams(L_r, L_r_next) + sol.getDistanceTeams(L_r_next, L_r_next2));
 
@@ -331,11 +325,11 @@ int CostTSTeamsTTP(const int i, const int j, const Solution& sol){
                 // cout << "New travel cost of " << k << " (adjacent to 2 colored edges) = " << sol.ComputeTravelCostTeamTTP(k)+delta_k << endl;
             }
             else if (t == i){
-                delta_k += CostUncoloredRoundSwapTeamiTTP(k, j, r, sol.MatchColor[k][j], sol);
+                delta_k += CostUncoloredRoundSwapTeamiTTP(k, j, r, sol.MatchColor[k][j]);
                 // cout << "New travel cost of " << k << " (adjacent to one uncolored edge) = " << sol.ComputeTravelCostTeamTTP(k)+delta_k << endl;
             }
             else if (t == j && sol.MatchColor[k][i] == -1){
-                delta_k += CostUncoloredRoundSwapTeamiTTP(k, i, r, sol.MatchColor[k][i], sol);
+                delta_k += CostUncoloredRoundSwapTeamiTTP(k, i, r, sol.MatchColor[k][i]);
                 // cout << "New travel cost of " << k << " (adjacent to one uncolored edge)  = " << sol.ComputeTravelCostTeamTTP(k)+delta_k << endl;
             }
             delta += delta_k;
@@ -349,7 +343,7 @@ int CostTSTeamsTTP(const int i, const int j, const Solution& sol){
     int t_opp;
     for (int t = 0; t < 2; ++t){
         t_opp = (t+1)%2;
-        k = getLoc(pair[t_opp],0,sol);
+        k = getLoc(pair[t_opp],0);
         if (k == pair[t_opp]){
             k = pair[t];
         }
@@ -358,7 +352,7 @@ int CostTSTeamsTTP(const int i, const int j, const Solution& sol){
         }
         delta += sol.getDistanceTeams(pair[t],k);
         for (int r = 1; r < R; ++r){
-            k2 = getLoc(pair[t_opp],r,sol);
+            k2 = getLoc(pair[t_opp],r);
             if (k2 == pair[t_opp]){
                 k2 = pair[t];
             }
@@ -374,21 +368,21 @@ int CostTSTeamsTTP(const int i, const int j, const Solution& sol){
     return delta;
 }
 
-int PTSCurrentTravelDelta(const vector<int>& SortedRoundsLantern, const int t, const Solution& sol){
+int Operator::PTSCurrentTravelDelta(const vector<int>& SortedRoundsLantern, const int t){
     int delta = 0;
     bool skip = false;
     int L, L_next;
     for (int i = 0; i < SortedRoundsLantern.size(); ++i){
-        L = getLoc(t,SortedRoundsLantern[i],sol);
+        L = getLoc(t,SortedRoundsLantern[i]);
         if (!skip){
-            delta += (sol.getDistanceTeams(getLoc(t,SortedRoundsLantern[i]-1,sol),L));
+            delta += (sol.getDistanceTeams(getLoc(t,SortedRoundsLantern[i]-1),L));
         }
         if (i < SortedRoundsLantern.size()-1 && SortedRoundsLantern[i+1] == SortedRoundsLantern[i]+1){
-            L_next = getLoc(t,SortedRoundsLantern[i+1],sol);
+            L_next = getLoc(t,SortedRoundsLantern[i+1]);
             skip = true;
         }
         else{
-            L_next = getLoc(t,SortedRoundsLantern[i]+1,sol);
+            L_next = getLoc(t,SortedRoundsLantern[i]+1);
             skip = false;
         }
         delta += (sol.getDistanceTeams(L,L_next));
@@ -396,7 +390,7 @@ int PTSCurrentTravelDelta(const vector<int>& SortedRoundsLantern, const int t, c
     return delta;
 }
 
-int DeltaPRS_TTP(Solution& sol, const int r, const int s, const int StartNode){
+int Operator::DeltaPRS_TTP(const int r, const int s, const int StartNode){
     // std::cout << "Partially swap rounds " << r << " and " << s << std::endl;
     // r and s are always real colors!!
     // The only way that something changes for PRS when doing 2RR is when a node goes back to another node before completing the cycle
@@ -407,10 +401,10 @@ int DeltaPRS_TTP(Solution& sol, const int r, const int s, const int StartNode){
     int next = StartNode;
     int delta = 0;
     do{
-        delta += CostRoundSwapTeamiTTP(next, r, s, sol);
+        delta += CostRoundSwapTeamiTTP(next, r, s);
         // std::cout << "t: " << next << std::endl;
         next = sol.TeamColorOpp[next][s];
-        delta += CostRoundSwapTeamiTTP(next, r, s, sol);
+        delta += CostRoundSwapTeamiTTP(next, r, s);
         next = sol.TeamColorOpp[next][r];
     }
     while (next != StartNode);
@@ -422,22 +416,22 @@ int DeltaPRS_TTP(Solution& sol, const int r, const int s, const int StartNode){
 
 // ----- YSTP ----- YSTP ----- YSTP ----- YSTP ----- YSTP ----- YSTP ----- YSTP ----- YSTP ----- YSTP //
 
-int DeltaPRS_YSTP(Solution& sol, const int r, const int s, const int StartNode){
+int Operator::DeltaPRS_YSTP(const int r, const int s, const int StartNode){
     int next = StartNode;
     int delta = 0;
     const int C = sol.getNrClubs();
-    vector<bool>ClubSeen(C, false);
+    clearClubSeen();
     do{
         if (sol.Orientation[next][r] != sol.Orientation[next][s]){
             std::swap(sol.Orientation[next][r], sol.Orientation[next][s]);
             delta += sol.ComputeHACostTeam(next);
-            ClubSeen[sol.getTeamClub(next)] = true;
+            ClubSeen[sol.getTeamClub(next)] = 1;
         }
         next = sol.TeamColorOpp[next][s];
         if (sol.Orientation[next][r] != sol.Orientation[next][s]){
             std::swap(sol.Orientation[next][r], sol.Orientation[next][s]);
             delta += sol.ComputeHACostTeam(next);
-            ClubSeen[sol.getTeamClub(next)] = true;
+            ClubSeen[sol.getTeamClub(next)] = 1;
         }
         next = sol.TeamColorOpp[next][r];
     }
@@ -469,7 +463,7 @@ int DeltaPRS_YSTP(Solution& sol, const int r, const int s, const int StartNode){
     return delta;
 }
 
-int CostTSTeamsYSTP(const int i, const int j, const Solution& sol){
+int Operator::CostTSTeamsYSTP(const int i, const int j){
     // Travel part:
     int delta_travel = 0;
     int r, opp_i, opp_j;
@@ -512,7 +506,7 @@ int CostTSTeamsYSTP(const int i, const int j, const Solution& sol){
 // end Deltas
 
 
-void PrintEdgeLantarn(const Solution& sol, const int i, const int k, const int j, const Lantarn& lantarn){
+void Operator::PrintEdgeLantarn(const int i, const int k, const int j){
     // k: position in middle, not the team itself!!!
     int c_i = sol.MatchColor[i][k];
     int c_j = sol.MatchColor[j][k];
@@ -539,18 +533,18 @@ void PrintEdgeLantarn(const Solution& sol, const int i, const int k, const int j
     cout << j << endl;
 }
 
-void PrintLantarn(const Solution& sol, const Lantarn& lantarn){
+void Operator::PrintLantarn(){
     int i = lantarn.i;
     int j = lantarn.j;
     for (int k = 0; k < lantarn.middle.size(); ++k){
-        PrintEdgeLantarn(sol, i, k, j, lantarn);
+        PrintEdgeLantarn(i, k, j);
     }
 }
 
 // Another option is to swap all the colors: the HAPs of the middle teams do not change, only of i and j
 // Next, we find paths to restore the balance but we use the trick 
 
-void setMatchColorR(Solution& sol, const int i, const int r, const int s){
+void Operator::setMatchColorR(const int i, const int r, const int s){
     // must always go before swap!!
     int opp_r = sol.TeamColorOpp[i][r];
     int opp_s = sol.TeamColorOpp[i][s];
@@ -577,7 +571,7 @@ void setMatchColorR(Solution& sol, const int i, const int r, const int s){
 }
 
 
-void TS(Solution& sol, const int i, const int j){
+void Operator::TS(const int i, const int j){
     // Swaps 2 teams
     // std::cout << "Swap teams " << i << " and " << j << std::endl;
     // ALWAYS KEEPS THE BALANCE!!
@@ -588,8 +582,6 @@ void TS(Solution& sol, const int i, const int j){
     // However, the HAPs of i and j might cause conflicts with capacities
 
     int c, opp_i, opp_j;
-    const int N = sol.getNrTeams();
-    const int R = sol.getNrRounds();
     for (c = 0; c < R; ++c){
         std::swap(sol.Orientation[i][c], sol.Orientation[j][c]);
 
@@ -631,13 +623,12 @@ void TS(Solution& sol, const int i, const int j){
     std::swap(sol.MatchColor[i][j], sol.MatchColor[j][i]); // do this to make the HAPs of i and j balanced!
 }
 
-void RS(Solution& sol, const int r, const int s){
+void Operator::RS(const int r, const int s){
     // std::cout << "Partially swap rounds " << r << " and " << s << std::endl;
     // r and s are always real colors!!
-    const int N = sol.getNrTeams();
     for (int i = 0; i < N; ++i){
         if (!sol.SRR){
-            setMatchColorR(sol, i, r, s);
+            setMatchColorR(i, r, s);
         }
         else{
             // otherwise we count double!!
@@ -649,7 +640,7 @@ void RS(Solution& sol, const int r, const int s){
     }
 }
 
-void PRS(Solution& sol, const int r, const int s, const int StartNode){
+void Operator::PRS(const int r, const int s, const int StartNode){
     // std::cout << "Partially swap rounds " << r << " and " << s << std::endl;
     // r and s are always real colors!!
     // The only way that something changes for PRS when doing 2RR is when a node goes back to another node before completing the cycle
@@ -660,12 +651,12 @@ void PRS(Solution& sol, const int r, const int s, const int StartNode){
     int next = StartNode;
     do{
         // std::cout << "t: " << next << std::endl;
-        setMatchColorR(sol, next, r, s);
+        setMatchColorR(next, r, s);
         std::swap(sol.TeamColorOpp[next][r], sol.TeamColorOpp[next][s]);
         std::swap(sol.Orientation[next][r], sol.Orientation[next][s]);
         next = sol.TeamColorOpp[next][s];
         // std::cout << "t2: " << next << std::endl;
-        setMatchColorR(sol, next, r, s);
+        setMatchColorR(next, r, s);
         std::swap(sol.TeamColorOpp[next][s], sol.TeamColorOpp[next][r]);
         std::swap(sol.Orientation[next][r], sol.Orientation[next][s]);
         next = sol.TeamColorOpp[next][r];
@@ -673,7 +664,7 @@ void PRS(Solution& sol, const int r, const int s, const int StartNode){
     while (next != StartNode);
 }
 
-void SwapColorsLantarn(Solution& sol, const Lantarn& lantarn, vector<HA>& OrientationCopy_i, vector<HA>& OrientationCopy_j){
+void Operator::SwapColorsLantarn(vector<HA>& OrientationCopy_i, vector<HA>& OrientationCopy_j){
 
     std::fill(OrientationCopy_i.begin(), OrientationCopy_i.end(), HA::BYE);
     std::fill(OrientationCopy_j.begin(), OrientationCopy_j.end(), HA::BYE);
@@ -720,7 +711,6 @@ void SwapColorsLantarn(Solution& sol, const Lantarn& lantarn, vector<HA>& Orient
         // PrintEdgeLantarn(G, i, k, j);
     }
 
-    const int R = sol.getNrRounds();
     for (int r = 0; r < R; ++r){
         if (OrientationCopy_i[r] != HA::BYE){
             sol.Orientation[i][r] = OrientationCopy_i[r];
@@ -731,7 +721,7 @@ void SwapColorsLantarn(Solution& sol, const Lantarn& lantarn, vector<HA>& Orient
     }
 }
 
-void ReplenishLantarn(Solution& sol, const int i, const int j, const int StartColor, Lantarn& lantarn, int& delta){
+void Operator::ReplenishLantarn(const int i, const int j, const int StartColor, int& delta){
     assert(StartColor >= 0);
     assert(i != j);
     int c_i = -1, c_j = StartColor;
@@ -750,10 +740,10 @@ void ReplenishLantarn(Solution& sol, const int i, const int j, const int StartCo
 
         // delta computation:
         if (c_j > -1){
-            delta += CostRoundSwapTeamiTTP(k, c_i, c_j, sol); 
+            delta += CostRoundSwapTeamiTTP(k, c_i, c_j); 
         }
         else{
-            delta += CostUncoloredRoundSwapTeamiTTP(k, j, c_i, c_j, sol);
+            delta += CostUncoloredRoundSwapTeamiTTP(k, j, c_i, c_j);
         }
 
         assert(c_i != c_j);
@@ -763,7 +753,6 @@ void ReplenishLantarn(Solution& sol, const int i, const int j, const int StartCo
             InfeasibleColorFound = true;
             lantarn.InfeasibleColor = true;
             lantarn.c_[i] = c_i;
-            lantarn.fictive_nb[j] = k;
             if (!sol.isEligible(j,k)){
                 lantarn.InfeasibleOpponents = true;
             }
@@ -772,29 +761,30 @@ void ReplenishLantarn(Solution& sol, const int i, const int j, const int StartCo
     while(c_j != StartColor && !InfeasibleColorFound);
 }
 
-Lantarn CreateLantarn(Solution& sol, const int i, const int j, const int StartColor, int& delta){
+void Operator::CreateLantarn(const int i, const int j, const int StartColor, int& delta){
     assert(StartColor >= 0);
-    Lantarn lantarn;
-    lantarn.i = i;
-    lantarn.j = j;
+    lantarn.reset(i,j);
     // cout << "i = " << i << ", j = " << j << endl;
-    ReplenishLantarn(sol, i, j, StartColor, lantarn, delta);
+    ReplenishLantarn(i, j, StartColor, delta);
     if (lantarn.InfeasibleColor /*&& !lantarn.InfeasibleOpponents*/){
         if (sol.ViolationEligibleOpponents_allowed || !lantarn.InfeasibleOpponents){
-            ReplenishLantarn(sol, j, i, StartColor, lantarn, delta);
+            ReplenishLantarn(j, i, StartColor, delta);
+        }
+        else{
+            return; // garbage lantarn, check outside if lantarn contains infeasible opponents!
         }
     }
-    if(lantarn.InfeasibleColor && (sol.Orientation[i][lantarn.c_[i]] != sol.Orientation[j][lantarn.c_[j]])){
+    if (lantarn.InfeasibleColor && (sol.Orientation[i][lantarn.c_[i]] != sol.Orientation[j][lantarn.c_[j]])){
         lantarn.PathReversalNeeded = true;
     }
     else{
         lantarn.PathReversalNeeded = false;
     }
-    return lantarn;
+    return;
 }
 
 
-bool RepairOrientationsEdgesLantarn(Solution& sol, Lantarn& lantarn, vector<array<int,3>>& path, const bool MinCostP, int& delta, std::mt19937& gen){
+bool Operator::RepairOrientationsEdgesLantarn(const bool MinCostP, int& delta){
     // Assumes orientations are already reversed!!
     // PrintLantarn(sol, lantarn);
     const int i = lantarn.i;
@@ -812,7 +802,7 @@ bool RepairOrientationsEdgesLantarn(Solution& sol, Lantarn& lantarn, vector<arra
         }
         // find path from source to sink, possible using edges in the lantern
 #ifndef NDEBUG
-        for (int t = 0; t < sol.getNrTeams(); ++t){
+        for (int t = 0; t < N; ++t){
             if (t != i && t != j){
                 assert(sol.IsTeamBalanced(t));
             }
@@ -829,7 +819,7 @@ bool RepairOrientationsEdgesLantarn(Solution& sol, Lantarn& lantarn, vector<arra
                 path.emplace_back(std::array<int, 3>{sink, k, c_sink}); // sink <- k <- source
                 path.emplace_back(std::array<int, 3>{k, source, c_source});
                 // cout << "Path in lantern via " << k << endl;
-                delta += ReversePath(sol, path, true, true);
+                delta += ReversePath(true, true);
                 return true;
             }
         }
@@ -838,20 +828,13 @@ bool RepairOrientationsEdgesLantarn(Solution& sol, Lantarn& lantarn, vector<arra
         // Now, everything is balanced except for i and j
         // Fix this by finding a path between them!
         // cout << "try to find path from " << source << " to " << sink << endl;
-        if (!MinCostP){
-            if (!FindNormalPathOneLeague(source, sink, sol, path, delta, MinCostP, gen, true)){
-                return false;
-            }
-            // cout << "Found path outside lantern" << endl;
+        if (!FindNormalPathOneLeague(source, sink, delta, MinCostP, true)){
+            return false;
         }
-        else{
-            if (!FindPathLineGraphOneLeague(source, sink, sol, path)){
-                return false;
-            }
-        }
+        // cout << "Found path outside lantern" << endl;
         // Now, everyone should be balanced!!
 #ifndef NDEBUG
-        for (int t = 0; t < sol.getNrTeams(); ++t){
+        for (int t = 0; t < N; ++t){
             assert(sol.IsTeamBalanced(t));
         }
 #endif
@@ -859,7 +842,7 @@ bool RepairOrientationsEdgesLantarn(Solution& sol, Lantarn& lantarn, vector<arra
     return true;
 }
 
-int ReversePath(Solution& sol, const vector<array<int,3>> path, const bool PR, const bool ComputeDelta){
+int Operator::ReversePath(const bool PR, const bool ComputeDelta){
     // If Path Reversal, we only take into account the deltas of the middle teams
     int i,j,c,e,c2;
     int delta = 0;
@@ -872,13 +855,13 @@ int ReversePath(Solution& sol, const vector<array<int,3>> path, const bool PR, c
         if (e > 0){
             c2 = path[e-1][2];
             if (ComputeDelta && sol.getSetting()==Setting::TTP){
-                delta += CostOrientationSwapTeamiTTP(i, c, c2, sol);
+                delta += CostOrientationSwapTeamiTTP(i, c, c2);
             }
         }
         else if (!PR){
             c2 = path.back()[2];
             if (ComputeDelta && sol.getSetting()==Setting::TTP){
-                delta += CostOrientationSwapTeamiTTP(i, c, c2, sol);
+                delta += CostOrientationSwapTeamiTTP(i, c, c2);
             }
         }
     }
@@ -917,22 +900,21 @@ int ReversePath(Solution& sol, const vector<array<int,3>> path, const bool PR, c
     return delta;
 }
 
-bool DFS_path_recursion(vector<bool>& Visited, vector<int>& Pred, const int current, const int sink, const Solution& sol){
+bool Operator::DFS_path_recursion(const int current, const int sink){
 
     if (current == sink){
         return true;
     }
 
-    Visited[current] = true;
+    Visited[current] = 1;
 
     int i;
-    const int R = sol.getNrRounds();
     for (int r = 0; r < R; ++r){
         if (sol.Orientation[current][r] == HA::A){
             i = sol.TeamColorOpp[current][r];
             if (!Visited[i]){
                 Pred[i] = current;
-                if (DFS_path_recursion(Visited, Pred, i, sink, sol)){
+                if (DFS_path_recursion(i, sink)){
                     return true;
                 }
             }
@@ -942,38 +924,35 @@ bool DFS_path_recursion(vector<bool>& Visited, vector<int>& Pred, const int curr
     return false;
 }
 
-bool DFS_path(vector<int>& Pred, const int source, const int sink, const Solution& sol) {
+bool Operator::DFS_path(const int source, const int sink) {
 
     // DFS for finding a path from source to sink
     // Path might be longer than what we would get with BFS
     
-    const int N = sol.getNrTeams();
-    vector<bool> Visited(N, false); 
-    if (DFS_path_recursion(Visited, Pred, source, sink, sol)){
+    clearVisited(); 
+    if (DFS_path_recursion(source, sink)){
         return true;
     }
     return false;
 }
 
-bool BFS_path(vector<int>& Pred, const int source, const int sink, const Solution& sol) {
+bool Operator::BFS_path(const int source, const int sink) {
 
     // BFS for finding a path from source to sink
     // Returns the shortest path!!
     // But: if we are stuck in local optimum, then this might always return the same cycle?
+
+    clearVisited();
+    // queue<int> q; // FIFO
+    int head = 0, tail = 0;
     
-    const int N = sol.getNrTeams();
-    const int R = sol.getNrRounds();
-    vector<bool> Visited(N, false);
-    queue<int> q; // FIFO
+    Visited[source] = 1;
+    Queue[tail++] = source;
     
-    Visited[source] = true;
-    q.push(source);
-    
-    while (!q.empty()) {
+    while (head < tail) {
         
         // Dequeue a vertex
-        int curr = q.front();
-        q.pop();
+        int curr = Queue[head++];
 
         if (curr == sink)
             return true; // then path found!!
@@ -984,8 +963,11 @@ bool BFS_path(vector<int>& Pred, const int source, const int sink, const Solutio
                 i = sol.TeamColorOpp[curr][r];
                 if (!Visited[i]) {
                     Pred[i] = curr;
-                    Visited[i] = true;
-                    q.push(i);
+                    if (i == sink){
+                        return true;
+                    }
+                    Visited[i] = 1;
+                    Queue[tail++] = i;
                 }
             }
         }
@@ -993,22 +975,20 @@ bool BFS_path(vector<int>& Pred, const int source, const int sink, const Solutio
     return false;
 }
 
-bool FindNormalPathOneLeague(const int source, const int sink, Solution& sol, vector<array<int,3>>& path, int& delta, const bool MinCostP, std::mt19937& gen, const bool ComputeDelta){ // source: A too much, sink: H too much
+bool Operator::FindNormalPathOneLeague(const int source, const int sink, int& delta, const bool MinCostP, const bool ComputeDelta){ // source: A too much, sink: H too much
     int i,j,r;
-    const int N = sol.getNrTeams();
-    const int R = sol.getNrTeams();
     // cout << "source = " << source << endl;
     // cout << "sink = " << sink << endl;
 
-    vector<int>Pred(N);
+    clearPred();
 
     if (gen() % 10 == 1){
-        if (!DFS_path(Pred, source, sink, sol)){
+        if (!DFS_path(source, sink)){
             return false;
         }
     }
     else{
-       if (!BFS_path(Pred, source, sink, sol)){
+       if (!BFS_path(source, sink)){
             return false;
         } 
     }
@@ -1024,60 +1004,57 @@ bool FindNormalPathOneLeague(const int source, const int sink, Solution& sol, ve
         curr = k;
     }
 
-    delta += ReversePath(sol, path, true, ComputeDelta);
+    delta += ReversePath(true, ComputeDelta);
 
     return true;
 }
 
 
-vector<array<int,3>> CycleBalanced(Solution& sol, std::mt19937& gen){
+void Operator::CycleBalanced(){
     // In principe zou deze genoeg moeten zijn want ik kan van eender welk balanced schedule naar eender ander balanced schedule gaan
     // Do this one if we just want to find a cycle in a balanced schedule
     // Given the cycle, calculate the delta afterwards
     // We know that in a balanced schedule, if we just do a random path, we always end up at a node already in the path
 
-    int N = sol.getNrTeams();
-    int C = sol.getNrRounds();
     std::uniform_int_distribution<>dist_team = std::uniform_int_distribution<>(0,N-1);
-    std::uniform_int_distribution<>dist_colour = std::uniform_int_distribution<>(0,C-1);
+    std::uniform_int_distribution<>dist_colour = std::uniform_int_distribution<>(0,R-1);
     int i = dist_team(gen);
     int j,c;
-    vector<bool>NodeVisited(N, false);
-    vector<array<int,3>>Cycle;
-    Cycle.reserve(N);
+    clearVisited();
+    clearPath();
     // cout << "Path: " << endl;
     // cout << i;
-    while (!NodeVisited[i]){
+    while (!Visited[i]){
         assert(sol.IsTeamBalanced(i));
-        NodeVisited[i] = true;
+        Visited[i] = 1;
         c = dist_colour(gen);
         int start_color = c;
         while (sol.Orientation[i][c] != HA::H || (!sol.SRR && sol.MatchColor[sol.TeamColorOpp[i][c]][i] >= 0)){
-            c = (c + 1)%C;
+            c = (c + 1)%R;
             if (c == start_color){
                 if (sol.SRR){
                     throw std::runtime_error("Infinite loop in CycleBalanced!!"); 
                 }
                 else{
-                    return {};
+                    return;
                 }
             }
         }
         j = sol.TeamColorOpp[i][c];
         assert(sol.Orientation[j][c] == HA::A);
-        Cycle.emplace_back(std::array<int, 3>{i,j,c});
+        path.emplace_back(std::array<int, 3>{i,j,c});
         i = j;
         // cout << " <- " << i;
     }
     // cout << endl;
     // i has been visited twice
     int e = 0;
-    if (Cycle[e][0] != i){
-        while(Cycle[e][1] != i){
+    if (path[e][0] != i){
+        while(path[e][1] != i){
             ++e;
         }
         // cout << "e = " << e << endl;
-        Cycle.erase(Cycle.begin(), Cycle.begin()+e+1);
+        path.erase(path.begin(), path.begin()+e+1);
     }
     
     /*
@@ -1092,11 +1069,9 @@ vector<array<int,3>> CycleBalanced(Solution& sol, std::mt19937& gen){
     }
     cout << endl;
     */
-
-    return Cycle;
 }
 
-int ComputeEdgeWeightM(const int i, const int j, const int c, const bool MinCostM, const bool bipartite, Solution& sol){
+int Operator::ComputeEdgeWeightM(const int i, const int j, const int c, const bool MinCostM, const bool bipartite){
     assert(sol.Orientation[i][c] != sol.Orientation[j][c]);
     if (sol.Orientation[i][c] == sol.Orientation[j][c]){
         return sol.CostImbalance;
@@ -1104,10 +1079,10 @@ int ComputeEdgeWeightM(const int i, const int j, const int c, const bool MinCost
     int d = 0;
     if (sol.getSetting() == Setting::TTP){
         if (sol.Orientation[i][c] == HA::A){
-            d += sol.getDistanceTeams(getLoc(i,c-1,sol), j) + sol.getDistanceTeams(j, getLoc(i,c+1,sol));
+            d += sol.getDistanceTeams(getLoc(i,c-1), j) + sol.getDistanceTeams(j, getLoc(i,c+1));
         }
         else if (sol.Orientation[j][c] == HA::A){
-            d += sol.getDistanceTeams(getLoc(j,c-1,sol), i) + sol.getDistanceTeams(i, getLoc(j,c+1,sol));
+            d += sol.getDistanceTeams(getLoc(j,c-1), i) + sol.getDistanceTeams(i, getLoc(j,c+1));
         }
     }
     else {
@@ -1120,13 +1095,11 @@ int ComputeEdgeWeightM(const int i, const int j, const int c, const bool MinCost
     return d;
 }
 
-vector<vector<pair<int,int>>>FindMinCostBalancedACycle(Solution& sol, const int r, std::mt19937& gen){  
+void Operator::FindMinCostBalancedACycle(const int r){  
 
     // cout << "MinCost cycle" << endl;
 
     int i,j;
-    const int N = sol.getNrTeams();
-    BGraph G(N);
     const bool MinCostM = true, bipartite = true;
 
     int cost = 1; 
@@ -1140,7 +1113,7 @@ vector<vector<pair<int,int>>>FindMinCostBalancedACycle(Solution& sol, const int 
     // if arc i->j does not exist: cost of infinity
     // In dist the distance x 2 because we set min_weight_cycle = INF, but dist can become less than INF even if there is no path, because some edge weights are negative!!
 
-    vector<vector<int>>pred(N, vector<int>(N,-1));
+    vector<vector<int>>predAC(N, vector<int>(N,-1));
 
     // pred[i][j] = last vertex before visiting j from the path from i to j
     // i.e. 1->2->3->4->5->6, then pred[2][6] = 5, pred[3][6] = 4, pred[2][5] = 4
@@ -1150,16 +1123,16 @@ vector<vector<pair<int,int>>>FindMinCostBalancedACycle(Solution& sol, const int 
     for (i = 0; i < N; ++i){
         for (j = i+1; j < N; ++j){
             if (sol.MatchColor[i][j] == r){
-                cost = -ComputeEdgeWeightM(i, j, r, MinCostM, bipartite, sol); // negative because this we subtract!!+
+                cost = -ComputeEdgeWeightM(i, j, r, MinCostM, bipartite); // negative because this we subtract!!+
                 if (sol.Orientation[i][r] == HA::H){ // j -> i
                     // cout << j << " -> " << i << "(" << cost << ")" << endl;
                     dist[j][i] = cost;
-                    pred[j][i] = j;
+                    predAC[j][i] = j;
                 }
                 else{ // i -> j
                     // cout << i << " -> " << j << "(" << cost << ")" << endl;
                     dist[i][j] = cost;
-                    pred[i][j] = i; 
+                    predAC[i][j] = i; 
                 }
                 EdgeWeight[i][j] = cost;
                 EdgeWeight[j][i] = cost;
@@ -1169,18 +1142,18 @@ vector<vector<pair<int,int>>>FindMinCostBalancedACycle(Solution& sol, const int 
                     continue;
                 }
                 // Remember: fictive edges must always point from the H team to the A team!!!!
-                cost = ComputeEdgeWeightM(i, j, r, MinCostM, bipartite, sol);
+                cost = ComputeEdgeWeightM(i, j, r, MinCostM, bipartite);
                 if (sol.Orientation[i][r] == HA::H && sol.Orientation[j][r] == HA::A){
                     // i plays H and j plays A, so we need the arc i -> j
                     // cout << i << " ->- " << j << "(" << cost << ")" << endl;
                     dist[i][j] = cost;
-                    pred[i][j] = i;
+                    predAC[i][j] = i;
                 }
                 else if (sol.Orientation[i][r] == HA::A && sol.Orientation[j][r] == HA::H){
                     // i plays A and j plays H, so we need the arc j -> i
                     // cout << j << " ->- " << i << "(" << cost << ")" << endl;
                     dist[j][i] = cost;
-                    pred[j][i] = j;
+                    predAC[j][i] = j;
                 }
                 EdgeWeight[i][j] = cost;
                 EdgeWeight[j][i] = cost;
@@ -1194,7 +1167,7 @@ vector<vector<pair<int,int>>>FindMinCostBalancedACycle(Solution& sol, const int 
 
     for (int i = 0; i < N; ++i){
         dist[i][i] = 0;
-        pred[i][i] = i;
+        predAC[i][i] = i;
     }
     for (int k = 0; k < N; ++k){
         for (int i = 0; i < N; ++i){
@@ -1207,7 +1180,7 @@ vector<vector<pair<int,int>>>FindMinCostBalancedACycle(Solution& sol, const int 
                 }
                 if (dist[i][j] > dist[i][k] + dist[k][j]){
                     dist[i][j] = dist[i][k] + dist[k][j];
-                    pred[i][j] = pred[k][j];
+                    predAC[i][j] = predAC[k][j];
                 }
             }
         }
@@ -1238,7 +1211,7 @@ vector<vector<pair<int,int>>>FindMinCostBalancedACycle(Solution& sol, const int 
         // we walk back N times.
         for (i = 0; i < N; ++i) {
             // cout << "curr = " << curr << endl;
-            curr = pred[cycle_node][curr];
+            curr = predAC[cycle_node][curr];
         }
 
         // Now curr is definitely inside a negative cycle.
@@ -1282,8 +1255,6 @@ vector<vector<pair<int,int>>>FindMinCostBalancedACycle(Solution& sol, const int 
     // So start with uncolored edge, then colored edge, uncolored, etc.
 
     // cout << "retrieve cycle" << endl;
-    vector<pair<int,int>>cycle;
-    cycle.reserve(N);
 
     if (start_node != -1){
         int k;
@@ -1294,7 +1265,7 @@ vector<vector<pair<int,int>>>FindMinCostBalancedACycle(Solution& sol, const int 
             std::swap(i,j);
         }
         // cout << "i = " << i << ", j = " << j << endl;
-        k = pred[i][j];
+        k = predAC[i][j];
 
         while (k != i) {
             // cout << "k = " << k << endl;
@@ -1302,41 +1273,34 @@ vector<vector<pair<int,int>>>FindMinCostBalancedACycle(Solution& sol, const int 
                 assert(sol.MatchColor[j][k] == -1);
                 assert(sol.Orientation[k][r] == HA::H);
                 assert(sol.Orientation[j][r] == HA::A);
-                cycle.emplace_back(j,k);
+                AlternatingCycle.emplace_back(j,k);
                 // cout << j << " -- " << k << endl;
             }
             else{
                 assert(sol.Orientation[j][r] == HA::H);
                 assert(sol.Orientation[k][r] == HA::A);
                 assert(sol.MatchColor[j][k] == r);
-                cycle.emplace_back(j,k);
+                AlternatingCycle.emplace_back(j,k);
                 // cout << j << " <- " << k << endl;
             }
             j = k;
-            k = pred[i][j];
+            k = predAC[i][j];
             // cout << k << " = pred " << i << ", " << j << endl;
         }
         // cout << "final 2 edges: " << endl;
-        cycle.emplace_back(j,i);
+        AlternatingCycle.emplace_back(j,i);
         // cout << j << " -- " << i << endl;
 
-        cycle.emplace_back(i, sol.TeamColorOpp[i][r]); // i <- j
+        AlternatingCycle.emplace_back(i, sol.TeamColorOpp[i][r]); // i <- j
         // cout << i << " <- " << sol.TeamColorOpp[i][r] << endl;
     }
     // cout << "done" << endl;
-    return {cycle};
 }
 
-vector<vector<array<int,3>>>EvaluateAlternatingCycleWithPaths(Solution& sol, vector<pair<int,int>>& AlternatingCycle, const int r, const bool bipartite, int& delta, std::mt19937& gen, const bool MinCostP, bool NoPathDueTo2RRConstraint){
+void Operator::EvaluateAlternatingCycleWithPaths(const int r, const bool bipartite, int& delta, const bool MinCostP, bool NoPathDueTo2RRConstraint){
 
-    vector<int>H_teams;
-    vector<int>A_teams;
-    vector<vector<array<int,3>>>Paths;
-
-    const int N = sol.getNrTeams();
-    H_teams.reserve(N/2);
-    A_teams.reserve(N/2);
-    Paths.reserve(N/2);
+    clearHA_teamsAC();
+    clearPathsAC();
 
     // cout << "Evaluate alternating cycle" << endl;
 
@@ -1378,14 +1342,14 @@ vector<vector<array<int,3>>>EvaluateAlternatingCycleWithPaths(Solution& sol, vec
             if (gen() % 2 == 0){
                 h_team = i, a_team = j;
             }
-            A_teams.push_back(a_team);
+            A_teamsAC.push_back(a_team);
         }
         else if (sol.Orientation[i][r] == sol.Orientation[j][r] && sol.Orientation[i][r] == HA::A){
             assert(!bipartite);;
             if (gen() % 2 == 0){
                 h_team = i, a_team = j;
             }
-            H_teams.push_back(h_team);
+            H_teamsAC.push_back(h_team);
         }
         else if (sol.Orientation[i][r] == HA::H && sol.Orientation[j][r] == HA::A){
             a_team = j, h_team = i;
@@ -1403,7 +1367,7 @@ vector<vector<array<int,3>>>EvaluateAlternatingCycleWithPaths(Solution& sol, vec
             // assert(sol.Orientation[k][r] == HA::H);
             if (bipartite){
                 assert(sol.Orientation[i][r] == HA::A);
-                delta += CostUncoloredRoundSwapTeamiTTP(i, j, r, -1, sol); 
+                delta += CostUncoloredRoundSwapTeamiTTP(i, j, r, -1); 
             }
             // cout << "delta " << j << " = " << CostUncoloredRoundSwapTeamiTTP(j, k, r, -1, sol) << endl;
 
@@ -1440,28 +1404,22 @@ vector<vector<array<int,3>>>EvaluateAlternatingCycleWithPaths(Solution& sol, vec
         // fix paths from H_teams to A_teams
         // Pick random H_team and random A_team, and find path between them, and reverse
         // do this by shuffling the vectors, then iteratively go over them
-        assert(H_teams.size() == A_teams.size());
-        shuffle(H_teams.begin(), H_teams.end(), gen);
-        shuffle(A_teams.begin(), A_teams.end(), gen);
+        assert(H_teamsAC.size() == A_teamsAC.size());
+        shuffle(H_teamsAC.begin(), H_teamsAC.end(), gen);
+        shuffle(A_teamsAC.begin(), A_teamsAC.end(), gen);
         int a;
-        for (int k = 0; k < H_teams.size(); ++k){
+        for (int k = 0; k < H_teamsAC.size(); ++k){
             // path is shortest in distance, but does not take into account the costs
             // It can be that not path exists between the teams because they are in different disconnected components!
             bool PathFound = false;
-            vector<array<int,3>>path;
-            path.reserve(N);
+            clearPath();
             a = -1;
             do{
                 ++a;
-                if (!MinCostP){
-                    // delta is computed in this function!!
-                    PathFound = FindNormalPathOneLeague(A_teams[k+a], H_teams[k], sol, path, delta, MinCostP, gen, false);
-                }
-                else{
-                    PathFound = FindPathLineGraphOneLeague(A_teams[k+a], H_teams[k], sol, path);
-                }
+                // delta is computed in this function!!
+                PathFound = FindNormalPathOneLeague(A_teamsAC[k+a], H_teamsAC[k], delta, MinCostP, false);
             }
-            while(k+a+1 < A_teams.size() && !PathFound);
+            while(k+a+1 < A_teamsAC.size() && !PathFound);
 
             if (sol.SRR && !PathFound){
                 cout << "No path found in M+PR" << endl;
@@ -1471,18 +1429,16 @@ vector<vector<array<int,3>>>EvaluateAlternatingCycleWithPaths(Solution& sol, vec
                 // This can happen because 2RR violations are forbidden->these edges are not made
                 // In this case, return empty path
                 NoPathDueTo2RRConstraint = true;
-                return {};
+                return;
             }
             // path is reversed in function!!
-            Paths.emplace_back(path);
-            std::swap(A_teams[k], A_teams[k+a]);
+            PathsAC.emplace_back(std::move(path));
+            std::swap(A_teamsAC[k], A_teamsAC[k+a]);
         }
     }
-        
-    return Paths;
 }
 
-void GoBackToOldCycle(Solution& sol, vector<pair<int,int>>& AlternatingCycle, const int r){
+void Operator::GoBackToOldCycle(const int r){
     // cout << "Go back to old matching: " << endl;
     int i,j,e;
     // First, uncolor all even edges (edges of new matching)
@@ -1510,7 +1466,7 @@ void GoBackToOldCycle(Solution& sol, vector<pair<int,int>>& AlternatingCycle, co
     }
 }
 
-bool DFS_Modified(int u, vector<int>& Cycle, vector<int>& Parent, vector<int>& AdjC, vector<vector<int>>& Adj, vector<int>& Count, vector<bool>& Visited, std::mt19937& gen){
+bool Operator::DFS_Modified(int u, vector<int>& Cycle, vector<int>& AdjC, vector<vector<int>>& Adj){
 
     // AdjC[i] = j <=> {i,j} is colored
     // Adj[i] = {k,l,..} <=> {i,k}, {i,l} are all uncolored
@@ -1549,7 +1505,7 @@ bool DFS_Modified(int u, vector<int>& Cycle, vector<int>& Parent, vector<int>& A
         Parent[AdjC[u]] = u;
         // cout << "Parent[" << AdjC[u] << "] = " << u << endl;
         // cout << u << "--C--" << AdjC[u] << endl;
-        if (DFS_Modified(AdjC[u], Cycle, Parent, AdjC, Adj, Count, Visited, gen)){
+        if (DFS_Modified(AdjC[u], Cycle, AdjC, Adj)){
             return true;
         }
     }
@@ -1572,7 +1528,7 @@ bool DFS_Modified(int u, vector<int>& Cycle, vector<int>& Parent, vector<int>& A
             Parent[w] = u;
             // cout << "Parent[" << v << "] = " << u << endl;
             // cout << u << "-----" << v << endl;
-            if (DFS_Modified(w, Cycle, Parent, AdjC, Adj, Count, Visited, gen)){
+            if (DFS_Modified(w, Cycle, AdjC, Adj)){
                 return true;
             }
             Parent[w] = ParentCopy;
@@ -1587,7 +1543,7 @@ bool DFS_Modified(int u, vector<int>& Cycle, vector<int>& Parent, vector<int>& A
 }
 
 
-bool DFS_cycle(int u, vector<int>& Cycle, vector<int>& Parent, const vector<vector<int>>& Adj, vector<bool>& Stack, vector<bool>& Visited, std::mt19937& gen){
+bool Operator::DFS_cycle(int u, vector<int>& Cycle, const vector<vector<int>>& Adj){
 
     if (Stack[u]){
         // cout << u << " already visited!" << endl;
@@ -1609,8 +1565,8 @@ bool DFS_cycle(int u, vector<int>& Cycle, vector<int>& Parent, const vector<vect
         return false;
     }
 
-    Visited[u] = true;
-    Stack[u] = true;
+    Visited[u] = 1;
+    Stack[u] = 1;
 
     const int degree = Adj[u].size();
     std::uniform_int_distribution<int> dist(0, degree - 1); // ensure some randomness
@@ -1623,20 +1579,18 @@ bool DFS_cycle(int u, vector<int>& Cycle, vector<int>& Parent, const vector<vect
         }
         w = Adj[u][v];
         Parent[u] = w;
-        if (DFS_cycle(w, Cycle, Parent, Adj, Stack, Visited, gen)){
+        if (DFS_cycle(w, Cycle, Adj)){
             return true;
         }
     }
-    Stack[u] = false;
+    Stack[u] = 0;
     return false;
 }
 
-vector<vector<pair<int,int>>>AlternatingCycleBM(Solution& sol, const int r, const bool bipartite, std::mt19937& gen){
-    // Here, we prove a general wat for finding an alternating cycle where edges have "the same orientation"
+void Operator::AlternatingCycleBM(const int r, const bool bipartite){
+    // Here, we provide a general way for finding an alternating cycle where edges have "the same orientation"
 
-    const int N = sol.getNrTeams();
     const int C = N/2;
-    const int R = sol.getNrRounds();
 
     int i,j,k;
 
@@ -1675,29 +1629,28 @@ vector<vector<pair<int,int>>>AlternatingCycleBM(Solution& sol, const int r, cons
         }
     }
 
-    vector<int>Parent(N, -1); // For DFS_Modified, Parent[u] = Parent[u] is the predecessor of u
+    clearParent(); // For DFS_Modified, Parent[u] = Parent[u] is the predecessor of u
     vector<int>Cycle; 
     Cycle.reserve(N);
-    vector<bool>Visited(N, false);
-    vector<bool>Stack(N, false); //DFS
-    vector<int>Count(N, -1); // DFS_Modified
+    clearVisited();
+    clearStack();
+    clearCount();
 
     // cout << "start DFS" << endl;
     for (i = 0; i < N; ++i){
         if (bipartite && !Visited[i]){
-            if (DFS_cycle(i, Cycle, Parent, Adj, Stack, Visited, gen)){
+            if (DFS_cycle(i, Cycle, Adj)){
                 break;
             }
         }
         else if (!bipartite && !Visited[i]){
-            if (DFS_Modified(i, Cycle, Parent, AdjC, Adj, Count, Visited, gen)){
+            if (DFS_Modified(i, Cycle, AdjC, Adj)){
                 break;
             }
         }
     }
     // cout << "done" << endl;
 
-    vector<pair<int,int>>AlternatingCycle;
     if (!Cycle.empty()){
         for (int i = Cycle.size()-1; i >= 1; --i){ // backwards because alternating cycle with DFS will always be i -- j -> k -- l -> m
             if (sol.MatchColor[Cycle[i-1]][Cycle[i]] == -1){
@@ -1732,135 +1685,7 @@ vector<vector<pair<int,int>>>AlternatingCycleBM(Solution& sol, const int r, cons
     else{
         // cout << "No alternating cycle!!" << endl;
     }
-    return {AlternatingCycle};
 }
-
-
-// ******************************** PERFECT MATCHING GREEDY MATCHING ***************************************** //
-
-bool ForbiddenEdge(const int i, const int j, const int r, const bool bipartite, const vector<bool>& TeamSelected, Solution& sol){
-    if (sol.MatchColor[i][j] >= 0 && sol.MatchColor[i][j] != r){
-        return true;
-    }
-    else if (sol.MatchColor[j][i] >= 0 && sol.MatchColor[j][i] != r){
-        return true;
-    }
-    else if (!sol.isEligible(i,j)){
-        return true;
-    }
-    if (bipartite){
-        if (sol.Orientation[i][r] == sol.Orientation[j][r]){
-            return true;
-        }
-    }
-    if (sol.getLeagueTeam(i) != sol.getLeagueTeam(j)){
-        assert(sol.getNrLeagues() > 1);
-        return true;
-    }
-    return false;
-}
-
-pair<vector<pair<int,int>>,vector<int>> MoveMWPMOneLeague(Solution& sol, const int r, std::mt19937& gen, const int l, const bool bipartite, const bool MinCostM){
-
-    int N = sol.getNrTeamsLeague(l);
-    int R = sol.getNrRounds();
-    int SizeMatching = N/2;
-    vector<bool>TeamSelected(N, true);
-
-    typedef boost::property< boost::edge_weight_t, float, boost::property< boost::edge_index_t, int > >EdgeProperty;
-
-    typedef boost::adjacency_list <boost::vecS, boost::vecS, boost::undirectedS, boost::no_property, EdgeProperty>BGraph;
-    boost::graph_traits< BGraph >::vertex_iterator vi, vi_end;
-
-    BGraph g(N); 
-
-    int UB_random = 100;
-    std::uniform_int_distribution<>dist_int = std::uniform_int_distribution<>(0,UB_random); 
-
-    int i, j, i_, j_;
-    // vector<vector<bool>>ForbiddenEdge(sol.getNrTeams(), vector<bool>(sol.getNrTeams(), false));
-    // forbidden edges: all edges in the current schedule (coloring of the current schedule must remain feasible)
-    int MaxWeight = 0;
-    if (!MinCostM){
-        MaxWeight = UB_random;
-    }
-    // each edge randomly gets a cost of 0 and 1, in a perfect matching there are N/2 edges so max cost should be N/2+1
-    int Weight = 0;
-
-    for (i = 0; i < N; ++i){
-        i_ = sol.getGlobalIndexTeam(l,i);
-        for (j = i+1; j < N; ++j){
-            j_ = sol.getGlobalIndexTeam(l,j);
-            if (ForbiddenEdge(i_,j_,r,bipartite,TeamSelected,sol)){
-                continue;
-            }
-            Weight = ComputeEdgeWeightM(i_, j_, r, MinCostM, bipartite, sol);
-            if (Weight > MaxWeight){
-                MaxWeight = Weight;
-            }
-        }
-    }
-    MaxWeight = MaxWeight*(N/2)+1;
-
-    for (i = 0; i < N; ++i){
-        i_ = sol.getGlobalIndexTeam(l,i);
-        for (j = i+1; j < N; ++j){
-            j_ = sol.getGlobalIndexTeam(l,j);
-            if (ForbiddenEdge(i_,j_,r,bipartite,TeamSelected,sol)){
-                continue;
-            }
-            // If still here, edge can be included:
-            
-            int d;
-            if (MinCostM){
-                d = MaxWeight - ComputeEdgeWeightM(i_, j_, r, MinCostM, bipartite, sol);
-            }
-            else{
-                d = MaxWeight - dist_int(gen);
-            }
-            assert(d >= 0);
-            // cout << "add edge " << i << ", " << j << " with weight " << d << endl;
-            boost::add_edge(i, j, EdgeProperty(d), g);
-        }
-    }
-
-    // sol.print_all_rounds();
-    // cout << "Bipartite matching in round " << r << endl;
-
-    // cout << "do MWPM" << endl;
-    vector<pair<int,int>>Matching;
-    vector<int>OpponentMatching(sol.getNrTeams(), -1); // i.e. OpponentMatching[i] = j, then the opponent of i in the matching is j
-
-    if (boost::num_edges(g) >= N/2){ // otherwise graph cannot contain a perfect matching
-        std::vector< boost::graph_traits< BGraph >::vertex_descriptor > mate1(N);
-        assert(mate1.size() == num_vertices(g));
-        boost::maximum_weighted_matching(g, &mate1[0]);
-
-        // cout << "----------" << endl;
-        // cout << "Matching in league " << l << " with " << N << "teams and round " << r << ": " << endl;
-        // cout << "----------" << endl;
-        for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi){
-            if (mate1[*vi] != boost::graph_traits< BGraph >::null_vertex() && *vi < mate1[*vi]){
-                // std::cout << "{" << *vi << ", " << mate1[*vi] << "}" << std::endl;
-                i = *vi, j = mate1[*vi];
-                i_ = sol.getGlobalIndexTeam(l,i);
-                j_ = sol.getGlobalIndexTeam(l,j);
-                OpponentMatching[i_] = j_;
-                OpponentMatching[j_] = i_;
-                if (bipartite){
-                    assert(sol.Orientation[i_][r] != sol.Orientation[j_][r]);
-                }
-                Matching.push_back({i_,j_});
-                // cout << i_ << " vs " << j_ << endl;
-            }
-        }
-        // cout << "----------" << endl;
-    }
-    
-    return {Matching, OpponentMatching}; // for Miao's algo: Matching, for my algo: OpponentMatching (bc I do no want full matching but alternating cycles instead)
-}
-
-// ******************************** PERFECT MATCHING GREEDY MATCHING ***************************************** //
 
 // ********* LINE GRAPH ******* LINE GRAPH ****** LINE GRAPH ******* LINE GRAPH ****** LINE GRAPH *********** //
 
@@ -1991,84 +1816,6 @@ vector<pair<int,int>>ForbiddenPairNC(Solution& sol, const vector<array<int,3>> p
         }
     }
     return ForbiddenPair;
-}
-
-bool FindPathLineGraphOneLeague(const int source, const int sink, Solution& sol, vector<array<int,3>>& path){ // source: team with A too much, sink: team with H too much
-
-    auto [Nodes,edge_vector,weights] = MakeLineGraph(sol, source, sink);
-
-    // Now, create the real source and sink nodes
-    // In line graph, nodes are of the form ({j,k}), with j->k
-    // Suppose the cheapest path is sink->source. Because every edge in the line graph is the combination of 2 edges, if 
-    // we do not add an extra source and sink, this single edge will never be taken as the cheapest path!!
-    // But now, we have SOURCE->(sink,source)->SINK as an option
-
-    int SOURCE = Nodes.size();
-    int SINK = Nodes.size()+1;
-    for (int v = 0; v < Nodes.size(); ++v){
-        if (Nodes[v].first == source){
-            edge_vector.push_back(Edge(SOURCE, v)); // create edges SOURCE --> v
-            weights.push_back(0); // get weight of 0
-            // cout << "add " << SOURCE << " -> " << "(" << Nodes[v].first << "," << Nodes[v].second << ")" << endl;
-        }
-        else if (Nodes[v].second == sink){
-            edge_vector.push_back(Edge(v, SINK)); // create edges v --> SINK
-            weights.push_back(0); // get weight of 0
-            // cout << "(" << Nodes[v].first << "," << Nodes[v].second << ")" << " -> " << SINK << endl;
-        }
-    }
-
-    BGraph G(Nodes.size()+2); // Nodes.size()+2 vertices, +2 bc of extra SOURCE and SINK node
-
-    for (std::size_t j = 0; j < edge_vector.size(); ++j){
-        if (weights[j] < 0){
-            weights[j] = 0; // Non-increasing!!
-        }
-        boost::add_edge(edge_vector[j].first, edge_vector[j].second, weights[j], G);
-    }
-
-    const int N = num_vertices(G);
-
-    std::vector< Vertex > p(N);
-    std::vector< int > d(N);
-    Vertex s = vertex(SOURCE, G);
-
-    dijkstra_shortest_paths(G, s, 
-        predecessor_map(boost::make_iterator_property_map(p.begin(), 
-            get(boost::vertex_index, G))).distance_map(boost::make_iterator_property_map(d.begin(), 
-                get(boost::vertex_index, G))));
-    
-    int v_ = SINK;
-    if (p[v_] == v_){
-        // cout << "vertex could not be reached" << endl;
-        return false; // this means that the vertex could not be reached
-    }
-
-    // cout << "path found:" << endl;
-    Edge e;
-    int i,j,k,r;
-    while (true){
-        if (v_ != SOURCE && v_ != SINK){
-            e = Nodes[v_];
-            i = e.first, k = e.second; // (i,k) = i->k
-            r = sol.MatchColor[k][i];
-
-            // cout << "add " << k << " <- " << i << endl;
-            path.emplace_back(std::array<int, 3>{k, i, r});
-            assert(sol.Orientation[k][r] == HA::H);
-            assert(sol.Orientation[i][r] == HA::A);
-        }
-        if (SOURCE == p[v_]){
-            break;
-        }
-        else{
-            v_ = p[v_];
-        }
-    }
-
-    ReversePath(sol, path, true, true);
-
-    return true;
 }
 
 vector<array<int,3>> NonIncreasingCycle(Solution& sol){

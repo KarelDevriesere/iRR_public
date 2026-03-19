@@ -10,7 +10,6 @@ Solution::Solution(const Input& in) : Input(in) {
 
     MatchColor = vector<vector<int>>(N, vector<int>(N, -1)); // diagonals should stay -1, if a team does not play it is also -1
     TeamColorOpp = vector<vector<int>>(N, vector<int>(R, -1));
-    WeightsBF = vector<vector<int>>(N+1, vector<int>(N+1, N+1)); // N+1 bc of extra source node!!
     Orientation = vector<vector<HA>>(N, vector<HA>(R, HA::BYE));
 
     if (IsBaseAlgo()){
@@ -184,10 +183,9 @@ int Solution::getImbalanceHalf(const int i){
     int cost = 0;
     int NrH_half;
     const int Half = NrColouredRounds/2;
-    const vector<pair<int,int>>Halves = {{0, Half}, {Half, NrColouredRounds}};
     const int lb = std::floor((double)Half/2.0);
     const int ub = lb+1;
-    for (const auto&[Start, End]: Halves){
+    for (const auto&[Start, End]: {pair{0, Half}, pair{Half, NrColouredRounds}}){
         NrH_half = 0;
         for (int c = Start; c < End; ++c){
             if (Orientation[i][c] == HA::H){
@@ -222,7 +220,7 @@ int Solution::ComputeCostReversingOrientationTeam(const int i, const int r1, con
         cost -= (getCostTTPViolation()*ComputeTTPViolations(i) + ComputeTravelCostTeamTTP(i));
     }
     else if (getSetting() == Setting::Football || getSetting() == Setting::Hockey){
-        cost -= ComputeHACostTeam(i) + ComputeCost2RRConstraintTeam(i); //  not possible to take capacity violations into account because multiple teams in same club!!
+        cost -= ComputeHACostTeam(i); //  not possible to take capacity violations into account because multiple teams in same club!!
         // Also, then we get negative costs which is not allowed for dijkstra shortest paths
     }
     std::swap(Orientation[i][r1], Orientation[i][r2]);
@@ -231,7 +229,7 @@ int Solution::ComputeCostReversingOrientationTeam(const int i, const int r1, con
         cost += (getCostTTPViolation()*ComputeTTPViolations(i) + ComputeTravelCostTeamTTP(i));
     }
     else if (getSetting() == Setting::Football || getSetting() == Setting::Hockey){
-        cost += ComputeHACostTeam(i) + ComputeCost2RRConstraintTeam(i); //  not possible to take capacity violations into account because multiple teams in same club!!
+        cost += ComputeHACostTeam(i); //  not possible to take capacity violations into account because multiple teams in same club!!
         // Also, then we get negative costs which is not allowed for dijkstra shortest paths
     }
     std::swap(Orientation[i][r1], Orientation[i][r2]);
@@ -288,26 +286,25 @@ int Solution::ComputeCost2RRConstraint(){
 
 int Solution::ComputeCostNonEligibleOpponents(){
     int cost = 0;
+    int j;
     for (int c = 0; c < NrColouredRounds; c++){
-        vector<bool>TeamSeen(getNrTeams(), false);
         for (int i = 0; i < getNrTeams(); i++){
-            if (TeamSeen[i]){
+            j = TeamColorOpp[i][c];
+            if (i < j){
                 continue;
             }
-            if (!isEligible(i, TeamColorOpp[i][c])){
+            if (!isEligible(i, j)){
                 cost++;
             }
-            TeamSeen[i] = true;
-            TeamSeen[TeamColorOpp[i][c]] = true;
         }
     }
     return NonEligibleCost*cost;
 }
 
 int Solution::ComputeCostSameClub(){
-    int NrSameClub;
+    int NrSameClub = 0;
     for (int i = 0; i < getNrTeams(); ++i){
-        NrSameClub = getNrSameClub(i);
+        NrSameClub += getNrSameClub(i);
     }
     return CostSameClub*max(0, NrSameClub - getMaxSameClub());
 }
@@ -322,32 +319,21 @@ int Solution::ComputeTravelCostTeam(const int i){
 
 int Solution::ComputeTravelCost(){
     int cost = 0;
+    int j;
     for (int c = 0; c < NrColouredRounds; c++){
         /*
         cout << "------------" << endl;
         cout << "Round " << c << endl;
         cout << "------------" << endl;
         */
-        vector<bool>TeamSeen(getNrTeams(), false);
         for (int i = 0; i < getNrTeams(); i++){
-            if (TeamSeen[i]){
+            j = TeamColorOpp[i][c];
+            if (i < j){
                 continue;
             }
             // cout << "Opponent of " << i << ":" << endl;
             // cout << TeamColorOpp[i][c] << endl;
-            cost += getDistanceTeams(i, TeamColorOpp[i][c]);
-            TeamSeen[i] = true;
-            TeamSeen[TeamColorOpp[i][c]] = true;
-            /*
-            if (G->Orientation[i][c] == HA::H){
-                assert(G->Orientation[G->TeamColorOpp[i][c]][c] == HA::A);
-                cout << i << ", " << G->TeamColorOpp[i][c] << " = " << getDistanceTeams(i, G->TeamColorOpp[i][c]) << endl;
-            }
-            else{
-                assert(G->Orientation[G->TeamColorOpp[i][c]][c] == HA::H);
-                cout << G->TeamColorOpp[i][c] << ", " << i << " = " << getDistanceTeams(i, G->TeamColorOpp[i][c]) << endl;
-            }
-                */
+            cost += getDistanceTeams(i, j);
         }
     }
     return TravelCost*cost;

@@ -16,6 +16,114 @@ void FindScheduleWithIP(Input& in, Solution& sol){
     gur.solve();
 }
 
+// Matching:
+
+bool ForbiddenEdge(const int i, const int j, const int r, const vector<bool>& TeamSelected, Solution& sol){
+    if (sol.MatchColor[i][j] >= 0 && sol.MatchColor[i][j] != r){
+        return true;
+    }
+    else if (sol.MatchColor[j][i] >= 0 && sol.MatchColor[j][i] != r){
+        return true;
+    }
+    else if (!sol.isEligible(i,j)){
+        return true;
+    }
+    if (sol.Orientation[i][r] == sol.Orientation[j][r]){
+        return true;
+    }
+    if (sol.getLeagueTeam(i) != sol.getLeagueTeam(j)){
+        assert(sol.getNrLeagues() > 1);
+        return true;
+    }
+    return false;
+}
+
+vector<pair<int,int>>GreedyMatching::MWPBM(const int r, std::mt19937& gen, const int l, Solution& sol){
+
+    int N = sol.getNrTeamsLeague(l);
+    int R = sol.getNrRounds();
+    int SizeMatching = N/2;
+    vector<bool>TeamSelected(N, true);
+
+    typedef boost::property< boost::edge_weight_t, float, boost::property< boost::edge_index_t, int > >EdgeProperty;
+
+    typedef boost::adjacency_list <boost::vecS, boost::vecS, boost::undirectedS, boost::no_property, EdgeProperty>BGraph;
+    boost::graph_traits< BGraph >::vertex_iterator vi, vi_end;
+
+    BGraph g(N); 
+
+    int UB_random = 100;
+    std::uniform_int_distribution<>dist_int = std::uniform_int_distribution<>(0,UB_random); 
+
+    int i, j, i_, j_;
+    // vector<vector<bool>>ForbiddenEdge(sol.getNrTeams(), vector<bool>(sol.getNrTeams(), false));
+    // forbidden edges: all edges in the current schedule (coloring of the current schedule must remain feasible)
+    int MaxWeight = 0;
+    // each edge randomly gets a cost of 0 and 1, in a perfect matching there are N/2 edges so max cost should be N/2+1
+    int Weight = 0;
+
+    for (i = 0; i < N; ++i){
+        i_ = sol.getGlobalIndexTeam(l,i);
+        for (j = i+1; j < N; ++j){
+            j_ = sol.getGlobalIndexTeam(l,j);
+            if (ForbiddenEdge(i_,j_,r,TeamSelected,sol)){
+                continue;
+            }
+            Weight = sol.getDistanceTeams(i_,j_);
+            if (Weight > MaxWeight){
+                MaxWeight = Weight;
+            }
+        }
+    }
+    MaxWeight = MaxWeight*(N/2)+1;
+
+    for (i = 0; i < N; ++i){
+        i_ = sol.getGlobalIndexTeam(l,i);
+        for (j = i+1; j < N; ++j){
+            j_ = sol.getGlobalIndexTeam(l,j);
+            if (ForbiddenEdge(i_,j_,r,TeamSelected,sol)){
+                continue;
+            }
+            // If still here, edge can be included:
+            
+            int d = MaxWeight - sol.getDistanceTeams(i_,j_);
+            assert(d >= 0);
+            // cout << "add edge " << i << ", " << j << " with weight " << d << endl;
+            boost::add_edge(i, j, EdgeProperty(d), g);
+        }
+    }
+
+    // sol.print_all_rounds();
+    // cout << "Bipartite matching in round " << r << endl;
+
+    // cout << "do MWPM" << endl;
+    vector<pair<int,int>>Matching;
+
+    if (boost::num_edges(g) >= N/2){ // otherwise graph cannot contain a perfect matching
+        std::vector< boost::graph_traits< BGraph >::vertex_descriptor > mate1(N);
+        assert(mate1.size() == num_vertices(g));
+        boost::maximum_weighted_matching(g, &mate1[0]);
+
+        // cout << "----------" << endl;
+        // cout << "Matching in league " << l << " with " << N << "teams and round " << r << ": " << endl;
+        // cout << "----------" << endl;
+        for (boost::tie(vi, vi_end) = vertices(g); vi != vi_end; ++vi){
+            if (mate1[*vi] != boost::graph_traits< BGraph >::null_vertex() && *vi < mate1[*vi]){
+                // std::cout << "{" << *vi << ", " << mate1[*vi] << "}" << std::endl;
+                i = *vi, j = mate1[*vi];
+                i_ = sol.getGlobalIndexTeam(l,i);
+                j_ = sol.getGlobalIndexTeam(l,j);
+                assert(sol.Orientation[i_][r] != sol.Orientation[j_][r]);
+                Matching.push_back({i_,j_});
+                // cout << i_ << " vs " << j_ << endl;
+            }
+        }
+        // cout << "----------" << endl;
+    }
+    
+    return Matching; 
+}
+
 // HAP operators of Li et al:
 
 void printHAP(Solution& sol, const int i){
@@ -173,11 +281,7 @@ bool GreedyMatching::SchedulePhase(Solution& sol){
         // cout << "Optimize round " << r << endl;
 
         // cout << "find matching" << endl;
-        const bool CM = false;
-        const bool keepHAP = true;
-        bool MinCostM = true;
-        pair<vector<pair<int,int>>, vector<int>>Matching_OpponentMatching = MoveMWPMOneLeague(sol, r, gen, CurrentLeague, bipartite, MinCostM); // in the file operators
-        vector<pair<int,int>>matching = Matching_OpponentMatching.first;
+        vector<pair<int,int>>matching = MWPBM(r, gen, CurrentLeague, sol);
         if ((int)matching.size() < N/2){
             // shuffling rounds does not seem a good idea, instead go back to the old HAP assignement and do a new HAP move
             // cout << "matching failed in round " << s << endl;
