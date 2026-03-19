@@ -257,8 +257,8 @@ bool LAHC<Move>::UpdateListLength(Solution& sol) {
                PerturbeValue = PerturbeValue_INITIAL;
                this->it = 0;
                int lb = this->best_obj;
-               // int ub = PerturbeValue*this->best_obj;
-               InitializeHistoricValues(lb, lb, HistoryLength);
+               int ub = PerturbeValue*this->best_obj;
+               InitializeHistoricValues(lb, ub, HistoryLength);
             }
 
             ++this->it;
@@ -284,7 +284,7 @@ bool LAHC<Move>::UpdateListLength(Solution& sol) {
 #endif                  
 
                         if (HistoryLength*HistoryMultiplier < MAX_HL){
-                            HistoryLength = std::ceil(HistoryLength*HistoryMultiplier);
+                            HistoryLength *= HistoryMultiplier;
                             /*
                             I manually tried different things here, i.e. x2, additively add HL (+10 everytime), gradually increase HL (+10 till HL = 100, +100 till HL = 1000, +1000 til HL = 10000) on 3 instances, but they did not directly seem to result in better solutions
                             I similarly tried different things with PerturbeIncrease (e.g. trying the same HL but with different values for PerturbeIncrease, but this seemed too slow). 
