@@ -231,7 +231,7 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
 
         int HistoryLength = 1; // default: Hill Climbing
         double HistoryMultiplier = 1.5;
-        int MAX_IT = 10000;
+        int MAX_IT = 100000;
         bool DynamicHL = false;
         double PerturbeValue_INITIAL = 1.005;
         double PerturbeValue = PerturbeValue_INITIAL;

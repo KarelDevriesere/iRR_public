@@ -356,7 +356,7 @@ int ReturnBestSeed(string& path){
 
         std::ifstream file(path_seed);
         if (!file.is_open()) {
-            std::cerr << "Could not open file\n";
+            std::cerr << "Could not open file " << path_seed << " \n";
             std::abort();
         }
 
@@ -405,13 +405,13 @@ string FolderHeuristic(const Input& in, const InputData& data){
     else{
         FolderPath += "Hockey";
     }
-    FolderPath += string(PATHSEP) + "Heuristic" + string(PATHSEP);
+    FolderPath += string(PATHSEP) + "Results" + string(PATHSEP) + "Heuristic" + string(PATHSEP);
     // contains requires C++ 20
-    if (data.InputWeights.contains(Move::TS) && data.InputWeights.contains(Move::PTS) && data.InputWeights.contains(Move::PRS) && data.InputWeights.contains(Move::C)){
+    if (data.InputWeights.contains(Move::TS) && data.InputWeights.contains(Move::PRS) && data.InputWeights.contains(Move::C)){
         if (data.InputWeights.contains(Move::iPTS_Random_PR) && data.InputWeights.contains(Move::Random_M_Random_PR)){
             FolderPath += "All";
         }
-        else if (data.InputWeights.contains(Move::iPTS_Random_PR) && data.InputWeights.contains(Move::Random_M_Random_PR)){
+        else {
             FolderPath += "Base";
         }
     }
@@ -466,11 +466,17 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
             VizingConstruction(sol, data.seed); 
         }
         */
-        path += "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "IP" + string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks);
+        path += "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks);
         // cout << "path = " << path << endl;
+        int BestSeed = ReturnBestSeed(path);
+        string path_seed = path + "_s" + to_string(BestSeed) + ".txt";
+        ReadSolution(path_seed, sol);
     }
     else if (in.getSetting() == Setting::Hockey){
         path += "Hockey" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + string(PATHSEP) + data.Instance;
+        int BestSeed = ReturnBestSeed(path);
+        string path_seed = path + "_s" + to_string(BestSeed) + ".txt";
+        ReadSolution(path_seed, sol);
     }
     else{
         cout << "Solve Vizing" << endl;
@@ -488,13 +494,6 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
         path += string(PATHSEP) + sol.getInstanceName();
         */
     }
-
-    cout << "path = " << path << endl;
-    // int BestSeed = ReturnBestSeed(path);
-
-    // string path_seed = path + "_s" + to_string(BestSeed) + ".txt";
-    string path_seed = path + ".txt"; // test with this because MiaoAlgo is too good so I don't see whether my deltas work!!!
-    ReadSolution(path_seed, sol);
    
     sol.validate();
 
@@ -503,7 +502,6 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     assert(sol.validate());
     int obj = sol.ComputeTotalCost();
     cout << "Cost initial solution = " << obj << endl;
-    cin.get();
 
     std::mt19937 gen(data.seed);
     int HL = 1;

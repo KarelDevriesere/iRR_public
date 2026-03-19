@@ -489,7 +489,7 @@ void GurSolver::iTTP_TripModel(){
 					}
 				}
 			}
-			model.addConstr(sum_rs <= 1/*, "c2"*/);
+			model.addConstr(sum_rs <= 1, "c1_" + to_string(t) + "_" + to_string(i));
 		}
 	}
 
@@ -505,7 +505,7 @@ void GurSolver::iTTP_TripModel(){
 				sum_t += L*z_trs[t][r][s];
 			}
 		}
-		model.addConstr(sum_t == R/2);
+		model.addConstr(sum_t == R/2, "c2_" + to_string(t));
 	}
 
 	cout << "c3a" << endl;
@@ -530,15 +530,15 @@ void GurSolver::iTTP_TripModel(){
 				}
 				sum_rsh += z_trs[t][r][s];
 			}
-			model.addConstr(sum_rsh <= 1);
+			model.addConstr(sum_rsh <= 1, "c3_" + to_string(t) + "_" + to_string(s));
 		}
 	}
-
+	
+	/*
 	// cout << "c3b" << endl;
 
-	// If a team starts a road trip in s, it cannot start a road trip in a later round such that this road trip overlaps with the current road trip -> implied by c3b!!!
+	// If a team starts a road trip in s, it cannot start a road trip in a later round such that this road trip overlaps with the current road trip -> implied by c3a!!!
 
-	/*
 	for (t = 0; t < N; ++t){
 		for (s = 0; s < R-1; s++){
 			GRBLinExpr sum_rsh = 0;
@@ -560,12 +560,12 @@ void GurSolver::iTTP_TripModel(){
 			model.addConstr(sum_rsh <= 1);
 		}
 	}
-		*/
+	*/
 
 	cout << "c4" << endl;
 
 	// If a team plays H in a round, there must be an active trip from another team such that this team visits our team in the right round -> hence write this as an equality
-
+	
 	for (t = 0; t < N; ++t){
 		for (s = 0; s < R; s++){
 			GRBLinExpr sum_rsh = 0;
@@ -599,26 +599,41 @@ void GurSolver::iTTP_TripModel(){
 					sum_rsh += z_trs[t][r][s_];
 				}
 			}
-			model.addConstr(sum_rsh == 1);
+			model.addConstr(sum_rsh == 1, "c4_" + to_string(t) + "_" + to_string(s));
 		}
 	}
 
 	cout << "c5" << endl;
 
-	// In every 4 consecutive slots: at least 1 road trip must be started!
+	// In every 4 consecutive slots: a team can be visited at most 3 times!!
 
 	for (t = 0; t < getNrTeams(); ++t){
 		for (s = 0; s < R-3; ++s){
 			GRBLinExpr sum_a = 0;
-			for (r = 0; r < NrTrips; ++r){
-				for (int s_ = 0; s_<= 3; ++s_){
-					if (s_+s > LastStartRoundTrip[t][r]){
-						break;
+			for (int s_ = s; s_ <= s+3; s_++){
+				for (i = 0; i < getNrTeams(); ++i){
+					if (t == i){
+						continue;
 					}
-					sum_a += z_trs[t][r][s+s_];
+					for (r = 0; r < NrTrips; ++r){
+						if (!IsTeamInTrip(t, Trips[i][r])){
+							continue;
+						}
+						int L = Trips[i][r].size();
+						for (int q = max(s_-L+1, 0); q <= s_; q++){
+							if (q > LastStartRoundTrip[i][r]){
+								break;
+							}
+							for (int l = 0; l < L; ++l){
+								if (Trips[i][r][l] == t && q+l == s_){
+									sum_a += z_trs[i][r][q];
+								}
+							}
+						}
+					}
 				}
 			}
-			model.addConstr(sum_a >= 1);
+			model.addConstr(sum_a <= 3, "c5_" + to_string(t) + "_" + to_string(s));
 		}
 	}
 
@@ -634,14 +649,6 @@ void GurSolver::iTTP_TripModel(){
 	}
 	
 	model.setObjective(Objective, GRB_MINIMIZE);
-
-	// Symmetry breaking:
-
-	GRBLinExpr sym = 0;
-	for (r = 0; r < NrTrips; ++r){
-		sym += z_trs[0][r][0];
-	}
-	model.addConstr(sym == 1);
 
 	cout << "done" << endl;
 }
@@ -1819,20 +1826,94 @@ void GurSolver::AddLowerBoundiTTP(const int LB){
 }
 
 void GurSolver::Fix_x(Solution& sol){
-	for (int r = 0; r < getNrRounds(); ++r){
-		vector<bool>NodeSeen(getNrTeams(), false);
+	if (!TripModelTTP_fixed_HAP && !TripModelTTP){
+		for (int r = 0; r < getNrRounds(); ++r){
+			vector<bool>NodeSeen(getNrTeams(), false);
+			for (int i = 0; i < getNrTeams(); ++i){
+				if (NodeSeen[i]){
+					continue;
+				}
+				int j = sol.TeamColorOpp[i][r];
+				assert(sol.isEligible(i,j));
+				NodeSeen[j] = true; 
+				if (sol.Orientation[i][r] == HA::H){
+					model.addConstr(x[i][j][r] == 1);
+				}
+				else{
+					model.addConstr(x[j][i][r] == 1);
+				}
+			}
+		}
+	}
+	else{
+		// fix the trips of teams:
+		// First, print the HAPs:
+		/*
 		for (int i = 0; i < getNrTeams(); ++i){
-			if (NodeSeen[i]){
-				continue;
+			cout << "HAP of " << i << ": ";
+			for (int r = 0; r < getNrRounds(); ++r){
+				if (sol.Orientation[i][r] == HA::H){
+					cout << "H";
+				}
+				else{
+					cout << "A";
+				}
 			}
-			int j = sol.TeamColorOpp[i][r];
-			assert(sol.isEligible(i,j));
-			NodeSeen[j] = true; 
-			if (sol.Orientation[i][r] == HA::H){
-				model.addConstr(x[i][j][r] == 1);
-			}
-			else{
-				model.addConstr(x[j][i][r] == 1);
+			cout << endl;
+		}
+		*/
+		int j;
+		for (int i = 0; i < getNrTeams(); ++i){
+			// cout << "Fix Trip variables of " << i << endl;
+			vector<int>Trip;
+			bool ActiveTrip = false;
+			for (int r = 0; r < getNrRounds(); ++r){
+				if ((r == 0 && sol.Orientation[i][r] == HA::A) || (r > 0 && sol.Orientation[i][r-1] == HA::H && sol.Orientation[i][r] == HA::A)){
+					// start a trip
+					cout << "start in round " << r << endl;
+					ActiveTrip = true;
+				}
+				if (ActiveTrip){
+					j = sol.TeamColorOpp[i][r];
+					Trip.push_back(j);
+					// cout << "add " << j << endl;
+				}
+				if ((r == sol.getNrRounds()-1 && sol.Orientation[i][r] == HA::A) || (r < sol.getNrRounds()-1  && sol.Orientation[i][r] == HA::A && sol.Orientation[i][r+1] == HA::H)){
+					// cout << "end trip" << endl;
+					// end a trip
+					// first, search the trip:
+					bool TripFound = false;
+					int L = Trip.size();
+					for (int p = 0; p < Trips[i].size(); ++p){
+						if (Trips[i][p].size() == L){
+							bool AllEqual = true;
+							for (int l = 0; l < L; ++l){
+								if (Trips[i][p][l] != Trip[l]){
+									AllEqual = false;
+									break;
+								}
+							}
+							if (AllEqual){
+								TripFound = true;
+								cout << i << " starts trip " << p << " in round " << r-L+1 << endl;
+								cout << i << " -> ";
+								for (int l = 0; l < L; ++l){
+									cout << Trip[l] << " -> ";
+								}
+								cout << i << endl;
+								model.addConstr(z_trs[i][p][r-L+1] == 1, "z[" + to_string(i) + "][" + to_string(p) + "][" + to_string(r-L+1) + "] == 1");
+								break;
+							}
+						}
+					}
+					if (!TripFound){
+						cout << "Trip not found!!" << endl;
+						std::abort();
+					}
+					cout << "done" << endl;
+					Trip.clear();
+					ActiveTrip = false;
+				}
 			}
 		}
 	}
