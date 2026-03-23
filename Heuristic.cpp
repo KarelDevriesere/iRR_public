@@ -470,7 +470,7 @@ void Heuristic::SelectiPRS(const bool bipartite){
 
     if (AlternatingCycle.empty()){
         // do this here because update is not called when cycles are empty
-        Update(sol, sol.ComputeTotalCost());
+        Update(sol, current_obj);
     }
     assert(sol.validate());
     return;

@@ -1105,15 +1105,10 @@ void Operator::FindMinCostBalancedACycle(const int r){
     int cost = 1; 
     // Make bipartite directed graph: left: A, right: H (incoming arc : H)
 
-    const int INF = 1000000; // large enough?
-    vector<vector<int>>EdgeWeight(N, vector<int>(N, INF));
-    vector<vector<int>>dist(N, vector<int>(N, 2*INF));
-
     // dist[i][j]: distance of going of going from i to j: i -> j
     // if arc i->j does not exist: cost of infinity
     // In dist the distance x 2 because we set min_weight_cycle = INF, but dist can become less than INF even if there is no path, because some edge weights are negative!!
-
-    vector<vector<int>>predAC(N, vector<int>(N,-1));
+    clearFloydWarshall();
 
     // pred[i][j] = last vertex before visiting j from the path from i to j
     // i.e. 1->2->3->4->5->6, then pred[2][6] = 5, pred[3][6] = 4, pred[2][5] = 4
@@ -1239,7 +1234,7 @@ void Operator::FindMinCostBalancedACycle(const int r){
             // but here we are interested in weight[a][h] (a -> h) + dist[h][a] (h -> .. -> a)!!!
             // check which colored edge lies in the best cycle!
             // cout << "weight = " << dist[h][a] << endl;
-            if (EdgeWeight[i][j]+dist[h][a] < min_weight_cycle && dist[h][a]){
+            if (EdgeWeight[i][j]+dist[h][a] < min_weight_cycle && dist[h][a] < INF){
                 min_weight_cycle = EdgeWeight[i][j]+dist[h][a];
                 start_node = h;
             }
@@ -1466,7 +1461,7 @@ void Operator::GoBackToOldCycle(const int r){
     }
 }
 
-bool Operator::DFS_Modified(int u, vector<int>& Cycle, vector<int>& AdjC, vector<vector<int>>& Adj){
+bool Operator::DFS_Modified(int u, const int r){
 
     // AdjC[i] = j <=> {i,j} is colored
     // Adj[i] = {k,l,..} <=> {i,k}, {i,l} are all uncolored
@@ -1476,15 +1471,15 @@ bool Operator::DFS_Modified(int u, vector<int>& Cycle, vector<int>& AdjC, vector
     if (Count[u] > -1 && Count[u] % 2 == 0){
         // cout << u << " already visited!" << endl;
         // Cycle found!
-        Cycle.push_back(u);
+        Cycle_AC.push_back(u);
         // cout << u << " -> ";
         int cur = Parent[u];
         while (cur != u){
             // cout << cur << " -> ";
-            Cycle.push_back(cur);
+            Cycle_AC.push_back(cur);
             cur = Parent[cur];
         }
-        Cycle.push_back(cur);
+        Cycle_AC.push_back(cur);
         // cout << u << endl;
         return true;
     }
@@ -1502,36 +1497,39 @@ bool Operator::DFS_Modified(int u, vector<int>& Cycle, vector<int>& AdjC, vector
     }
 
     if (Count[u] % 2 == 0){
-        Parent[AdjC[u]] = u;
+        int w = sol.TeamColorOpp[u][r];
+        Parent[w] = u;
         // cout << "Parent[" << AdjC[u] << "] = " << u << endl;
         // cout << u << "--C--" << AdjC[u] << endl;
-        if (DFS_Modified(AdjC[u], Cycle, AdjC, Adj)){
+        if (DFS_Modified(w, r)){
             return true;
         }
     }
     else{
         const int degree = Adj[u].size();
-        std::uniform_int_distribution<int> dist(0, degree - 1); // ensure some randomness
-        int start = dist(gen);
-        int i,v,w;
-        for (i = 0; i < degree; ++i){
-            v = i+start;
-            if (v > degree-1){
-                v -= degree;
+        if (degree > 0){
+            std::uniform_int_distribution<int> dist(0, degree - 1); // ensure some randomness
+            int start = dist(gen);
+            int i,v,w;
+            for (i = 0; i < degree; ++i){
+                v = i+start;
+                if (v > degree-1){
+                    v -= degree;
+                }
+                w = Adj[u][v];
+                if (Visited[w]){
+                    continue;
+                }
+                int ParentCopy = Parent[w];
+                // cout << "ParentCopy = " << ParentCopy << endl;
+                Parent[w] = u;
+                // cout << "Parent[" << v << "] = " << u << endl;
+                // cout << u << "-----" << v << endl;
+                if (DFS_Modified(w, r)){
+                    return true;
+                }
+                Parent[w] = ParentCopy;
             }
-            w = Adj[u][v];
-            if (Visited[w]){
-                continue;
-            }
-            int ParentCopy = Parent[w];
-            // cout << "ParentCopy = " << ParentCopy << endl;
-            Parent[w] = u;
-            // cout << "Parent[" << v << "] = " << u << endl;
-            // cout << u << "-----" << v << endl;
-            if (DFS_Modified(w, Cycle, AdjC, Adj)){
-                return true;
-            }
-            Parent[w] = ParentCopy;
         }
     }
 
@@ -1543,20 +1541,20 @@ bool Operator::DFS_Modified(int u, vector<int>& Cycle, vector<int>& AdjC, vector
 }
 
 
-bool Operator::DFS_cycle(int u, vector<int>& Cycle, const vector<vector<int>>& Adj){
+bool Operator::DFS_cycle(int u){
 
     if (Stack[u]){
         // cout << u << " already visited!" << endl;
         // Cycle found!
-        Cycle.push_back(u);
+        Cycle_AC.push_back(u);
         // cout << u << " <- ";
         int cur = Parent[u];
         while (cur != u){
             // cout << cur << " <- ";
-            Cycle.push_back(cur);
+            Cycle_AC.push_back(cur);
             cur = Parent[cur];
         }
-        Cycle.push_back(cur);
+        Cycle_AC.push_back(cur);
         // cout << u << endl;
         return true;
     }
@@ -1569,18 +1567,20 @@ bool Operator::DFS_cycle(int u, vector<int>& Cycle, const vector<vector<int>>& A
     Stack[u] = 1;
 
     const int degree = Adj[u].size();
-    std::uniform_int_distribution<int> dist(0, degree - 1); // ensure some randomness
-    int start = dist(gen);
-    int i,v,w;
-    for (i = 0; i < degree; ++i){
-        v = i+start;
-        if (v > degree-1){
-            v -= degree;
-        }
-        w = Adj[u][v];
-        Parent[u] = w;
-        if (DFS_cycle(w, Cycle, Adj)){
-            return true;
+    if (degree > 0){
+        std::uniform_int_distribution<int> dist(0, degree - 1); // ensure some randomness
+        int start = dist(gen);
+        int i,v,w;
+        for (i = 0; i < degree; ++i){
+            v = i+start;
+            if (v > degree-1){
+                v -= degree;
+            }
+            w = Adj[u][v];
+            Parent[u] = w;
+            if (DFS_cycle(w)){
+                return true;
+            }
         }
     }
     Stack[u] = 0;
@@ -1594,8 +1594,7 @@ void Operator::AlternatingCycleBM(const int r, const bool bipartite){
 
     int i,j,k;
 
-    vector<int>AdjC(N); // DFS_Modified
-    vector<vector<int>>Adj(N);
+    clearAdj_AC();
     for (i = 0; i < N; ++i){
         for (k = i+1; k < N; ++k){
             if (sol.MatchColor[i][k] == -1 && sol.isEligible(i,k)){
@@ -1621,56 +1620,49 @@ void Operator::AlternatingCycleBM(const int r, const bool bipartite){
                         Adj[i].push_back(k);
                     }
                 }
-                else{
-                    AdjC[i] = k;
-                    AdjC[k] = i;
-                }
             }
         }
     }
 
     clearParent(); // For DFS_Modified, Parent[u] = Parent[u] is the predecessor of u
-    vector<int>Cycle; 
-    Cycle.reserve(N);
+    clearCycle_AC();
     clearVisited();
     clearStack();
     clearCount();
 
-    // cout << "start DFS" << endl;
     for (i = 0; i < N; ++i){
         if (bipartite && !Visited[i]){
-            if (DFS_cycle(i, Cycle, Adj)){
+            if (DFS_cycle(i)){
                 break;
             }
         }
         else if (!bipartite && !Visited[i]){
-            if (DFS_Modified(i, Cycle, AdjC, Adj)){
+            if (DFS_Modified(i, r)){
                 break;
             }
         }
     }
-    // cout << "done" << endl;
 
-    if (!Cycle.empty()){
-        for (int i = Cycle.size()-1; i >= 1; --i){ // backwards because alternating cycle with DFS will always be i -- j -> k -- l -> m
-            if (sol.MatchColor[Cycle[i-1]][Cycle[i]] == -1){
-                if (sol.Orientation[Cycle[i-1]][r] == HA::A){
+    if (!Cycle_AC.empty()){
+        for (int i = Cycle_AC.size()-1; i >= 1; --i){ // backwards because alternating cycle with DFS will always be i -- j -> k -- l -> m
+            if (sol.MatchColor[Cycle_AC[i-1]][Cycle_AC[i]] == -1){
+                if (sol.Orientation[Cycle_AC[i-1]][r] == HA::A){
                     // cout << Edges[i][0] << " -- " << Edges[i][1] << endl;
-                    AlternatingCycle.emplace_back(Cycle[i-1], Cycle[i]);
+                    AlternatingCycle.emplace_back(Cycle_AC[i-1], Cycle_AC[i]);
                 }
                 else{
                     // cout << Edges[i][1] << " -- " << Edges[i][0] << endl;
-                    AlternatingCycle.emplace_back(Cycle[i], Cycle[i-1]);
+                    AlternatingCycle.emplace_back(Cycle_AC[i], Cycle_AC[i-1]);
                 }
             }
             else{
-                if (sol.Orientation[Cycle[i-1]][r] == HA::H){
+                if (sol.Orientation[Cycle_AC[i-1]][r] == HA::H){
                     // cout << Edges[i][0] << " <- " << Edges[i][1] << endl;
-                    AlternatingCycle.emplace_back(Cycle[i-1], Cycle[i]);
+                    AlternatingCycle.emplace_back(Cycle_AC[i-1], Cycle_AC[i]);
                 }
                 else{
                     // cout << Edges[i][0] << " -> " << Edges[i][1] << endl;
-                    AlternatingCycle.emplace_back(Cycle[i], Cycle[i-1]);
+                    AlternatingCycle.emplace_back(Cycle_AC[i], Cycle_AC[i-1]);
                 }
             }
         }

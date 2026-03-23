@@ -78,12 +78,18 @@ class Operator{
         vector<int>Pred;
         vector<int>Parent;
         vector<int>Queue;
+        vector<vector<int>>Adj;
         vector<array<int,3>> path;
         vector<vector<array<int,3>>>PathsAC;
         vector<int>H_teamsAC;
         vector<int>A_teamsAC;
         vector<pair<int,int>> AlternatingCycle;
+        vector<int>Cycle_AC; 
         vector<uint8_t>ClubSeen;
+        const int INF = 1000000; // large enough?
+        vector<vector<int>>EdgeWeight;
+        vector<vector<int>>dist;
+        vector<vector<int>>predAC;
 
         Lantarn lantarn;
 
@@ -133,6 +139,30 @@ class Operator{
             std::fill(ClubSeen.begin(), ClubSeen.end(), 0);
         }
 
+        void clearAdj_AC(){
+            for (auto& inner_vec: Adj){
+                inner_vec.clear();
+                inner_vec.reserve(N);
+            }
+        }
+
+        void clearFloydWarshall(){
+            for (auto& inner_vec: EdgeWeight){
+                std::fill(inner_vec.begin(), inner_vec.end(), INF);
+            }
+            for (auto& inner_vec: dist){
+                std::fill(inner_vec.begin(), inner_vec.end(), 2*INF);
+            }
+            for (auto& inner_vec: predAC){
+                std::fill(inner_vec.begin(), inner_vec.end(), -1);
+            }
+        }
+
+        void clearCycle_AC(){
+            Cycle_AC.clear();
+            Cycle_AC.reserve(N);
+        }
+
 
     public:
         Operator(Solution& current_sol, std::mt19937& current_gen): sol(current_sol), N(sol.getNrTeams()), R(sol.getNrRounds()), gen(current_gen){
@@ -144,6 +174,10 @@ class Operator{
             Queue.resize(N,0);
             lantarn.init(N);
             ClubSeen.resize(sol.getNrClubs(),0);
+            Adj.resize(N);
+            EdgeWeight.resize(N, vector<int>(N, INF));
+            dist.resize(N, vector<int>(N, 2*INF));
+            predAC.resize(N, vector<int>(N,-1));
         };
 
         // Deltas:
@@ -220,10 +254,10 @@ class Operator{
         void FindMinCostBalancedACycle(const int r);
 
         // Balanced Random Alternating Cycle:
-        bool DFS_cycle(int u, vector<int>& Cycle, const vector<vector<int>>& Adj);
+        bool DFS_cycle(int u);
 
         // (Un)balanced Random Alternating Cycle:
-        bool DFS_Modified(int u, vector<int>& Cycle, vector<int>& AdjC, vector<vector<int>>& Adj);
+        bool DFS_Modified(int u, const int r);
 
         // Paths:
 
