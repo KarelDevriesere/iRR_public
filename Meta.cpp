@@ -170,7 +170,6 @@ template <typename Move>
 
 template<typename Move>
 void MetaBase<Move>::UpdateBest(Solution& sol, const int obj){
-    NewBestSolutionFound = false;
     if (obj < best_obj){
         best_obj = obj;
         UpdateBestSolution(sol);
@@ -259,6 +258,7 @@ bool LAHC<Move>::UpdateListLength(Solution& sol) {
                int lb = this->best_obj;
                int ub = PerturbeValue*this->best_obj;
                InitializeHistoricValues(lb, ub, HistoryLength);
+               this->NewBestSolutionFound = false;
             }
 
             ++this->it;

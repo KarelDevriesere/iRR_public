@@ -251,7 +251,7 @@ class Operator{
         // Alternating cycles:
 
         // General purpose:
-        void EvaluateAlternatingCycleWithPaths(const int r, const bool bipartite, int& delta, const bool MinCostP, bool NoPathDueTo2RRConstraint);
+        void EvaluateAlternatingCycleWithPaths(const int r, const bool bipartite, int& delta, const bool MinCostP);
 
         // General purpose:
         void AlternatingCycleBM(const int r, const bool bipartite);

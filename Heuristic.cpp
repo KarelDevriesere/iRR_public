@@ -376,7 +376,7 @@ void Heuristic::SelectiPRS(const bool bipartite){
     clearAlternatingCycle();
     if (!MinCostAC){ 
         AlternatingCycleBM(r, bipartite);
-        if (AlternatingCycle.empty()){
+        if (!bipartite && AlternatingCycle.empty()){
             cout << "No alternating cycle" << endl;
             std::abort();
         }
@@ -400,20 +400,9 @@ void Heuristic::SelectiPRS(const bool bipartite){
         int cost_before = sol.ComputeTotalCost();
         // cout << "cost_before = " << cost_before << endl;
 #endif 
-        bool NoPathDueTo2RRConstraint = false;
 
         int delta = 0;
-        EvaluateAlternatingCycleWithPaths(r, bipartite, delta, MinCostPR, NoPathDueTo2RRConstraint);
-
-        if (!bipartite && NoPathDueTo2RRConstraint){
-            assert(!sol.SRR);
-            GoBackToOldCycle(r);
-#ifndef NDEBUG
-            assert(cost_before == sol.ComputeTotalCost());
-#endif
-            assert(sol.validate());
-            return;
-        }
+        EvaluateAlternatingCycleWithPaths(r, bipartite, delta, MinCostPR);
 
 #ifndef NDEBUG
         for (int i = 0; i < N; ++i){

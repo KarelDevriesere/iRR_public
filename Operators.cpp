@@ -1017,6 +1017,7 @@ bool Operator::BFS_path(const int source, const int sink) {
     int head = 0, tail = 0;
     
     Visited[source] = 1;
+    // Queue does not need reinitialization, just overwrite
     Queue[tail++] = source;
     
     while (head < tail) {
@@ -1320,7 +1321,7 @@ void Operator::FindMinCostBalancedACycle(const int r){
     // So start with uncolored edge, then colored edge, uncolored, etc.
 
     // cout << "retrieve cycle" << endl;
-
+    int safety_counter = 0;
     if (start_node != -1){
         int k;
         int c = 1;
@@ -1351,6 +1352,12 @@ void Operator::FindMinCostBalancedACycle(const int r){
             j = k;
             k = predAC[i][j];
             // cout << k << " = pred " << i << ", " << j << endl;
+
+            safety_counter++;
+            if (safety_counter > N + 5) {
+                cout << "CRITICAL ERROR: Infinite loop detected in cycle retrieval!" << endl;
+                std::abort();
+            }
         }
         // cout << "final 2 edges: " << endl;
         AlternatingCycle.emplace_back(j,i);
@@ -1362,7 +1369,7 @@ void Operator::FindMinCostBalancedACycle(const int r){
     // cout << "done" << endl;
 }
 
-void Operator::EvaluateAlternatingCycleWithPaths(const int r, const bool bipartite, int& delta, const bool MinCostP, bool NoPathDueTo2RRConstraint){
+void Operator::EvaluateAlternatingCycleWithPaths(const int r, const bool bipartite, int& delta, const bool MinCostP){
 
     clearHA_teamsAC();
     clearPathsAC();
@@ -1490,12 +1497,6 @@ void Operator::EvaluateAlternatingCycleWithPaths(const int r, const bool biparti
                 cout << "No path found in M+PR" << endl;
                 throw std::runtime_error("Error!!!");
             }
-            else if (!sol.SRR && !PathFound){
-                // This can happen because 2RR violations are forbidden->these edges are not made
-                // In this case, return empty path
-                NoPathDueTo2RRConstraint = true;
-                return;
-            }
             // path is reversed in function!!
             PathsAC.emplace_back(std::move(path));
             std::swap(A_teamsAC[k], A_teamsAC[k+a]);
@@ -1555,10 +1556,12 @@ bool Operator::DFS_Modified(int u, const int r){
     }
 
     if (Count[u] > -1 && Count[u] % 2 == 1){
+        // cout << "return from " << u << ": odd count" << endl;
         return false;
     }
 
     if (Parent[u] < 0){
+        // cout << "count of u = " << 0 << endl;
         Count[u] = 0;
     }
     else{
@@ -1568,17 +1571,20 @@ bool Operator::DFS_Modified(int u, const int r){
 
     if (Count[u] % 2 == 0){
         int w = sol.TeamColorOpp[u][r];
+        // int ParentCopy = Parent[w];
         Parent[w] = u;
-        // cout << "Parent[" << AdjC[u] << "] = " << u << endl;
-        // cout << u << "--C--" << AdjC[u] << endl;
+        // cout << "Parent[" << w << "] = " << Parent[w] << endl;
+        // cout << u << "--C--" << w << endl;
         if (DFS_Modified(w, r)){
             return true;
         }
+        // Parent[w] = ParentCopy;
     }
     else{
+        // cout << "explore fictive neighbours of " << u << endl;
         const int degree = Adj[u].size();
+        std::uniform_int_distribution<int> dist(0, degree - 1); // ensure some randomness
         if (degree > 0){
-            std::uniform_int_distribution<int> dist(0, degree - 1); // ensure some randomness
             int start = dist(gen);
             int i,v,w;
             for (i = 0; i < degree; ++i){
@@ -1587,14 +1593,16 @@ bool Operator::DFS_Modified(int u, const int r){
                     v -= degree;
                 }
                 w = Adj[u][v];
+                // cout << "next is " << w << endl;
                 if (Visited[w]){
+                    // cout << "but already visited" << endl;
                     continue;
                 }
                 int ParentCopy = Parent[w];
                 // cout << "ParentCopy = " << ParentCopy << endl;
                 Parent[w] = u;
-                // cout << "Parent[" << v << "] = " << u << endl;
-                // cout << u << "-----" << v << endl;
+                // cout << "Parent[" << w << "] = " << u << endl;
+                // cout << u << "-----" << w << endl;
                 if (DFS_Modified(w, r)){
                     return true;
                 }
@@ -1603,9 +1611,9 @@ bool Operator::DFS_Modified(int u, const int r){
         }
     }
 
-    Visited[u] = true;
+    Visited[u] = false;
 
-    // Count[u] = -1;
+    Count[u] = -1;
 
     return false;
 }
@@ -1664,6 +1672,8 @@ void Operator::AlternatingCycleBM(const int r, const bool bipartite){
 
     int i,j,k;
 
+    // cout << "****** GRAPH ********" << endl;
+
     clearAdj_AC();
     for (i = 0; i < N; ++i){
         for (k = i+1; k < N; ++k){
@@ -1679,6 +1689,7 @@ void Operator::AlternatingCycleBM(const int r, const bool bipartite){
                 else if (!bipartite){
                     Adj[i].push_back(k);
                     Adj[k].push_back(i);
+                    // cout << i << "--" << k << endl;
                 }
             }
             else if (sol.MatchColor[i][k] == r){
@@ -1693,6 +1704,22 @@ void Operator::AlternatingCycleBM(const int r, const bool bipartite){
             }
         }
     }
+
+    /*
+    for (int i = 0; i < N; ++i){
+        for (int j = i+1; j < N; ++j){
+            if (sol.MatchColor[i][j] == r){
+                if (sol.Orientation[i][r] == HA::H){
+                    cout << i << " <- " << j << endl;
+                }
+                else{
+                    cout << i << " -> " << j << endl;
+                }
+            }
+        }
+    }
+    cout << "***********************" << endl;
+    */
 
     clearParent(); // For DFS_Modified, Parent[u] = Parent[u] is the predecessor of u
     clearCycle_AC();
