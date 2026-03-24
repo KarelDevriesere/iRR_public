@@ -48,6 +48,8 @@ struct Lantarn{
     bool InfeasibleColor = false;
     bool PathReversalNeeded = false;
     vector<int>c_; // this is needed for the alternative PTS->color bordering to the infeasible color
+    vector<int>up; // i <- k <- j
+    vector<int>down; // i -> k -> j
 
     void init(const int N){
         c_.resize(N,-1);
@@ -60,6 +62,8 @@ struct Lantarn{
         InfeasibleColor = false;
         PathReversalNeeded = false;
         middle.clear();
+        up.clear();
+        down.clear();
         // c_ will automatically be overwritten
     }
 };
@@ -210,6 +214,10 @@ class Operator{
 
         int DeltaPRS_YSTP(const int r, const int s, const int StartNode);
 
+        int DeltaiPTS_TS(const int k, int r, int s);
+
+        void DeltaLantarn(int& delta,vector<uint8_t>& SwapColor);
+
         // Debugging:
         void PrintEdgeLantarn(const int i, const int k, const int j);
 
@@ -234,7 +242,7 @@ class Operator{
         //iPTS:
         void CreateLantarn(const int i, const int j, const int startColor, int& delta);
 
-        void SwapColorsLantarn(vector<HA>& OrientationCopy_i, vector<HA>& OrientationCopy_j);
+        void SwapColorsLantarn(vector<HA>& OrientationCopy_i, vector<HA>& OrientationCopy_j, vector<uint8_t>& SwapColor);
 
         void ReplenishLantarn(const int i, const int j, const int startColor, int& delta);
 

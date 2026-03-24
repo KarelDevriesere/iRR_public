@@ -411,6 +411,35 @@ int Operator::DeltaPRS_TTP(const int r, const int s, const int StartNode){
     return delta;
 }
 
+int Operator::DeltaiPTS_TS(const int k, int r, int s){
+    assert(sol.Orientation[k][r] != sol.Orientation[k][s]);
+    int delta = 0;
+    int L_r_next, L_s_next;
+    if (sol.Orientation[k][r] == HA::H){
+        L_r_next = k;
+        L_s_next = sol.TeamColorOpp[k][r];
+    }
+    else{
+        L_r_next = sol.TeamColorOpp[k][s];
+        L_s_next = k;
+    }
+    if (abs(r-s) > 1){
+        delta -= (sol.getDistanceTeams(getLoc(k,r-1), getLoc(k,r)) + sol.getDistanceTeams(getLoc(k,r), getLoc(k,r+1)));
+        delta -= (sol.getDistanceTeams(getLoc(k,s-1), getLoc(k,s)) + sol.getDistanceTeams(getLoc(k,s), getLoc(k,s+1)));
+
+        delta += (sol.getDistanceTeams(getLoc(k,r-1), L_r_next) + sol.getDistanceTeams(L_r_next, getLoc(k,r+1)));
+        delta += (sol.getDistanceTeams(getLoc(k,s-1), L_s_next) + sol.getDistanceTeams(L_s_next, getLoc(k,s+1)));
+    }
+    else{
+        if (r > s){
+            std::swap(r,s);
+            delta -= (sol.getDistanceTeams(getLoc(k,r-1), getLoc(k,r)) + sol.getDistanceTeams(getLoc(k,r), getLoc(k,s)) + sol.getDistanceTeams(getLoc(k,s), getLoc(k,s+1)));
+            delta += (sol.getDistanceTeams(getLoc(k,r-1), L_r_next) + sol.getDistanceTeams(L_r_next, L_s_next) + sol.getDistanceTeams(L_s_next, getLoc(k,s+1)));
+        }
+    }
+    return delta;
+}
+
 // ----- TTP ----- TTP ----- TTP ----- TTP ----- TTP ----- TTP ----- TTP ----- TTP ----- TTP //
 
 
@@ -500,6 +529,30 @@ int Operator::CostTSTeamsYSTP(const int i, const int j){
     return delta_travel + delta_HA;
 }
 
+// delta lantarn: this is only needed when we do cycle reversals in the lantarn!
+
+void Operator::DeltaLantarn(int& delta, vector<uint8_t>& SwapColor){
+    int c_i, c_j;
+    for (auto& k: lantarn.middle){
+        c_i = sol.MatchColor[lantarn.i][k];
+        c_j = sol.MatchColor[lantarn.j][k];
+        if (c_i > -1 && c_j > -1){
+            if (SwapColor[k]){
+                delta += CostRoundSwapTeamiTTP(k, c_i, c_j);
+            }
+            else{
+                delta += DeltaiPTS_TS(k, c_i, c_j);
+            }
+        }
+        else if (c_i < 0){
+            delta += CostUncoloredRoundSwapTeamiTTP(k, lantarn.i, c_j, c_i);
+        }
+        else{
+            delta += CostUncoloredRoundSwapTeamiTTP(k, lantarn.j, c_i, c_j);
+        }
+    }
+}
+
 // ----- YSTP ----- YSTP ----- YSTP ----- YSTP ----- YSTP ----- YSTP ----- YSTP ----- YSTP ----- YSTP //
 
 // ********************************************************************************************************************************* //
@@ -520,7 +573,7 @@ void Operator::PrintEdgeLantarn(const int i, const int k, const int j){
     else{
         cout << "-" << c_i << "->";
     }
-    cout << lantarn.middle[k];
+    cout << k;
     if (c_j < 0){
         cout << "-" << c_j << "-";
     }
@@ -534,10 +587,8 @@ void Operator::PrintEdgeLantarn(const int i, const int k, const int j){
 }
 
 void Operator::PrintLantarn(){
-    int i = lantarn.i;
-    int j = lantarn.j;
-    for (int k = 0; k < lantarn.middle.size(); ++k){
-        PrintEdgeLantarn(i, k, j);
+    for (auto& k: lantarn.middle){
+        PrintEdgeLantarn(lantarn.i, k, lantarn.j);
     }
 }
 
@@ -664,13 +715,14 @@ void Operator::PRS(const int r, const int s, const int StartNode){
     while (next != StartNode);
 }
 
-void Operator::SwapColorsLantarn(vector<HA>& OrientationCopy_i, vector<HA>& OrientationCopy_j){
+void Operator::SwapColorsLantarn(vector<HA>& OrientationCopy_i, vector<HA>& OrientationCopy_j, vector<uint8_t>& SwapColor){
 
     std::fill(OrientationCopy_i.begin(), OrientationCopy_i.end(), HA::BYE);
     std::fill(OrientationCopy_j.begin(), OrientationCopy_j.end(), HA::BYE);
 
     int i = lantarn.i;
     int j = lantarn.j;
+
     for (int k = 0; k < lantarn.middle.size(); ++k){
 
         int k_ = lantarn.middle[k];
@@ -679,9 +731,15 @@ void Operator::SwapColorsLantarn(vector<HA>& OrientationCopy_i, vector<HA>& Orie
         int c_j = sol.MatchColor[j][k_];
 
         if (c_i > -1 && c_j > -1){
-            std::swap(sol.Orientation[k_][c_i], sol.Orientation[k_][c_j]);
-            OrientationCopy_i[c_j] = sol.Orientation[i][c_i];
-            OrientationCopy_j[c_i] = sol.Orientation[j][c_j];
+            if (SwapColor[k_]){
+                std::swap(sol.Orientation[k_][c_i], sol.Orientation[k_][c_j]);
+                OrientationCopy_i[c_j] = sol.Orientation[i][c_i];
+                OrientationCopy_j[c_i] = sol.Orientation[j][c_j];
+            }
+            else{
+                OrientationCopy_i[c_j] = sol.Orientation[j][c_j];
+                OrientationCopy_j[c_i] = sol.Orientation[i][c_i];
+            }
         }
         else if (c_j < 0){
             OrientationCopy_j[c_i] = sol.Orientation[i][c_i];
@@ -740,10 +798,22 @@ void Operator::ReplenishLantarn(const int i, const int j, const int StartColor, 
 
         // delta computation:
         if (c_j > -1){
-            delta += CostRoundSwapTeamiTTP(k, c_i, c_j); 
+            // delta += CostRoundSwapTeamiTTP(k, c_i, c_j); 
+            if (lantarn.i == i && sol.Orientation[k][c_i] == HA::H && sol.Orientation[k][c_j] == HA::A){
+                lantarn.up.push_back(k);
+            }
+            else if (lantarn.i == i && sol.Orientation[k][c_i] == HA::A && sol.Orientation[k][c_j] == HA::H){
+                lantarn.down.push_back(k);
+            }
+            else if (lantarn.i == j && sol.Orientation[k][c_i] == HA::H && sol.Orientation[k][c_j] == HA::A){
+                lantarn.down.push_back(k);
+            }
+            else if (lantarn.i == j && sol.Orientation[k][c_i] == HA::A && sol.Orientation[k][c_j] == HA::H){
+                lantarn.up.push_back(k);
+            }
         }
         else{
-            delta += CostUncoloredRoundSwapTeamiTTP(k, j, c_i, c_j);
+            // delta += CostUncoloredRoundSwapTeamiTTP(k, j, c_i, c_j);
         }
 
         assert(c_i != c_j);

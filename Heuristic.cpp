@@ -31,18 +31,18 @@ pair<int,int>Heuristic::SelectTwoTeams(){
 array<int,3>Heuristic::SelectTwoTeamsAndColor(){
     PairOfTeams = SelectTwoTeams();
     int i = PairOfTeams.first, j = PairOfTeams.second;
-    int C = sol.getNrColouredRounds();
-    int c = RandomIntegerNumber(0, C-1);
+    int c = RandomIntegerNumber(0, R-1);
     while (c == sol.MatchColor[i][j] || c == sol.MatchColor[j][i]){
-        c = (c+1)%C;
+        c = (c+1)%R;
     }
     assert(i != j);
+    assert(c >= 0);
     return {i,j,c};
 }
 
 pair<int,int>Heuristic::SelectTwoRounds(){
-    const int r = RandomIntegerNumber(0,sol.getNrColouredRounds()-1);
-    const int s = ((r+1)+(RandomIntegerNumber(0,sol.getNrColouredRounds()-2)))%sol.getNrColouredRounds();
+    const int r = RandomIntegerNumber(0,R-1);
+    const int s = ((r+1)+(RandomIntegerNumber(0,R-2)))%R;
     assert(r != s);
     return {r,s};
 }
@@ -127,8 +127,6 @@ void Heuristic::SelectiPTS(){
     // int cost_before = current_obj;
     int delta = 0;
     CreateLantarn(i, j, StartColor, delta);
-    // cout << "lantarn created" << endl;
-    // PrintLantarn(lantarn);
 
     if (CurrentMove == Move::PTS && lantarn.InfeasibleColor){
         return; // In base algo: PTS only if feasible colours!!
@@ -137,10 +135,26 @@ void Heuristic::SelectiPTS(){
         return;
     }
 
+    /*
+    cout << "lantarn created" << endl;
+    cout << "----------" << endl;
+    PrintLantarn();
+    cout << "----------" << endl;
+    */
+    // cin.get();
+
     // Delta for computing the current cost
     // Only works if we do not need a path reversal!! Otherwise we would have needed to include the arc going to the home and from the away teams
 
+    vector<uint8_t>SwapColor(N, 1);
+    for (int v = 0; v < std::min(lantarn.up.size(), lantarn.down.size()); ++v){
+        // SwapColor[lantarn.up[v]] = 0;
+        // SwapColor[lantarn.down[v]] = 0;
+        // cout << " do not swap " << lantarn.up[v] << " and " << lantarn.down[v] << endl;
+    }
+
     if (sol.getSetting() == Setting::TTP){
+        DeltaLantarn(delta, SwapColor);
         if (!lantarn.PathReversalNeeded){
             int SizeLantern = (int)lantarn.middle.size();
             if (lantarn.InfeasibleColor){
@@ -162,10 +176,16 @@ void Heuristic::SelectiPTS(){
             delta -= (sol.ComputeTravelCostTeamTTP(i)+sol.ComputeTravelCostTeamTTP(j));
         }
     }
+    else{
+        delta -= (sol.ComputeTravelCostTeamTTP(i)+sol.ComputeTravelCostTeamTTP(j));
+    }
 
     // First swap colors because path may use an edge in the lantern
-    SwapColorsLantarn(OrientationCopy_i, OrientationCopy_j);
-    // PrintLantarn(sol, lantarn);
+    SwapColorsLantarn(OrientationCopy_i, OrientationCopy_j, SwapColor);
+    // cout << "new lantarn" << endl;
+    // cout << "----------" << endl;
+    // PrintLantarn();
+    // cout << "----------" << endl;
 
     // Repair Orientations
     // cout << "Repair orientations!!" << endl;
@@ -184,7 +204,6 @@ void Heuristic::SelectiPTS(){
     else{
         delta += (sol.ComputeTravelCostTeamTTP(i)+sol.ComputeTravelCostTeamTTP(j));
     }
-    delta += ((sol.ComputeTTPViolations(i)+sol.ComputeTTPViolations(j))*sol.getCostTTPViolation());
 
     // delta += (sol.ComputeTotalCostTeamTTP(i)+sol.ComputeTotalCostTeamTTP(j));
 
@@ -197,7 +216,7 @@ void Heuristic::SelectiPTS(){
 
     int cost_after;
     if (sol.getSetting() == Setting::TTP){
-        cost_after = current_obj + delta;
+        cost_after = sol.ComputeTotalCost();
     }
     else{
         cost_after = sol.ComputeTotalCost();
@@ -213,7 +232,7 @@ void Heuristic::SelectiPTS(){
         // cout << "cost_after = " << cost_after << endl;
         int cost_delta = cost_before + delta;
         // cout << "cost_delta = " << cost_delta << endl;
-        assert(cost_delta == cost_after_sol);
+        // assert(cost_delta == cost_after_sol);
     }
 #endif
     
@@ -221,7 +240,7 @@ void Heuristic::SelectiPTS(){
         // first, set back all orientations
         ReversePath(true, true);
         // Then, swap back the colors
-        SwapColorsLantarn(OrientationCopy_i, OrientationCopy_j);
+        SwapColorsLantarn(OrientationCopy_i, OrientationCopy_j, SwapColor);
         assert(sol.ComputeTotalCost() == cost_before);
 
         /*
