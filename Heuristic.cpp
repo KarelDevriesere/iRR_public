@@ -373,7 +373,7 @@ void Heuristic::SelectiPRS(const bool bipartite){
 
     clearAlternatingCycle();
     if (!MinCostAC){ 
-        AlternatingCycleBM(r, bipartite);
+        AlternatingCycleBM(l, r, bipartite);
         if (!bipartite && AlternatingCycle.empty()){
             cout << "No alternating cycle" << endl;
             std::abort();

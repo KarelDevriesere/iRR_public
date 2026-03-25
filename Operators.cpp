@@ -1532,7 +1532,7 @@ void Operator::GoBackToOldCycle(const int r){
     }
 }
 
-bool Operator::DFS_Modified(int u, const int r){
+bool Operator::DFS_Modified(int u, const int l, const int r){
 
     // AdjC[i] = j <=> {i,j} is colored
     // Adj[i] = {k,l,..} <=> {i,k}, {i,l} are all uncolored
@@ -1570,12 +1570,12 @@ bool Operator::DFS_Modified(int u, const int r){
     }
 
     if (Count[u] % 2 == 0){
-        int w = sol.TeamColorOpp[u][r];
+        int w = sol.getIndexInLeague(sol.TeamColorOpp[sol.getGlobalIndexTeam(l,u)][r]);
         // int ParentCopy = Parent[w];
         Parent[w] = u;
         // cout << "Parent[" << w << "] = " << Parent[w] << endl;
         // cout << u << "--C--" << w << endl;
-        if (DFS_Modified(w, r)){
+        if (DFS_Modified(w, l, r)){
             return true;
         }
         // Parent[w] = ParentCopy;
@@ -1583,8 +1583,8 @@ bool Operator::DFS_Modified(int u, const int r){
     else{
         // cout << "explore fictive neighbours of " << u << endl;
         const int degree = Adj[u].size();
-        std::uniform_int_distribution<int> dist(0, degree - 1); // ensure some randomness
         if (degree > 0){
+            std::uniform_int_distribution<int> dist(0, degree - 1); // ensure some randomness
             int start = dist(gen);
             int i,v,w;
             for (i = 0; i < degree; ++i){
@@ -1603,7 +1603,7 @@ bool Operator::DFS_Modified(int u, const int r){
                 Parent[w] = u;
                 // cout << "Parent[" << w << "] = " << u << endl;
                 // cout << u << "-----" << w << endl;
-                if (DFS_Modified(w, r)){
+                if (DFS_Modified(w, l, r)){
                     return true;
                 }
                 Parent[w] = ParentCopy;
@@ -1665,40 +1665,50 @@ bool Operator::DFS_cycle(int u){
     return false;
 }
 
-void Operator::AlternatingCycleBM(const int r, const bool bipartite){
+void Operator::AlternatingCycleBM(const int l, const int r, const bool bipartite){
     // Here, we provide a general way for finding an alternating cycle where edges have "the same orientation"
 
     const int C = N/2;
+    const int N_l = sol.getNrTeamsLeague(l);
+    if (sol.getSetting() == Setting::TTP || sol.getSetting() == Setting::Football){
+        assert(N == N_l);
+    }
 
-    int i,j,k;
+    int i,j,k,i_,j_,k_;
 
     // cout << "****** GRAPH ********" << endl;
 
     clearAdj_AC();
-    for (i = 0; i < N; ++i){
-        for (k = i+1; k < N; ++k){
+    for (i_ = 0; i_ < N_l; ++i_){
+        i = sol.getGlobalIndexTeam(l, i_);
+        for (k_ = i_+1; k_ < N_l; ++k_){
+            k = sol.getGlobalIndexTeam(l, k_);
+            if (sol.getSetting() == Setting::TTP || sol.getSetting() == Setting::Football){
+                assert(i == i_);
+                assert(k == k_);
+            }
             if (sol.MatchColor[i][k] == -1 && sol.isEligible(i,k)){
                 if (bipartite && sol.Orientation[i][r] != sol.Orientation[k][r]){
                     if (sol.Orientation[i][r] == HA::H){
-                        Adj[i].push_back(k);
+                        Adj[i_].push_back(k_);
                     }
                     else {
-                        Adj[k].push_back(i);
+                        Adj[k_].push_back(i_);
                     }
                 }
                 else if (!bipartite){
-                    Adj[i].push_back(k);
-                    Adj[k].push_back(i);
+                    Adj[i_].push_back(k_);
+                    Adj[k_].push_back(i_);
                     // cout << i << "--" << k << endl;
                 }
             }
             else if (sol.MatchColor[i][k] == r){
                 if (bipartite){
                     if (sol.Orientation[i][r] == HA::H){
-                        Adj[k].push_back(i);
+                        Adj[k_].push_back(i_);
                     }
                     else {
-                        Adj[i].push_back(k);
+                        Adj[i_].push_back(k_);
                     }
                 }
             }
@@ -1727,45 +1737,46 @@ void Operator::AlternatingCycleBM(const int r, const bool bipartite){
     clearStack();
     clearCount();
 
-    for (i = 0; i < N; ++i){
-        if (bipartite && !Visited[i]){
-            if (DFS_cycle(i)){
+    for (i_ = 0; i_ < N_l; ++i_){
+        if (bipartite && !Visited[i_]){
+            if (DFS_cycle(i_)){
                 break;
             }
         }
-        else if (!bipartite && !Visited[i]){
-            if (DFS_Modified(i, r)){
+        else if (!bipartite && !Visited[i_]){
+            if (DFS_Modified(i_, l, r)){
                 break;
             }
         }
     }
 
     if (!Cycle_AC.empty()){
-        for (int i = Cycle_AC.size()-1; i >= 1; --i){ // backwards because alternating cycle with DFS will always be i -- j -> k -- l -> m
-            if (sol.MatchColor[Cycle_AC[i-1]][Cycle_AC[i]] == -1){
-                if (sol.Orientation[Cycle_AC[i-1]][r] == HA::A){
+        for (i = Cycle_AC.size()-1; i >= 1; --i){ // backwards because alternating cycle with DFS will always be i -- j -> k -- l -> m
+            k = sol.getGlobalIndexTeam(l, Cycle_AC[i-1]), j = sol.getGlobalIndexTeam(l, Cycle_AC[i]);
+            if (sol.MatchColor[k][j] == -1){
+                if (sol.Orientation[k][r] == HA::A){
                     // cout << Edges[i][0] << " -- " << Edges[i][1] << endl;
-                    AlternatingCycle.emplace_back(Cycle_AC[i-1], Cycle_AC[i]);
+                    AlternatingCycle.emplace_back(k, j);
                 }
                 else{
                     // cout << Edges[i][1] << " -- " << Edges[i][0] << endl;
-                    AlternatingCycle.emplace_back(Cycle_AC[i], Cycle_AC[i-1]);
+                    AlternatingCycle.emplace_back(j, k);
                 }
             }
             else{
-                if (sol.Orientation[Cycle_AC[i-1]][r] == HA::H){
+                if (sol.Orientation[k][r] == HA::H){
                     // cout << Edges[i][0] << " <- " << Edges[i][1] << endl;
-                    AlternatingCycle.emplace_back(Cycle_AC[i-1], Cycle_AC[i]);
+                    AlternatingCycle.emplace_back(k, j);
                 }
                 else{
                     // cout << Edges[i][0] << " -> " << Edges[i][1] << endl;
-                    AlternatingCycle.emplace_back(Cycle_AC[i], Cycle_AC[i-1]);
+                    AlternatingCycle.emplace_back(j, k);
                 }
             }
         }
         if (sol.MatchColor[AlternatingCycle[0].first][AlternatingCycle[0].second] != -1){
             pair<int,int>E = AlternatingCycle[0];
-            for (int k = 0; k < AlternatingCycle.size()-1; ++k){
+            for (k = 0; k < AlternatingCycle.size()-1; ++k){
                 AlternatingCycle[k] = AlternatingCycle[k+1];
             }
             AlternatingCycle.back() = E;

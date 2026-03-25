@@ -254,7 +254,7 @@ class Operator{
         void EvaluateAlternatingCycleWithPaths(const int r, const bool bipartite, int& delta, const bool MinCostP);
 
         // General purpose:
-        void AlternatingCycleBM(const int r, const bool bipartite);
+        void AlternatingCycleBM(const int l, const int r, const bool bipartite);
 
         // MinCost Alternating Cycle:
         int ComputeEdgeWeightM(const int i, const int j, const int c, const bool MinCostM, const bool bipartite);
@@ -265,7 +265,7 @@ class Operator{
         bool DFS_cycle(int u);
 
         // (Un)balanced Random Alternating Cycle:
-        bool DFS_Modified(int u, const int r);
+        bool DFS_Modified(int u, const int l, const int r);
 
         // Paths:
 
