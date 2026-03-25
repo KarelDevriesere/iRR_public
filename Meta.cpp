@@ -248,16 +248,21 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
 }
 
 template<typename Move>
+void LAHC<Move>::ResetList() {
+    HistoryLength = 10;
+    // it_same_HL = 0;
+    PerturbeValue = PerturbeValue_INITIAL;
+    this->it = 0;
+    int lb = this->best_obj;
+    int ub = PerturbeValue*this->best_obj;
+    InitializeHistoricValues(lb, ub, HistoryLength);
+}
+
+template<typename Move>
 bool LAHC<Move>::UpdateListLength(Solution& sol) {
 
             if (this->NewBestSolutionFound){
-               HistoryLength = 10;
-               // it_same_HL = 0;
-               PerturbeValue = PerturbeValue_INITIAL;
-               this->it = 0;
-               int lb = this->best_obj;
-               int ub = PerturbeValue*this->best_obj;
-               InitializeHistoricValues(lb, ub, HistoryLength);
+               ResetList();
                this->NewBestSolutionFound = false;
             }
 
@@ -299,14 +304,9 @@ bool LAHC<Move>::UpdateListLength(Solution& sol) {
                             // reinitialize
                             this->SaveBestSolution(sol);
                             this->current_obj = this->best_obj;
-                            HistoryLength = 10;
-                            // it_same_HL = 0;
-                            PerturbeValue = 2.0;
-                            this->it = 0;
-                            int lb = this->best_obj;
-                            int ub = PerturbeValue*this->best_obj;
-                            InitializeHistoricValues(lb, ub, HistoryLength);
+                            ResetList();
                         }
+                        
 #ifdef PRINT
 #if PRINT == 1
                         // cout << "Previous HL = " << HistoryLength << endl;

@@ -246,6 +246,8 @@ class LAHC: public MetaBase<Move>{ // Late Acceptancy Hill Climbing
            const std::unordered_map<Move, double>& weights, std::mt19937& g): MetaBase<Move>(moves, weights, g){
         }
 
+        void ResetList();
+
         void SetHistoryLength(const int l){
             HistoryLength = l;
         }
