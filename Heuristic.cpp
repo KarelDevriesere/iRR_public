@@ -154,7 +154,7 @@ void Heuristic::SelectiPTS(){
     }
 
     if (sol.getSetting() == Setting::TTP){
-        DeltaLantarn(delta, SwapColor);
+        // DeltaLantarn(delta, SwapColor);
         if (!lantarn.PathReversalNeeded){
             int SizeLantern = (int)lantarn.middle.size();
             if (lantarn.InfeasibleColor){
@@ -175,9 +175,6 @@ void Heuristic::SelectiPTS(){
         else{
             delta -= (sol.ComputeTravelCostTeamTTP(i)+sol.ComputeTravelCostTeamTTP(j));
         }
-    }
-    else{
-        delta -= (sol.ComputeTravelCostTeamTTP(i)+sol.ComputeTravelCostTeamTTP(j));
     }
 
     // First swap colors because path may use an edge in the lantern
@@ -204,6 +201,7 @@ void Heuristic::SelectiPTS(){
     else{
         delta += (sol.ComputeTravelCostTeamTTP(i)+sol.ComputeTravelCostTeamTTP(j));
     }
+    delta += ((sol.ComputeTTPViolations(i)+sol.ComputeTTPViolations(j))*sol.getCostTTPViolation());
 
     // delta += (sol.ComputeTotalCostTeamTTP(i)+sol.ComputeTotalCostTeamTTP(j));
 
@@ -216,7 +214,7 @@ void Heuristic::SelectiPTS(){
 
     int cost_after;
     if (sol.getSetting() == Setting::TTP){
-        cost_after = sol.ComputeTotalCost();
+        cost_after = current_obj+delta;
     }
     else{
         cost_after = sol.ComputeTotalCost();
@@ -232,7 +230,7 @@ void Heuristic::SelectiPTS(){
         // cout << "cost_after = " << cost_after << endl;
         int cost_delta = cost_before + delta;
         // cout << "cost_delta = " << cost_delta << endl;
-        // assert(cost_delta == cost_after_sol);
+        assert(cost_delta == cost_after_sol);
     }
 #endif
     

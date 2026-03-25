@@ -798,7 +798,7 @@ void Operator::ReplenishLantarn(const int i, const int j, const int StartColor, 
 
         // delta computation:
         if (c_j > -1){
-            // delta += CostRoundSwapTeamiTTP(k, c_i, c_j); 
+            delta += CostRoundSwapTeamiTTP(k, c_i, c_j); 
             if (lantarn.i == i && sol.Orientation[k][c_i] == HA::H && sol.Orientation[k][c_j] == HA::A){
                 lantarn.up.push_back(k);
             }
@@ -813,7 +813,7 @@ void Operator::ReplenishLantarn(const int i, const int j, const int StartColor, 
             }
         }
         else{
-            // delta += CostUncoloredRoundSwapTeamiTTP(k, j, c_i, c_j);
+            delta += CostUncoloredRoundSwapTeamiTTP(k, j, c_i, c_j);
         }
 
         assert(c_i != c_j);
@@ -2095,5 +2095,47 @@ vector<array<int,3>> NegativeCycle(Solution& sol){
 }
 
 // ********* LINE GRAPH ******* LINE GRAPH ****** LINE GRAPH ******* LINE GRAPH ****** LINE GRAPH *********** //
+
+// **************** GPTS ***************** //
+
+/*
+struct GPTS_lantarn{
+    int i;
+    int j;
+    vector<vector<int>>Chains;
+};
+
+void GPTS(const int i, const Solution& sol, std::mt19937& gen){
+    // all we need is to a start node
+    // sample two random colors:
+    const int R = sol.getNrRounds();
+    std::uniform_int_distribution<>dist_colour1 = std::uniform_int_distribution<>(0,R-1);
+    std::uniform_int_distribution<>dist_colour2 = std::uniform_int_distribution<>(0,R-2);
+    int r = dist_colour1(gen);
+    int s = ((r+1)+dist_colour2(gen))%R;
+    int StartColor = r;
+    int CurrentColor = s;
+    assert(r != s);
+    GPTS_lantarn lantarn;
+    lantarn.i = i;
+    int k = sol.TeamColorOpp[i][r];
+    lantarn.Chains.emplace_back(vector<int>(1,k));
+    int j = sol.TeamColorOpp[k][s];
+    lantarn.j = j;
+
+    // First, try idea to only construct lantarns of 3 colors
+    // Sample a random chain for the next color
+    for (r = 0; r < R; ++r){
+        if (r == StartColor || r == CurrentColor){
+            continue;
+        }
+        // if new color, try to construct a chain!
+    }
+
+}
+*/
+
+// **************** GPTS ***************** //
+
 
 
