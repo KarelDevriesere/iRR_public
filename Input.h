@@ -30,7 +30,7 @@ struct InputData{
     // All input that we get from the command line
     // If nothing specified, we get the default value
     const unordered_map<Move,bool>IsMoveInBase = {{Move::TS, true}, 
-    /*{Move::PTS, true},*/ 
+    {Move::PTS, true}, 
     {Move::RS, true}, 
     {Move::PRS, true}, 
     {Move::C, false}, 
@@ -45,7 +45,7 @@ struct InputData{
     {Move::Random_M_Random_PR, false}};
 
     const unordered_map<Move,string>Moves = {{Move::TS, "TS"}, 
-    /*{Move::PTS, "PTS"},*/ 
+    {Move::PTS, "PTS"},
     {Move::RS, "RS"}, 
     {Move::PRS, "PRS"}, 
     {Move::C, "C"}, 

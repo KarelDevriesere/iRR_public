@@ -135,6 +135,10 @@ void Heuristic::SelectiPTS(){
         return;
     }
 
+    if (lantarn.InfeasibleColor){
+        cout << "Wrong PTS!!!" << endl;
+    }
+
     /*
     cout << "lantarn created" << endl;
     cout << "----------" << endl;
