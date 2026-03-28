@@ -415,6 +415,9 @@ int Operator::DeltaiPTS_TS(const int k, int r, int s){
     assert(sol.Orientation[k][r] != sol.Orientation[k][s]);
     int delta = 0;
     int L_r_next, L_s_next;
+    if (r > s){
+        std::swap(r,s);
+    }
     if (sol.Orientation[k][r] == HA::H){
         L_r_next = k;
         L_s_next = sol.TeamColorOpp[k][r];
@@ -431,11 +434,8 @@ int Operator::DeltaiPTS_TS(const int k, int r, int s){
         delta += (sol.getDistanceTeams(getLoc(k,s-1), L_s_next) + sol.getDistanceTeams(L_s_next, getLoc(k,s+1)));
     }
     else{
-        if (r > s){
-            std::swap(r,s);
-            delta -= (sol.getDistanceTeams(getLoc(k,r-1), getLoc(k,r)) + sol.getDistanceTeams(getLoc(k,r), getLoc(k,s)) + sol.getDistanceTeams(getLoc(k,s), getLoc(k,s+1)));
-            delta += (sol.getDistanceTeams(getLoc(k,r-1), L_r_next) + sol.getDistanceTeams(L_r_next, L_s_next) + sol.getDistanceTeams(L_s_next, getLoc(k,s+1)));
-        }
+        delta -= (sol.getDistanceTeams(getLoc(k,r-1), getLoc(k,r)) + sol.getDistanceTeams(getLoc(k,r), getLoc(k,s)) + sol.getDistanceTeams(getLoc(k,s), getLoc(k,s+1)));
+        delta += (sol.getDistanceTeams(getLoc(k,r-1), L_r_next) + sol.getDistanceTeams(L_r_next, L_s_next) + sol.getDistanceTeams(L_s_next, getLoc(k,s+1)));
     }
     return delta;
 }
@@ -531,13 +531,13 @@ int Operator::CostTSTeamsYSTP(const int i, const int j){
 
 // delta lantarn: this is only needed when we do cycle reversals in the lantarn!
 
-void Operator::DeltaLantarn(int& delta, vector<uint8_t>& SwapColor){
+void Operator::DeltaLantarn(int& delta){
     int c_i, c_j;
     for (auto& k: lantarn.middle){
         c_i = sol.MatchColor[lantarn.i][k];
         c_j = sol.MatchColor[lantarn.j][k];
         if (c_i > -1 && c_j > -1){
-            if (SwapColor[k]){
+            if (SwapColorLantarn[k]){
                 delta += CostRoundSwapTeamiTTP(k, c_i, c_j);
             }
             else{
@@ -715,7 +715,7 @@ void Operator::PRS(const int r, const int s, const int StartNode){
     while (next != StartNode);
 }
 
-void Operator::SwapColorsLantarn(vector<HA>& OrientationCopy_i, vector<HA>& OrientationCopy_j, vector<uint8_t>& SwapColor){
+void Operator::SwapColorsLantarn(vector<HA>& OrientationCopy_i, vector<HA>& OrientationCopy_j){
 
     std::fill(OrientationCopy_i.begin(), OrientationCopy_i.end(), HA::BYE);
     std::fill(OrientationCopy_j.begin(), OrientationCopy_j.end(), HA::BYE);
@@ -731,7 +731,7 @@ void Operator::SwapColorsLantarn(vector<HA>& OrientationCopy_i, vector<HA>& Orie
         int c_j = sol.MatchColor[j][k_];
 
         if (c_i > -1 && c_j > -1){
-            if (SwapColor[k_]){
+            if (SwapColorLantarn[k_]){
                 std::swap(sol.Orientation[k_][c_i], sol.Orientation[k_][c_j]);
                 OrientationCopy_i[c_j] = sol.Orientation[i][c_i];
                 OrientationCopy_j[c_i] = sol.Orientation[j][c_j];
@@ -779,7 +779,7 @@ void Operator::SwapColorsLantarn(vector<HA>& OrientationCopy_i, vector<HA>& Orie
     }
 }
 
-void Operator::ReplenishLantarn(const int i, const int j, const int StartColor, int& delta){
+void Operator::ReplenishLantarn(const int i, const int j, const int StartColor){
     assert(StartColor >= 0);
     assert(i != j);
     int c_i = -1, c_j = StartColor;
@@ -798,7 +798,6 @@ void Operator::ReplenishLantarn(const int i, const int j, const int StartColor, 
 
         // delta computation:
         if (c_j > -1){
-            delta += CostRoundSwapTeamiTTP(k, c_i, c_j); 
             if (lantarn.i == i && sol.Orientation[k][c_i] == HA::H && sol.Orientation[k][c_j] == HA::A){
                 lantarn.up.push_back(k);
             }
@@ -811,9 +810,6 @@ void Operator::ReplenishLantarn(const int i, const int j, const int StartColor, 
             else if (lantarn.i == j && sol.Orientation[k][c_i] == HA::A && sol.Orientation[k][c_j] == HA::H){
                 lantarn.up.push_back(k);
             }
-        }
-        else{
-            delta += CostUncoloredRoundSwapTeamiTTP(k, j, c_i, c_j);
         }
 
         assert(c_i != c_j);
@@ -831,14 +827,14 @@ void Operator::ReplenishLantarn(const int i, const int j, const int StartColor, 
     while(c_j != StartColor && !InfeasibleColorFound);
 }
 
-void Operator::CreateLantarn(const int i, const int j, const int StartColor, int& delta){
+void Operator::CreateLantarn(const int i, const int j, const int StartColor){
     assert(StartColor >= 0);
     lantarn.reset(i,j);
     // cout << "i = " << i << ", j = " << j << endl;
-    ReplenishLantarn(i, j, StartColor, delta);
+    ReplenishLantarn(i, j, StartColor);
     if (lantarn.InfeasibleColor /*&& !lantarn.InfeasibleOpponents*/){
         if (sol.ViolationEligibleOpponents_allowed || !lantarn.InfeasibleOpponents){
-            ReplenishLantarn(j, i, StartColor, delta);
+            ReplenishLantarn(j, i, StartColor);
         }
         else{
             return; // garbage lantarn, check outside if lantarn contains infeasible opponents!
@@ -886,8 +882,8 @@ bool Operator::RepairOrientationsEdgesLantarn(const bool MinCostP, int& delta){
                 continue;
             }
             if (sol.Orientation[k][c_source] == HA::H && sol.Orientation[k][c_sink] == HA::A){
-                path.emplace_back(std::array<int, 3>{sink, k, c_sink}); // sink <- k <- source
-                path.emplace_back(std::array<int, 3>{k, source, c_source});
+                path.push_back({sink, k, c_sink}); // sink <- k <- source
+                path.push_back({k, source, c_source});
                 // cout << "Path in lantern via " << k << endl;
                 delta += ReversePath(true, true);
                 return true;
@@ -898,8 +894,15 @@ bool Operator::RepairOrientationsEdgesLantarn(const bool MinCostP, int& delta){
         // Now, everything is balanced except for i and j
         // Fix this by finding a path between them!
         // cout << "try to find path from " << source << " to " << sink << endl;
-        if (!FindNormalPathOneLeague(source, sink, delta, MinCostP, true)){
-            return false;
+        if (MinCostP){
+            if (!ShortestPathLineGraph(source, sink, delta)){
+                return false;
+            }
+        }
+        else{
+            if (!FindNormalPathOneLeague(source, sink, delta, true)){
+                return false;
+            }
         }
         // cout << "Found path outside lantern" << endl;
         // Now, everyone should be balanced!!
@@ -1046,7 +1049,7 @@ bool Operator::BFS_path(const int source, const int sink) {
     return false;
 }
 
-bool Operator::FindNormalPathOneLeague(const int source, const int sink, int& delta, const bool MinCostP, const bool ComputeDelta){ // source: A too much, sink: H too much
+bool Operator::FindNormalPathOneLeague(const int source, const int sink, int& delta, const bool ComputeDelta){ // source: A too much, sink: H too much
     int i,j,r;
     // cout << "source = " << source << endl;
     // cout << "sink = " << sink << endl;
@@ -1069,7 +1072,7 @@ bool Operator::FindNormalPathOneLeague(const int source, const int sink, int& de
     while (curr != source){
         k = Pred[curr];
         r = sol.MatchColor[curr][k];
-        path.emplace_back(std::array<int, 3>{curr, k, r});
+        path.push_back({curr, k, r});
         assert(sol.Orientation[curr][r] == HA::H);
         assert(sol.Orientation[k][r] == HA::A);
         curr = k;
@@ -1113,7 +1116,7 @@ void Operator::CycleBalanced(){
         }
         j = sol.TeamColorOpp[i][c];
         assert(sol.Orientation[j][c] == HA::A);
-        path.emplace_back(std::array<int, 3>{i,j,c});
+        path.push_back({i,j,c});
         i = j;
         // cout << " <- " << i;
     }
@@ -1166,26 +1169,40 @@ int Operator::ComputeEdgeWeightM(const int i, const int j, const int c, const bo
     return d;
 }
 
-void Operator::FindMinCostBalancedACycle(const int r){  
+void Operator::FloydWarshall(vector<vector<int>>& dist, vector<vector<int>>& pred){
+    // Floyd Warshall
 
-    // cout << "MinCost cycle" << endl;
+    // cout << "FW" << endl;
+
+    const int N = dist.size();
+
+    for (int k = 0; k < N; ++k){
+        for (int i = 0; i < N; ++i){
+            if (dist[i][k] > INF-1){
+                continue;
+            }
+            for (int j = 0; j < N; ++j){
+                if (dist[k][j] > INF-1){
+                    continue;
+                }
+                if (dist[i][j] > dist[i][k] + dist[k][j]){
+                    dist[i][j] = dist[i][k] + dist[k][j];
+                    pred[i][j] = pred[k][j];
+                }
+            }
+        }
+    }
+
+    // cout << "FW done" << endl;
+    return;
+}
+
+void Operator::PrepareFloydWarshallAlternatingCycle(const int r){
 
     int i,j;
     const bool MinCostM = true, bipartite = true;
+    int cost = 1;
 
-    int cost = 1; 
-    // Make bipartite directed graph: left: A, right: H (incoming arc : H)
-
-    // dist[i][j]: distance of going of going from i to j: i -> j
-    // if arc i->j does not exist: cost of infinity
-    // In dist the distance x 2 because we set min_weight_cycle = INF, but dist can become less than INF even if there is no path, because some edge weights are negative!!
-    clearFloydWarshall();
-
-    // pred[i][j] = last vertex before visiting j from the path from i to j
-    // i.e. 1->2->3->4->5->6, then pred[2][6] = 5, pred[3][6] = 4, pred[2][5] = 4
-    // in retrieving the path, we fix i (the source), and iteratively take j = pred[i][j]
-
-    // Preparation:
     for (i = 0; i < N; ++i){
         for (j = i+1; j < N; ++j){
             if (sol.MatchColor[i][j] == r){
@@ -1227,34 +1244,16 @@ void Operator::FindMinCostBalancedACycle(const int r){
         }
     }
 
-    // Floyd Warshall
-
-    // cout << "FW" << endl;
-
     for (int i = 0; i < N; ++i){
         dist[i][i] = 0;
         predAC[i][i] = i;
     }
-    for (int k = 0; k < N; ++k){
-        for (int i = 0; i < N; ++i){
-            if (dist[i][k] > INF-1){
-                continue;
-            }
-            for (int j = 0; j < N; ++j){
-                if (dist[k][j] > INF-1){
-                    continue;
-                }
-                if (dist[i][j] > dist[i][k] + dist[k][j]){
-                    dist[i][j] = dist[i][k] + dist[k][j];
-                    predAC[i][j] = predAC[k][j];
-                }
-            }
-        }
-    }
+}
 
-    // cout << "FW done" << endl;
-
+int Operator::StartNodeAlternatingCycleFloydWarshall(const int r){
     // First, check if negative cycle:
+
+    const int N = dist.size();
 
     int cycle_node = -1;
     for (int i = 0; i < N; ++i) {
@@ -1265,7 +1264,7 @@ void Operator::FindMinCostBalancedACycle(const int r){
     }
 
     int start_node = -1;
-    int curr;
+    int curr,i,j;
 
     // cout << "Look for NC" << endl;
 
@@ -1314,58 +1313,86 @@ void Operator::FindMinCostBalancedACycle(const int r){
         // cout << "MinWeight cycle of length = " << min_weight_cycle << endl;
         // cout << "start node = " << start_node << endl;
     }
+    return start_node;
+}
 
-    // retrieve the cycle in case there exists one
+void Operator::RetrieveAlternatingCycleFloydWarshall(const int start_node, const int r){
+    // cout << "retrieve cycle" << endl;
+    int i,j,k;
+    int safety_counter = 0;
+    if (start_node == -1){
+        return;
+    }
+    int c = 1;
+    i = start_node; 
+    j = sol.TeamColorOpp[i][r];
+    if (sol.Orientation[i][r] == HA::A){
+        std::swap(i,j);
+    }
+    // cout << "i = " << i << ", j = " << j << endl;
+    k = predAC[i][j];
+
+    while (k != i) {
+        // cout << "k = " << k << endl;
+        if ((++c) % 2 == 0){
+            assert(sol.MatchColor[j][k] == -1);
+            assert(sol.Orientation[k][r] == HA::H);
+            assert(sol.Orientation[j][r] == HA::A);
+            AlternatingCycle.emplace_back(j,k);
+            // cout << j << " -- " << k << endl;
+        }
+        else{
+            assert(sol.Orientation[j][r] == HA::H);
+            assert(sol.Orientation[k][r] == HA::A);
+            assert(sol.MatchColor[j][k] == r);
+            AlternatingCycle.emplace_back(j,k);
+            // cout << j << " <- " << k << endl;
+        }
+        j = k;
+        k = predAC[i][j];
+        // cout << k << " = pred " << i << ", " << j << endl;
+
+        safety_counter++;
+        if (safety_counter > N + 5) {
+            cout << "CRITICAL ERROR: Infinite loop detected in cycle retrieval!" << endl;
+            std::abort();
+        }
+    }
+    // cout << "final 2 edges: " << endl;
+    AlternatingCycle.emplace_back(j,i);
+    // cout << j << " -- " << i << endl;
+
+    AlternatingCycle.emplace_back(i, sol.TeamColorOpp[i][r]); // i <- j
+    // cout << i << " <- " << sol.TeamColorOpp[i][r] << endl;
+}
+
+void Operator::FindMinCostBalancedACycle(const int r){  
+
+    // cout << "MinCost cycle" << endl;
+
+    // Make bipartite directed graph: left: A, right: H (incoming arc : H)
+
+    // dist[i][j]: distance of going of going from i to j: i -> j
+    // if arc i->j does not exist: cost of infinity
+    // In dist the distance x 2 because we set min_weight_cycle = INF, but dist can become less than INF even if there is no path, because some edge weights are negative!!
+    clearFloydWarshall();
+
+    // pred[i][j] = last vertex before visiting j from the path from i to j
+    // i.e. 1->2->3->4->5->6, then pred[2][6] = 5, pred[3][6] = 4, pred[2][5] = 4
+    // in retrieving the path, we fix i (the source), and iteratively take j = pred[i][j]
+
+    // Preparation:
+    PrepareFloydWarshallAlternatingCycle(r);
+
+
+    FloydWarshall(dist, predAC); // this function fills dist and predAC
+    // Based on this, we can find the start node of the cycle: retrieve the cycle in case there exists one
+    int start_node = StartNodeAlternatingCycleFloydWarshall(r);
 
     // For other functions, the edges of the initial matching must be in odd position in cycle!!!
     // So start with uncolored edge, then colored edge, uncolored, etc.
+    RetrieveAlternatingCycleFloydWarshall(start_node, r); // populates AlternatingCycle
 
-    // cout << "retrieve cycle" << endl;
-    int safety_counter = 0;
-    if (start_node != -1){
-        int k;
-        int c = 1;
-        i = start_node; 
-        j = sol.TeamColorOpp[i][r];
-        if (sol.Orientation[i][r] == HA::A){
-            std::swap(i,j);
-        }
-        // cout << "i = " << i << ", j = " << j << endl;
-        k = predAC[i][j];
-
-        while (k != i) {
-            // cout << "k = " << k << endl;
-            if ((++c) % 2 == 0){
-                assert(sol.MatchColor[j][k] == -1);
-                assert(sol.Orientation[k][r] == HA::H);
-                assert(sol.Orientation[j][r] == HA::A);
-                AlternatingCycle.emplace_back(j,k);
-                // cout << j << " -- " << k << endl;
-            }
-            else{
-                assert(sol.Orientation[j][r] == HA::H);
-                assert(sol.Orientation[k][r] == HA::A);
-                assert(sol.MatchColor[j][k] == r);
-                AlternatingCycle.emplace_back(j,k);
-                // cout << j << " <- " << k << endl;
-            }
-            j = k;
-            k = predAC[i][j];
-            // cout << k << " = pred " << i << ", " << j << endl;
-
-            safety_counter++;
-            if (safety_counter > N + 5) {
-                cout << "CRITICAL ERROR: Infinite loop detected in cycle retrieval!" << endl;
-                std::abort();
-            }
-        }
-        // cout << "final 2 edges: " << endl;
-        AlternatingCycle.emplace_back(j,i);
-        // cout << j << " -- " << i << endl;
-
-        AlternatingCycle.emplace_back(i, sol.TeamColorOpp[i][r]); // i <- j
-        // cout << i << " <- " << sol.TeamColorOpp[i][r] << endl;
-    }
     // cout << "done" << endl;
 }
 
@@ -1489,7 +1516,7 @@ void Operator::EvaluateAlternatingCycleWithPaths(const int r, const bool biparti
             do{
                 ++a;
                 // delta is computed in this function!!
-                PathFound = FindNormalPathOneLeague(A_teamsAC[k+a], H_teamsAC[k], delta, MinCostP, false);
+                PathFound = FindNormalPathOneLeague(A_teamsAC[k+a], H_teamsAC[k], delta, false);
             }
             while(k+a+1 < A_teamsAC.size() && !PathFound);
 
@@ -1789,85 +1816,495 @@ void Operator::AlternatingCycleBM(const int l, const int r, const bool bipartite
 
 // ********* LINE GRAPH ******* LINE GRAPH ****** LINE GRAPH ******* LINE GRAPH ****** LINE GRAPH *********** //
 
-tuple<vector<Edge>,vector<Edge>,vector<int>> MakeLineGraph(Solution& sol, const int source, const int sink){
+/*
+struct State{
+    int v;
+    int dist;
+    State(int v_, int dist_){
+        v = v_;
+        dist = dist_;
+    }
+    bool operator>(const State& other)const{return dist > other.dist;}
+};
+
+int Operator::DijkstraLineGraph(vector<int>& Pred){
+    const int source = LineGraph.SOURCE;
+    const int sink = LineGraph.SINK;
+    priority_queue<State, vector<State>, greater<State>> pq;
+    vector<int>Dist(LineGraph.N+2, INF);
+    Dist[source] = 0; 
+    pq.push(State(source,0));
+
+    int v,d;
+
+    while (!pq.empty()){
+        State curr = pq.top();
+        pq.pop();
+        v = curr.v;
+
+        if (v == sink){
+            break;
+        }
+
+        if (curr.dist > Dist[v]){
+            continue;
+        }
+
+        for (int w: LineGraph.Adj[v]){
+            // v->w
+            d = curr.dist + LineGraph.Weights[v][w];
+            if (d < Dist[w]){
+                Pred[w] = v;
+                Dist[w] = d;
+                pq.push(State(w,d));
+            }
+        }
+    }
+
+    return Dist[sink];
+}
+*/
+
+bool Operator::SPFALineGraph(vector<int>& Pred, vector<int>& Cycle, int& delta) {
+    // Shortest path faster
+    const int source = LineGraph.SOURCE;
+    const int N_total = LineGraph.N + 2; // Total nodes including SOURCE and SINK
+
+    std::queue<int> q;
+    vector<int> Dist(N_total, INF);
+    vector<bool> inQueue(N_total, false);
+    vector<int> enqueueCount(N_total, 0);
+
+    // 1. Initialize Source
+    Dist[source] = 0; 
+    q.push(source);
+    inQueue[source] = true;
+    enqueueCount[source] = 1;
+
+    int cycleStartNode = -1;
+
+    // 2. Process the Queue
+    while (!q.empty()) {
+        int v = q.front();
+        q.pop();
+        inQueue[v] = false;
+
+        for (int w : LineGraph.Adj[v]) {
+            int weight = LineGraph.Weights[v][w]; 
+            
+            if (Dist[v] + weight < Dist[w]) {
+                Dist[w] = Dist[v] + weight;
+                Pred[w] = v;
+
+                if (!inQueue[w]) {
+                    q.push(w);
+                    inQueue[w] = true;
+                    enqueueCount[w]++;
+
+                    // 3. Negative Cycle Detection!
+                    // If a node is relaxed N_total times, we are caught in an infinite negative loop.
+                    if (enqueueCount[w] >= N_total) {
+                        cycleStartNode = w;
+                        break; 
+                    }
+                }
+            }
+        }
+        if (cycleStartNode != -1) break; // Break out of the while loop early
+    }
+
+    // 4. Extract the Negative Cycle
+    if (cycleStartNode != -1) {
+        int curr = cycleStartNode;
+        
+        // TRICK: `cycleStartNode` might be on a "stem" leading INTO the cycle, 
+        // not in the cycle itself. To guarantee we are inside the cycle, 
+        // we walk backwards through Pred N_total times.
+        for (int i = 0; i < N_total; ++i) {
+            curr = Pred[curr];
+        }
+        
+        // Now `curr` is definitely inside the loop. Walk backwards until we hit it again.
+        int cycleNode = curr;
+        int next;
+        do {
+            Cycle.push_back(cycleNode);
+            next = Pred[cycleNode];
+            delta += LineGraph.Costs[next][cycleNode];
+            cycleNode = next;
+        } while (cycleNode != curr);
+        
+        // The path was traced backwards, so reverse it to get the forward execution order
+        // std::reverse(Cycle.begin(), Cycle.end());
+        
+        return true; // We found a negative cycle!
+    }
+
+    return false; // No negative cycle found (Dist and Pred now hold valid shortest paths)
+}
+
+void Operator::AddEdgeToLineGraph(const int a, const int h, const int weight){
+    LineGraph.Adj[a].push_back(h);
+    LineGraph.Weights[a][h] = weight;
+    LineGraph.Costs[a][h] = weight;
+}
+
+
+void Operator::MakeLineGraph(const int source, const int sink){
 
     // Update 07/01/2026: Just the line graph does not work, a cycle or path in the line graph results in a walk or closed walk, respectively, in the original graph
     // But: add N nodes in the line graph and I think it works
     // e.h. (ij)->(j)->(jk) instead of (ij)->(jk)
 
     // source: team with A game too much, sink: team with H too much
-    vector<Edge>Nodes; // Nodes of the line graph are edges of the original graph
 
     // cout << "Find path between " << source << " and " << sink << endl;
 
     int i,j,r,h,a;
-    vector<bool>NodeSeen(sol.getNrTeams(), false);
+
+    // Original graph:
+    /*
+    cout << "Original graph: " << endl;
+    cout << "--------------------" << endl;
     for (r = 0; r < sol.getNrRounds(); ++r){
-        std::fill(NodeSeen.begin(), NodeSeen.end(), false);
         for (i = 0; i < sol.getNrTeams(); ++i){
-            if (!NodeSeen[i]){
-                j = sol.TeamColorOpp[i][r];
-                if (sol.Orientation[i][r] == HA::H){
-                    h = i, a = j;
-                }
-                else{
-                    assert(sol.Orientation[i][r] == HA::A);
-                    h = j, a = i;
-                }
-                if (!sol.SRR && sol.MatchColor[a][h] >= 0){
-                    // then we cannot reverse the orientation (unless both their orientations are reversed, but this cannot happen in a path)!!
-                    continue;
-                }
-                if (h != source && a != sink){ // no point in adding the edge a->SOURCE, because SOURCE always must have an outgoing edge (and SINK always an incoming edge)
-                    Nodes.push_back({a,h}); // arc goes like a->h
-                    // cout << "add the node (" << a << "," << h << ")" << endl;
-                }
-                NodeSeen[j] = true;
+            j = sol.TeamColorOpp[i][r];
+            if (i < j){
+                continue;
             }
+            if (sol.Orientation[i][r] == HA::H){
+                h = i, a = j;
+            }
+            else{
+                assert(sol.Orientation[i][r] == HA::A);
+                h = j, a = i;
+            }
+            cout << h << " <- " << a << endl;
         }
     }
-    // cout << "Added all edge nodes" << endl;
-
-    /*
-    for (i = 0; i < sol.getNrTeams(); ++i){
-        Nodes.push_back({i,i});
-    }
+    cout << "--------------------" << endl;
     */
+
+    int index = 0;
+    for (r = 0; r < sol.getNrRounds(); ++r){
+        for (i = 0; i < sol.getNrTeams(); ++i){
+            j = sol.TeamColorOpp[i][r];
+            if (i < j){
+                continue;
+            }
+            if (sol.Orientation[i][r] == HA::H){
+                h = i, a = j;
+            }
+            else{
+                assert(sol.Orientation[i][r] == HA::A);
+                h = j, a = i;
+            }
+            /*
+            if (h != source && a != sink){ // no point in adding the edge a->SOURCE, because SOURCE always must have an outgoing edge   (and SINK always an incoming edge)
+            }
+            */
+            LineGraph.Nodes[index++] = EdgeNode(a,h); // arc goes like a->h
+            // cout << "add the node (" << a << "," << h << ")" << endl;
+        }
+    }
+    assert(index == LineGraph.N);
+
+    // cout << "Added all edge nodes" << endl;
 
     // cout << "Added all the nodes" << endl;
 
     // Now, evaluate for pair of nodes what the cost will be
-    vector<Edge>edge_vector;
-    vector<int>weights;
+
+    LineGraph.reset();
 
     int weight, v, w, k, r1, r2;
-    for (v = 0; v < Nodes.size(); ++v){
-        for (w = v+1; w < Nodes.size(); ++w){
-            if (Nodes[v].second == Nodes[w].first){ // e.g. if (i,k) = (k,j), add the edge {(i,k),(k,j)}
-                i = Nodes[v].first, j = Nodes[w].second, k = Nodes[v].second;
-                h = v, a = w;
+    for (v = 0; v < LineGraph.N; ++v){
+        for (w = v+1; w < LineGraph.N; ++w){
+            // cout << "v = " << v << ", w = " << w << endl;
+            if (LineGraph.Nodes[v].h == LineGraph.Nodes[w].a){ // e.g. if (i,k) and (k,j), add the arc {(i,k),(k,j)} // i->k->j
+                i = LineGraph.Nodes[v].a, j = LineGraph.Nodes[w].h, k = LineGraph.Nodes[v].h;
+                a = v, h = w; // v->w
             }
-            else if (Nodes[w].second == Nodes[v].first){ 
-                i = Nodes[w].first, j = Nodes[v].second, k = Nodes[v].first;
-                h = w, a = v;
+            else if (LineGraph.Nodes[w].h == LineGraph.Nodes[v].a){ // e.g. if (k,i) and (j,k), add the arc {(j,k),(i,j)} // j->k->i
+                i = LineGraph.Nodes[w].a, j = LineGraph.Nodes[v].h, k = LineGraph.Nodes[w].h;
+                a = w, h = v;
             }
             else{
                 continue;
             }
+            // cout << "i = " << i << ", k = " << k << ", j = " << j << endl;
             r1 = sol.MatchColor[k][i]; // remember, arc (i,k) = i->k, so k is the home team!
             r2 = sol.MatchColor[j][k]; // remember, arc (k,j) = k->j, so j is the home team!
-    
-            weight = sol.ComputeCostReversingOrientationTeam(k, r1, r2);
+            
+            // Dijkstra requires positive edge weights, so not really the shortest but a non-increasing path 
+            weight = CostOrientationSwapTeamiTTP(k,r1,r2);
 
-            edge_vector.push_back(Edge(h, a));
-            weights.push_back(weight);
+            // cout << "a = " << a << ", h = " << h << endl;
+            AddEdgeToLineGraph(a, h, weight);
 
             // cout << "add the arc (" << i << "," << k << ") -> (" << k << "," << j << ")" << " with weight " << weight << endl;
         }
+        if (LineGraph.Nodes[v].h == sink){
+            AddEdgeToLineGraph(v, LineGraph.SINK, 0);
+            // cout << "add the arc (" << LineGraph.Nodes[v].a << ", " << LineGraph.Nodes[v].h << ") -> SINK" << endl; 
+        }
+        else if (LineGraph.Nodes[v].a == source){
+            AddEdgeToLineGraph(LineGraph.SOURCE, v, 0);
+            // cout << "add the arc SOURCE -> (" << LineGraph.Nodes[v].a << ", " << LineGraph.Nodes[v].h << ")" << endl;
+        }
+    }
+    if (source == -1 || sink == -1){
+        // if no source and sink in line graph (i.e. when we want to find cycles), connect SOURCE to all nodes 
+        // and let all nodes go to sink
+        for (v = 0; v < LineGraph.N; ++v){
+            AddEdgeToLineGraph(v, LineGraph.SINK, 0);
+            AddEdgeToLineGraph(LineGraph.SOURCE, v, 0);
+        }
     }
     // cout << "added all the edges" << endl;
-    return {Nodes, edge_vector, weights};
+    return;
 }
+
+bool Operator::RetrieveCycleLineGraphFloydWarshall(vector<int>& Cycle, int& delta){
+    int start_node = -1;
+    int MinWeight = INF;
+    int i,h,a,prev;
+    for (i = 0; i < LineGraph.N; ++i){
+        if (distLG[i][i] < MinWeight){
+            start_node = i;
+            MinWeight = distLG[i][i];
+        }
+    }
+    if (MinWeight == INF){
+        // then no negative cycle
+        return false;
+    }
+    assert(start_node != -1); // there must always exist a cycle, this cycle necessarily has a cost less than INF
+    clearPath(); // embed cycle in path
+
+    i = start_node;
+    do {
+        Cycle.push_back(i);
+        prev = predLG[start_node][i];
+        delta += LineGraph.Costs[i][prev];
+        i = prev;
+    }
+    while (i != start_node);
+    return true;
+}
+
+void Operator::RestoreWeights(const State& curr, const bool NC){
+    for (int f: curr.ForbiddenNodes){
+        for (int w: LineGraph.Adj[f]){
+            LineGraph.Weights[f][w] = LineGraph.Costs[f][w];
+            if (NC){
+                distLG[f][w] = LineGraph.Costs[f][w];
+            }
+        }
+    }
+}
+
+bool Operator::FindCycleLineGraph(const double& current_obj, const bool FindNC){
+    // We just want to find any negative cycle, not necessarily the most negative!!
+    // This is faster than exploring all states
+    // current_obj and delta are fossils because they were needed to compute lower bounds!
+    MakeLineGraph(-1,-1); // no source and sink here
+    // cout << "Try to find NC" << endl;
+    // cout << "Cost before = " << current_obj << endl;
+    double obj = current_obj;
+    vector<int>Pred(LineGraph.N+2,-1);
+    vector<int>Cycle;
+    queue<State>Queue;
+    clearPath();
+    // dummy state
+    State dummy;
+    Queue.push(dummy);
+    while (!Queue.empty()){
+        State curr = Queue.front();
+        Queue.pop();
+        // cout << "Evaluate state with forbidden nodes:" << endl;
+        for (int f: curr.ForbiddenNodes){
+            // cout << f << ", ";
+            for (int w: LineGraph.Adj[f]){
+                LineGraph.Weights[f][w] = INF;
+                if (!FindNC){
+                    // then we look for a normal MinWeight cycle
+                    // set the weights that we use in Floyd Warshall to INF
+                    distLG[f][w] = INF;
+                }
+            }
+        }
+        // cout << endl;
+        int delta = 0;
+        if (FindNC){
+            std::fill(Pred.begin(), Pred.end(), -1);
+        }
+        else{
+            clearFloydWarshallLineGraph();
+            for (int a = 0; a < LineGraph.N; ++a){
+                for (int h: LineGraph.Adj[a]){
+                    distLG[a][h] = LineGraph.Costs[a][h];
+                    predLG[a][h] = a;
+                }
+                distLG[a][a] = INF;
+                predLG[a][a] = a;
+            } 
+        }
+        Cycle.clear();
+        bool cycle_found = false;
+        if (FindNC){
+            cycle_found = SPFALineGraph(Pred, Cycle, delta);
+        }
+        else{
+            FloydWarshall(distLG, predLG);
+            cycle_found = RetrieveCycleLineGraphFloydWarshall(Cycle, delta);
+        }
+        if (!cycle_found){
+            // cout << "No cycle found when these are forbidden!" << endl;
+            RestoreWeights(curr, FindNC);
+            continue; // if no cycle: go further with the next one
+        }
+
+        // cout << "NC found, check for forbidden pairs" << endl;
+        // if NC found: check for forbidden pairs
+        std::fill(Count.begin(), Count.end(), 0);
+        int ForbiddenNode = -1;
+        for (int v: Cycle){
+            int i = LineGraph.Nodes[v].h;
+            int j = LineGraph.Nodes[v].a;
+            if (++Count[i] > 2){
+                // cout << i << "is included more than twice in Cycle!!" << endl;
+                ForbiddenNode = i;
+                break;
+            }
+            if (++Count[j] > 2){
+                // cout << j << "is included more than twice in Cycle!!" << endl;
+                ForbiddenNode = j;
+                break;
+            }
+        }
+        if (ForbiddenNode == -1){
+            // then no forbidden nodes -> valid UB
+            // What if we return as soon as we have found an UB?
+            if (FindNC)assert(delta <= 0);
+            obj = current_obj+delta;
+            // cout << "No forbidden nodes, obj = " << obj << endl;
+            // store the best found path
+            for (int v: Cycle){
+                int i = LineGraph.Nodes[v].h;
+                int j = LineGraph.Nodes[v].a;
+                path.push_back({i, j, sol.MatchColor[i][j]});
+                // cout << i << " <- " << j << endl;
+            }
+            break;
+        }
+        else{
+            // retrieve the two forbidden nodes in the line graph:
+            // cout << "Forbidden pair of nodes found!!" << endl;
+            array<int,2>ForbiddenPair;
+            int u = 0;
+            for (int v: Cycle){
+                int i = LineGraph.Nodes[v].h;
+                int j = LineGraph.Nodes[v].a;
+                if (i == ForbiddenNode){
+                    ForbiddenPair[u++] = v;
+                }
+                else if (j ==  ForbiddenNode){
+                    ForbiddenPair[u++] = v;
+                }
+                if (u >= 2){
+                    break;
+                }
+            }
+            // add two states to the queue
+            State state1;
+            State state2;
+            for (int w: curr.ForbiddenNodes){
+                state1.ForbiddenNodes.push_back(w);
+                state2.ForbiddenNodes.push_back(w);
+            } 
+            // cout << "The 2 states have a LB = " << state1.LB << endl;
+            state1.ForbiddenNodes.push_back(ForbiddenPair[0]);
+            state2.ForbiddenNodes.push_back(ForbiddenPair[1]);
+            // cout << "add " << ForbiddenPair[0] << " to state 1" << endl;
+            // cout << "add " << ForbiddenPair[1] << " to state 2" << endl;
+            Queue.push(state1);
+            Queue.push(state2);
+        }
+        RestoreWeights(curr, FindNC);
+    }
+    // cout << "All states evaluated" << endl;
+    if (!path.empty()){
+        // cout << "NC cycle found, new best cost = " << UB << endl;
+#ifndef NDEBUG
+        ReversePath(false, false);
+        // cout << sol.ComputeTotalCost() << " == " << obj << endl;
+        assert(sol.ComputeTotalCost() == obj);
+        ReversePath(false, false);
+#endif
+        return true;
+    }
+    // cout << "No NC found" << endl;
+    return false;
+}
+
+bool Operator::ShortestPathLineGraph(const int source, const int sink, int& delta){
+
+    vector<int>Pred(LineGraph.N+2,-1);
+    vector<int>Cycle;
+
+    // while we keep on finding negative cycles: reverse them. Else: find path with minimum number of violations (if one exists)
+    // If not, there does not exist any path between those two vertices now that would lead to accepting the lantern
+    // Hence, with this approach, we maximize the chances of a lantern getting accepted
+
+    bool NC = false;
+    do{
+        MakeLineGraph(source, sink);
+        double obj = sol.ComputeTotalCost();
+        // NC = NegativeCycleLineGraph(obj);
+    }
+    while (NC);
+
+    cout << "No negative cycle anymore!" << endl;
+    cin.get();
+
+    // Now Pred is filled, based on this we retrieve the path:
+    // retrieve the path -> check for forbidden nodes!!
+    clearPath();
+    std::fill(Count.begin(), Count.end(), 0);
+    int curr = LineGraph.SINK;
+    curr = Pred[curr];
+    int i,j;
+    bool SourceAdded = false;
+    bool ForbiddenPairFound = false;
+    // cout << "Path: " << endl;
+    do{
+        i = LineGraph.Nodes[curr].h;
+        j = LineGraph.Nodes[curr].a;
+        if (Count[i]++ > 2){
+            // cout << i << "is included more than twice!!" << endl;
+            ForbiddenPairFound = true;
+            // return false;
+        }
+        if (Count[j]++ > 2){
+            // cout << j << "is included more than twice!!" << endl;
+            ForbiddenPairFound = true;
+            // return false;
+        }
+        cout << i << " <- " << j << endl;
+        path.push_back({i, j, sol.MatchColor[i][j]}); // path goes like this <-
+        curr = Pred[curr];
+    }
+    while (curr != LineGraph.SOURCE && LineGraph.Nodes[curr].h != source);
+
+    cin.get();
+
+    delta += ReversePath(true, true);
+
+    return true;
+}
+
+/*
 
 vector<pair<int,int>>ForbiddenPairNC(Solution& sol, const vector<array<int,3>> path){
     int i,j,c,e;
@@ -2104,6 +2541,7 @@ vector<array<int,3>> NegativeCycle(Solution& sol){
     return Cycle;
 
 }
+*/
 
 // ********* LINE GRAPH ******* LINE GRAPH ****** LINE GRAPH ******* LINE GRAPH ****** LINE GRAPH *********** //
 

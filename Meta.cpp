@@ -251,10 +251,10 @@ template<typename Move>
 void LAHC<Move>::ResetList() {
     HistoryLength = 10;
     // it_same_HL = 0;
-    PerturbeValue = PerturbeValue_INITIAL;
     this->it = 0;
     int lb = this->best_obj;
     int ub = PerturbeValue*this->best_obj;
+    // cout << "reinitialize list with values between " << lb << " and " << ub << endl;
     InitializeHistoricValues(lb, ub, HistoryLength);
 }
 
@@ -262,6 +262,7 @@ template<typename Move>
 bool LAHC<Move>::UpdateListLength(Solution& sol) {
 
             if (this->NewBestSolutionFound){
+               PerturbeValue = PerturbeValue_INITIAL;
                ResetList();
                this->NewBestSolutionFound = false;
             }
@@ -304,6 +305,9 @@ bool LAHC<Move>::UpdateListLength(Solution& sol) {
                             // reinitialize
                             this->SaveBestSolution(sol);
                             this->current_obj = this->best_obj;
+                            // std::uniform_real_distribution<>dist_pert = std::uniform_real_distribution<>(PerturbeValue_INITIAL,2.0); // guarantee some randomness
+                            // PerturbeValue = dist_pert(this->gen);
+                            PerturbeValue = PerturbeValue_INITIAL;
                             ResetList();
                         }
                         

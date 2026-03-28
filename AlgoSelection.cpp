@@ -418,6 +418,9 @@ string FolderHeuristic(const Input& in, const InputData& data){
     else if (data.InputWeights.contains(Move::iPTS_Random_PR)){
         FolderPath += "iPTS_Random_PR";
     }
+    else if (data.InputWeights.contains(Move::iPTS_Random_PR_CR)){
+        FolderPath += "iPTS_Random_PR_CR";
+    }
     else if (data.InputWeights.contains(Move::Random_M_Random_PR)){
         FolderPath += "Random_M_Random_PR";
     }

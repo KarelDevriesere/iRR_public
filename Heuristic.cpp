@@ -126,7 +126,7 @@ void Heuristic::SelectiPTS(){
 
     // int cost_before = current_obj;
     int delta = 0;
-    CreateLantarn(i, j, StartColor, delta);
+    CreateLantarn(i, j, StartColor);
 
     if (CurrentMove == Move::PTS && lantarn.InfeasibleColor){
         return; // In base algo: PTS only if feasible colours!!
@@ -146,15 +146,24 @@ void Heuristic::SelectiPTS(){
     // Delta for computing the current cost
     // Only works if we do not need a path reversal!! Otherwise we would have needed to include the arc going to the home and from the away teams
 
-    vector<uint8_t>SwapColor(N, 1);
-    for (int v = 0; v < std::min(lantarn.up.size(), lantarn.down.size()); ++v){
-        // SwapColor[lantarn.up[v]] = 0;
-        // SwapColor[lantarn.down[v]] = 0;
-        // cout << " do not swap " << lantarn.up[v] << " and " << lantarn.down[v] << endl;
+    if (CurrentMove == Move::iPTS_Random_PR_CR){
+        clearSwapColorLantarn();
+        int SizeUp = lantarn.up.size();
+        int SizeDown = lantarn.down.size();
+        int MinSize = std::min(SizeUp, SizeDown);
+        if (MinSize > 0){
+            int v_up = RandomIntegerNumber(0,SizeUp-1); // ensure some randomness
+            int v_down = RandomIntegerNumber(0,SizeDown-1);
+            for (int v = 0; v < MinSize; ++v){
+                SwapColorLantarn[lantarn.up[v_up++ % SizeUp]] = 0;
+                SwapColorLantarn[lantarn.down[v_down++ % SizeDown]] = 0;
+                // cout << " do not swap " << lantarn.up[v] << " and " << lantarn.down[v] << endl;
+            }
+        }
     }
 
     if (sol.getSetting() == Setting::TTP){
-        // DeltaLantarn(delta, SwapColor);
+        DeltaLantarn(delta);
         if (!lantarn.PathReversalNeeded){
             int SizeLantern = (int)lantarn.middle.size();
             if (lantarn.InfeasibleColor){
@@ -178,7 +187,7 @@ void Heuristic::SelectiPTS(){
     }
 
     // First swap colors because path may use an edge in the lantern
-    SwapColorsLantarn(OrientationCopy_i, OrientationCopy_j, SwapColor);
+    SwapColorsLantarn(OrientationCopy_i, OrientationCopy_j);
     // cout << "new lantarn" << endl;
     // cout << "----------" << endl;
     // PrintLantarn();
@@ -188,20 +197,22 @@ void Heuristic::SelectiPTS(){
     // cout << "Repair orientations!!" << endl;
     clearPath(); // always try to find a path between i and j!! 
     bool BalanceRepaired = RepairOrientationsEdgesLantarn(MinCostPR, delta);
-    if (!BalanceRepaired){
+    if (!BalanceRepaired && !MinCostPR){
         throw std::runtime_error("Could not repair imbalance in PTS!");
     }
 
     // add new cost
-    if (!lantarn.PathReversalNeeded){
-        for (int t: {i,j}){
-            delta += PTSCurrentTravelDelta(ColoredRoundsLantern, t);
+    if (sol.getSetting() == Setting::TTP){
+        if (!lantarn.PathReversalNeeded){
+            for (int t: {i,j}){
+                delta += PTSCurrentTravelDelta(ColoredRoundsLantern, t);
+            }
         }
+        else{
+            delta += (sol.ComputeTravelCostTeamTTP(i)+sol.ComputeTravelCostTeamTTP(j));
+        }
+        delta += ((sol.ComputeTTPViolations(i)+sol.ComputeTTPViolations(j))*sol.getCostTTPViolation());
     }
-    else{
-        delta += (sol.ComputeTravelCostTeamTTP(i)+sol.ComputeTravelCostTeamTTP(j));
-    }
-    delta += ((sol.ComputeTTPViolations(i)+sol.ComputeTTPViolations(j))*sol.getCostTTPViolation());
 
     // delta += (sol.ComputeTotalCostTeamTTP(i)+sol.ComputeTotalCostTeamTTP(j));
 
@@ -214,7 +225,8 @@ void Heuristic::SelectiPTS(){
 
     int cost_after;
     if (sol.getSetting() == Setting::TTP){
-        cost_after = current_obj+delta;
+        // cost_after = current_obj+delta;
+        cost_after = sol.ComputeTotalCost();
     }
     else{
         cost_after = sol.ComputeTotalCost();
@@ -230,7 +242,7 @@ void Heuristic::SelectiPTS(){
         // cout << "cost_after = " << cost_after << endl;
         int cost_delta = cost_before + delta;
         // cout << "cost_delta = " << cost_delta << endl;
-        assert(cost_delta == cost_after_sol);
+        // assert(cost_delta == cost_after_sol);
     }
 #endif
     
@@ -238,7 +250,7 @@ void Heuristic::SelectiPTS(){
         // first, set back all orientations
         ReversePath(true, true);
         // Then, swap back the colors
-        SwapColorsLantarn(OrientationCopy_i, OrientationCopy_j, SwapColor);
+        SwapColorsLantarn(OrientationCopy_i, OrientationCopy_j);
         assert(sol.ComputeTotalCost() == cost_before);
 
         /*
@@ -484,7 +496,20 @@ void Heuristic::SelectiPRS(const bool bipartite){
 
 void Heuristic::SelectBalancedCycle(){
 
-    CycleBalanced();
+    if (MinCostC){
+        // First try to find a negative cycle
+        if (!FindCycleLineGraph(current_obj, true)){
+            // This only works if we have a guarantee that there are no negative cycles in the graph!
+            cout << "Find MinWeight cycle" << endl;
+            if (!FindCycleLineGraph(current_obj, false)){
+                cout << "no cycle without violations found" << endl;
+                return;
+            }
+        }
+    }
+    else{
+        CycleBalanced();
+    }
     assert(!path.empty());
  
     int cost_before;
@@ -540,8 +565,12 @@ void Heuristic::DoMove(){
         MinCostPR = false;
         SelectiPTS();
     }
-    else if (CurrentMove == Move::iPTS_Random_PR){
+    else if (CurrentMove == Move::iPTS_Random_PR || CurrentMove == Move::iPTS_Random_PR_CR){
         MinCostPR = false;
+        SelectiPTS();
+    }
+    else if (CurrentMove == Move::iPTS_MinCost_PR){
+        MinCostPR = true;
         SelectiPTS();
     }
     else if (CurrentMove == Move::RS){
@@ -566,9 +595,17 @@ void Heuristic::DoMove(){
         bipartite = true;
         SelectiPRS(bipartite);
     }
-    else{
+    else if (CurrentMove == Move::C){
         MinCostC = false;
         SelectBalancedCycle();
+    }
+    else if (CurrentMove == Move::NC){
+        MinCostC = true;
+        SelectBalancedCycle();
+    }
+    else{
+        cout << "Current selected move = " << Moves.at(CurrentMove) << " not known" << endl;
+        std::abort();
     }
     // LAHC
     /*

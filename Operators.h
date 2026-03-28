@@ -40,6 +40,49 @@ typedef pair<int, int>Edge;
 typedef boost::property_map<BGraph, boost::edge_weight_t>::type WeightMap;
 typedef boost::graph_traits<BGraph>::vertex_descriptor Vertex;
 
+const int INF = 1000000; // large enough?
+
+struct EdgeNode{ // (a -> h)
+    int a, h;
+    EdgeNode() = default;
+    EdgeNode(const int j, const int i){
+        a = j;
+        h = i;
+    }
+};
+
+// We want one graph, do not delete edges and nodes but instead modify the weights
+// i.e. if node u is forbidden, set a cost of INF to all edges u->v
+
+struct LineGraph{
+    int N,R;
+    int SOURCE,SINK;
+    vector<EdgeNode>Nodes;
+    vector<vector<int>>Adj; // Adj[u] = {v,w} if u -> v and u -> w
+    vector<vector<int>>Costs; // Real costs -> initialized only once per search!
+    vector<vector<int>>Weights; // Weights on the graph -> updated during the search
+
+    void init(const int n, const int r){
+        // N = (n/2)*r
+        N = (n/2)*r; // +2 because we need a dummy and sink
+        R = r;
+        // when constructing a new line graph, overwrite everything
+        Nodes.resize(N);
+        Adj.resize(N+2); // we do not know the size of Adj beforehand because teams can be unbalanced!
+        Costs.assign(N+2, vector<int>(N+2));
+        Weights.assign(N+2, vector<int>(N+2));
+        SOURCE = N;
+        SINK = N+1;
+    }
+
+    void reset(){
+        for (auto& inner_vec: Adj){
+            inner_vec.clear();
+            inner_vec.reserve(R); // in worst case a team plays away in all rounds
+        }
+    }
+};
+
 struct Lantarn{
     int i;
     vector<int>middle;
@@ -90,12 +133,16 @@ class Operator{
         vector<pair<int,int>> AlternatingCycle;
         vector<int>Cycle_AC; 
         vector<uint8_t>ClubSeen;
-        const int INF = 1000000; // large enough?
         vector<vector<int>>EdgeWeight;
         vector<vector<int>>dist;
         vector<vector<int>>predAC;
+        vector<uint8_t>SwapColorLantarn; // This is for when we do cycle reversals in the lantern
+        // If no: the middle team keeps its orientation in each round
+        vector<vector<int>>distLG;
+        vector<vector<int>>predLG;
 
         Lantarn lantarn;
+        LineGraph LineGraph;
 
         void clearVisited(){
             std::fill(Visited.begin(), Visited.end(), 0);
@@ -162,9 +209,22 @@ class Operator{
             }
         }
 
+        void clearFloydWarshallLineGraph(){
+            for (auto& inner_vec: distLG){
+                std::fill(inner_vec.begin(), inner_vec.end(), 2*INF);
+            }
+            for (auto& inner_vec: predLG){
+                std::fill(inner_vec.begin(), inner_vec.end(), -1);
+            }
+        }
+
         void clearCycle_AC(){
             Cycle_AC.clear();
             Cycle_AC.reserve(N);
+        }
+
+        void clearSwapColorLantarn(){
+            std::fill(SwapColorLantarn.begin(), SwapColorLantarn.end(), 1);
         }
 
 
@@ -182,6 +242,10 @@ class Operator{
             EdgeWeight.resize(N, vector<int>(N, INF));
             dist.resize(N, vector<int>(N, 2*INF));
             predAC.resize(N, vector<int>(N,-1));
+            SwapColorLantarn.resize(N,1);
+            LineGraph.init(N,R);
+            distLG.resize(LineGraph.N+2, vector<int>(LineGraph.N+2, 2*INF));
+            predLG.resize(LineGraph.N+2, vector<int>(LineGraph.N+2,-1));
         };
 
         // Deltas:
@@ -216,7 +280,7 @@ class Operator{
 
         int DeltaiPTS_TS(const int k, int r, int s);
 
-        void DeltaLantarn(int& delta,vector<uint8_t>& SwapColor);
+        void DeltaLantarn(int& delta);
 
         // Debugging:
         void PrintEdgeLantarn(const int i, const int k, const int j);
@@ -239,12 +303,14 @@ class Operator{
         // CycleReversal:
         void CycleBalanced();
 
+        void FloydWarshall(vector<vector<int>>& dist, vector<vector<int>>& pred); // both for normal and alternating cycles -> set dist and pred accordingly
+
         //iPTS:
-        void CreateLantarn(const int i, const int j, const int startColor, int& delta);
+        void CreateLantarn(const int i, const int j, const int startColor);
 
-        void SwapColorsLantarn(vector<HA>& OrientationCopy_i, vector<HA>& OrientationCopy_j, vector<uint8_t>& SwapColor);
+        void SwapColorsLantarn(vector<HA>& OrientationCopy_i, vector<HA>& OrientationCopy_j);
 
-        void ReplenishLantarn(const int i, const int j, const int startColor, int& delta);
+        void ReplenishLantarn(const int i, const int j, const int startColor);
 
         bool RepairOrientationsEdgesLantarn(const bool MinCostP, int& delta);
 
@@ -259,7 +325,13 @@ class Operator{
         // MinCost Alternating Cycle:
         int ComputeEdgeWeightM(const int i, const int j, const int c, const bool MinCostM, const bool bipartite);
 
+        void PrepareFloydWarshallAlternatingCycle(const int r);
+
         void FindMinCostBalancedACycle(const int r);
+
+        int StartNodeAlternatingCycleFloydWarshall(const int r);
+
+        void RetrieveAlternatingCycleFloydWarshall(const int start_node, const int r);
 
         // Balanced Random Alternating Cycle:
         bool DFS_cycle(int u);
@@ -276,7 +348,7 @@ class Operator{
 
         bool BFS_path(const int source, const int sink);
 
-        bool FindNormalPathOneLeague(const int source, const int sink, int& delta, const bool MinCostP, const bool ComputeDelta);
+        bool FindNormalPathOneLeague(const int source, const int sink, int& delta, const bool ComputeDelta);
 
         // Helpers paths and cycles:
 
@@ -284,13 +356,35 @@ class Operator{
 
         int ReversePath(const bool PR, const bool ComputeDelta);
 
+        // LineGraph:
+
+        struct State{
+            vector<int>ForbiddenNodes; // if node is forbidden: set cost of INF for going from this node to its neighbors
+            // int LB;
+            // bool operator>(const State& other)const{return LB > other.LB;} // when we want to find the most negative, we can use this
+        };
+
+        void RestoreWeights(const State& curr, const bool NC);
+
+        void AddEdgeToLineGraph(const int a, const int h, const int weight);
+
+        void MakeLineGraph(const int source, const int sink);
+
+        bool ShortestPathLineGraph(const int source, const int sink, int& delta);
+
+        bool SPFALineGraph(vector<int>& Pred, vector<int>& Cycle, int& delta);
+
+        bool FindCycleLineGraph(const double& current_obj, const bool NC);
+
+        bool CycleWithoutTTPViolations(const double& current_obj);
+
+        bool RetrieveCycleLineGraphFloydWarshall(vector<int>& Cycle, int& delta);
+
 };
 
 // MinCost cycles and paths:
 
 vector<array<int,3>> NonIncreasingCycle(Solution& sol);
-
-tuple<vector<Edge>,vector<Edge>,vector<int>> MakeLineGraph(Solution& sol, const int source, const int sink);
 
 vector<pair<int,int>>ForbiddenPairNC(Solution& sol, const vector<array<int,3>> path);
 
