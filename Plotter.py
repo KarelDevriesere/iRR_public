@@ -7,19 +7,15 @@ import re
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy import stats  # for Friedmans test
 
 # HPC: module load SciPy-bundle/2023.11-gfbf-2023b
 
-NrRoundsCM = {36: 8, 100: 16, 250: 30}
 RoundSet40 = [10,20,30]
 RoundSet32 = [8,16,24]
 RoundSet24 = [6,12,18]
 RoundSet16 = [4,8,12]
 NrRoundsTTP = {"BRA24": RoundSet24, "CIRC40": RoundSet40, "CON40": RoundSet40, "GAL40": RoundSet40, "INCR40": RoundSet40, "LINE40": RoundSet40, "NL16": RoundSet16, "NFL32": RoundSet32}
-ListLengths = [1,5,10,50,100,500,1000,5000,10000,50000,100000] # list lengths
-# ListLengths = [500,1000,5000,10000]
-
-TIME_LIMIT = 600
 
 def ResultsInstances(InstanceSetting, iTTP=False):
     instances = []
@@ -45,22 +41,26 @@ def ResultsInstances(InstanceSetting, iTTP=False):
             instances.append(i)
     PathRoot = os.path.join(PathRoot, "Results")
 
-    if iTTP:
-        Table = {inst: {"IP_value": -1, "IP_gap": -1, "Initial_Avg_value": [], "Initial_seed": [], "Initial_gap": -1, "MiaoAlgo_Avg_value": [], "MiaoAlgo_Avg_time": [], "MiaoAlgo_seed": [], "Ip_TripModel_value": -1, "IP_TripModel_gap": -1, "Miao_gap": -1} for inst in instances}
-    else:
-        Table = {inst: {"IP_value": -1, "IP_bound": -1, "IP_time": -1, "MiaoAlgo_Avg_value": [],        "MiaoAlgo_Avg_time": [], "MiaoAlgo_seed": [], "Heuristic_Avg_value": [], "Heuristic_Avg_time": [], "Heuristic_HL": []} for inst in instances}
+    TableComp = {"IP_time": [], "MiaoAlgo_time": [], "IP_TripModel_HAP_fixed_time": [], "IP_TripModel_time": [], "Heuristic_time": []}
+    Table = {inst: {"IP_value": -1, "IP_gap": -1, "IP_time": [], "IP_bound": -1, "Initial_Avg_value": [], "Initial_seed": [], "Initial_gap": -1, "Initial_time": [], "MiaoAlgo_Avg_value": [], "MiaoAlgo_time": [], "MiaoAlgo_seed": [], "Ip_TripModel_HAP_fixed_value": 10000000, "IP_TripModel_HAP_fixed_gap": 10000000, "IP_TripModel_HAP_fixed_time": [], "Miao_gap": -1, "IP_TripModel_value": 10000000, "IP_TripModel_gap": -1, "IP_TripModel_bound": 10000000, "IP_TripModel_time": [], "Heuristic_Avg_value": [], "Heuristic_HL": [], "Heuristic_gap": -1, "Heuristic_Avg_time": []} for inst in instances}
+
     TableMatchings = {inst: {"NrSuccesfullMatchings": [], "NrInfeasibleMatchings": []} for inst in instances}
     PathIP = os.path.join(PathRoot, "IP")
-    PathHeuristic = os.path.join(PathRoot, "Heuristic") # HeuristicStartingFromMiao
-    PathMiaoAlgo = os.path.join(PathRoot, "MiaoAlgo08_01_2026")
-    PathTripModel = os.path.join(PathRoot, "IP_TripModel")
-    if iTTP:
-        Paths = [PathIP, PathMiaoAlgo, PathTripModel]
+    PathHeuristic = os.path.join(os.path.join(PathRoot, "Heuristic"), "All") # HeuristicStartingFromMiao
+    PathMiaoAlgo = os.path.join(PathRoot, "MiaoAlgo")
+    if InstanceSetting == "TTP":
+        PathTripModel = os.path.join(PathRoot, "IP_TripModel")
+        PathTripModel_HAP_fixed = os.path.join(PathRoot, "IP_TripModel_HAP_fixed")
+        Paths = [PathIP, PathMiaoAlgo, PathTripModel, PathTripModel_HAP_fixed, PathHeuristic]
     else:
         Paths = [PathIP, PathMiaoAlgo, PathHeuristic]
+
     for Path in Paths:
         for file_index, filename in enumerate(os.listdir(Path)):
             if not filename.endswith(".txt"):
+                continue
+            if "LP" in filename:
+                print(f'File {filename} contains LP, skip!!')
                 continue
             FilePath = os.path.join(Path, filename)
             if not os.path.exists(FilePath):
@@ -117,40 +117,50 @@ def ResultsInstances(InstanceSetting, iTTP=False):
                         TableMatchings[Instance][row[2]].append(int(row[3]))
                         # print(f'{Instance} & {row[1]} & {row[3]} \\\\ \n')
                     if i > 1 and (row[0] == "Final"): # or method == "Heuristic" and int(row[0]) == TIME_LIMIT): # row[0] == "Final"
-                        if method == "IP":
+                        if method == "IP" and Path == PathIP:
                             Table[Instance]["IP_value"] = int(row[1])
-                            Table[Instance]["IP_bound"] = row[2]
+                            Table[Instance]["IP_bound"] = int(row[2])
                             if abs(int(row[1]) - int(row[2])) > 1:
-                                Table[Instance]["IP_time"] = 7200
+                                TableComp["IP_time"].append(172800)
                             else:
-                                Table[Instance]["IP_time"] = max_time
+                                TableComp["IP_time"].append(max_time)
+                        elif method == "IP" and Path == PathTripModel_HAP_fixed:
+                            Table[Instance]["IP_TripModel_HAP_fixed_value"] = int(row[1])
+                            if abs(int(row[1]) - int(row[2])) > 1:
+                                TableComp["IP_TripModel_HAP_fixed_time"].append(43200)
+                            else:
+                                TableComp["IP_TripModel_HAP_fixed_time"].append(max_time)
                         elif method == "IP_TripModel":
                             Table[Instance]["IP_TripModel_value"] = int(row[1])
+                            Table[Instance]["IP_TripModel_bound"] = int(row[2])
                             if abs(int(row[1]) - int(row[2])) > 1:
-                                Table[Instance]["IP_TripModel_time"] = 7200
+                                TableComp["IP_TripModel_time"].append(172800)
                             else:
-                                Table[Instance]["IP_TripModel_time"] = max_time
+                                TableComp["IP_TripModel_time"].append(max_time)
                         elif method == "MiaoAlgo":
                             Table[Instance]["MiaoAlgo_Avg_value"].append(int(row[1]))
-                            Table[Instance]["MiaoAlgo_Avg_time"].append(int(row[2]))
+                            TableComp["MiaoAlgo_time"].append(max_time)
+                            Table[Instance]["MiaoAlgo_time"].append(max_time)
                             Table[Instance]["MiaoAlgo_seed"].append(seed)
                         elif method == "Heuristic": # HeuristicStartingFromMiao
-                            if row[0] == "Final":
-                                Table[Instance]["Heuristic_Avg_value"].append(float(row[1]))
-                                Table[Instance]["Heuristic_Avg_time"].append(float(row[2]))
-                            else:
-                                Table[Instance]["Heuristic_Avg_value"].append(float(row[1]))
-                                Table[Instance]["Heuristic_Avg_time"].append(float(row[0]))
+                            Table[Instance]["Heuristic_Avg_value"].append(float(row[1]))
+                            Table[Instance]["Heuristic_Avg_time"].append(float(row[2]))
+                            TableComp["Heuristic_time"].append(max_time)
                         else:
                             print(f'Unknown method = {method}')
                             breakpoint()
                         break
-                    elif iTTP and i > 1 and (row[0] == "0" or row[0] == 0):
+                    elif i > 1 and (row[0] == "0" or row[0] == 0):
                         if method == "MiaoAlgo":
                             Table[Instance]["Initial_Avg_value"].append(int(row[1]))
                             Table[Instance]["Initial_seed"].append(seed)
 
-
+    if iTTP:
+        print(f"COMPUTATION TIMES:")
+        print(f"& F1 & F2 & GM-c & GM-it & F2-HAP \\\\ \n")
+        print(f"Min & {round(min(TableComp['IP_time'])/60.0, 2)} & {round(min(TableComp['IP_TripModel_time'])/60.0, 2)} & & {round(min(TableComp['MiaoAlgo_time'])/60.0, 2)} &  {round(min(TableComp['IP_TripModel_HAP_fixed_time'])/60.0, 2)} \\\\ \n")
+        print(f"Max & {round(max(TableComp['IP_time'])/60.0, 2)} & {round(max(TableComp['IP_TripModel_time'])/60.0, 2)} & & {round(max(TableComp['MiaoAlgo_time'])/60.0, 2)} &  {round(max(TableComp['IP_TripModel_HAP_fixed_time'])/60.0, 2)} \\\\ \n")
+        print(f"Average & {round(np.mean(TableComp['IP_time'])/60.0, 2)} & {round(np.mean(TableComp['IP_TripModel_time'])/60.0, 2)} & & {round(np.mean(TableComp['MiaoAlgo_time'])/60.0, 2)} &  {round(np.mean(TableComp['IP_TripModel_HAP_fixed_time'])/60.0, 2)} \\\\ \n")
 
     for inst in TableMatchings.keys():
         if len(TableMatchings[inst]["NrSuccesfullMatchings"]) > 0:
@@ -181,7 +191,7 @@ def ResultsInstances(InstanceSetting, iTTP=False):
             output_file.write("Instance & IP_v & IP_b & IP_t & Miao_{av} & Miao_{at} & Miao_{bv} & Miao_{bt} & Heur_{av} & Heur_{at} & Heur_{bv} & Heur_{bt} & Heur_{bHL}\n")
         else:
             if iTTP:
-                output_file.write("Instance & Bound & IP_v & IP_gap & Init_v & Init_gap & Miao_{av} & Miao_{at} & Miao_{bv} & Miao_{bt} & Miao_gap\n")
+                output_file.write("Instance & Bound & IP_v & IP_gap & IP_Trip & Ip_trip_gap & Init_v & Init_gap & Miao_{av} & Miao_{bv} & Miao_gap & IP-HAP & IP-HAP_gap\n")
             else:
                 output_file.write("Instance & Bound & IP_v & IP_b & IP_t & Miao_{av} & Miao_{at} & Miao_{bv} & Miao_{bt} & Heur_{av} & Heur_{at} & Heur_{bv} & Heur_{bt} & Heur_{bHL}\n")
 
@@ -192,6 +202,10 @@ def ResultsInstances(InstanceSetting, iTTP=False):
                 writer.writerow(["Algorithm", "LB", "Obj"])
             else:
                 writer.writerow(["Algorithm", "InstanceClass", "LB", "Obj"])
+
+        Results = {inst: {"Avg_Base": 0, "Min_Base": 0, "Avg_iPTS": 0, "Min_iPTS": 0, "Avg_M": 0, "Min_M": 0, "Avg_BM": 0, "Min_BM": 0, "Avg_all": 0, "Min_all": 0, "Min_GM": 0, "Avg_GM": 0} for inst in instances}
+
+        Bounds = {inst: -1 for inst in instances}
 
         for Instance in Table.keys():
             Heuristic_Avg_value = -1
@@ -208,6 +222,7 @@ def ResultsInstances(InstanceSetting, iTTP=False):
             Initial_Best_value = -1
             InitialBestSeed = -1
             if not iTTP and len(Table[Instance]["Heuristic_Avg_value"]) > 0:
+                print(f"length of {Instance} = {len(Table[Instance]['Heuristic_Avg_value'])}")
                 Heuristic_Avg_value = round(sum(Table[Instance]["Heuristic_Avg_value"]) / len(Table[Instance]["Heuristic_Avg_value"]),2)
                 Heuristic_Avg_time = round(sum(Table[Instance]["Heuristic_Avg_time"]) / len(Table[Instance]["Heuristic_Avg_time"]),2)
                 Heuristic_Best_value = Table[Instance]["Heuristic_Avg_value"][0]
@@ -219,19 +234,25 @@ def ResultsInstances(InstanceSetting, iTTP=False):
                         Heuristic_Best_value = Table[Instance]["Heuristic_Avg_value"][i]
                         Heuristic_Best_time = Table[Instance]["Heuristic_Avg_time"][i]
                         Heuristic_best_HL = Table[Instance]["Heuristic_HL"][i]
+
+                Results[Instance]["Avg_all"] = int(Heuristic_Avg_value)
+                Results[Instance]["Min_all"] = int(Heuristic_Best_value) 
                 
             if len(Table[Instance]["MiaoAlgo_Avg_value"]) > 0:
                 MiaoAlgo_Avg_value = round(sum(Table[Instance]["MiaoAlgo_Avg_value"]) / len(Table[Instance]["MiaoAlgo_Avg_value"]))
-                MiaoAlgo_Avg_time = round(sum(Table[Instance]["MiaoAlgo_Avg_time"]) / len(Table[Instance]["MiaoAlgo_Avg_time"]))
+                MiaoAlgo_Avg_time = round(sum(Table[Instance]["MiaoAlgo_time"]) / len(Table[Instance]["MiaoAlgo_time"]))
                 MiaoAlgo_Best_value = Table[Instance]["MiaoAlgo_Avg_value"][0]
-                MiaoAlgo_Best_time = Table[Instance]["MiaoAlgo_Avg_time"][0]
+                MiaoAlgo_Best_time = Table[Instance]["MiaoAlgo_time"][0]
                 MiaoAlgoBestSeed = Table[Instance]["MiaoAlgo_seed"][0]
     
                 for i in range(1,len(Table[Instance]["MiaoAlgo_Avg_value"])):
                     if Table[Instance]["MiaoAlgo_Avg_value"][i] < MiaoAlgo_Best_value:
                         MiaoAlgo_Best_value = Table[Instance]["MiaoAlgo_Avg_value"][i]
-                        MiaoAlgo_Best_time = Table[Instance]["MiaoAlgo_Avg_time"][i]
+                        MiaoAlgo_Best_time = Table[Instance]["MiaoAlgo_time"][i]
                         MiaoAlgoBestSeed = Table[Instance]["MiaoAlgo_seed"][i]
+
+                Results[Instance]["Min_GM"] = int(MiaoAlgo_Best_value) 
+                Results[Instance]["Avg_GM"] = int(MiaoAlgo_Avg_value) 
 
             if iTTP and len(Table[Instance]["Initial_Avg_value"]) > 0:
                 Initial_Avg_value = round(sum(Table[Instance]["Initial_Avg_value"]) / len(Table[Instance]["Initial_Avg_value"]))
@@ -247,7 +268,8 @@ def ResultsInstances(InstanceSetting, iTTP=False):
             
             line = Instance + " & "
 
-            bound = -1
+            # assumes that the file "Bounds contains the best bound, including LP of TripModel for iTTP!!"
+
             if InstanceSetting == "TTP" or InstanceSetting == "Hockey":
                 if InstanceSetting == "TTP":
                     FilePathBounds = os.path.join(os.path.join(os.path.join("Instances", "TTP"), "Bounds"), "BestBounds.txt")
@@ -260,22 +282,28 @@ def ResultsInstances(InstanceSetting, iTTP=False):
                     reader = csv.reader(file)
                     for i, row in enumerate(reader):
                         if row[0] == Instance:
-                            bound = row[1]
+                            Bounds[Instance] = int(row[1])
                             break
-            if bound == -1:
-                bound = Table[Instance]["IP_bound"]
+            if Bounds[Instance] == -1:
+                Bounds[Instance] = Table[Instance]["IP_bound"]
+            elif Table[Instance]["IP_bound"] > Bounds[Instance]:
+                Bounds[Instance] = Table[Instance]["IP_bound"]
+            '''
+            elif Table[Instance]["IP_TripModel_bound"] > bound:
+                bound = Table[Instance]["IP_TripModel_bound"]
+            '''
                 
-            line += str(bound) + " & "
+            line += str(Bounds[Instance]) + " & "
 
-            if (Table[Instance]["IP_value"] <= MiaoAlgo_Best_value or MiaoAlgo_Best_value == -1) and (Table[Instance]["IP_value"] <= Heuristic_Best_value or Heuristic_Best_value == -1) and Table[Instance]["IP_value"] != -1 :
+            if (Table[Instance]["IP_value"] <= MiaoAlgo_Best_value or MiaoAlgo_Best_value == -1) and (Table[Instance]["IP_value"] <= Heuristic_Best_value or Heuristic_Best_value == -1) and Table[Instance]["IP_value"] != -1 and (Table[Instance]["IP_value"] <= Table[Instance]["IP_TripModel_value"] or Table[Instance]["IP_TripModel_value"] == -1):
                 # line += "\\cellcolor{green!25}" 
-                if not iTTP or (iTTP and Table[Instance]["IP_value"] <= Table[Instance]["IP_TripModel_value"]):
+                if not iTTP or (iTTP and Table[Instance]["IP_value"] <= Table[Instance]["IP_TripModel_HAP_fixed_value"]):
                     line += "\\textbf{" + str(Table[Instance]["IP_value"]) + "}"
                 else:
                     line += str(Table[Instance]["IP_value"])
-            elif Table[Instance]["IP_value"] >= MiaoAlgo_Best_value and Table[Instance]["IP_value"] >= Heuristic_Best_value:
+            elif Table[Instance]["IP_value"] >= MiaoAlgo_Best_value and Table[Instance]["IP_value"] >= Heuristic_Best_value and Table[Instance]["IP_value"] >= Table[Instance]["IP_TripModel_value"]:
                 # line += "\\cellcolor{red!25}" 
-                if not iTTP or (iTTP and Table[Instance]["IP_value"] >= Table[Instance]["IP_TripModel_value"]):
+                if not iTTP or (iTTP and Table[Instance]["IP_value"] >= Table[Instance]["IP_TripModel_HAP_fixed_value"]):
                     line += "\\emph{" + str(Table[Instance]["IP_value"]) + "}"
                 else:
                     line += str(Table[Instance]["IP_value"]) 
@@ -283,50 +311,66 @@ def ResultsInstances(InstanceSetting, iTTP=False):
                 line += str(Table[Instance]["IP_value"])  
 
             # if iTTP:
-            gap_ip = round(((Table[Instance]["IP_value"] - int(bound)) / Table[Instance]["IP_value"])*100,2)
+            if Table[Instance]["IP_value"] > 0:
+                gap_ip = round(((Table[Instance]["IP_value"] - int(Bounds[Instance])) / Table[Instance]["IP_value"])*100,2)
+            else:
+                gap_ip = -1
             line += " & " + str(gap_ip) + " & "
 
             if iTTP:
-                gap_initial = round(((Initial_Best_value - int(bound)) / Initial_Best_value)*100,2)
+                if Table[Instance]["IP_TripModel_value"] > 0:
+                    gap_trip_model = round(((Table[Instance]["IP_TripModel_value"] - int(Bounds[Instance])) /  Table[Instance]["IP_TripModel_value"])*100,2)
+                else:
+                    gap_trip_model = -1
+                if Table[Instance]["IP_TripModel_value"] <= MiaoAlgo_Best_value and Table[Instance]["IP_TripModel_value"] <= Table[Instance]["IP_value"] and Table[Instance]["IP_TripModel_value"] != -1 and (Table[Instance]["IP_TripModel_value"] <= Table[Instance]["IP_TripModel_HAP_fixed_value"]):
+                    line += " \\textbf{" + str(Table[Instance]["IP_TripModel_value"]) + "}"
+                elif Table[Instance]["IP_TripModel_value"] <= MiaoAlgo_Best_value and Table[Instance]["IP_TripModel_value"] <= Table[Instance]["IP_value"] and Table[Instance]["IP_TripModel_value"] <= Table[Instance]["IP_TripModel_HAP_fixed_value"] and Table[Instance]["IP_TripModel_value"] != -1:
+                    line += " \\emph{" + str(Table[Instance]["IP_TripModel_value"]) + "}"
+                else:
+                    line += str(Table[Instance]["IP_TripModel_value"])
+                line += " & " + str(gap_trip_model) + " & "
+
+            if iTTP:
+                gap_initial = round(((Initial_Best_value - int(Bounds[Instance])) / Initial_Best_value)*100,2)
                 line += str(Initial_Best_value)  +" & " + str(gap_initial)  + " & "
             
-            if (MiaoAlgo_Best_value <= Table[Instance]["IP_value"] or Table[Instance]["IP_value"] == -1) and (MiaoAlgo_Best_value <= Heuristic_Best_value or Heuristic_Best_value == -1) and MiaoAlgo_Best_value != -1:
+            if (MiaoAlgo_Best_value <= Table[Instance]["IP_value"] or Table[Instance]["IP_value"] == -1) and (MiaoAlgo_Best_value <= Heuristic_Best_value or Heuristic_Best_value == -1) and MiaoAlgo_Best_value != -1 and (MiaoAlgo_Best_value <= Table[Instance]["IP_TripModel_value"] or Table[Instance]["IP_TripModel_value"] == -1):
                 # line += "\\cellcolor{green!25}" 
-                if not iTTP or (iTTP and MiaoAlgo_Best_value <= Table[Instance]["IP_TripModel_value"]):
+                if not iTTP or (iTTP and MiaoAlgo_Best_value <= Table[Instance]["IP_TripModel_HAP_fixed_value"]):
                     line += "\\textbf{" + str(MiaoAlgo_Best_value) + "}"
                 else:
                     line += str(MiaoAlgo_Best_value) 
-            elif MiaoAlgo_Best_value >= Table[Instance]["IP_value"] and MiaoAlgo_Best_value >= Heuristic_Best_value:
+            elif MiaoAlgo_Best_value >= Table[Instance]["IP_value"] and MiaoAlgo_Best_value >= Heuristic_Best_value and MiaoAlgo_Best_value >= Table[Instance]["IP_TripModel_value"]:
                 # line += "\\cellcolor{red!25}" 
-                if not iTTP or (iTTP and MiaoAlgo_Best_value >= Table[Instance]["IP_TripModel_value"]):
+                if not iTTP or (iTTP and MiaoAlgo_Best_value >= Table[Instance]["IP_TripModel_HAP_fixed_value"]):
                     line += "\\emph{" + str(MiaoAlgo_Best_value) + "}"
                 else:
                     line += str(MiaoAlgo_Best_value) 
             else:
                 line += str(MiaoAlgo_Best_value) 
 
-            gap_miao = round(((MiaoAlgo_Best_value - int(bound)) / MiaoAlgo_Best_value)*100,2)
+            gap_miao = round(((MiaoAlgo_Best_value - int(Bounds[Instance])) / MiaoAlgo_Best_value)*100,2)
             line += " & " + str(gap_miao)
 
-            line += " & " + str(MiaoAlgo_Avg_value)  +" & " + str(MiaoAlgo_Avg_time)
+            line += " & " + str(MiaoAlgo_Avg_value)
 
             # line += " \\\\ \n"
 
             if iTTP:
-                gap_trip_model = round(((Table[Instance]["IP_TripModel_value"] - int(bound)) /  Table[Instance]["IP_TripModel_value"])*100,2)
-                if Table[Instance]["IP_TripModel_value"] <= MiaoAlgo_Best_value and Table[Instance]["IP_TripModel_value"] <= Table[Instance]["IP_value"]:
-                    line += " & \\textbf{" + str(Table[Instance]["IP_TripModel_value"]) + "}"
-                elif Table[Instance]["IP_TripModel_value"] <= MiaoAlgo_Best_value and Table[Instance]["IP_TripModel_value"] <= Table[Instance]["IP_value"]:
-                    line += " & \\emph{" + str(Table[Instance]["IP_TripModel_value"]) + "}"
+                gap_trip_model = round(((Table[Instance]["IP_TripModel_HAP_fixed_value"] - int(Bounds[Instance])) /  Table[Instance]["IP_TripModel_HAP_fixed_value"])*100,2)
+                if Table[Instance]["IP_TripModel_HAP_fixed_value"] <= MiaoAlgo_Best_value and Table[Instance]["IP_TripModel_HAP_fixed_value"] <= Table[Instance]["IP_value"] and Table[Instance]["IP_TripModel_HAP_fixed_value"] != -1 and (Table[Instance]["IP_TripModel_value"] < 0 or Table[Instance]["IP_TripModel_HAP_fixed_value"] <= Table[Instance]["IP_TripModel_value"]):
+                    line += " & \\textbf{" + str(Table[Instance]["IP_TripModel_HAP_fixed_value"]) + "}"
+                elif Table[Instance]["IP_TripModel_HAP_fixed_value"] <= MiaoAlgo_Best_value and Table[Instance]["IP_TripModel_HAP_fixed_value"] <= Table[Instance]["IP_value"] and Table[Instance]["IP_TripModel_HAP_fixed_value"] <= Table[Instance]["IP_TripModel_value"]:
+                    line += " & \\emph{" + str(Table[Instance]["IP_TripModel_HAP_fixed_value"]) + "}"
                 else:
-                    line += " & " + str(Table[Instance]["IP_TripModel_value"])
-                line += " & " + str(gap_trip_model) + " & " + str(Table[Instance]["IP_TripModel_time"])
+                    line += " & " + str(Table[Instance]["IP_TripModel_HAP_fixed_value"])
+                line += " & " + str(gap_trip_model)
                 line += " \\\\ \n"
             else:
             
                 # line +=  " & " + str(Heuristic_Avg_value)  +" & " + str(Heuristic_Avg_time) + " & " 
 
-                line += + " & " + str(Heuristic_Avg_value) + " & "
+                line += " & " + str(Heuristic_Avg_value) + " & "
                 
                 if (Heuristic_Best_value <= Table[Instance]["IP_value"] or Table[Instance]["IP_value"] == -1) and (Heuristic_Best_value <= MiaoAlgo_Best_value or MiaoAlgo_Best_value == -1) and Heuristic_Best_value != -1:
                     # line += "\\cellcolor{green!25}" + str(Heuristic_Best_value)  
@@ -339,27 +383,27 @@ def ResultsInstances(InstanceSetting, iTTP=False):
                 
                 line += " & " + str(Heuristic_Best_time) + " & " + str(Heuristic_best_HL) 
 
-                gap_heuristic = round(((Heuristic_Best_value - int(bound)) / Heuristic_Best_value)*100,2)
+                gap_heuristic = round(((Heuristic_Best_value - int(Bounds[Instance])) / Heuristic_Best_value)*100,2)
                 line += " & " + str(gap_heuristic) + " \\\\ \n"
 
                 if InstanceSetting == "TTP":
                     for value in Table[Instance]["MiaoAlgo_Avg_value"]:
-                        writer.writerow(["Greedy", bound, value])
-                    writer.writerow(["IP", bound, Table[Instance]["IP_value"]])
+                        writer.writerow(["Greedy", Bounds[Instance], value])
+                    writer.writerow(["IP", Bounds[Instance], Table[Instance]["IP_value"]])
                 else:
                     for i, value in enumerate(Table[Instance]["Heuristic_Avg_value"]):
                         heur = "Heuristic_" + str(Table[Instance]["Heuristic_HL"][i])
-                        writer.writerow([heur, InstanceSetting, bound, value])
-                        if value < int(bound):
+                        writer.writerow([heur, InstanceSetting, Bounds[Instance], value])
+                        if value < int(Bounds[Instance]):
                             print(Instance)
                             breakpoint()
                     for value in Table[Instance]["MiaoAlgo_Avg_value"]:
-                        writer.writerow(["Greedy", InstanceSetting, bound, value])
-                        if value < int(bound):
+                        writer.writerow(["Greedy", InstanceSetting, Bounds[Instance], value])
+                        if value < int(Bounds[Instance]):
                             print(Instance)
                             breakpoint()
-                    writer.writerow(["IP", InstanceSetting, bound, Table[Instance]["IP_value"]])
-                    if Table[Instance]["IP_value"] < int(bound):
+                    writer.writerow(["IP", InstanceSetting, Bounds[Instance], Table[Instance]["IP_value"]])
+                    if Table[Instance]["IP_value"] < int(Bounds[Instance]):
                         print(Instance)
                         breakpoint()
 
@@ -367,56 +411,154 @@ def ResultsInstances(InstanceSetting, iTTP=False):
             output_file.write(line)
         
     print(f"done")
+    breakpoint()
 
+    # Individual neighborhoods:
+    Path_base = os.path.join(os.path.join(PathRoot, "Heuristic"), "Base") 
+    Path_iPTS = os.path.join(os.path.join(PathRoot, "Heuristic"), "iPTS_Random_PR") 
+    Path_BM = os.path.join(os.path.join(PathRoot, "Heuristic"), "Random_BM_C") #
+    Path_M = os.path.join(os.path.join(PathRoot, "Heuristic"), "Random_M_Random_PR") #
+    Path_MinCost_BM = os.path.join(os.path.join(PathRoot, "Heuristic"), "MinCost_BM_C")
+    Paths = {"Base": Path_base, "iPTS": Path_iPTS, "BM": Path_BM, "M": Path_M, "MinCost_BM": Path_MinCost_BM}
+    Values = {inst: {"Base": [], "iPTS": [], "M": [], "BM": [], "MinCost_BM": []} for inst in instances}
+    Gaps = {inst: {"Base": [], "iPTS": [], "M": [], "BM": [], "MinCost_BM": [], "all": [], "IP": [], "GM": []} for inst in instances}
 
-def ResultsPercHAPs():
-    Path = os.path.join(os.path.join(os.path.join("Instances", "TTP"), "Results"), "MiaoAlgo")
-    Instances = []
-    for key in NrRoundsTTP.keys():
-        for round_ in NrRoundsTTP[key]:
-            Instances.append("I_"+key+"_"+str(round_))
-    Percentages = [1, 10, 30, 50, 70, 90]
-    Seeds = [0,11,42,154,396,588,1217,2486,5003,10000]
-    Values = {inst: {perc: [] for perc in Percentages} for inst in Instances}
-    Times = {inst: {perc: [] for perc in Percentages} for inst in Instances}
-    BestValues = {inst: {perc: -1 for perc in Percentages} for inst in Instances}
-    BestTimes = {inst: {perc: -1 for perc in Percentages} for inst in Instances}
-    for file_index, filename in enumerate(os.listdir(Path)):
-        if not filename.endswith(".txt") or "PercHAPs" not in filename:
-            continue
-        FilePath = os.path.join(Path, filename)
-        if not os.path.exists(FilePath):
-            raise FileNotFoundError(f"The file '{FilePath}' does not exist.")
-            sys.exit(0)
-        with open(FilePath, 'r', newline="") as file:
-            reader = csv.reader(file)
-            for i, row in enumerate(reader):
-                if i == 0:
-                    seed = str(row[0])
-                    method = row[1]
-                    instance = row[2]
-                    HL = row[3] # does not matter
-                    Perc = int(row[4]) # percentage of the haps used
-                    if instance not in Instances or Perc not in Percentages:
+    for key, Path in Paths.items():
+        for file_index, filename in enumerate(os.listdir(Path)):
+            if not filename.endswith(".txt"):
+                continue
+            FilePath = os.path.join(Path, filename)
+            if not os.path.exists(FilePath):
+                raise FileNotFoundError(f"The file '{FilePath}' does not exist.")
+                sys.exit(0)
+            with open(FilePath, 'r', newline="") as file:
+                reader = csv.reader(file)
+                max_time = 0
+                for i, row in enumerate(reader):
+                    if i == 0:
+                        if InstanceSetting == "Miao":
+                            inst = row[2]
+                            setting = str(row[3])
+                            nr_breaks = str(row[4])
+                            Instance = inst + "_s" + setting + "_b" + nr_breaks
+                        elif InstanceSetting == "Hockey":
+                            Instance = row[2]
+                        elif InstanceSetting == "TTP":
+                            pattern = re.compile(r'(?:^|_)([A-Z]+[0-9]+_[0-9]+)(?:_|\.|$)')
+
+                            match = pattern.search(filename)
+                            if match:
+                                Instance = match.group(1)
+                                if Instance == "N16_4":
+                                    Instance = "NL16_4"
+                                elif Instance == "N16_8":
+                                    Instance = "NL16_8"
+                                elif Instance == "N16_12":
+                                    Instance = "NL16_12"
+                                # print(f'Extracted {Instance} from {filename}')
+                            else:
+                                print(f'No match for {filename} in path {FilePath}')
+                                break
+
+                    elif i > 0 and row[0] != "Final" and row[0] != "Time":
+                        Values[Instance][key].append(int(row[1]))
                         break
-                elif row[0] == "Final":
-                    Values[instance][Perc].append(int(row[1]))
-                    Times[instance][Perc].append(int(row[2]))
-                    break
 
-    print(f'Instance & bv1 & t1 & bv10 & t10 & bv30 & t30 & bv50 & t50 & bv70 & t70 & bv90 & t90 \\\\ \n')
-    for instance in Instances:
-        for Perc in Percentages:
-            if len(Values[instance][Perc]) > 0:
-                best_value = Values[instance][Perc][0]
-                best_time = Times[instance][Perc][0]
-                for i in range(1,len(Values[instance][Perc])):
-                    if Values[instance][Perc][i] < best_value:
-                        best_value = Values[instance][Perc][i]
-                        best_time = Times[instance][Perc][i]
-                BestValues[instance][Perc] = best_value
-                BestTimes[instance][Perc] = best_time
-        print(f'{instance} & {BestValues[instance][1]} & {BestTimes[instance][1]} & {BestValues[instance][10]} & {BestTimes[instance][10]} & {BestValues[instance][30]} & {BestTimes[instance][30]} & {BestValues[instance][50]} & {BestTimes[instance][50]} & {BestValues[instance][70]} & {BestTimes[instance][70]} & {BestValues[instance][90]} & {BestTimes[instance][90]} \\\\')
+    print(f'Table in text:')
+    print(f"Instance & LB & IP & GM & Base & Min IPTS & Min M & Min BM+C & Min All \\\\")
+    for inst in instances:
+        # print(f"Instance = {inst}")
+        # print(f"Length iPTS: {len(Values[inst]['iPTS'])}")
+        if (len(Values[inst]['Base'])) > 0:
+            Results[inst]["Avg_Base"] = sum(Values[inst]['Base']) / len(Values[inst]['Base'])
+            Results[inst]["Min_Base"] = min(Values[inst]['Base']) 
+        if (len(Values[inst]['iPTS'])) > 0:
+            Results[inst]["Avg_iPTS"] = sum(Values[inst]['iPTS']) / len(Values[inst]['iPTS'])
+            Results[inst]["Min_iPTS"] = min(Values[inst]['iPTS'])
+        # print(f"Length M: {len(Values[inst]['M'])}")
+        if (len(Values[inst]['M'])) > 0:
+            Results[inst]["Avg_M"] = sum(Values[inst]['M']) / len(Values[inst]['M'])
+            Results[inst]["Min_M"] = min(Values[inst]['M'])
+        # print(f"Length BM: {len(Values[inst]['BM'])}")
+        if (len(Values[inst]['BM'])) > 0:
+            Results[inst]["Avg_BM"] = sum(Values[inst]['BM']) / len(Values[inst]['BM'])
+            Results[inst]["Min_BM"] = min(Values[inst]['BM'])
+        # print(f"Length MinCost_BM: {len(Values[inst]['MinCost_BM'])}")
+        if (len(Values[inst]['MinCost_BM'])) > 0:
+            Results[inst]["Avg_MinCost_BM"] = sum(Values[inst]['MinCost_BM']) / len(Values[inst]['MinCost_BM'])
+            Results[inst]["Min_MinCost_BM"] = min(Values[inst]['MinCost_BM'])
+
+        for key in ['Base','iPTS','M','BM','MinCost_BM']:
+            for value in Values[inst][key]:
+                Gaps[inst][key].append(round(((value-Bounds[inst])/value)*100,1))
+        for value in Table[inst]["Heuristic_Avg_value"]:
+            Gaps[inst]["all"].append(round(((value-Bounds[inst])/value)*100,1))
+
+
+        # print(f"{inst} & {Bounds[inst]} & {Table[inst]['IP_value']} ({Gaps[inst]['IP']}) & {Results[inst]['Min_GM']} ({Gaps[inst]['GM']}) & {Results[inst]['Min_Base']} ({Gaps[inst]['Base']}) & {Results[inst]['Min_iPTS']} ({Gaps[inst]['iPTS']}) & {Results[inst]['Min_M'] } ({Gaps[inst]['M']}) & {Results[inst]['Min_BM']} ({Gaps[inst]['BM']}) & {Results[inst]['Min_all']} ({Gaps[inst]['all']}) \\\\")
+        if InstanceSetting == "TTP":
+            print(f"{inst} & {Bounds[inst]} & {Table[inst]['IP_TripModel_HAP_fixed_value']} & {Results[inst]['Min_Base']} & {Results[inst]['Min_iPTS']} & {Results[inst]['Min_M'] } & {Results[inst]['Min_BM']} & {Results[inst]['Min_all']} \\\\")
+        else:
+            print(f"{inst} & {Bounds[inst]} & {Table[inst]['IP_value']} & {Results[inst]['Min_GM']} & {Results[inst]['Min_Base']} & {Results[inst]['Min_iPTS']} & {Results[inst]['Min_M'] } & {Results[inst]['Min_BM']} & {Results[inst]['Min_all']} \\\\")
+    breakpoint()
+
+    # boxplots:
+    AllValuesGaps = {"Base": [], "iPTS": [], "M": [], "BM": [], "all": []}
+    for inst in instances:
+        for key in AllValuesGaps.keys():
+            print(f"size of Gaps[{inst}][{key}] = {len(Gaps[inst][key])}")
+            AllValuesGaps[key] += Gaps[inst][key]
+
+    # Friedmans test:
+    print(f"{len(AllValuesGaps['Base'])}, {len(AllValuesGaps['iPTS'])}, {len(AllValuesGaps['M'])}, {len(AllValuesGaps['BM'])}, {len(AllValuesGaps['all'])}")
+    stats.friedmanchisquare(AllValuesGaps["Base"], AllValuesGaps["iPTS"], AllValuesGaps["M"], AllValuesGaps["BM"], AllValuesGaps["all"])
+    breakpoint()
+
+    data = pd.DataFrame({
+        "Method": ["Base"] * len(AllValuesGaps["Base"]) + ["iPTS"] * len(AllValuesGaps["iPTS"]) + ["M"] * len(AllValuesGaps["M"]) + ["BM"] * len(AllValuesGaps["BM"]) + ["all"] * len(AllValuesGaps["all"]),
+        "Value": AllValuesGaps["Base"] + AllValuesGaps["iPTS"] + AllValuesGaps["M"] + AllValuesGaps["BM"] + AllValuesGaps["all"]
+    })
+
+    sns.boxplot(data=data, x="Method", y="Value")
+    sns.swarmplot(data=data, x="Method", y="Value", color="black", alpha=0.8, size=2)
+
+    # Ensure everything fits perfectly
+    plt.tight_layout()
+
+    if InstanceSetting == "TTP":
+        plt.savefig("boxplot_TTP")
+    elif InstanceSetting == "Miao":
+        plt.savefig("boxplot_Football")
+    else:
+        plt.savefig("boxplot_Hockey")
+
+    # Display the plot
+    plt.show()
+
+    breakpoint()
+
+    print(f'Table in appendix:')
+    print(f"Instance & Avg iPTS & Min IPTS & Avg M & Min M & Avg BM+C & Min BM+C & Avg All & Min All \\\\")
+    for inst in instances:
+        # print(f"Instance = {inst}")
+        # print(f"Length iPTS: {len(Values[inst]['iPTS'])}")
+        if (len(Values[inst]['iPTS'])) > 0:
+            Results[inst]["Avg_iPTS"] = sum(Values[inst]['iPTS']) / len(Values[inst]['iPTS'])
+            Results[inst]["Min_iPTS"] = min(Values[inst]['iPTS'])
+        # print(f"Length M: {len(Values[inst]['M'])}")
+        if (len(Values[inst]['M'])) > 0:
+            Results[inst]["Avg_M"] = sum(Values[inst]['M']) / len(Values[inst]['M'])
+            Results[inst]["Min_M"] = min(Values[inst]['M'])
+        # print(f"Length BM: {len(Values[inst]['BM'])}")
+        if (len(Values[inst]['BM'])) > 0:
+            Results[inst]["Avg_BM"] = sum(Values[inst]['BM']) / len(Values[inst]['BM'])
+            Results[inst]["Min_BM"] = min(Values[inst]['BM'])
+        # print(f"Length MinCost_BM: {len(Values[inst]['MinCost_BM'])}")
+        if (len(Values[inst]['MinCost_BM'])) > 0:
+            Results[inst]["Avg_MinCost_BM"] = sum(Values[inst]['MinCost_BM']) / len(Values[inst]['MinCost_BM'])
+            Results[inst]["Min_MinCost_BM"] = min(Values[inst]['MinCost_BM'])
+
+        print(f"{inst} & {Results[inst]['Avg_iPTS']} & {Results[inst]['Min_iPTS']} & {Results[inst]['Avg_M']} & {Results[inst]['Min_M'] } & {Results[inst]['Avg_BM']} & {Results[inst]['Min_BM']} & {Results[inst]['Avg_all']} & {Results[inst]['Min_all']} \\\\")
 
 
 def MergeBounds():
@@ -425,7 +567,7 @@ def MergeBounds():
         output_file.write(f'Instance,LB,UB,gap \n')
         for inst in NrRoundsTTP.keys():
             for r in NrRoundsTTP[inst]:
-                FilePath = os.path.join(os.path.join(os.path.join("Instances"), "TTP"), "Bound_" + inst + "_" + str(r) + ".txt")
+                FilePath = os.path.join(os.path.join(os.path.join(os.path.join("Instances"), "TTP"), "Bounds"), "DLB_I_" + inst + "_" + str(r) + ".txt")
                 if not os.path.exists(FilePath):
                     print(f'The file {FilePath} does not exist yet!')
                     continue
@@ -433,483 +575,15 @@ def MergeBounds():
                     print(f'Open {FilePath}')
                     reader = csv.reader(file)
                     for i, row in enumerate(reader):
-                        output_file.write(f'{row[0]}_{row[4]},{row[1]},{row[2]},{round(float(row[3]),2)} \n')
+                        output_file.write(f'{inst}_{r},{row[1]},{row[2]},{round(float(row[3]),2)} \n')
     print(f'Merging bounds in file {OutputPath}')
-
-
-def TableListLengthst(FolderPathHeuristic):
-    OutputPath = os.path.join(os.path.join(os.path.join("Results"), "TTP"), "ListLengths.txt")
-    OutputPath_InstGapL = os.path.join(os.path.join(os.path.join("Results"), "TTP"), "InstGapL.txt")
-    OutputPath_InstTimeL = os.path.join(os.path.join(os.path.join("Results"), "TTP"), "InstTimeL.txt")
-    Output = {inst: {r: {l: {"Time": 0, "Value": 0} for l in ListLengths} for r in NrRoundsTTP[inst]} for inst in NrRoundsTTP.keys()}
-    Output_InstGapL = {inst: {r: {l: 0 for l in ListLengths} for r in NrRoundsTTP[inst]} for inst in NrRoundsTTP.keys()}
-    Output_InstTimeL = {inst: {r: {l: 0 for l in ListLengths} for r in NrRoundsTTP[inst]} for inst in NrRoundsTTP.keys()}
-    with open(OutputPath, "w") as output_file, open(OutputPath_InstGapL, "w") as output_file_InstGapL, open(OutputPath_InstTimeL , "w") as output_file_InstTimeL :
-        for i, l in enumerate(ListLengths):
-            if i < len(ListLengths)-1:
-                output_file.write(f'L{l}-Value,L{l}-Time,')
-            else:
-                output_file.write(f'L{l}-Value,L{l}-Time \n')
-        output_file_InstGapL.write("Instance,Gap,L\n")
-        output_file_InstTimeL.write("Instance,Time,L\n")
-        for inst in NrRoundsTTP.keys():
-            for r in NrRoundsTTP[inst]:
-                BestList = ListLengths[0]
-                BestValue = 2147483647
-                for l in ListLengths:
-                    FilePath = os.path.join(os.path.join(os.path.join(os.path.join(os.path.join("Instances"), "TTP"), "Results"), "Heuristic"), inst + "_" + str(r) + "_s0_HL" + str(l) + ".txt")
-                    if not os.path.exists(FilePath):
-                        print(f'The file {FilePath} does not exist yet!')
-                        continue
-                    with open(FilePath, 'r', newline="") as file:
-                        # print(f'Open {FilePath}')
-                        reader = csv.reader(file)
-                        for i, row in enumerate(reader):
-                            if row[0] == "Final":
-                                Output[inst][r][l]["Value"] = row[1]
-                                Output[inst][r][l]["Time"] = row[2]
-                                if int(row[1]) < BestValue :
-                                    BestList = l
-                                    BestValue = int(row[1])
-                                FilePathBound = os.path.join(os.path.join(os.path.join(os.path.join("Instances"), "TTP"), "Bounds"), "Bound_" + inst + "_" + str(r) + ".txt")
-                                with open(FilePathBound, 'r', newline="") as file2:
-                                    # print(f'Open {FilePathBound}')
-                                    reader2 = csv.reader(file2)
-                                    for i, row2 in enumerate(reader2):
-                                        Bound = int(row2[1])
-                                Output_InstGapL[inst][r][l] = str(round((int(row[1])-Bound)/int(row[1]),2))
-                                Output_InstTimeL[inst][r][l] = row[2]
-                                break
-                print(f'{inst}_{r}, {BestList}')
-        for inst in NrRoundsTTP.keys():
-            for r in NrRoundsTTP[inst]:
-                output_file.write(f'{inst}_{r},')
-                output_file.write(f'{inst}_{r},')
-                for i, l in enumerate(ListLengths):
-                    if i < len(ListLengths)-1:
-                        output_file.write(str(Output[inst][r][l]["Value"])+","+str(Output[inst][r][l]["Time"])+",")
-                    else:
-                        output_file.write(str(Output[inst][r][l]["Value"])+","+str(Output[inst][r][l]["Time"])+"\n")
-                    output_file_InstGapL.write(f"{inst}_{r},{Output_InstGapL[inst][r][l]},{l} \n")
-                    output_file_InstTimeL.write(f"{inst}_{r},{Output_InstTimeL[inst][r][l]},{l} \n")
-
-
-def MakeLinePlotInstTimeL():
-    InputPath_InstGapL = os.path.join(os.path.join(os.path.join("Results"), "TTP"), "InstTimeL.txt")
-
-    df = pd.read_csv(InputPath_InstGapL, sep=",")
-
-    # Ensure L is numeric and sort to get correct line order
-    df["L"] = pd.to_numeric(df["L"])
-    df = df.sort_values(["Instance", "L"])
-
-    fig, ax = plt.subplots(figsize=(20, 10))  # fig is the Figure, ax is the Axes
-
-    ax.set_xscale("log")
-    ax.set_xticks([l for l in ListLengths])  
-    from matplotlib.ticker import ScalarFormatter
-    ax.xaxis.set_major_formatter(ScalarFormatter())
-
-    for instance, group in df.groupby("Instance"):
-        ax.plot(group["L"], group["Time"], label=instance)
-
-    ax.set_title("Line plot")
-    ax.set_xlabel("Length")
-    ax.set_ylabel("Time")
-    ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-    fig.savefig(os.path.join("Figures","TimeListLengths.png"))
-    plt.show()
-
-        
-def MakeLinePlotInstGapL():
-    InputPath_InstGapL = os.path.join(os.path.join(os.path.join("Results"), "TTP"), "InstGapL.txt")
-
-    df = pd.read_csv(InputPath_InstGapL, sep=",")
-
-    # Ensure L is numeric and sort to get correct line order
-    df["L"] = pd.to_numeric(df["L"])
-    df = df.sort_values(["Instance", "L"])
-
-    fig, ax = plt.subplots(figsize=(20, 10))  # fig is the Figure, ax is the Axes
-
-    ax.set_xscale("log")
-    ax.set_xticks([l for l in ListLengths])  
-    from matplotlib.ticker import ScalarFormatter
-    ax.xaxis.set_major_formatter(ScalarFormatter())
-
-    for instance, group in df.groupby("Instance"):
-        ax.plot(group["L"], group["Gap"], label=instance)
-
-    ax.set_title("Line plot")
-    ax.set_xlabel("Length")
-    ax.set_ylabel("Gap")
-    ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-    fig.savefig(os.path.join("Figures","GapListLengths.png"))
-    plt.show()
-
-
-
-def BoxPlotsAblation(FolderPath):
-    FolderPathIP = os.path.join(FolderPath, "IP")
-    FolderPathBase = os.path.join(FolderPath, "Base")
-    FolderPathM = os.path.join(os.path.join(FolderPath, "Heuristic"), "M_uniform")
-    FolderPathBM = os.path.join(os.path.join(FolderPath, "Heuristic"), "BM_uniform")
-    FolderPathPTS = os.path.join(os.path.join(FolderPath, "Heuristic"), "iPTS_uniform")
-    FolderPathAll = os.path.join(FolderPath, "Heuristic")
-    FolderPaths = [FolderPathIP, FolderPathBase, FolderPathM, FolderPathBM, FolderPathPTS, FolderPathAll]
-
-    FilePathBounds = os.path.join(os.path.join("Instances", "TTP"), "DVBKDB.txt")
-    print(f'Open {FilePathBounds}')
-    Bounds = {inst: {r: 0 for r in NrRoundsTTP[inst]} for inst in NrRoundsTTP.keys()}
-    with open(FilePathBounds, 'r', newline="") as file:
-        reader = csv.reader(file)
-        for i, row in enumerate(reader):
-            inst = row[0]
-            if inst == "SUP12":
-                continue
-            lb = int(row[1])
-            r = int(row[2])
-            Bounds[inst][r] = lb
-            # print(f'LB of {inst} with {r} rounds  = {lb}')
-
-    # boxplots 
-    data = {"IP": [], "Base": [], "M": [], "BM": [], "iPTS": [], "All": []}
-
-    for inst in NrRoundsTTP.keys():
-        for r in NrRoundsTTP[inst]:
-            for algo, FolderPath in zip(data.keys(), FolderPaths):
-                if algo == "IP":
-                    File = inst + "_" + str(r) + ".txt"
-                else:
-                    File = inst + "_" + str(r) + "_s0_HL500" + ".txt"
-                FilePath = os.path.join(FolderPath, File)
-                if not os.path.exists(FilePath):
-                    print(f'The file {FilePath} does not exist yet!')
-                    continue
-                with open(FilePath, 'r', newline="") as file:
-                    reader = csv.reader(file)
-                    for i, row in enumerate(reader):
-                        if row[0] == "Final":
-                            BestSolution = int(row[1])
-                            gap = (BestSolution-Bounds[inst][r])/BestSolution
-                            if gap > 0.5 and algo != "IP":
-                                print(f'Instance {inst}_{r} has a gap of {round(gap,2)} (lb = {Bounds[inst][r]}), (ub = {BestSolution})')
-                            data[algo].append(gap)
-                            break
-
-    BoxPlots = [data["IP"], data["Base"], data["M"], data["BM"], data["iPTS"], data["All"]]
-    fig, ax = plt.subplots(figsize=(10, 7))
-    ax.boxplot(BoxPlots, labels=data.keys())
-    OutputPath = os.path.join("Figures", "Ablation_test1.png")
-    print(f"Save results in {OutputPath}")
-    plt.savefig(OutputPath) 
-    plt.show()
-
-
-def MakeTable(Paths):
-    row_table = {"IP": -1, "Heuristic": {l: -1 for l in ListLengths}, "BaseAlgo": {l: -1 for l in ListLengths}}
-    for path in Paths:
-        if not os.path.exists(path):
-            raise FileNotFoundError(f"The file '{path}' does not exist.")
-            sys.exit(0)
-        with open(path, 'r', newline="") as file:
-            reader = csv.reader(file)
-            for i, row in enumerate(reader):
-                if i == 0:
-                    method = row[1]
-                    print(f'{method}')
-                    seed = row[0]
-                    if method != "IP":
-                        MaxIt = int(row[2])
-                        TimeLimit = int(row[3])
-                        ListLength = int(row[4])
-                        ConstrViolationCost = int(row[5])
-                elif row[0] == "Final":
-                    value = int(float(row[1]))
-                    if method == "IP":
-                        row_table[method] = value
-                    else:
-                        row_table[method][ListLength] = value
-                    break
-    return row_table
-
-
-def InstancesCM():
-    Instances = []
-    for NrTeams in [36, 100, 250]:
-        for k in [1,5,10]:
-            for i in range(5):
-                Instance = str(NrTeams) + "_" + str(NrRoundsCM[NrTeams]) + "_k" + str(k) + "_" + str(i)
-                Instances.append(Instance)
-    return Instances
-
-
-def InstancesTTP():
-    Instances = []
-    for i in ["BRA24", "CIRC40", "CON40", "GAL40", "INCR40", "LINE40", "N16", "NFL32"]:
-        for NrRounds in NrRoundsTTP[i]:
-            Instance = i + "_" + str(NrRounds)
-            Instances.append(Instance)
-    return Instances
-
-
-def WriteOutput(CM,TTP,FolderPathIP, FolderPathHeuristic, FolderPathBase,OutputPath):
-    with open(OutputPath, "w") as output_file:
-        table = []
-        columns = ["Instance", "IP"] + ["Heuristic_" + "L" + str(l) for l in ListLengths] + ["Base_" + "L" + str(l) for l in ListLengths]
-        for c, col in enumerate(columns):
-            output_file.write(col)
-            if c < len(columns):
-                output_file.write(",")
-        output_file.write("\n")
-        if CM:
-            Instances = InstancesCM()
-        else:
-            Instances = InstancesTTP()
-
-        for Instance in Instances:
-            # print(Instance)
-            # Now, search through all the files and see if Instance is in the name of the file
-            Paths = []
-            for directory in [FolderPathIP, FolderPathHeuristic, FolderPathBase]:
-                for file_index, filename in enumerate(os.listdir(directory)):
-                    if Instance in filename and filename.endswith(".txt"):
-                        Paths.append(os.path.join(directory,filename))
-
-            if len(Paths) == 0:
-                # print(f"No results for instance {Instance}")
-                pass
-            else:
-                # print(f"Make plot of instance {Instance}")
-                row_dict = MakeTable(Paths)
-                row = [Instance, row_dict["IP"]] + [row_dict["Heuristic"][l] for l in ListLengths] + [row_dict["BaseAlgo"][l] for l in ListLengths]
-                table.append(row)
-                for v, val in enumerate(row):
-                    output_file.write(str(val))
-                    if v < len(row):
-                        output_file.write(",")
-                output_file.write("\n")
-        df = pd.DataFrame(table, columns=columns)
-        print(df)
-
-
-def Analyze(CM,TTP,FolderPathIP, FolderPathHeuristic, FolderPathBase):
-    if CM:
-        OutputPath = os.path.join(os.path.join("Results", "CM"), "BestValues.txt")
-    else:
-        OutputPath = os.path.join(os.path.join("Results", "TTP"), "BestValues.txt")
-    print(f"Save results in {OutputPath}")
-    WriteOutput(CM,TTP,FolderPathIP, FolderPathHeuristic, FolderPathBase,OutputPath)
-
-
-def AblationBoxPlots(InstanceSetting):
-
-    instances = []
-    Bounds = {}
-
-    bound = -1
-    if InstanceSetting == "TTP" or InstanceSetting == "Hockey":
-        for key in NrRoundsTTP.keys():
-            for r in NrRoundsTTP[key]:
-                instances.append(key + "_" + str(r))
-        Bounds = {inst: -1 for inst in instances}
-        if InstanceSetting == "TTP":
-            FilePathBounds = os.path.join(os.path.join(os.path.join("Instances", "TTP"), "Bounds"), "BestBounds.txt")
-        else:
-            FilePathBounds = os.path.join(os.path.join(os.path.join("Instances", "Hockey"), "Bounds"), "BestBounds.txt")
-        if not os.path.exists(FilePathBounds):
-            raise FileNotFoundError(f"The file '{FilePathBounds}' does not exist.")
-            sys.exit(0)
-        with open(FilePathBounds, 'r', newline="") as file:
-            reader = csv.reader(file)
-            for i, row in enumerate(reader):
-                Bounds[row[0]]  = row[1]
-                print(f'Bound of {row[0]} = {row[1]}')
-
-    if InstanceSetting == "Miao":
-        instances = []
-        PathRoot = os.path.join("Instances", "Miao")
-        I = ["i01", "i02", "i03", "i04", "i05", "i06"]
-        S = ["0","1","2"]
-        B = ["3", "100"]
-        for i in I:
-            for s in S:
-                for b in B:
-                    instances.append(i+"_s"+s+"_b"+b)
-        Bounds = {inst: -1 for inst in instances}
-
-        PathIP = os.path.join(os.path.join(os.path.join("Instances", "Miao"), "Results"), "IP")
-
-        Instances = ""
-        for file_index, filename in enumerate(os.listdir(PathIP)):
-            if not filename.endswith(".txt"):
-                continue
-            FilePath = os.path.join(PathIP, filename)
-            if not os.path.exists(FilePath):
-                raise FileNotFoundError(f"The file '{FilePath}' does not exist.")
-                sys.exit(0)
-            with open(FilePath, 'r', newline="") as file:
-                reader = csv.reader(file)
-                max_time = 0
-                for i, row in enumerate(reader):
-                    if i == 0:
-                        inst = row[2]
-                        setting = str(row[3])
-                        nr_breaks = str(row[4])
-                        Instance = inst + "_s" + setting + "_b" + nr_breaks
-                    if i > 1 and (row[0] == "Final"): # or method == "Heuristic" and int(row[0]) == TIME_LIMIT): # row[0] == "Final"
-                        Bounds[Instance] = row[2]
-                        print(f'Bound {Instance} = {row[2]}')
-                        break
-    Path_base = "Ablation"
-    if InstanceSetting == "Miao":
-        Path_base = os.path.join(Path_base, "Miao")
-
-    Path_source = os.path.join(Path_base, "Source")
-    Path_source_bm = os.path.join(Path_base, "Source_BM")
-    Path_source_m = os.path.join(Path_base, "Source_M")
-    Path_source_ipts = os.path.join(Path_base, "Source_iPTS")
-    Path_source_ipts_bm = os.path.join(Path_base, "Source_iPTS_BM")
-    Path_source_ipts_m = os.path.join(Path_base, "Source_iPTS_M")
-    Path_source_all = os.path.join(os.path.join(os.path.join(os.path.join("Instances"), "TTP"), "Results"), "Heuristic")
-
-    if InstanceSetting == "Miao":
-        Config = ["Source", "BM", "M", "iPTS"]
-        Paths = [Path_source, Path_source_bm, Path_source_m, Path_source_ipts]
-    else:
-        Config = ["Source", "BM", "M", "iPTS", "iPTS+BM", "iPTS+M", "iPTS+BM+M"]
-        Paths = [Path_source, Path_source_bm, Path_source_m, Path_source_ipts, Path_source_ipts_bm, Path_source_ipts_m, Path_source_all]
-
-    data = []
-
-    for Path, setting in zip(Paths, Config):
-        for file_index, filename in enumerate(os.listdir(Path)):
-            if not (filename.endswith("seed0.txt") or filename.endswith("seed11.txt") or filename.endswith("seed42.txt")): # miao instances were not all ready!
-                continue
-            FilePath = os.path.join(Path, filename)
-            if not os.path.exists(FilePath):
-                raise FileNotFoundError(f"The file '{FilePath}' does not exist.")
-                sys.exit(0)
-            if InstanceSetting == "TTP":
-                pattern = re.compile(r'(?:^|_)([A-Z]+[0-9]+_[0-9]+)(?:_|\.|$)')
-                match = pattern.search(filename)
-                if match:
-                    Instance = match.group(1)
-                    if Instance == "N16_4":
-                        Instance = "NL16_4"
-                    elif Instance == "N16_8":
-                        Instance = "NL16_8"
-                    elif Instance == "N16_12":
-                        Instance = "NL16_12"
-                # print(f'Extracted {Instance} from {filename}')
-                else:
-                    print(f'No match for {filename} in path {FilePath}')
-                    return
-            # print(FilePath)
-            with open(FilePath, 'r', newline="") as file:
-                reader = csv.reader(file)
-                max_time = 0
-                for i, row in enumerate(reader):
-                    if InstanceSetting == "Miao" and i == 0:
-                        inst = row[2]
-                        if inst not in {"i03", "i04", "i05"}:
-                            break
-                        cap_setting = str(row[3])
-                        nr_breaks = str(row[4])
-                        Instance = inst + "_s" + cap_setting + "_b" + nr_breaks
-                    if row[0] == "Final":
-                        gap = round(((int(row[1])-int(Bounds[Instance]))/int(row[1])),2)
-                        if gap < 0.9:
-                            data.append([setting, gap])
-                        else:
-                            print(f'Gap in {filename} is {gap}!!')
-                        # print(setting)
-                        break
-
-    df = pd.DataFrame(data, columns=["Configuration", "Gap"])
-    sns.boxplot(x="Configuration", y="Gap", data=df)
-    if InstanceSetting == "Miao":
-        plt.savefig("ablation_Miao.png")
-    else:
-        plt.savefig("ablation_iTTP.png")
-    plt.show()
-
-
-
-def MakePlotTimeListLength(FolderPathHeuristic,CM,TTP):
-    # loop over all instances, store values per list length!!
-    if CM:
-        OutputPath = os.path.join(os.path.join("Results", "CM"), "PlotLengthTime.png")
-    else:
-        OutputPath = os.path.join(os.path.join("Results", "TTP"), "PlotLengthTime.png")
-
-    data = {l: [] for l in ListLengths}
-
-
-    for directory in [FolderPathHeuristic]:
-        for file_index, filename in enumerate(os.listdir(directory)):
-            if not filename.endswith(".txt"):
-                continue
-            path = os.path.join(directory, filename)
-            if not os.path.exists(path):
-                raise FileNotFoundError(f"The file '{path}' does not exist.")
-                sys.exit(0)
-            with open(path, 'r', newline="") as file:
-                # print(path)
-                reader = csv.reader(file)
-                prev_time = 0
-                for i, row in enumerate(reader):
-                    if i == 0:
-                        Length = int(row[3])
-                    if i > 1:
-                        time = row[0]
-                        value = int(row[1])
-                        if time == "Final":
-                            time = prev_time+30
-                            data[Length].append(time)
-                            break
-                        else:
-                            prev_time = int(time)
-                            data[Length].append(int(time))
-                            
-    ListBoxplot = [data[l] for l in ListLengths]
-    fig, ax = plt.subplots()  # fig is the Figure, ax is the Axes
-
-    ax.set_yscale("log")
-    ax.set_yticks([1, 10, 30, 60, 120, 180, 300, 600, 1200, 2400, 3600, 7200])  
-    from matplotlib.ticker import ScalarFormatter
-    ax.yaxis.set_major_formatter(ScalarFormatter())
-
-    ax.boxplot(ListBoxplot, labels=ListLengths)
-    ax.set_title("Boxplot")
-    ax.set_xlabel("Length")
-    ax.set_ylabel("Time")
-    print(f"Save results in {OutputPath}")
-    # fig.savefig(OutputPath)  # saves as PNG
-    plt.show()
                         
 
 if __name__ == "__main__":
-    '''
-    TableListLengthst("")
-    breakpoint()
-    MakeLinePlotInstGapL()
-    MakeLinePlotInstTimeL()
-    breakpoint()
-    '''
-    # AblationBoxPlots("Miao")
-    # ResultsPercHAPs()
-    # breakpoint()
     setting = sys.argv[1]
-    CM = False
     TTP = False
     FolderPath = "Instances"
-    if setting == "CM":
-        CM = True
-        print("Analyze results cost minimization")
-        for subfolder in ["CostMinimization", "Karel", "0_100"]:
-            FolderPath = os.path.join(FolderPath, subfolder)
-    elif setting == "TTP":
+    if setting == "TTP":
         TTP = True
         FolderPath = os.path.join(FolderPath, "TTP")
         print("Analyze results TTP")
@@ -919,27 +593,14 @@ if __name__ == "__main__":
     elif setting == "Hockey":
         FolderPath = os.path.join(FolderPath, "Hockey")
     else:
-        print("Specify CM or TTP or Miao or Hockey")
+        print("Specify TTP or Miao or Hockey")
     FolderPath = os.path.join(FolderPath, "Results")
 
     if not os.path.exists(FolderPath):
         # Create the folder if it doesn't exist
         print(f"The folder {FolderPath} does not exists")
 
-    ResultsInstances(setting, iTTP=True)
-    breakpoint()
-    
-    FolderPathIP = os.path.join(FolderPath, "IP")
-    FolderPathHeuristic = os.path.join(FolderPath, "Heuristic")
-    FolderPathHeuristic = os.path.join(os.path.join(FolderPath, "Heuristic"), "NoMinCost") # TODo
-    FolderPathHeuristicNoMinCost = FolderPathHeuristic
-    FolderPathHeuristicMinCost = os.path.join(os.path.join(FolderPath, "Heuristic"), "MinCost")
-    FolderPathBase = os.path.join(FolderPath, "Base")
-
-    TableListLengthst(FolderPathHeuristic)
-    # BoxPlotsAblation(FolderPath)
-    # MakePlotTimeListLength(FolderPathHeuristic,CM,TTP)
-    # Analyze(CM,TTP,FolderPathIP, FolderPathHeuristic, FolderPathBase)
+    ResultsInstances(setting, iTTP=False)
 
 
 '''
