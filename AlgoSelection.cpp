@@ -44,7 +44,7 @@ void ReadSolutionXML(const string path, Solution& sol){
         int a = getAttr(line, "away");
         int r = getAttr(line, "slot");
 
-        SetValueCircleMethod(h,a,r,sol);
+        sol.SetColorMatch(h,a,r);
         sol.Orientation[h][r] = HA::H;
         sol.Orientation[a][r] = HA::A;
     }
@@ -83,7 +83,7 @@ void ReadSolution(const string path, Solution& sol){
         char comma; // to consume commas
 
         if (ss >> r >> comma >> h >> comma >> a) {
-            SetValueCircleMethod(h,a,r,sol);
+            sol.SetColorMatch(h,a,r);
             sol.Orientation[h][r] = HA::H;
             sol.Orientation[a][r] = HA::A;
             // cout << h << " vs " << a << " in " << r << endl;
@@ -257,7 +257,7 @@ void SolveLeagueByLeague(Input& in, const InputData& data, const bool ComputeTra
 }
 
 
-void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data){
+void SolveGreedyMatching(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data, const ParameterValues& param){
     // Find initial solution with Vizing
     Solution sol(in);
     std::mt19937 gen(data.seed);
@@ -272,7 +272,7 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
         cout << "Only 1 move: 2THAS" << endl;
     }
 
-    GreedyMatching GM(moves, weights, in.getNrRounds(), gen);
+    GreedyMatching GM(moves, weights, in.getNrRounds(), gen, sol);
 
     if (in.getSetting() == Setting::Football){
         string path = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
@@ -298,7 +298,6 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
         }
     }
 
-    GM.setTimeLimit_meta(data.TimeLimit);
     GM.SetTimeStamps(TimeStamps);
     GM.solve(in, sol);
     if (GM.NrSuccesfullMatchings >= 1){
@@ -319,12 +318,9 @@ void SolveMiaoHeuristic(Input& in, vector<int>& TimeStamps, const string FolderP
     }
     else{
         FilePath = "Instances" + string(PATHSEP) + "TTP" + string(PATHSEP) + "Results" + string(PATHSEP) + "MiaoAlgo" + std::string(PATHSEP) + sol.getInstanceName();
-        if (data.PercentageHAPs < 99.99){
-        FilePath += "_PercHAPs" + to_string(data.PercentageHAPs);
-        } 
         FilePath += "_s" + to_string(data.seed) + ".txt";
         
-        config = to_string(data.seed) + ",MiaoAlgo," + sol.getInstanceName() + "," + to_string(data.HistoryLength) + "," + to_string(data.PercentageHAPs);
+        config = to_string(data.seed) + ",MiaoAlgo," + sol.getInstanceName();
     }
     std::ofstream output_file(FilePath);
     output_file << config << "\n";
@@ -447,11 +443,14 @@ string FolderHeuristic(const Input& in, const InputData& data){
     return FolderPath;
 }
 
-void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data){
+void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data, const ParameterValues& param){
     // Find initial solution with Vizing
     cout << "Solve heuristic" << endl;
     Solution sol(in);
     sol.SetOneCostAllViolations(data.ConstrViolationCost); // this makes it impossible to select moves that violate any of the constraints
+    if (data.ConstraintViolationAllowed){
+        sol.ConstraintViolationAllowed = true;
+    }
 
     string path = "Instances" + string(PATHSEP);
 
@@ -507,21 +506,22 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     cout << "Cost initial solution = " << obj << endl;
 
     std::mt19937 gen(data.seed);
-    int HL = 1;
-    if (data.HistoryLengthProvided){
-        HL = data.HistoryLength;
+    MetaHeuristic M;
+    if (param.SA){
+        M = MetaHeuristic::SA;
     }
-    int TL = data.TimeLimit;
-    Heuristic algo(data.Moves, data.InputWeights, gen, HL, obj, sol);
-    // LAHC
-    if (!data.HistoryLengthProvided){
-        algo.MakeHistoryLengthDynamic();
+    else if (param.HC){
+        M = MetaHeuristic::HC;
     }
-    algo.SetPerturbeIncrease(data.PerturbeIncrease); // LAHC
-    algo.setTimeLimit_meta(TL);
-    algo.SetMaxIt(data.MaxIt); // LAHC
-    algo.SetTimeStamps(TimeStamps);
-    algo.solve(in, sol);
+    else if (param.ILS){
+        M = MetaHeuristic::ILS;
+    }
+    else{
+        M = MetaHeuristic::LAHC; // default is (adaptive) LAHC
+    }
+    auto MetaStrategy = MetaFactory<Move>::create(M, obj, param, data.Moves, data.InputWeights, data.InputWeightsPerturb, gen);
+    Heuristic myHeuristic(sol, std::move(MetaStrategy));
+    myHeuristic.solve(in, sol);
 
     int NrViolations = 0;
     sol.SetOneCostAllViolations(1);
@@ -534,9 +534,6 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
         cout << "HA Cost = " << sol.ComputeTotalHACost() << endl;
         cout << "Eligible opponents cost = " << sol.ComputeCostNonEligibleOpponents() << endl;
     }
-
-    algo.SaveBestSolution(sol);
-    sol.validate();
     cout << "Final cost = " << sol.ComputeTotalCost() << endl;
     if (data.TTP){
         cout << "Travel cost = " << sol.ComputeTravelCostTTP() << ", Cost violations = " << sol.CostTTPViolation << " x " << NrViolations << endl;
@@ -554,27 +551,27 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     if (in.getSetting() == Setting::TTP){
         FilePath += std::string(PATHSEP) + sol.getInstanceName();
         FilePath += "_s" + to_string(data.seed);
-        if (data.HistoryLengthProvided){
-            FilePath += "_HL" + to_string(data.HistoryLength);
+        if (param.HistoryLengthProvided){
+            FilePath += "_HL" + to_string(param.HistoryLength);
         }
         FilePath += ".txt";
         config = to_string(data.seed);
         config += ",Heuristic,";
-        config += to_string(data.MaxIt) + "," + to_string(data.TimeLimit) + "," + to_string(data.HistoryLength) + "," + to_string(data.PerturbeIncrease) + "," + to_string(data.ConstrViolationCost) + "," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
+        config += to_string(param.MaxIt) + "," + to_string(param.TIME_LIMIT) + "," + to_string(param.HistoryLength) + "," + to_string(param.PerturbeIncrease) + "," + to_string(data.ConstrViolationCost) + "," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
     }
     else if (in.getSetting() == Setting::Football){
         FilePath += std::string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + "_seed" + to_string(data.seed) + ".txt";
-        config = to_string(data.seed) + ",Heuristic," + data.Instance + "," + to_string(data.CapacitySetting) + "," + to_string(data.MaxNrBreaks) + "," + to_string(data.HistoryLength);
+        config = to_string(data.seed) + ",Heuristic," + data.Instance + "," + to_string(data.CapacitySetting) + "," + to_string(data.MaxNrBreaks) + "," + to_string(param.HistoryLength);
     }
     else if (in.getSetting() == Setting::Hockey){
         FilePath += std::string(PATHSEP)  + data.Instance + "_seed" + to_string(data.seed) + ".txt";
-        config = to_string(data.seed) + ",Heuristic," + data.Instance + "," + to_string(data.HistoryLength);
+        config = to_string(data.seed) + ",Heuristic," + data.Instance + "," + to_string(param.HistoryLength);
     }
 
     cout << "Save file as " << FilePath << endl;
     std::ofstream output_file(FilePath);
     output_file << config << "\n";
-    algo.SaveSolutionsTimeStamps(output_file);
+    myHeuristic.saveTimeStamps(output_file);
     if (data.TTP){
         output_file << "NrViolations," << NrViolations << "\n";
     }
@@ -590,7 +587,7 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     return;
 }
 
-void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data){
+void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const InputData& data, const ParameterValues& param){
     GurSolver gur(in);
     Solution sol(in);
     bool HA = true;
@@ -677,7 +674,7 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
         }
         // gur.Fix_x(sol);
     }
-    gur.setTimeLimit(data.TimeLimit);
+    gur.setTimeLimit(param.TIME_LIMIT);
     gur.SetTimeStamps(TimeStamps);
     gur.solve();
     cout << "save solution" << endl;
@@ -763,12 +760,12 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     return;
 }
 
-void SelectAlgo(InputData& data){
+void SelectAlgo(InputData& data, ParameterValues& param){
 
     vector<int>TimeStamps;
     int TimeStamp = 0;
     int Incrementor = 30;
-    while (TimeStamp <= data.TimeLimit){ 
+    while (TimeStamp <= param.TIME_LIMIT){ 
         TimeStamps.push_back(TimeStamp);
         TimeStamp += Incrementor;
     }
@@ -820,15 +817,14 @@ void SelectAlgo(InputData& data){
     return;
     */
     
-    if (data.Heuristic && !data.RunGM && !data.RunRF){
-        SolveHeuristic(in,TimeStamps,folder_path,data);
+    if (data.Heuristic && !data.RunGM){
+        SolveHeuristic(in,TimeStamps,folder_path,data,param);
     }
     else if (data.RunGM){
-        SolveMiaoHeuristic(in,TimeStamps,folder_path,data);
+        SolveGreedyMatching(in,TimeStamps,folder_path,data,param);
     }
     else{
-        cout << "Solve IP" << endl;
-        SolveIP(in,TimeStamps,folder_path,data);
+        SolveIP(in,TimeStamps,folder_path,data,param);
     }
 }
 
@@ -887,7 +883,7 @@ void BoundTTP(const int TimeLimit, const string Instance, const int NrRoundsTTP,
     output_file << Instance << "," << LB << "," << UB << "," << gap << "," << NrRoundsTTP << "\n";
 }
 
-void BoundsTTP_OneInstance(InputData& data){
+void BoundsTTP_OneInstance(InputData& data, ParameterValues& param){
     Input in;
     if (!in.read_TTP(data.Instance)){
         cout << "could not read " << data.Instance << endl;
@@ -906,6 +902,6 @@ void BoundsTTP_OneInstance(InputData& data){
     OutputFilePath += in.getInstanceName() + ".txt";
     cout << "Save file as " << OutputFilePath << endl;
     std::ofstream output_file(OutputFilePath);
-    BoundTTP(data.TimeLimit, data.Instance, data.NrRounds, output_file, data.addMinTripConstraint, data.addColoringConstraint);
+    BoundTTP(param.TIME_LIMIT, data.Instance, data.NrRounds, output_file, data.addMinTripConstraint, data.addColoringConstraint);
     output_file.close();
 }

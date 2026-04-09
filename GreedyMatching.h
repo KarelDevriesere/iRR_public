@@ -1,7 +1,6 @@
 #include "GurSolver.h"
 #include "Input.h"
 #include "Operators.h"
-#include "Algo.h"
 #include "Meta.h"
 
 class GreedyMatching: public HC<Move>{
@@ -17,8 +16,16 @@ class GreedyMatching: public HC<Move>{
 
         vector<vector<int>>Opponents; // Opponents[i][r] = j means that j is the opponent of j in round r
 
+        int RandomIntegerNumber(const int a, const int b){ // TODO
+            std::uniform_int_distribution<>dist = std::uniform_int_distribution<>(a,b);
+            return dist(gen);
+        }
+
+    protected:
+        Solution& sol;
+
     public:
-        GreedyMatching(const std::unordered_map<Move, string>& moves, const std::unordered_map<Move, double>& weights, const int NrRounds, std::mt19937& g);
+        GreedyMatching(const std::unordered_map<Move, string>& moves, const std::unordered_map<Move, double>& weights, const int NrRounds, std::mt19937& g, Solution& current_sol);
         ~GreedyMatching();
 
         int NrInfeasibleMatchings = 0;
@@ -30,24 +37,18 @@ class GreedyMatching: public HC<Move>{
 
         vector<int>Rounds;
 
-        vector<pair<int,int>> MWPBM(const int r, std::mt19937& gen, const int l, Solution& sol);
+        vector<pair<int,int>> MWPBM(const int r, const int l);
 
-        bool HomeAwaySwap(Solution& sol); // our own neighborhood
-        bool InterClubSwap(Solution& sol);
-        bool IntraClubSwap(Solution& sol);
-        bool RandomSwap(Solution& sol);
-        bool ComplementInsertion(Solution& sol);
-        bool SchedulePhase(Solution& sol);
-        void ReAssignHAPs(Solution& sol);
-        void Reset(Solution& sol); // delete all opponents
-        void ReverseMove(Solution& sol);
-        void SetAllOpponents(Solution& sol);
-        void SetOpponentsCurrentLeague(Solution& sol);
-
-        // Custom functions already declared in SA:
+        bool HomeAwaySwap(); // our own neighborhood
+        bool InterClubSwap();
+        bool IntraClubSwap();
+        bool RandomSwap();
+        bool ComplementInsertion();
+        bool SchedulePhase();
+        void Reset(); // delete all opponents
+        void ReverseMove();
+        void SetAllOpponents();
+        void SetOpponentsCurrentLeague();
         void solve(Input& in, Solution& sol) override;
-
-        void SolveGivenSeqeuence(Input& in, Solution& sol);
-
-        
+        void DoMove();
 };

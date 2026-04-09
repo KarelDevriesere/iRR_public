@@ -1,7 +1,6 @@
 #ifndef OPERATORS_H  
 #define OPERATORS_H 
 
-// #include "Graph.h"
 #include "Input.h"
 #include "Solution.h"
 #include <map>
@@ -11,34 +10,8 @@
 #include <string>
 #include <array>
 #include "GurSolver.h"
-#include "Algo.h"
+#include "Randomizer.h"
 #include <algorithm>
-
-#include <boost/config.hpp>
-#include <fstream>
-#include <iomanip>
-#include <boost/graph/edge_coloring.hpp>
-#include <boost/graph/properties.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/bellman_ford_shortest_paths.hpp>
-
-#include <boost/graph/floyd_warshall_shortest.hpp>
-#include <boost/graph/johnson_all_pairs_shortest.hpp>
-
-// TODO Overwrite maximum weighted matching with the newest boost file.
-// See https://github.com/boostorg/graph/issues/399
-//#include <boost/graph/maximum_weighted_matching.hpp>
-#include "maximum_weighted_matching.hpp"
-// #include <boost/graph/max_cardinality_matchinsol.hpp>
-
-#include <boost/graph/dijkstra_shortest_paths.hpp>
-
-typedef boost::adjacency_list <boost::vecS, boost::vecS, boost::directedS, boost::no_property, boost::property <boost::edge_weight_t, int>>BGraph;
-// shortest path needs listS?
-// typedef boost::adjacency_list< boost::listS, boost::vecS, boost::directedS, boost::no_property, boost::property< boost::edge_weight_t, int > >BGraph;
-typedef pair<int, int>Edge;
-typedef boost::property_map<BGraph, boost::edge_weight_t>::type WeightMap;
-typedef boost::graph_traits<BGraph>::vertex_descriptor Vertex;
 
 const int INF = 1000000; // large enough?
 
@@ -111,6 +84,15 @@ struct Lantarn{
     }
 };
 
+struct GPTS_lantarn{
+    int i;
+    int j;
+    vector<vector<int>>Chains;
+    void reset(){
+        Chains.clear();
+    }
+};
+
 class Operator{
     protected:
         Solution& sol;
@@ -143,6 +125,7 @@ class Operator{
 
         Lantarn lantarn;
         LineGraph LineGraph;
+        GPTS_lantarn lantarnGPTS;
 
         void clearVisited(){
             std::fill(Visited.begin(), Visited.end(), 0);
@@ -227,6 +210,10 @@ class Operator{
             std::fill(SwapColorLantarn.begin(), SwapColorLantarn.end(), 1);
         }
 
+        // Distributions:
+        std::unique_ptr<Randomizer<int>>DisWeightLG;
+        std::unique_ptr<Randomizer<int>>DisN;
+        std::unique_ptr<Randomizer<int>>DisR;
 
     public:
         Operator(Solution& current_sol, std::mt19937& current_gen): sol(current_sol), N(sol.getNrTeams()), R(sol.getNrRounds()), gen(current_gen){
@@ -246,6 +233,9 @@ class Operator{
             LineGraph.init(N,R);
             distLG.resize(LineGraph.N+2, vector<int>(LineGraph.N+2, 2*INF));
             predLG.resize(LineGraph.N+2, vector<int>(LineGraph.N+2,-1));
+            DisN = std::make_unique<Randomizer<int>>(0,N-1,gen);
+            DisR= std::make_unique<Randomizer<int>>(0,R-1,gen);
+            DisWeightLG = std::make_unique<Randomizer<int>>(1,10,gen);
         };
 
         // Deltas:
@@ -274,6 +264,8 @@ class Operator{
 
         int CostTSTeamsTTP(const int i, const int j);
 
+        void DeltaUnbalancedAlternatingCycle(int& delta, const vector<int>& CostBeforeTTPTeams);
+
         int CostTSTeamsYSTP(const int i, const int j);
 
         int DeltaPRS_YSTP(const int r, const int s, const int StartNode);
@@ -301,7 +293,8 @@ class Operator{
         void PRS(const int r, const int s, const int StartNode);
 
         // CycleReversal:
-        void CycleBalanced();
+        bool CycleBalanced(); // bool because in case no violations allowed, we can already check if we will have a violation or not
+        // during the construction of the cycle!
 
         void FloydWarshall(vector<vector<int>>& dist, vector<vector<int>>& pred); // both for normal and alternating cycles -> set dist and pred accordingly
 
@@ -327,14 +320,14 @@ class Operator{
 
         void PrepareFloydWarshallAlternatingCycle(const int r);
 
-        void FindMinCostBalancedACycle(const int r);
+        bool FindMinCostBalancedACycle(const int r);
 
         int StartNodeAlternatingCycleFloydWarshall(const int r);
 
-        void RetrieveAlternatingCycleFloydWarshall(const int start_node, const int r);
+        bool RetrieveAlternatingCycleFloydWarshall(const int start_node, const int r);
 
         // Balanced Random Alternating Cycle:
-        bool DFS_cycle(int u);
+        bool DFS_cycle(int u, const int l, const int r);
 
         // (Un)balanced Random Alternating Cycle:
         bool DFS_Modified(int u, const int l, const int r);
@@ -358,6 +351,20 @@ class Operator{
 
         // LineGraph:
 
+        struct StateDijkstra{
+            int v;
+            int dist;
+            StateDijkstra(int v_, int dist_){
+                v = v_;
+                dist = dist_;
+            }
+            bool operator>(const StateDijkstra& other)const{return dist > other.dist;}
+        };
+
+        bool DijkstraLineGraph(vector<int>& Pred, vector<int>& Cycle);
+
+        void FindCycleWithoutTTPViolations();
+
         struct State{
             vector<int>ForbiddenNodes; // if node is forbidden: set cost of INF for going from this node to its neighbors
             // int LB;
@@ -368,17 +375,29 @@ class Operator{
 
         void AddEdgeToLineGraph(const int a, const int h, const int weight);
 
-        void MakeLineGraph(const int source, const int sink);
+        void MakeLineGraph(const int source, const int sink, const bool NC);
 
         bool ShortestPathLineGraph(const int source, const int sink, int& delta);
 
-        bool SPFALineGraph(vector<int>& Pred, vector<int>& Cycle, int& delta);
+        bool SPFALineGraph(vector<int>& Pred, vector<int>& Cycle);
 
         bool FindCycleLineGraph(const double& current_obj, const bool NC);
 
         bool CycleWithoutTTPViolations(const double& current_obj);
 
         bool RetrieveCycleLineGraphFloydWarshall(vector<int>& Cycle, int& delta);
+
+        // GPTS:
+
+        void PrintChain(const vector<int>& chain);
+
+        bool FindChain(const int i, const int j, const int r, const int s, vector<int>& chain, vector<vector<uint8_t>>& EdgeIncluded);
+
+        void SwapColorsChainGPTS(const vector<int>& chain, const bool reverse);
+
+        void SwapColorsGPTSLantarn(const bool reverse);
+
+        bool GPTS(const int i, const int r, const int s);
 
 };
 

@@ -121,12 +121,12 @@ class GurSolver : public Input
         
         void Fix_x(Solution& sol);
         void FixHAP(Solution& sol);
-        void BuildMiaoFormulation(const bool relax_x, const bool min_travel, const bool min_capacity_violations);
+        void BuildIntegratedFormulation(const bool relax_x, const bool min_travel, const bool min_capacity_violations);
         void BuildPatternFormulation();
         void Fix_y_Patterns(const Solution& sol);
-        void AssignHAPsToTeams(Solution& sol); // For Miao's algorithm
+        void AssignHAPsToTeams(Solution& sol);
         void StoreHAPs(Solution& sol);
-        void AddMiaoSymmetryConstraint();
+        void AddSymmetryConstraint();
         void iTTP();
         
         bool TrackTimeBestSolution = true;

@@ -2835,7 +2835,7 @@ void GurSolver::Fix_y_Patterns(const Solution& sol){
 	}
 }
 
-void GurSolver::AddMiaoSymmetryConstraint(){
+void GurSolver::AddSymmetryConstraint(){
 	// Because teams from the same club is not enough, they also need to have the same strength!!
 	for (int c = 0; c < getNrClubs(); ++c){
 		for (int i = 0; i < getTeamsClub(c).size(); ++i){
@@ -2857,7 +2857,8 @@ void GurSolver::AddMiaoSymmetryConstraint(){
 	// cout << "added symmetry constraint" << endl;
 }
 
-void GurSolver::BuildMiaoFormulation(const bool relax_x, const bool min_travel, const bool min_capacity_violations){
+void GurSolver::BuildIntegratedFormulation(const bool relax_x, const bool min_travel, const bool min_capacity_violations){
+	// Big model described in Li et al (2025)
 	const bool HA = false;
 	build_all(HA, relax_x);
 	if (min_travel){
@@ -2883,48 +2884,6 @@ void GurSolver::BuildMiaoFormulation(const bool relax_x, const bool min_travel, 
 	}
 
 	AddObj(min_travel, min_capacity_violations);
-
-	// AddMiaoSymmetryConstraint(); // does not work with warm start
-	
-	// Constraint for the dummy teams:
-	/*
-	for (int i = 0; i < getNrTeams(); i++){
-		if (!isTeamDummy(i)){
-			GRBLinExpr sum_j = 0;
-			for (int j = 0; j < getNrTeams(); ++j){
-				if (isTeamDummy(j)){
-					for (int r = 0; r < getNrRounds(); ++r){
-						sum_j += (x[i][j][r] + x[j][i][r]);
-					}
-				}
-			}
-			model.addConstr(sum_j <= 2);
-			// In paper of Miao it is stated that "all teams originally assigned to leagues of size m-1
-			// in the solution of Toffolo can play against a dummy team at most 2x", but should this not
-			// be required for every team??
-		}
-	}
-		*/
-
-	// Limit total nr of dummy games 
-
-	/*
-	if (getNrTeams() == 216){
-		// this is the U15 instance in Miao
-		// Only instance where some leagues have more than 2 dummy teams
-		GRBLinExpr sum_ij = 0;
-		for (int i = 0; i < getNrTeams(); ++i){
-			for (int j = i+1; j < getNrTeams(); ++j){
-				if (isTeamDummy(i) && isTeamDummy(j)){
-					for (int r = 0; r < getNrRounds(); ++r){
-						sum_ij += (x[i][j][r] + x[j][i][r]);
-					}
-				}
-			}
-		}
-		model.addConstr(sum_ij == 46);
-	}
-	*/
 }
 
 void GurSolver::StoreHAPs(Solution& sol){

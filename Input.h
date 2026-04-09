@@ -10,7 +10,7 @@
 
 using namespace std;
 
-enum class Move{TS,PTS,RS,PRS,C,NC,
+enum class Move{TS,PTS,RS,PRS,GPTS,C,NC,
     MinCost_BM, Random_BM,
     iPTS_MinCost_PR, iPTS_Random_PR, iPTS_Random_PR_CR,
     MinCost_M_MinCost_PR, MinCost_M_Random_PR, Random_M_MinCost_PR, Random_M_Random_PR,
@@ -33,6 +33,7 @@ struct InputData{
     {Move::PTS, true}, 
     {Move::RS, true}, 
     {Move::PRS, true}, 
+    {Move::GPTS, false},
     {Move::C, false}, 
     {Move::NC, false},
     {Move::MinCost_BM, false}, 
@@ -51,6 +52,7 @@ struct InputData{
     {Move::PRS, "PRS"}, 
     {Move::C, "C"}, 
     {Move::NC, "NC"},
+    {Move::GPTS, "GPTS"},
     {Move::MinCost_BM, "MinCost_BM"}, 
     {Move::Random_BM, "Random_BM"}, 
     {Move::iPTS_MinCost_PR, "iPTS_MinCost_PR"},
@@ -64,15 +66,11 @@ struct InputData{
     string Instance;
     int seed = 0;
     bool Heuristic = 1;
-    bool HistoryLengthProvided = false;
-    int HistoryLength = 1;
-    double PerturbeIncrease = 0.005;
     int NrRounds = 4; // TTP
-    int TimeLimit = 7200;
-    long MaxIt = 100000;
     bool TTP = false; // TTP
-    long ConstrViolationCost = 100000;
+    long ConstrViolationCost = 10000000;
     unordered_map<Move, double>InputWeights;
+    unordered_map<Move, double>InputWeightsPerturb;
     bool addMinTripConstraint = false;
     bool addColoringConstraint = false;
 
@@ -86,14 +84,13 @@ struct InputData{
 
     string startSol = "";
 
-    bool RunGM = false;
-    bool RunRF = false;
-
+    bool RunGM = false; // Greedy Matching
     bool Hockey = false;
-    int PercentageHAPs = 100;
 
     bool SolveTripModel = false; // iTTP
     bool TripModelHAP_Fixed = false; //iTTP
+
+    bool ConstraintViolationAllowed = false;
 };
 
 class Input
@@ -107,6 +104,7 @@ class Input
         // vector<int>LeagueIndex;
         vector<vector<int>>ClubCapacity;
         vector<vector<int>>DistanceClubs;
+         vector<vector<int>>DistanceTeams;
         vector<int>TeamLeague;
         vector<int>TeamStrength;
         vector<int>Teams;
@@ -159,7 +157,7 @@ class Input
         int getNrRounds()const{return NrRounds;}
         int getNrClubs()const{return NrClubs;}
         int getDistanceClubs(const int c1, const int c2)const{return DistanceClubs[c1][c2];}
-        int getDistanceTeams(const int i, const int j)const;
+        int getDistanceTeams(const int i, const int j)const{return DistanceTeams[i][j];}
         vector<int> getTeamsClub(const int c)const{return ClubTeams[c];}
         vector<int> getTeamsClubLeague(const int c, const int l)const{return ClubTeamsLeague[c][l];}
         vector<int> getSingleTeamClubs()const{return SingleTeamClubs;};

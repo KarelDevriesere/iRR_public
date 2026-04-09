@@ -11,9 +11,11 @@
 
 using namespace std;
 
-class Heuristic: public LAHC<Move>, public Operator
+class Heuristic: public Operator, public MoveExecutor
 {
     private:
+        std::unique_ptr<MetaBase<Move>> MetaH;
+
         array<int,3>SelectTwoTeamsAndColorMinCost();
         array<int,3>SelectTwoTeamsAndColor();
         pair<int,int>SelectTwoTeams();
@@ -25,6 +27,7 @@ class Heuristic: public LAHC<Move>, public Operator
         void SelectPRS();
         void SelectiPRS(const bool bipartite);
         void SelectBalancedCycle();
+        void SelectGPTS();
 
         bool MinCostPR = false; // MinCost Path
         bool MinCostAC = false; // MinCost Alternating Cycle
@@ -39,16 +42,34 @@ class Heuristic: public LAHC<Move>, public Operator
         vector<HA>OrientationCopy_j; // iPTS
         vector<int>CostBeforeTTPTeams; // Unbalanced iPRS
 
+        // Only if orientation changed since last time does it make sense to do this
+        bool LineGraphUsefull = false;
+
+        // Random distributions:
+        std::unique_ptr<Randomizer<int>>DisL;
+        std::unique_ptr<Randomizer<int>>DisR2;
+        vector<std::unique_ptr<Randomizer<int>>>DisTL1;
+        vector<std::unique_ptr<Randomizer<int>>>DisTL2;
+
     public:
-        Heuristic(const std::unordered_map<Move, string>& moves, const std::unordered_map<Move, double>& weights, std::mt19937& g, const int HistoryLength, const int obj, Solution& current_sol);
+        explicit Heuristic(Solution& current_sol, std::unique_ptr<MetaBase<Move>> strategy);
         ~Heuristic();
+
+        void PushLocalOptimum();
         
-        void DoMove();
-
-        // Custom functions already declared in LAHC:
-        void solve(Input& in, Solution& sol) override;
-
-        // void Perturbe(Solution& sol) override; // ILS
+        void DoMove() override;
 
 	    void TeamSwapper();
+
+        void solve(Input& in, Solution& sol){
+            if (MetaH) {
+                MetaH->solve(in, sol);
+            }
+        }
+
+        void saveTimeStamps(std::ofstream& output_file) { // wrapper to save time stamps
+            if (MetaH) {
+                MetaH->SaveSolutionsTimeStamps(output_file);
+            }
+        }
 };

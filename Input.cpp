@@ -34,19 +34,6 @@ void Input::setBaseAlgo(){
         */
 }
 
-int Input::getDistanceTeams(const int i, const int j)const{
-    if (i > IsTeamDummy.size() || j > IsTeamDummy.size() || i < 0 || j < 0){
-        cout << "i = " << i << ", j = " << j << " in getDistanceTeams()" << endl;
-        std::abort();
-    }
-    if (isTeamDummy(i) || isTeamDummy(j)){
-        return 0;
-    }
-    else{
-        return DistanceClubs[TeamClub[i]][TeamClub[j]];
-    }
-}
-
 void Input::SetDefault(const int NrTeams){
     // All teams same strength, every team has its own club, no dummy teams, all teams in same league
     // In solution: modify everything such that instead of travel cost, we compute the costs
@@ -153,6 +140,7 @@ int Input::read_TTP(const std::string file_path){
     // ---- Read Distances ----
     MaxEdgeCost = 0;
     DistanceClubs = vector<vector<int>>(NrTeams, vector<int>(NrTeams, 0));
+    DistanceTeams = vector<vector<int>>(NrTeams, vector<int>(NrTeams, 0));
     CostMatchRound = vector<vector<vector<int>>>(NrTeams,vector<vector<int>>(NrTeams,vector<int>(NrRounds, 0)));
     xml_node<> *distancesNode = root->first_node("Data")->first_node("Distances");
     if (distancesNode) {
@@ -160,6 +148,7 @@ int Input::read_TTP(const std::string file_path){
             int t1 = std::stoi(dist->first_attribute("team1")->value());
             int t2 = std::stoi(dist->first_attribute("team2")->value());
             DistanceClubs[t1][t2] = std::stoi(dist->first_attribute("dist")->value());
+            DistanceTeams[t1][t2] = std::stoi(dist->first_attribute("dist")->value());
             // std::cout << "Distance between team " << t1 << " and " << t2 << " = " << DistanceClubs[t1][t2] << std::endl;
             if (MaxEdgeCost < DistanceClubs[t1][t2]){
                 MaxEdgeCost = DistanceClubs[t1][t2];
@@ -284,6 +273,7 @@ int Input::read_YSTP(const std::string file_path, const bool Miao){
                     if (Miao){
                         InstanceFootball = getFootballInstance();
                     }
+                    DistanceTeams = vector<vector<int>>(NrTeams, vector<int>(NrTeams, 0));
                 }
                 else if (j == 1){
                     NrLeagues = num;
@@ -423,6 +413,19 @@ int Input::read_YSTP(const std::string file_path, const bool Miao){
         ++i;
     }
     // cout << "done" << endl;
+
+    // distance of the teams:
+    for (int c1 = 0; c1 < NrClubs; ++c1){
+        for (int c2 = c1+1; c2 < NrClubs; ++c2){
+            for (int t1: getTeamsClub(c1)){
+                for (int t2: getTeamsClub(c2)){
+                    DistanceTeams[t1][t2] = DistanceClubs[c1][c2];
+                    DistanceTeams[t2][t1] = DistanceClubs[c1][c2];
+                    // cout << "distance vs " << t1 << " and " << t2 << " = " << DistanceTeams[t1][t2] << endl;
+                }
+            }
+        }
+    }
 
     // Add the dummy teams; only when not doing Miao instances (the dummy teams are hidden under the normal teams)
     // go over the teams and specify which teams are dummy teams and which are not!

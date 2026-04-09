@@ -15,6 +15,17 @@ class FO: public GurSolver, public SA<FO_move>
         vector<vector<vector<bool>>>x_value;
         vector<vector<vector<bool>>>x_fixed;
 
+        double RandomDoubleNumber(const double a, const double b){ // TODO
+            std::uniform_real_distribution<>dist = std::uniform_real_distribution<>(a,b);
+            return dist(gen);
+        }
+
+        int RandomIntegerNumber(const int a, const int b){ // TODO
+            std::uniform_int_distribution<>dist = std::uniform_int_distribution<>(a,b);
+            return dist(gen);
+        }
+
+
     public:
         FO(Input& in, const std::unordered_map<FO_move, string>& moves, const std::unordered_map<FO_move, double>& weights, std::mt19937& g);
         ~FO();

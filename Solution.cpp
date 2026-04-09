@@ -21,6 +21,17 @@ Solution::Solution(const Input& in) : Input(in) {
 }
 Solution::~Solution(){}
 
+void Solution::SetColorMatch(const int h, const int a, const int c){
+    MatchColor[h][a] = c;
+    if (SRR){
+        MatchColor[a][h] = c;
+    } 
+    TeamColorOpp[h][c] = a;
+    TeamColorOpp[a][c] = h;
+    // sol.Orientation[h][c] = HA::H;
+    // sol.Orientation[a][c] = HA::A;
+}
+
 void Solution::SetOneCostAllViolations(const int cost){
     NonEligibleCost = cost;
     CostCapacityViol = cost;
@@ -217,7 +228,7 @@ int Solution::getNrSameClub(const int i){
 int Solution::ComputeCostReversingOrientationTeam(const int i, const int r1, const int r2){
     int cost = 0;
     if (getSetting() == Setting::TTP){
-        cost -= (getCostTTPViolation()*ComputeTTPViolations(i) + ComputeTravelCostTeamTTP(i));
+        cost -= (getCostTTPViolation()*ComputeTTPViolations(i,0,getNrRounds()-1) + ComputeTravelCostTeamTTP(i));
     }
     else if (getSetting() == Setting::Football || getSetting() == Setting::Hockey){
         cost -= ComputeHACostTeam(i); //  not possible to take capacity violations into account because multiple teams in same club!!
@@ -226,7 +237,7 @@ int Solution::ComputeCostReversingOrientationTeam(const int i, const int r1, con
     std::swap(Orientation[i][r1], Orientation[i][r2]);
     // cout << "swap orientation of " << i << " in " << r1 << " and " << r2 << endl;
     if (getSetting() == Setting::TTP){
-        cost += (getCostTTPViolation()*ComputeTTPViolations(i) + ComputeTravelCostTeamTTP(i));
+        cost += (getCostTTPViolation()*ComputeTTPViolations(i,0,getNrRounds()-1) + ComputeTravelCostTeamTTP(i));
     }
     else if (getSetting() == Setting::Football || getSetting() == Setting::Hockey){
         cost += ComputeHACostTeam(i); //  not possible to take capacity violations into account because multiple teams in same club!!
@@ -498,78 +509,90 @@ int Solution::ComputeTotalCostYSTP(){
     return travel_cost + HA_cost + opp_cost + DRR_cost;
 }
 
-int Solution::ComputeTTPViolations(const int i){
-    int nrH = 0, nrA = 0; // nr of consecutive H or A
-    int nrV = 0; // nr of violations
-    for (int r = 0; r < NrColouredRounds; ++r){
-        if (Orientation[i][r] == HA::H){
-            nrH++;
-            nrA = 0;
-            // cout << i << "plays H in " << r << endl;
-        }
-        else{
-            assert(Orientation[i][r] == HA::A);
-            nrA++;
-            nrH = 0;
-            // cout << i << "plays A in " << r << endl;
-        }
-        if (nrH > 3 || nrA > 3){
-            nrV++;
-            /*
-            cout << "HAP of " << i << ": " << endl;
-            for (int s = 0; s < NrColouredRounds; ++s){
-                if (Orientation[i][s] == HA::H){
-                    cout << "H";
+int Solution::ComputeTTPViolations(const int i, const int min_round, const int max_round){
+    int cost = 0;
+    int NrH = 0, NrA = 0;
+    const auto& RowOrientation = Orientation[i];
+    for (int k = min_round; k <= max_round; ++k){
+        if (RowOrientation[k] == HA::H){
+            if (++NrH > 3){
+                if (ConstraintViolationAllowed){
+                    ++cost;
                 }
                 else{
-                    assert(Orientation[i][s] == HA::A);
-                    cout << "A";
+                    return 1;
                 }
             }
-            cout << endl;
-            */
+            NrA = 0;
+        }
+        else if (RowOrientation[k] == HA::A){
+            if (++NrA > 3){
+                if (ConstraintViolationAllowed){
+                    ++cost;
+                }
+                else{
+                    return 1;
+                }
+            }
+            NrH = 0;
         }
     }
-    return nrV;
+    if (ConstraintViolationAllowed){
+        return cost;
+    }
+    else{
+        return 0;
+    }
 }
 
 int Solution::ComputeTotalCostTTPViolations(){
     int sum = 0;
     for (int i = 0; i < getNrTeams(); ++i){
-        sum += ComputeTTPViolations(i);
+        sum += ComputeTTPViolations(i,0,getNrRounds()-1);
     }
     return sum*getCostTTPViolation();
 }
 
 
 int Solution::ComputeTravelCostTeamTTP(const int t)const{
-    int i,j,r;
     int CostOfTrips = 0;
-    for (r = 1; r < NrColouredRounds; ++r){
-        i = TeamColorOpp[t][r-1], j = TeamColorOpp[t][r];
-        if (i == -1 || j == -1){
-            continue;
-        }
-        if (Orientation[t][r-1] == HA::H && Orientation[t][r] == HA::A){
-            CostOfTrips += getDistanceTeams(t,j);
-            // cout << t << " -> " << j << ": " << getDistanceTeams(t,j) << endl;
-        }
-        else if (Orientation[t][r-1] == HA::A && Orientation[t][r] == HA::H){
-            CostOfTrips += getDistanceTeams(t,i);
-            // cout << i << " -> " << t << ": " << getDistanceTeams(i,t) << endl;
-        }
-        else if (Orientation[t][r-1] == HA::A && Orientation[t][r] == HA::A){
-            CostOfTrips += getDistanceTeams(i,j);
-            // cout << i << " -> " << j << ": " << getDistanceTeams(i,j) << endl;
-        }
-    }
-    if (Orientation[t][0] == HA::A && TeamColorOpp[t][0] != -1){
-        CostOfTrips += getDistanceTeams(t,TeamColorOpp[t][0]); // if it plays A in first round, it must also travel to that team (not accounted for in sum above)
+    const auto& TeamRow = TeamColorOpp[t];
+    const auto& OrientationRow = Orientation[t];
+
+    int PrevOpponent = TeamRow[0];
+    HA PrevOrientation = OrientationRow[0];
+
+    if (PrevOrientation == HA::A){
+        assert(PrevOpponent != -1);
+        CostOfTrips += getDistanceTeams(t,PrevOpponent); // if it plays A in first round, it must also travel to that team (not accounted for in sum above)
         // cout << t << " -> " << TeamColorOpp[t][0] << ": " << getDistanceTeams(t,TeamColorOpp[t][0]) << endl;
     }
-    if (Orientation[t][NrColouredRounds-1] == HA::A && TeamColorOpp[t][NrColouredRounds-1] != -1){
+    
+    int CurrOpponent;
+    HA CurrOrientation;
+    for (int r = 1; r < NrColouredRounds; ++r){
+        CurrOpponent = TeamRow[r];
+        CurrOrientation = OrientationRow[r];
+        if (PrevOrientation == HA::H && CurrOrientation == HA::A){
+            CostOfTrips += getDistanceTeams(t,CurrOpponent);
+            // cout << t << " -> " << j << ": " << getDistanceTeams(t,j) << endl;
+        }
+        else if (PrevOrientation == HA::A && CurrOrientation == HA::H){
+            CostOfTrips += getDistanceTeams(t,PrevOpponent);
+            // cout << i << " -> " << t << ": " << getDistanceTeams(i,t) << endl;
+        }
+        else if (PrevOrientation == HA::A && CurrOrientation == HA::A){
+            CostOfTrips += getDistanceTeams(PrevOpponent,CurrOpponent);
+            // cout << i << " -> " << j << ": " << getDistanceTeams(i,j) << endl;
+        }
+        PrevOpponent = CurrOpponent;
+        PrevOrientation = CurrOrientation;
+    }
+    
+    if (PrevOrientation == HA::A){
+        assert(PrevOpponent != -1);
        //  if ((NrColouredRounds == getNrRounds()) || (NrColouredRounds >= 3 && Orientation[t][NrColouredRounds-1] == HA::A && Orientation[t][NrColouredRounds-2] == HA::A && Orientation[t][NrColouredRounds-3] == HA::A)){
-            CostOfTrips += getDistanceTeams(t,TeamColorOpp[t][NrColouredRounds-1]); // similar for last round
+            CostOfTrips += getDistanceTeams(t,PrevOpponent); // similar for last round
             // cout << TeamColorOpp[t][NrColouredRounds-1] << " -> " << t << ": " << getDistanceTeams(t,TeamColorOpp[t][NrColouredRounds-1]) << endl;
         // }
     }
@@ -587,9 +610,14 @@ int Solution::ComputeTravelCostTTP(){
 }
 
 int Solution::ComputeTotalCostTeamTTP(const int i){
-    // cout << "Travel cost = " << ComputeTravelCostTTP() << endl;
-    // cout << "TTP cost = " << ComputeTotalCostTTPViolations() << endl;
-    return ComputeTravelCostTeamTTP(i)+getCostTTPViolation()*ComputeTTPViolations(i);
+    int delta = 0;
+    delta += getCostTTPViolation()*ComputeTTPViolations(i,0,getNrRounds()-1);
+    if (!ConstraintViolationAllowed && delta >= getCostTTPViolation()){
+        return delta;
+    }
+    else{
+        return delta + ComputeTravelCostTeamTTP(i);
+    }
 }
 
 int Solution::ComputeTotalCostTTP(){
