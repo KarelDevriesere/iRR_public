@@ -305,7 +305,8 @@ int Solution::ComputeCostNonEligibleOpponents(){
                 continue;
             }
             if (!isEligible(i, j)){
-                cost++;
+                // cost++;
+                return NonEligibleCost; // early exit
             }
         }
     }
@@ -347,7 +348,7 @@ int Solution::ComputeTravelCost(){
             cost += getDistanceTeams(i, j);
         }
     }
-    return TravelCost*cost;
+    return cost;
 }
 
 int Solution::ComputeCapacityClubRound(const int c, const int r)const{
@@ -484,9 +485,14 @@ int Solution::ComputeHACostTeam(const int i){
 
 int Solution::ComputeTotalHACost(){
     int cost = ComputeCostCapacities();
-    // cout << "Cost capacities = " << cost << endl;
+    if (cost >= CostCapacityViol){
+        return cost; // early exit
+    }
     for (int i = 0; i < getNrTeams(); ++i){
         cost += ComputeHACostTeam(i);
+        if (cost >= HighCostHAPs){
+            return cost; // early exit
+        }
     }
     return cost;
 }
@@ -516,33 +522,18 @@ int Solution::ComputeTTPViolations(const int i, const int min_round, const int m
     for (int k = min_round; k <= max_round; ++k){
         if (RowOrientation[k] == HA::H){
             if (++NrH > 3){
-                if (ConstraintViolationAllowed){
-                    ++cost;
-                }
-                else{
-                    return 1;
-                }
+                ++cost;
             }
             NrA = 0;
         }
         else if (RowOrientation[k] == HA::A){
             if (++NrA > 3){
-                if (ConstraintViolationAllowed){
-                    ++cost;
-                }
-                else{
-                    return 1;
-                }
+                ++cost;
             }
             NrH = 0;
         }
     }
-    if (ConstraintViolationAllowed){
-        return cost;
-    }
-    else{
-        return 0;
-    }
+    return cost;
 }
 
 int Solution::ComputeTotalCostTTPViolations(){

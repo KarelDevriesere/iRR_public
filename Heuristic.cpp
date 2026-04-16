@@ -11,18 +11,12 @@
 // const std::unordered_map<Move, string>& moves, const std::unordered_map<Move, double>& weights, std::mt19937& g
 
 Heuristic::Heuristic(Solution& current_sol, std::unique_ptr<MetaBase<Move>> strategy): Operator(current_sol, strategy->gen), MetaH(std::move(strategy)){
-            std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
-            MetaH->setStartTime(start_time);
-            MetaH->BestOrientation = vector<vector<HA>>(sol.getNrTeams(), vector<HA>(sol.getNrRounds()));
-            MetaH->BestTeamColorOpp = vector<vector<int>>(sol.getNrTeams(), vector<int>(sol.getNrRounds()));
+            MetaH->Initialize(sol);
+            MetaH->SetExecutor(this);
+
             CostBeforeTTPTeams.resize(sol.getNrTeams());
             OrientationCopy_i.resize(sol.getNrRounds());
             OrientationCopy_j.resize(sol.getNrRounds());
-            MetaH->Reset();
-            MetaH->best_obj = sol.ComputeTotalCost();
-            MetaH->current_obj = MetaH->best_obj;
-            MetaH->UpdateBestSolution(sol);
-            MetaH->SetExecutor(this);
 
             // DisN and DisR come from Operators.h
             DisL = std::make_unique<Randomizer<int>>(0, sol.getNrLeagues()-1, MetaH->gen);
@@ -134,6 +128,7 @@ void Heuristic::SelectiPTS(){
 
 #ifndef NDEBUG
     int cost_before = sol.ComputeTotalCost();
+    if (cost_before != MetaH->current_obj){std::abort();}
 #endif
 
     /*
@@ -343,7 +338,7 @@ void Heuristic::SelectiPTS(){
     if (!MetaH->Update(sol, cost_after)){
         // first, set back all orientations
         if (lantarn.PathReversalNeeded){
-            ReversePath(true, true);
+            ReversePath(true, false);
         }
         // Then, swap back the colors
         SwapColorsLantarn(OrientationCopy_i, OrientationCopy_j);
@@ -359,6 +354,7 @@ void Heuristic::SelectiPTS(){
         MetaH->UpdateBest(sol, cost_after);
         LineGraphUsefull = true;
     }
+
     return;
 }
 
@@ -500,11 +496,13 @@ void Heuristic::SelectiPRS(const bool bipartite){
         }
     }
 
+    /*
     if (!bipartite){
         for (int t = 0; t < N; ++t){
             CostBeforeTTPTeams[t] = -sol.ComputeTotalCostTeamTTP(t);
         }
     }
+    */
     
         // cout << "AlternatingCycle found!!" << endl;
         // a_cycle contains only initially uncoloured edges!!!
@@ -512,7 +510,8 @@ void Heuristic::SelectiPRS(const bool bipartite){
         int cost_before = sol.ComputeTotalCost();
         // cout << "cost_before = " << cost_before << endl;
 #endif 
-
+        bool ConstrViolationAllowedCopy = sol.ConstraintViolationAllowed;
+        sol.ConstraintViolationAllowed = true;
         int delta = 0;
         EvaluateAlternatingCycleWithPaths(r, bipartite, delta, MinCostPR);
         // for TTP: only teams whose orientations did not change are included so far in delta
@@ -525,11 +524,6 @@ void Heuristic::SelectiPRS(const bool bipartite){
             assert(sol.ComputeTotalHACost() == 0);
         }
 #endif 
-// TODO: early exit deltas here
-    if (!bipartite && sol.getSetting() == Setting::TTP){
-        assert(delta == 0);
-        DeltaUnbalancedAlternatingCycle(delta, CostBeforeTTPTeams);
-    }
 
     int cost_after;
     if (sol.getSetting() == Setting::TTP){
@@ -545,6 +539,7 @@ void Heuristic::SelectiPRS(const bool bipartite){
 #ifndef NDEBUG
     // cout << "cost_after = " << cost_after << ", total_cost = " << sol.ComputeTotalCost() << endl;
     if (sol.ConstraintViolationAllowed){
+        // cout << cost_after << " == " << sol.ComputeTotalCost() << endl;
         assert(cost_after == sol.ComputeTotalCost());
     }
 #endif  
@@ -575,6 +570,7 @@ void Heuristic::SelectiPRS(const bool bipartite){
         // do this here because update is not called when cycles are empty
         MetaH->Update(sol, MetaH->current_obj);
     }
+    sol.ConstraintViolationAllowed = ConstrViolationAllowedCopy;
     assert(sol.validate());
     return;
 } 

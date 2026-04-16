@@ -24,6 +24,12 @@ enum class FootballInstance{S, U13, U15, U17, U21, M, Tiny}; // Instances paper 
 const std::unordered_map<Move, string>GreedyMatchingMoves = {{Move::InterClubSwap, "InterClubSwap"}, {Move::IntraClubSwap, "IntraClubSwap"}, {Move::RandomSwap, "RandomSwap"}, {Move::ComplementInsertion, "ComplementInsertion"}};
 const std::unordered_map<Move, double>GreedyMatchingWeights = {{Move::InterClubSwap, 1.0/3.0}, {Move::IntraClubSwap, 1.0/3.0}, {Move::RandomSwap, 1.0/6.0}, {Move::ComplementInsertion, 1.0/6.0}};
 
+// R1: 1 round free, R2: 2 rounds free, R3: 3 rounds free, T: free subset of teams
+enum class FO_move{R1, R2C, R3C, R2NC, R3NC, T}; 
+
+const std::unordered_map<FO_move, string>FixAndOptimizeMoves{{FO_move::R1, "R1"}, {FO_move::R2C, "R2C"}, {FO_move::R3C, "R3C"}, {FO_move::R2NC, "R2NC"}, {FO_move::R3NC, "R3NC"}, {FO_move::T, "T"}}; // C: consecutive, NC: non consecutive
+const std::unordered_map<FO_move, double>FixAndOptimizeWeights = {{FO_move::R1, 1.0/6.0}, {FO_move::R2C, 1.0/6.0}, {FO_move::R3C, 1.0/6.0}, {FO_move::R2NC, 1.0/6.0}, {FO_move::R3NC, 1.0/6.0}, {FO_move::T, 1.0/6.0}};
+
 enum class HA{H, A, BYE};
 
 struct InputData{
@@ -68,7 +74,7 @@ struct InputData{
     bool Heuristic = 1;
     int NrRounds = 4; // TTP
     bool TTP = false; // TTP
-    long ConstrViolationCost = 10000000;
+    long ConstrViolationCost = 500000; // may be set higher for other sets of instances
     unordered_map<Move, double>InputWeights;
     unordered_map<Move, double>InputWeightsPerturb;
     bool addMinTripConstraint = false;
@@ -86,6 +92,7 @@ struct InputData{
 
     bool RunGM = false; // Greedy Matching
     bool Hockey = false;
+    bool FO; // Fix and Optimize
 
     bool SolveTripModel = false; // iTTP
     bool TripModelHAP_Fixed = false; //iTTP

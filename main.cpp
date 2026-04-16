@@ -39,7 +39,11 @@ void ModifyWeights(const unordered_map<Move,string>& Moves, unordered_map<Move, 
     for (const auto& [move, weight]: InputWeights){
         InputWeights.at(move) /= sum;
         sum_weights += InputWeights.at(move);
+#ifdef PRINT
+#if PRINT == 1
         cout << Moves.at(move) << ": " << InputWeights.at(move) << endl;
+#endif 
+#endif
     }
     if (NoMoveSeen){
         assert(sum == 0);
@@ -49,7 +53,11 @@ void ModifyWeights(const unordered_map<Move,string>& Moves, unordered_map<Move, 
         for (const auto& [move, name]: Moves){
             InputWeights[move] = 1.0 / sum;
             sum_weights += InputWeights.at(move);
+#ifdef PRINT
+#if PRINT == 1
             cout << Moves.at(move) << ": " << InputWeights.at(move) << endl;
+#endif 
+#endif
         }
     }
     if (sum_weights <= 0.99 || sum_weights >= 1.01){
@@ -84,6 +92,8 @@ int main(int argc, const char* argv[]){
                 std::cerr << "Heuristic should be 0 or 1" << endl;
                 return 1;
             }
+            data.RunGM = 0;
+            data.FO = 0;
         }
         else if (arg == "--InstanceTTP"){ // TTP
             data.Instance = argv[++i];
@@ -93,7 +103,6 @@ int main(int argc, const char* argv[]){
             //    return 1;
             //}
             data.TTP = true;
-    std::cout << "Set data TTP true" << std::endl;
             data.Football = false;
             data.Hockey = false;
         }
@@ -140,7 +149,13 @@ int main(int argc, const char* argv[]){
                 */
         }
         else if (arg == "--GM"){ // YSTP, football
-            data.RunGM = std::stoi(argv[++i]);
+            data.Heuristic = 0;
+            data.FO = 0;
+        }
+        else if (arg == "--FO"){ // YSTP, football, hockey
+            data.FO = std::stoi(argv[++i]);
+            data.Heuristic = 0;
+            data.RunGM = 0;
         }
         else if (arg == "--InstanceHockey"){
             int hockey_i = std::stoi(argv[++i]);
@@ -289,6 +304,12 @@ int main(int argc, const char* argv[]){
             }
             param.LAHC = true;
         }
+        else if (arg == "--VNS"){ // Variable Neighborhood Search
+            if (!std::stoi(argv[++i])){
+                continue;
+            }
+            param.VNS = true;
+        }
         else if (arg == "--ConstrViolationAllowed"){
             if (std::stol(argv[++i]) > 0){
                 data.ConstraintViolationAllowed = true;
@@ -357,15 +378,30 @@ int main(int argc, const char* argv[]){
         return 1;
     }
 
+    if (data.Heuristic){
+#ifdef PRINT
+#if PRINT == 1
     cout << "------ Weights ------" << endl;
+#endif
+#endif
     ModifyWeights(data.Moves, data.InputWeights);
     ModifyWeights(data.Moves, data.InputWeightsPerturb);
+#ifdef PRINT
+#if PRINT == 1
+    cout << "---------------------" << endl;
+#endif
+#endif
+    }
+#ifdef PRINT
+#if PRINT == 1
     cout << "---------------------" << endl;
     cout << "Instance = " << data.Instance << endl;
     cout << "Parameters specified:" << endl;
     cout << "TimeLimit = " << param.TIME_LIMIT << endl;
     cout << "Max iterations = " << param.MAX_IT << endl;
     cout << "HistoryLength = " << param.HistoryLength << endl;
+#endif
+#endif
     SelectAlgo(data, param);
 
     return 1;

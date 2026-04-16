@@ -1,6 +1,7 @@
 #ifndef META_H  
 #define META_H
 
+#include <cmath> // for sqrt and log (log is ln)
 #include <filesystem>
 #include <iostream>
 #include <fstream>
@@ -40,6 +41,9 @@ struct ParameterValues{
     int IT_MAX_PERT = 1; // Maximum number of perturbations
     // TODO: weights of moves when doing perturbation?
 
+    // VS: TimeBased, so no parameters (except for the order in which we do them)
+    bool VNS = false;
+
     // LAHC:
     bool LAHC = false;
     int HistoryLength = 1; // HistoryLength
@@ -49,7 +53,7 @@ struct ParameterValues{
     double PerturbeValue_INITIAL = 1.005; // Everytime we reset the history length, we fill the list with values in range [best_obj, best_obj*PerturbeValue_INITIAL]
 };
 
-enum class MetaHeuristic{HC, SA, ILS, LAHC};
+enum class MetaHeuristic{HC, SA, ILS, LAHC, VNS};
 
 class MoveExecutor { // Executor: here we do not need to know the logic behind the moves
 public:
@@ -145,11 +149,17 @@ class MetaBase{ // Everything that can be used for all metaheuristics
                 CurrentMove = SelectNB();
                 executor->DoMove(); // do a move of CurrentMove
                 Reconfigure(sol); // check internal state of the algorithm 
+                if (current_obj < 0){
+                    cout << "current_obj is negative!" << endl;
+                    std::abort();
+                }
             }
             while(!STOP);
             SaveBestSolution(sol);
             sol.validate();
         }
+
+        void Initialize(Solution& sol);
 
         void UpdateBest(Solution& sol, const int obj); // Check if we need to update the best solution
 
@@ -240,7 +250,11 @@ class MetaBase{ // Everything that can be used for all metaheuristics
             for (auto&[TimeStamp, Solution]: TimeStampSolution){
                 output_file << TimeStamp << "," << Solution << "\n";
             }
+#ifdef PRINT
+#if PRINT == 1
             cout << "Total time = " << (int)this->getTimeDiff() << endl;
+#endif
+#endif
             output_file << "Final, " << this->best_obj << "," << (int)this->getTimeDiff() << "\n" << endl;
         }
 
@@ -250,35 +264,41 @@ class MetaBase{ // Everything that can be used for all metaheuristics
 
         Move SelectNB(){
             Move BestMove;
-            // double rnd = RandomDoubleNumber->Sample();
-            // if (rnd < epsilon){
             double rnd = RandomDoubleNumber->Sample();
             auto iterator = WeightsCumul.upper_bound(rnd);
             BestMove = iterator->second;
-            // }
-            /*
-            else{
-                double BestValue = -1;
-                // sample a value, if less than epsilon, select a move uniformly, otherwise select the move with the best reward
-                for (auto& [move, value]: SelectionProbabilityMAB){
-                    // cout << Moves.at(move) << ": " << value << endl;
-                    if (NrChosen.at(move) == 0){
-                        BestValue = value;
-                        BestMove = move;
-                        break;
-                    }
-                    else if (value > BestValue){
-                        BestValue = value;
-                        BestMove = move;
-                    }
-                }
-            }
-                */
             return BestMove;
         }
 
-        void UpdateReward(Move move){
-            SelectionProbabilityMAB.at(move) = NrImprov.at(move) / (double)NrChosen.at(move);
+        Move SelectNB_MAB(){ // Multi Armed Bandit
+            Move BestMove;
+            double BestValue = -1;
+            // select the move with the best reward
+            // cout << "------------------------" << endl;
+            // cout << "Selection probabilities:" << endl;
+            for (auto& [move, value]: SelectionProbabilityMAB){
+                // cout << Moves.at(move) << ": " << value << endl;
+                if (NrChosen.at(move) == 0){
+                    BestValue = value;
+                    BestMove = move;
+                    break;
+                }
+                else if (value > BestValue){
+                    BestValue = value;
+                    BestMove = move;
+                }
+            }
+            // cout << "------------------------" << endl;
+            // cout << Moves.at(BestMove) << " selected" << endl;
+            return BestMove;
+        }
+
+        void UpdateSelectionProbabilities(Move move){
+            double exploration_term = 2*std::sqrt((double)std::log(it)/(double)NrChosen.at(move));
+            SelectionProbabilityMAB.at(move) = Reward.at(move) / (double)NrChosen.at(move) + exploration_term;
+            // cout << "NrChosen = " << NrChosen.at(move) << endl;
+		    // cout << "Reward = " << Reward.at(move) << endl;
+            //cout << "exploration_term = " << exploration_term << endl;
         }
 
         // ------------------------------- MAB ----------------------------------- //
@@ -420,6 +440,35 @@ class ILS: public MetaBase<Move>{ // Hill Climbing
 
 };
 
+template<typename Move>
+class VNS: public MetaBase<Move>{ // Variable Neighborhood Search
+    private:
+        const vector<string>OrderedMoves = {"C", "PRS", "TS", "Random_BM", "iPTS_Random_PR", "Random_M_Random_PR"};
+        vector<Move>OrderedPresentMoves;
+        int previous_best_obj = INT_MAX;
+    public:
+        bool perturb = false;
+
+        VNS(const std::unordered_map<Move, string>& moves, // moves, weights and in are defined in main
+           const std::unordered_map<Move, double>& weights, std::mt19937& g): MetaBase<Move>(moves, weights, g){
+            // insert moves in order
+            int it = 0;
+            for (string move_name1: OrderedMoves){
+                for (auto& [move, weight]: this->Weights){
+                    if (this->Moves.at(move) == move_name1){
+                        OrderedPresentMoves.push_back(move);
+                        cout << "add move " << move_name1 << " as the " << ++it << "'th neighborhood" << endl;
+                        break;
+                    }
+                }
+            }
+        }
+
+        bool Update(Solution& sol, const int obj);
+
+        void solve(Input& in, Solution& sol)override;
+};
+
 template<typename Move> 
 class MetaFactory{
     public:
@@ -456,6 +505,10 @@ class MetaFactory{
                 lahc_ptr->PerturbeValue_INITIAL = ParamV.PerturbeValue_INITIAL;
                 lahc_ptr->InitializeHistoricValues(obj, obj, lahc_ptr->HistoryLength);
                 MetaH = std::move(lahc_ptr);
+            }
+            else if (M == MetaHeuristic::VNS){
+                auto vns_ptr = std::make_unique<VNS<Move>>(moves, weights, g);
+                MetaH = std::move(vns_ptr);
             }
             else{
                 throw std::invalid_argument("Unknown heuristic type");

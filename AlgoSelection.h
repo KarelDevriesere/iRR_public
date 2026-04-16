@@ -8,6 +8,7 @@
 #include "Input.h"
 #include "GreedyMatching.h"
 #include "Meta.h"
+#include "FO.h"
 
 #include <filesystem>
 

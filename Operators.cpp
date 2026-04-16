@@ -33,6 +33,50 @@ int Operator::getLoc(const int i, const int round) {
     }
 };
 
+int Operator::DeltaHASwap(const int i, const int r){
+    // Effect of swapping the orientation of team i in round r on the HAPs for TTP
+    const int min_r = std::max(0, r-3);
+    const int max_r = std::min(R-1, r+3);
+    int delta = -sol.ComputeTTPViolations(i, min_r, max_r);
+
+    if (sol.Orientation[i][r] == HA::H){
+        sol.Orientation[i][r] = HA::A;
+    }
+    else{
+        sol.Orientation[i][r] = HA::H;
+    }
+
+    delta += sol.ComputeTTPViolations(i, min_r, max_r);
+    if (sol.Orientation[i][r] == HA::H){
+        sol.Orientation[i][r] = HA::A;
+    }
+    else{
+        sol.Orientation[i][r] = HA::H;
+    }
+
+    return sol.getCostTTPViolation()*delta;
+}
+
+int Operator::CostTTPSingleEdgeSwap(const int i, const int r){
+    // cost of swapping orientation of edge {i,j} for i
+    // Both effect on HAPs and travel distance for TTP
+    int delta = 0;
+
+    int L_r_prev = getLoc(i,r-1);
+    int L_r      = getLoc(i,r);
+    int L_r_next = getLoc(i,r+1);
+
+    int L_r_after = i;
+    if (sol.Orientation[i][r] == HA::H){
+        L_r_after = sol.TeamColorOpp[i][r];
+    }
+
+    delta += DeltaHASwap(i,r);
+    delta -= (sol.getDistanceTeams(L_r_prev, L_r) + sol.getDistanceTeams(L_r, L_r_next));
+    delta += (sol.getDistanceTeams(L_r_prev, L_r_after) + sol.getDistanceTeams(L_r_after, L_r_next));
+    return delta;
+}
+
 int Operator::DeltaTravelOrientationSwapTeam(const int i, const int r, const int s) {
     // Ensure r is the earlier round for easier logic
     int MinRound = std::min(r, s);
@@ -138,9 +182,7 @@ int Operator::DeltaHACostOrientationSwapTeam(const int i, const int r, const int
         const int min_s = std::max(0, s-3);
         const int max_s = std::min(R-1, s+3);
 
-        if (sol.ConstraintViolationAllowed){
-            delta -= sol.getCostTTPViolation()*(sol.ComputeTTPViolations(i, min_r, max_r) + sol.ComputeTTPViolations(i, min_s, max_s));
-        }
+        delta -= (sol.getCostTTPViolation()*(sol.ComputeTTPViolations(i, min_r, max_r) + sol.ComputeTTPViolations(i, min_s, max_s)));
         std::swap(RowOrientation[r], RowOrientation[s]);
         delta += sol.getCostTTPViolation()*(sol.ComputeTTPViolations(i, min_r, max_r) + sol.ComputeTTPViolations(i, min_s, max_s));
         std::swap(RowOrientation[r], RowOrientation[s]);
@@ -149,9 +191,7 @@ int Operator::DeltaHACostOrientationSwapTeam(const int i, const int r, const int
         const int min_r = std::max(0, std::min(r,s)-3);
         const int max_r = std::min(R-1, std::max(r,s)+3);
 
-        if (sol.ConstraintViolationAllowed){
-            delta -=  sol.getCostTTPViolation()*sol.ComputeTTPViolations(i, min_r, max_r);
-        }
+        delta -= sol.getCostTTPViolation()*sol.ComputeTTPViolations(i, min_r, max_r);
         std::swap(RowOrientation[r], RowOrientation[s]);
         delta +=  sol.getCostTTPViolation()*sol.ComputeTTPViolations(i, min_r, max_r);
         std::swap(RowOrientation[r], RowOrientation[s]);
@@ -198,6 +238,40 @@ int Operator::CostRoundSwapTeamiTTP(const int i, const int r, const int s){
     // cout << "New cost team " << i << " : " << sol.ComputeTotalCostTeamTTP(i)+delta_HA+delta_travel << endl;
 
     return delta_travel+delta_HA;
+}
+
+int Operator::CostUncoloredRoundSwapHASwapTeamiTTP(const int i, const int UncoloredOpponent_i, const int r, const int s){
+    int delta = 0;
+    // Exactly one must be uncolored and one must be colored!
+
+    assert((r == -1 || s == -1) && !(r == -1 && s == -1));
+
+    int f,c;
+    if (r == -1){
+        f=r;
+        c=s;
+    }
+    else{
+        f=s;
+        c=r;
+    }
+
+    int L_c_prev = getLoc(i, c - 1);
+    int L_c = getLoc(i, c);
+    int L_c_next = getLoc(i, c + 1);
+
+    int L_c_after = i;
+    if (sol.Orientation[i][c] == HA::H){
+        L_c_after = UncoloredOpponent_i;
+    }
+
+    delta += DeltaHASwap(i,r);
+    delta -= (sol.getDistanceTeams(L_c_prev, L_c) + sol.getDistanceTeams(L_c, L_c_next));
+    // cout << "initial travel for team " << i << ": " << L_c_prev << " -> (" << sol.getDistanceTeams(L_c_prev, L_c) << ")" << L_c << " -> (" << sol.getDistanceTeams(L_c, L_c_next) << ")" << L_c_next << endl;
+    delta += (sol.getDistanceTeams(L_c_prev, L_c_after) + sol.getDistanceTeams(L_c_after, L_c_next));
+    // cout << "new travel for team " << i << ": " << L_c_prev << " -> (" << sol.getDistanceTeams(L_c_prev, UncoloredOpponent_i) << ")" << UncoloredOpponent_i << " -> (" << sol.getDistanceTeams(UncoloredOpponent_i, L_c_next) << ")" << L_c_next << endl;
+
+    return delta; 
 }
 
 int Operator::CostUncoloredRoundSwapTeamiTTP(const int i, const int UncoloredOpponent_i, const int r, const int s){
@@ -427,6 +501,7 @@ int Operator::DeltaiPTS_TS(const int k, int r, int s){
 void Operator::DeltaUnbalancedAlternatingCycle(int& delta, const vector<int>& CostBeforeTTPTeams){
     clearVisited();
     int t1,t2,e;
+    /*
     for (e = 1; e < AlternatingCycle.size(); e+=2){
         t1 = AlternatingCycle[e].first, t2 = AlternatingCycle[e].second;
         delta += sol.ComputeTotalCostTeamTTP(t1);
@@ -440,6 +515,7 @@ void Operator::DeltaUnbalancedAlternatingCycle(int& delta, const vector<int>& Co
         delta += CostBeforeTTPTeams[t2];
         Visited[t1] = 1, Visited[t2] = 1;
     }
+    */
     for (auto& current_path: PathsAC){
         path = current_path;
         for (e = 0; e < path.size(); ++e){
@@ -1482,57 +1558,90 @@ void Operator::EvaluateAlternatingCycleWithPaths(const int r, const bool biparti
         }
     }
 
+    /*
+    cout << "---------------------------------" << endl;
+    for (int t = 0; t < N; ++t){
+        cout << "cost before of " << t << " = " << sol.ComputeTotalCostTeamTTP(t) << endl;
+    }
+    cout << "---------------------------------" << endl;
+    */
+
     // cout << "Uncolored edges:" << endl;
     int h_team, a_team;
     for (e = 0; e < AlternatingCycle.size(); e+=2){
         i = AlternatingCycle[e].first, j = AlternatingCycle[e].second;
+        a_team = i, h_team = j; // default in balanced alternating cycle
         if (bipartite){
             assert(sol.Orientation[i][r] == HA::A); 
             assert(sol.Orientation[j][r] == HA::H);
-        }
-        a_team = i, h_team = j; // default in balanced alternating cycle
-        if (sol.Orientation[i][r] == sol.Orientation[j][r] && sol.Orientation[i][r] == HA::H){
-            assert(!bipartite);
-            if (gen() % 2 == 0){
-                h_team = i, a_team = j;
+            if (sol.getSetting() != Setting::TTP){
+                delta += sol.getDistanceTeams(i, j);
             }
-            A_teamsAC.push_back(a_team);
-        }
-        else if (sol.Orientation[i][r] == sol.Orientation[j][r] && sol.Orientation[i][r] == HA::A){
-            assert(!bipartite);;
-            if (gen() % 2 == 0){
-                h_team = i, a_team = j;
+            else{
+                // compute deltas of the teams whose orientations did not change!!
+
+                // for the home team, nothing changes! Only compute for away team
+                
+                // cout << AlternatingCycle[e-1].first << "<-" << AlternatingCycle[e-1].second << endl;
+                // cout << j << " -- " << k << endl;
+                // assert(sol.Orientation[k][r] == HA::H);
+
+                delta += CostUncoloredRoundSwapTeamiTTP(i, j, r, -1);
+                
+                // cout << "delta " << j << " = " << CostUncoloredRoundSwapTeamiTTP(j, k, r, -1, sol) << endl;
+
+                // cout << i << "," << j << "," << r << ": -" << sol.getCostMatchRound(i,j,r) << endl;
+                // cout << sol.getDistanceTeams(i,j) << endl;
             }
-            H_teamsAC.push_back(h_team);
-        }
-        else if (sol.Orientation[i][r] == HA::H && sol.Orientation[j][r] == HA::A){
-            a_team = j, h_team = i;
-        }
-        if (sol.getSetting() != Setting::TTP){
-            delta += sol.getDistanceTeams(i, j);
         }
         else{
-            // compute deltas of the teams whose orientations did not change!!
-
-            // for the home team, nothing changes! Only compute for away team
-            
-            // cout << AlternatingCycle[e-1].first << "<-" << AlternatingCycle[e-1].second << endl;
-            // cout << j << " -- " << k << endl;
-            // assert(sol.Orientation[k][r] == HA::H);
-            if (bipartite){
-                assert(sol.Orientation[i][r] == HA::A);
-                delta += CostUncoloredRoundSwapTeamiTTP(i, j, r, -1); 
+            if (sol.Orientation[i][r] == sol.Orientation[j][r]){
+                if (sol.Orientation[i][r] == HA::H){
+                    assert(!bipartite);
+                    if (gen() % 2 == 0){
+                        h_team = i, a_team = j;
+                    }
+                    A_teamsAC.push_back(a_team);
+                    delta += CostUncoloredRoundSwapHASwapTeamiTTP(a_team, h_team, r, -1);
+                    // cout << "1" << endl;
+                    // cout << "delta of " << a_team  << " = " << CostUncoloredRoundSwapHASwapTeamiTTP(a_team, h_team, r, -1) << endl;
+                }
+                else{
+                    assert(!bipartite);;
+                    if (gen() % 2 == 0){
+                        h_team = i, a_team = j;
+                    }
+                    H_teamsAC.push_back(h_team);
+                    delta += CostUncoloredRoundSwapTeamiTTP(a_team, h_team, r, -1);
+                    delta += CostUncoloredRoundSwapHASwapTeamiTTP(h_team, a_team, r, -1);
+                    // cout << "2" << endl;
+                    // cout << "delta of " << a_team  << " = " << CostUncoloredRoundSwapTeamiTTP(a_team, h_team, r, -1) << endl;
+                    // cout << "delta of " << h_team  << " = " << CostUncoloredRoundSwapHASwapTeamiTTP(h_team, a_team, r, -1) << endl;
+                }
             }
-            // cout << "delta " << j << " = " << CostUncoloredRoundSwapTeamiTTP(j, k, r, -1, sol) << endl;
-
-            // cout << i << "," << j << "," << r << ": -" << sol.getCostMatchRound(i,j,r) << endl;
-            // cout << sol.getDistanceTeams(i,j) << endl;
+            else{
+                if (sol.Orientation[i][r] == HA::H && sol.Orientation[j][r] == HA::A){
+                    a_team = j, h_team = i;
+                }
+                // nothing changes for the team that played home -> still plays home!!
+                delta += CostUncoloredRoundSwapTeamiTTP(a_team, h_team, r, -1);
+                // cout << "3" << endl;
+                // cout << "delta of " << a_team << " = " << CostUncoloredRoundSwapTeamiTTP(a_team, h_team, r, -1) << endl;
+            }
         }
         sol.SetColorMatch(h_team,a_team,r);
         sol.Orientation[h_team][r] = HA::H;
         sol.Orientation[a_team][r] = HA::A;
     }
 
+    /*
+    cout << "---------------------------------" << endl;
+    for (int t = 0; t < N; ++t){
+        cout << "cost after of " << t << " = " << sol.ComputeTotalCostTeamTTP(t) << endl;
+    }
+    cout << "---------------------------------" << endl;
+    cin.get();
+    */
     /*
     for (int i = 0; i < sol.getNrTeams(); ++i){
         DeltaReal[i] += sol.ComputeTravelCostTeamTTP(i);
@@ -1563,6 +1672,7 @@ void Operator::EvaluateAlternatingCycleWithPaths(const int r, const bool biparti
         shuffle(A_teamsAC.begin(), A_teamsAC.end(), gen);
         int a;
         for (int k = 0; k < H_teamsAC.size(); ++k){
+            h_team = H_teamsAC[k];
             // path is shortest in distance, but does not take into account the costs
             // It can be that not path exists between the teams because they are in different disconnected components!
             bool PathFound = false;
@@ -1570,10 +1680,22 @@ void Operator::EvaluateAlternatingCycleWithPaths(const int r, const bool biparti
             a = -1;
             do{
                 ++a;
+                a_team = A_teamsAC[k+a];
                 // delta is computed in this function!!
-                PathFound = FindNormalPathOneLeague(A_teamsAC[k+a], H_teamsAC[k], delta, false);
+                PathFound = FindNormalPathOneLeague(a_team, h_team, delta, true);
             }
             while(k+a+1 < A_teamsAC.size() && !PathFound);
+
+            // also compute deltas of source and sink!! (single edge)
+            // because we already reversed the arc in  FindNormalPathOneLeague, we have to do minus here
+            if (path.size() > 1){
+                delta -= CostTTPSingleEdgeSwap(path.front()[0], path.front()[2]);
+                delta -= CostTTPSingleEdgeSwap(path.back()[1], path.back()[2]);
+            }
+            else{
+                delta -= CostTTPSingleEdgeSwap(path.front()[0], path.front()[2]);
+                delta -= CostTTPSingleEdgeSwap(path.front()[1], path.front()[2]);
+            }
 
             if (sol.SRR && !PathFound){
                 cout << "No path found in M+PR" << endl;
@@ -1581,7 +1703,7 @@ void Operator::EvaluateAlternatingCycleWithPaths(const int r, const bool biparti
             }
             // path is reversed in function!!
             PathsAC.emplace_back(std::move(path));
-            std::swap(A_teamsAC[k], A_teamsAC[k+a]);
+            std::swap(A_teamsAC[k], a_team);
         }
     }
 }
@@ -1693,9 +1815,9 @@ bool Operator::DFS_Modified(int u, const int l, const int r){
             }
         }
         */
-        int i,w;
         int N_l = sol.getNrTeamsLeague(l);
-        int start = rand() % N_l;
+        int start = gen() % N_l; // ensure some randomness
+        int i,w;
         for (i = 0; i < N_l; ++i){
             w = i+start;
             if (w > N_l-1){
@@ -1786,7 +1908,7 @@ bool Operator::DFS_cycle(int u, const int l, const int r){
     */
 
     int N_l = sol.getNrTeamsLeague(l);
-    int start = rand() % N_l; // ensure some randomness
+    int start = gen() % N_l; // ensure some randomness
     int i,w;
     for (i = 0; i < N_l; ++i){
         w = i+start;
@@ -1899,14 +2021,19 @@ void Operator::AlternatingCycleBM(const int l, const int r, const bool bipartite
     clearStack();
     clearCount();
 
-    for (int& i: sol.getTeamsLeague(l)){
-        if (bipartite && !Visited[i]){
-            if (DFS_cycle(i, l, r)){
+    int start = gen() % N_l; // ensure some randomness
+    for (i = 0; i < N_l; ++i){
+        int w = i+start;
+        if (w > N_l-1){
+            w -= N_l;
+        }
+        if (bipartite && !Visited[w]){
+            if (DFS_cycle(w, l, r)){
                 break;
             }
         }
-        else if (!bipartite && !Visited[i]){
-            if (DFS_Modified(i, l, r)){
+        else if (!bipartite && !Visited[w]){
+            if (DFS_Modified(w, l, r)){
                 break;
             }
         }

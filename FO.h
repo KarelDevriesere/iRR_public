@@ -3,40 +3,43 @@
 
 #include "GurSolver.h"
 #include "Meta.h"
+#include "Input.h"
 
-// R1: 1 round free, R2: 2 rounds free, R3: 3 rounds free, T: free subset of teams
-enum class FO_move{R1, R2C, R3C, R2NC, R3NC, T}; 
-const unordered_map<FO_move, string>FO_name_string = {{FO_move::R1, "R1"}, {FO_move::R2C, "R2C"}, {FO_move::R3C, "R3C"}, 
-    {FO_move::R2NC, "R2NC"}, {FO_move::R3NC, "R3NC"}, {FO_move::T, "T"}}; // C: consecutive, NC: non consecutive
-
-class FO: public GurSolver, public SA<FO_move>
+class FO: public GurSolver, public MoveExecutor
 {
     private:
+        std::unique_ptr<MetaBase<FO_move>> MetaH;
+
         vector<vector<vector<bool>>>x_value;
         vector<vector<vector<bool>>>x_fixed;
+        vector<bool>LeagueFree;
 
-        double RandomDoubleNumber(const double a, const double b){ // TODO
-            std::uniform_real_distribution<>dist = std::uniform_real_distribution<>(a,b);
-            return dist(gen);
-        }
+        std::unique_ptr<Randomizer<double>>DisFreeTeams;
+        std::unique_ptr<Randomizer<double>>DisFreeHAPs;
 
-        int RandomIntegerNumber(const int a, const int b){ // TODO
-            std::uniform_int_distribution<>dist = std::uniform_int_distribution<>(a,b);
-            return dist(gen);
-        }
+        int MaxNrRandomIterations = 20; // maximum number of iterations where we sample uniformly from the neighborhoods before doing multi armed bandit
+        double obj_prev_pert = INT_MAX; // objective before the previous perturb
+        // If nothing happened: increase computation time and percentage of free variables
+        // TODO
 
 
     public:
-        FO(Input& in, const std::unordered_map<FO_move, string>& moves, const std::unordered_map<FO_move, double>& weights, std::mt19937& g);
+        FO(Input& in, std::unique_ptr<MetaBase<FO_move>> strategy);
         ~FO();
 
+        double TimeLimitPerturb = 60;
+        double PercFreeVariables = 0.50;
         double PercFreeTeams = 0.15;
         unordered_map<FO_move, double>PercentageHapsFixed = {{FO_move::R1, 0.0}, {FO_move::R2C, 0.0}, {FO_move::R3C, 0.05}, 
             {FO_move::R2NC, 0.0}, {FO_move::R3NC, 0.0}, {FO_move::T, 0.05}}; // Number of Haps we fix based on the number of rounds
         unordered_map<FO_move, double>TimeLimit = {{FO_move::R1, 10.0}, {FO_move::R2C, 10.0}, {FO_move::R3C, 10.0}, 
             {FO_move::R2NC, 10.0}, {FO_move::R3NC, 10.0}, {FO_move::T, 10.0}}; // in seconds!!
+
+        unordered_map<FO_move, int>NrLeaguesFree = {{FO_move::R1, 1}, {FO_move::R2C, 1}, {FO_move::R3C, 1}, 
+            {FO_move::R2NC, 1}, {FO_move::R3NC, 1}, {FO_move::T, 1}};
         
-        void InitializeModel(Solution& sol);
+        void InitializeModel(Solution& sol, const InputData& data);
+        void FreeLeagues();
         void FreeRounds(const int nr, const bool consecutive);
         void FreeTeams();
         void fix_all();
@@ -44,13 +47,16 @@ class FO: public GurSolver, public SA<FO_move>
         void FixVariables();
         void SetDualProbs();
         void UpdateSizeFixedVariables(const FO_move move, const bool optimal);
-        void UpdateSelectionProbabilities();
+        void UpdateSizeFreeLeagues(const FO_move move, const bool optimal);
         void FreeVariables();
+        void FreeVariablesPerturb();
         void Validate();
         void Set_x_value_from_sol(Solution& sol);
         void Store_x_value();
 
-        void solve(Input& in, Solution& sol);
+        void DoMove() override;
+        void solve(Input& in, Solution& sol, const InputData& data);
+        int Perturb(Solution& sol);
 };
 
 #endif

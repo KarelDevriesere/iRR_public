@@ -22,7 +22,7 @@ GRBModel GurSolver::createModel(GRBEnv& env) {
 	// env.set(GRB_IntParam_LogToConsole, 0); // surpress all output
 #endif
 #endif
-	// env.set(GRB_IntParam_LogToConsole, 0);
+	env.set(GRB_IntParam_LogToConsole, 0);
 	return GRBModel(env);
   }
 
@@ -1517,6 +1517,24 @@ void GurSolver::Min2Factor(){
 	model.setObjective(Objective, GRB_MINIMIZE);
 }
 
+void GurSolver::AddObj_iTTP(){
+	// Objective function:
+	Objective = 0;
+	int t,i,j;
+	for (t = 0; t < getNrTeams(); ++t){
+		for (i = 0; i < getNrTeams(); ++i){
+			for (j = 0; j < getNrTeams(); ++j){
+				if (i == j){
+					continue;
+				}
+				Objective += getDistanceTeams(i,j)*z[t][i][j];
+			}
+		}
+	}
+	model.setObjective(Objective, GRB_MINIMIZE);
+	model.update();
+}
+
 void GurSolver::iTTP(){
 
 	int t,i,j,r;
@@ -1647,32 +1665,7 @@ void GurSolver::iTTP(){
 		}
 	}
 
-	// Objective function:
-	Objective = 0;
-	for (t = 0; t < getNrTeams(); ++t){
-		for (i = 0; i < getNrTeams(); ++i){
-			for (j = 0; j < getNrTeams(); ++j){
-				if (i == j){
-					continue;
-				}
-				Objective += getDistanceTeams(i,j)*z[t][i][j];
-			}
-		}
-	}
-	/*
-	Objective = 0;
-	for (r = 0; r < getNrRounds(); ++r){
-		for (i = 0; i < getNrTeams(); ++i){
-			for (j = 0; j < getNrTeams(); ++j){
-				if (i == j){
-					continue;
-				}
-				Objective += getDistanceTeams(i,j)*x[i][j][r];
-			}
-		}
-	}
-	*/
-	model.setObjective(Objective, GRB_MINIMIZE);
+	AddObj_iTTP();
 
 	// Add all odd set constraints of size 3 and 5:
 
@@ -2485,6 +2478,30 @@ void GurSolver::AddObj(const bool min_travel, const bool min_capacity_violations
 		Objective = 0;
 	}
 	model.setObjective(Objective, GRB_MINIMIZE);
+	model.update();
+}
+
+void GurSolver::AddObjPerturb(const vector<vector<vector<bool>>>& x_fixed, const vector<vector<vector<bool>>>& x_value){
+	// Minimize number of variables that are free that stay the same
+	Objective = 0;
+	for (int i = 0; i < getNrTeams(); ++i){
+		for (int j = 0; j < getNrTeams(); ++j){
+			if (isEligible(i, j)){
+				for (int r = 0; r < getNrRounds(); ++r){
+					if (!x_fixed[i][j][r]){
+						if (x_value[i][j][r]){
+							Objective += x[i][j][r];
+						}
+						else{
+							Objective += (1-x[i][j][r]);
+						}
+					}
+				}
+			}
+		}
+	}
+	model.setObjective(Objective, GRB_MINIMIZE);
+	model.update();
 }
 
 void GurSolver::setBoundCapacityViolations(){

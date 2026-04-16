@@ -244,6 +244,12 @@ class Operator{
 
         int getLoc(const int i, const int round);
 
+        int CostTTPSingleEdgeSwap(const int i, const int r);
+
+        int DeltaHASwap(const int i, const int r);
+
+        int CostUncoloredRoundSwapHASwapTeamiTTP(const int i, const int UncoloredOpponent_i, const int r, const int s);
+
         int DeltaTravelOrientationSwapTeam(const int i, const int r, const int s);
 
         int DeltaTravelRoundSwapTeam(const int i, const int r, const int s);

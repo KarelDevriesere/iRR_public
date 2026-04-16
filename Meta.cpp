@@ -6,12 +6,19 @@ template <typename Move>
 MetaBase<Move>::MetaBase(const std::unordered_map<Move, string>& moves, const std::unordered_map<Move, double>& weights, std::mt19937& g): 
           Moves(moves), Weights(weights), gen(g) {
             double sum = 0;
+#ifdef PRINT
+#if PRINT == 1
             cout << "------ Cumulative Weights ------" << endl;
+#endif 
+#endif
             for (const auto& [move, weight]: weights){
                 sum += weight;
                 WeightsCumul[sum] = move;
-
+#ifdef PRINT
+#if PRINT == 1
                 cout << "Cumulative weight of " << Moves.at(WeightsCumul.at(sum)) << " = " << sum << endl;
+#endif 
+#endif
                 
                 NrImprov[move] = 0;
                 NrChosen[move] = 0;
@@ -22,7 +29,11 @@ MetaBase<Move>::MetaBase(const std::unordered_map<Move, string>& moves, const st
                 Improv[move]; // vector is default constructed
                 ExecutionTimes[move];
             }
+#ifdef PRINT
+#if PRINT == 1
             cout << "-------------------------------" << endl;
+#endif 
+#endif
             assert(0.99 < sum && sum < 1.01);
             it = 0;
             it_accepted = 0;
@@ -32,6 +43,18 @@ MetaBase<Move>::MetaBase(const std::unordered_map<Move, string>& moves, const st
 
             RandomDoubleNumber = make_unique<Randomizer<double>>(0,1,g);
         }
+
+template <typename Move>
+void MetaBase<Move>::Initialize(Solution& sol){
+    std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
+    setStartTime(start_time);
+    BestOrientation = vector<vector<HA>>(sol.getNrTeams(), vector<HA>(sol.getNrRounds()));
+    BestTeamColorOpp = vector<vector<int>>(sol.getNrTeams(), vector<int>(sol.getNrRounds()));
+    Reset();
+    best_obj = sol.ComputeTotalCost();
+    current_obj = best_obj;
+    UpdateBestSolution(sol);
+}
 
 template <typename Move>
 void MetaBase<Move>::UpdateBestSolution(Solution& sol){
@@ -236,7 +259,11 @@ void LAHC<Move>::Reconfigure(Solution& sol) {
         ++this->it;
         if (this->getTimeDiff() > this->TIME_LIMIT || (this->it_idle > this->MAX_IT)){
             if (this->getTimeDiff() > this->TIME_LIMIT){
+#ifdef PRINT
+#if PRINT == 1
                 cout << "Time limit hit" << endl;
+#endif
+#endif
                 this->STOP = true;
             }
             else{
@@ -256,7 +283,8 @@ void LAHC<Move>::Reconfigure(Solution& sol) {
 #endif                  
 
                     if (HistoryLength*HistoryMultiplier < MAX_HL){
-                        HistoryLength *= HistoryMultiplier;
+                        HistoryLength *= HistoryMultiplier; 
+                        ++HistoryLength;
                         /*
                         I manually tried different things here, i.e. x2, additively add HL (+10 everytime), gradually increase HL (+10 till HL = 100, +100 till HL = 1000, +1000 til HL = 10000) on 3 instances, but they did not directly seem to result in better solutions
                         I similarly tried different things with PerturbeIncrease (e.g. trying the same HL but with different values for PerturbeIncrease, but this seemed too slow). 
@@ -521,12 +549,81 @@ void ILS<Move>::Reconfigure(Solution& sol){
     return;
 }
 
+template<typename Move>
+bool VNS<Move>::Update(Solution& sol, const int obj){
+
+            bool SolutionAccepted = false;
+
+            if (this->current_obj <= obj){
+                ++this->it_idle;
+            }
+            else{
+                this->it_idle = 0;
+            }
+            if (this->current_obj >= obj || (perturb && obj < sol.getCostTTPViolation())){
+                this->current_obj = obj;
+                SolutionAccepted = true;
+                perturb = false;
+#if PRINT == 1
+                    this->print_solution();
+#endif
+            }
+
+            if (this->getTimeDiff() > this->TIME_LIMIT){
+                cout << "Time limit of " << this->TIME_LIMIT << " hit" << endl;
+                this->STOP = true;
+            }
+
+            this->UpdateTimeStamps();
+
+            return SolutionAccepted;
+}
+
+template<typename Move>
+void VNS<Move>::solve(Input& in, Solution& sol){
+    // Works with a fixed hierarchy for the moves: based on current CPU time
+    // The order is also theoretically motivated
+    int k = 0;
+    int k_last = OrderedPresentMoves.size();
+    while (!this->STOP){
+        this->CurrentMove = OrderedPresentMoves[k];
+        cout << "CurrentMove = " << this->Moves.at(this->CurrentMove) << endl;
+        while (this->it_idle < this->MAX_IT){
+            this->executor->DoMove();
+        }
+        if (this->current_obj < previous_best_obj){
+            previous_best_obj = this->current_obj;
+            assert(previous_best_obj == this->best_obj);
+            k = 0;
+        }
+        else{
+            ++k;
+            if (k >= k_last){
+                k = this->gen()%k_last;
+                this->CurrentMove = OrderedPresentMoves[k];
+                cout << "Accept " << this->Moves.at(this->CurrentMove) << " no matter what" << endl;
+                perturb = true;
+                while (perturb){
+                    this->executor->DoMove();
+                }
+            }
+        }
+        this->it_idle = 0;
+    }
+}
+
 
 // Explicit instantiations
-template class MetaBase<FO_move>;
 template class MetaBase<Move>;
 template class LAHC<Move>;
-template class SA<FO_move>;
 template class SA<Move>;
 template class HC<Move>;
 template class ILS<Move>;
+template class VNS<Move>;
+
+template class MetaBase<FO_move>;
+template class LAHC<FO_move>;
+template class SA<FO_move>;
+template class HC<FO_move>;
+template class ILS<FO_move>;
+template class VNS<FO_move>;
