@@ -6,13 +6,25 @@
 #include "Heuristic.h"
 #include "Operators.h"
 
-Heuristic::Heuristic(const std::unordered_map<Move, string>& moves, // moves, weights and in are defined in main
-           const std::unordered_map<Move, double>& weights, std::mt19937& g, const int HistoryLength, const int obj, Solution& current_sol): LAHC<Move>(moves, weights, g), Operator(current_sol, g){
-            SetHistoryLength(HistoryLength); // LAHC
-            InitializeHistoricValues(obj,obj,HistoryLength); // LAHC
+// LAHC<Move>(moves, weights, g)
 
-            std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
-            setStartTime(start_time);
+// const std::unordered_map<Move, string>& moves, const std::unordered_map<Move, double>& weights, std::mt19937& g
+
+Heuristic::Heuristic(Solution& current_sol, std::unique_ptr<MetaBase<Move>> strategy): Operator(current_sol, strategy->gen), MetaH(std::move(strategy)){
+            MetaH->Initialize(sol);
+            MetaH->SetExecutor(this);
+
+            CostBeforeTTPTeams.resize(sol.getNrTeams());
+            OrientationCopy_i.resize(sol.getNrRounds());
+            OrientationCopy_j.resize(sol.getNrRounds());
+
+            // DisN and DisR come from Operators.h
+            DisL = std::make_unique<Randomizer<int>>(0, sol.getNrLeagues()-1, MetaH->gen);
+            DisR2 = std::make_unique<Randomizer<int>>(0, sol.getNrRounds()-2, MetaH->gen);
+            for (int l = 0; l < sol.getNrLeagues(); ++l){
+                DisTL1.push_back(std::make_unique<Randomizer<int>>(0, sol.getNrTeamsLeague(l)-1, MetaH->gen));
+                DisTL2.push_back(std::make_unique<Randomizer<int>>(0, sol.getNrTeamsLeague(l)-2, MetaH->gen));
+            }
 }
 
 Heuristic::~Heuristic(){}
@@ -20,10 +32,10 @@ Heuristic::~Heuristic(){}
 pair<int,int>Heuristic::SelectTwoTeams(){
     int l = 0;
     if (sol.getNrLeagues() > 1){
-        l = RandomIntegerNumber(0, sol.getNrLeagues()-1);
+        l = DisL->Sample();
     }
-    int i = RandomIntegerNumber(0, sol.getNrTeamsLeague(l)-1);
-    int j = ((i+1)+(RandomIntegerNumber(0,sol.getNrTeamsLeague(l)-2)))%sol.getNrTeamsLeague(l); 
+    int i = DisTL1[l]->Sample();
+    int j = ((i+1)+(DisTL2[l]->Sample()))%sol.getNrTeamsLeague(l); 
     assert(i != j);
     return {sol.getGlobalIndexTeam(l, i), sol.getGlobalIndexTeam(l, j)};
 }
@@ -31,7 +43,7 @@ pair<int,int>Heuristic::SelectTwoTeams(){
 array<int,3>Heuristic::SelectTwoTeamsAndColor(){
     PairOfTeams = SelectTwoTeams();
     int i = PairOfTeams.first, j = PairOfTeams.second;
-    int c = RandomIntegerNumber(0, R-1);
+    int c = DisR->Sample();
     while (c == sol.MatchColor[i][j] || c == sol.MatchColor[j][i]){
         c = (c+1)%R;
     }
@@ -41,8 +53,8 @@ array<int,3>Heuristic::SelectTwoTeamsAndColor(){
 }
 
 pair<int,int>Heuristic::SelectTwoRounds(){
-    const int r = RandomIntegerNumber(0,R-1);
-    const int s = ((r+1)+(RandomIntegerNumber(0,R-2)))%R;
+    const int r = DisR->Sample();
+    const int s = ((r+1)+(DisR2->Sample()))%R;
     assert(r != s);
     return {r,s};
 }
@@ -62,13 +74,13 @@ void Heuristic::SelectTS(){ // use TS for perturbation move!!
     else{
         delta += CostTSTeamsYSTP(i, j);
     }
-    cost_after = current_obj + delta;
+    cost_after = MetaH->current_obj + delta;
 #ifndef NDEBUG
         cost_before = sol.ComputeTotalCost();
 #endif
-    if (Update(sol, cost_after)){
+    if (MetaH->Update(sol, cost_after)){
         TS(i, j); 
-        UpdateBest(sol, cost_after);
+        MetaH->UpdateBest(sol, cost_after);
 #ifndef NDEBUG
         int cost_after_sol = sol.ComputeTotalCost();
         int cost_delta = cost_before+delta;
@@ -76,6 +88,7 @@ void Heuristic::SelectTS(){ // use TS for perturbation move!!
         // cout << "cost_delta = " << cost_delta << endl;
         assert(cost_after_sol == cost_before+delta);
 #endif
+        LineGraphUsefull = true;
     }
     return;
 }
@@ -115,6 +128,7 @@ void Heuristic::SelectiPTS(){
 
 #ifndef NDEBUG
     int cost_before = sol.ComputeTotalCost();
+    if (cost_before != MetaH->current_obj){std::abort();}
 #endif
 
     /*
@@ -125,10 +139,10 @@ void Heuristic::SelectiPTS(){
     */
 
     // int cost_before = current_obj;
-    int delta = 0;
+    int delta = 0; // DELTA
     CreateLantarn(i, j, StartColor);
 
-    if (CurrentMove == Move::PTS && lantarn.InfeasibleColor){
+    if (MetaH->CurrentMove == Move::PTS && lantarn.InfeasibleColor){
         return; // In base algo: PTS only if feasible colours!!
     }
     else if (lantarn.InfeasibleOpponents){
@@ -146,14 +160,14 @@ void Heuristic::SelectiPTS(){
     // Delta for computing the current cost
     // Only works if we do not need a path reversal!! Otherwise we would have needed to include the arc going to the home and from the away teams
 
-    if (CurrentMove == Move::iPTS_Random_PR_CR){
+    if (MetaH->CurrentMove == Move::iPTS_Random_PR_CR){
         clearSwapColorLantarn();
         int SizeUp = lantarn.up.size();
         int SizeDown = lantarn.down.size();
         int MinSize = std::min(SizeUp, SizeDown);
         if (MinSize > 0){
-            int v_up = RandomIntegerNumber(0,SizeUp-1); // ensure some randomness
-            int v_down = RandomIntegerNumber(0,SizeDown-1);
+            int v_up = rand()%SizeUp; // ensure some randomness
+            int v_down = rand()%SizeDown;
             for (int v = 0; v < MinSize; ++v){
                 SwapColorLantarn[lantarn.up[v_up++ % SizeUp]] = 0;
                 SwapColorLantarn[lantarn.down[v_down++ % SizeDown]] = 0;
@@ -162,6 +176,18 @@ void Heuristic::SelectiPTS(){
         }
     }
 
+    /*
+    cout << "Total cost = " << sol.ComputeTotalCost() << endl;
+    cout << "-------------" << endl;
+    cout << "cost of " << i << " = " << sol.ComputeTotalCostTeamTTP(i) << endl;
+    cout << "cost of " << j << " = " << sol.ComputeTotalCostTeamTTP(j) << endl;
+    for (auto& k: lantarn.middle){
+        cout << "cost of " << k << " = " << sol.ComputeTotalCostTeamTTP(k) << endl;
+    }
+    cout << "-------------" << endl;
+    */
+
+    // subtract old cost
     if (sol.getSetting() == Setting::TTP){
         DeltaLantarn(delta);
         if (!lantarn.PathReversalNeeded){
@@ -179,12 +205,17 @@ void Heuristic::SelectiPTS(){
             std::sort(ColoredRoundsLantern.begin(), ColoredRoundsLantern.end());
             for (int t: {i,j}){
                 delta -= PTSCurrentTravelDelta(ColoredRoundsLantern, t);
+                // cout << "delta of " << t << " -= " << PTSCurrentTravelDelta(ColoredRoundsLantern, t) << endl;
             }
         }
         else{
             delta -= (sol.ComputeTravelCostTeamTTP(i)+sol.ComputeTravelCostTeamTTP(j));
+            // cout << "delta of " << i << " -= " << sol.ComputeTravelCostTeamTTP(i) << endl;
+            // cout << "delta of " << j << " -= " << sol.ComputeTravelCostTeamTTP(j) << endl;
         }
     }
+
+    // cout << "-------------" << endl;
 
     // First swap colors because path may use an edge in the lantern
     SwapColorsLantarn(OrientationCopy_i, OrientationCopy_j);
@@ -193,26 +224,77 @@ void Heuristic::SelectiPTS(){
     // PrintLantarn();
     // cout << "----------" << endl;
 
-    // Repair Orientations
-    // cout << "Repair orientations!!" << endl;
-    clearPath(); // always try to find a path between i and j!! 
-    bool BalanceRepaired = RepairOrientationsEdgesLantarn(MinCostPR, delta);
-    if (!BalanceRepaired && !MinCostPR){
-        throw std::runtime_error("Could not repair imbalance in PTS!");
-    }
-
-    // add new cost
+    // add new cost // DELTA
+    /*
     if (sol.getSetting() == Setting::TTP){
         if (!lantarn.PathReversalNeeded){
-            for (int t: {i,j}){
-                delta += PTSCurrentTravelDelta(ColoredRoundsLantern, t);
-            }
+            delta += PTSCurrentTravelDelta(ColoredRoundsLantern, i) + PTSCurrentTravelDelta(ColoredRoundsLantern, j);
+            cout << "delta of " << i << " += " << PTSCurrentTravelDelta(ColoredRoundsLantern, i) << endl;
+            cout << "delta of " << j << " += " << PTSCurrentTravelDelta(ColoredRoundsLantern, j) << endl;
         }
         else{
             delta += (sol.ComputeTravelCostTeamTTP(i)+sol.ComputeTravelCostTeamTTP(j));
         }
-        delta += ((sol.ComputeTTPViolations(i)+sol.ComputeTTPViolations(j))*sol.getCostTTPViolation());
+        delta += ((sol.ComputeTTPViolations(i,0,R-1)+sol.ComputeTTPViolations(j,0,R-1))*sol.getCostTTPViolation());
+        cout << "delta of " << i << " += " << sol.ComputeTTPViolations(i,0,R-1)*sol.getCostTTPViolation() << endl;
+        cout << "delta of " << j << " += " << sol.ComputeTTPViolations(j,0,R-1)*sol.getCostTTPViolation() << endl;
     }
+    */
+
+    // cout << "Total cost = " << sol.ComputeTotalCost() << endl;
+    // cout << "-------------" << endl;
+    // cout << "cost of " << i << " = " << sol.ComputeTotalCostTeamTTP(i) << endl;
+    // cout << "cost of " << j << " = " << sol.ComputeTotalCostTeamTTP(j) << endl;
+    // for (auto& k: lantarn.middle){
+    //     cout << "cost of " << k << " = " << sol.ComputeTotalCostTeamTTP(k) << endl;
+    // }
+    // cout << "-------------" << endl;
+
+    if (lantarn.PathReversalNeeded){
+        // Repair Orientations
+        // cout << "Repair orientations!!" << endl;
+        clearPath(); // always try to find a path between i and j!! 
+        bool BalanceRepaired = RepairOrientationsEdgesLantarn(MinCostPR, delta);
+        if (!BalanceRepaired && !MinCostPR){
+            throw std::runtime_error("Could not repair imbalance in PTS!");
+        }
+        // cout << "Path: ";
+        // for (auto& edge: path){
+        //     cout << edge[0] << "->";
+        // }
+        // cout << path.back()[1] << endl;
+    }
+
+    if (sol.getSetting() == Setting::TTP){
+        if (!lantarn.PathReversalNeeded){
+            delta += PTSCurrentTravelDelta(ColoredRoundsLantern, i) + PTSCurrentTravelDelta(ColoredRoundsLantern, j);
+            // cout << "delta of " << i << " += " << PTSCurrentTravelDelta(ColoredRoundsLantern, i) << endl;
+            // cout << "delta of " << j << " += " << PTSCurrentTravelDelta(ColoredRoundsLantern, j) << endl;
+        }
+        else{
+            delta += (sol.ComputeTravelCostTeamTTP(i)+sol.ComputeTravelCostTeamTTP(j));
+        }
+        delta += ((sol.ComputeTTPViolations(i,0,R-1)+sol.ComputeTTPViolations(j,0,R-1))*sol.getCostTTPViolation());
+        // cout << "delta of " << i << " += " << sol.ComputeTTPViolations(i,0,R-1)*sol.getCostTTPViolation() << endl;
+        // cout << "delta of " << j << " += " << sol.ComputeTTPViolations(j,0,R-1)*sol.getCostTTPViolation() << endl;
+    }
+
+    /*
+    cout << "costs after path reversal:" << endl;
+    for (int t = 0; t < sol.getNrTeams(); ++t){
+        cout << "cost of " << t << " = " << sol.ComputeTotalCostTeamTTP(t) << endl;
+    }
+    */
+
+    /*
+    cout << "-------------" << endl;
+    cout << "cost of " << i << " = " << sol.ComputeTotalCostTeamTTP(i) << endl;
+    cout << "cost of " << j << " = " << sol.ComputeTotalCostTeamTTP(j) << endl;
+    for (auto& k: lantarn.middle){
+        cout << "cost of " << k << " = " << sol.ComputeTotalCostTeamTTP(k) << endl;
+    }
+    cout << "-------------" << endl;
+    */
 
     // delta += (sol.ComputeTotalCostTeamTTP(i)+sol.ComputeTotalCostTeamTTP(j));
 
@@ -225,8 +307,13 @@ void Heuristic::SelectiPTS(){
 
     int cost_after;
     if (sol.getSetting() == Setting::TTP){
-        // cost_after = current_obj+delta;
-        cost_after = sol.ComputeTotalCost();
+        if (!lantarn.PathReversalNeeded){
+            cost_after = MetaH->current_obj+delta;
+        }
+        else{
+            // cost_after = sol.ComputeTotalCost();
+            cost_after = MetaH->current_obj+delta;
+        }
     }
     else{
         cost_after = sol.ComputeTotalCost();
@@ -242,13 +329,17 @@ void Heuristic::SelectiPTS(){
         // cout << "cost_after = " << cost_after << endl;
         int cost_delta = cost_before + delta;
         // cout << "cost_delta = " << cost_delta << endl;
-        // assert(cost_delta == cost_after_sol);
+        if (sol.ConstraintViolationAllowed){
+            assert(cost_delta == cost_after_sol);
+        }
     }
 #endif
     
-    if (!Update(sol, cost_after)){
+    if (!MetaH->Update(sol, cost_after)){
         // first, set back all orientations
-        ReversePath(true, true);
+        if (lantarn.PathReversalNeeded){
+            ReversePath(true, false);
+        }
         // Then, swap back the colors
         SwapColorsLantarn(OrientationCopy_i, OrientationCopy_j);
         assert(sol.ComputeTotalCost() == cost_before);
@@ -260,8 +351,10 @@ void Heuristic::SelectiPTS(){
         */
     }
     else{
-        UpdateBest(sol, cost_after);
+        MetaH->UpdateBest(sol, cost_after);
+        LineGraphUsefull = true;
     }
+
     return;
 }
 
@@ -282,20 +375,20 @@ void Heuristic::SelectRS(){
         for (int i = 0; i < N; ++i){
             delta += CostRoundSwapTeamiTTP(i, r, s);
         }
-        cost_after = current_obj + delta;
+        cost_after = MetaH->current_obj + delta;
     }
     else{
         RS(r, s);
         cost_after = sol.ComputeTotalCost();
     }
 
-    if (sol.getSetting() != Setting::TTP && !Update(sol, cost_after)){
+    if (sol.getSetting() != Setting::TTP && !MetaH->Update(sol, cost_after)){
         RS(r, s);
         assert(sol.ComputeTotalCost() == cost_before);
     }
-    else if (sol.getSetting() == Setting::TTP && Update(sol, cost_after)){
+    else if (sol.getSetting() == Setting::TTP && MetaH->Update(sol, cost_after)){
         RS(r, s); 
-        UpdateBest(sol, cost_after);
+        MetaH->UpdateBest(sol, cost_after);
 #ifndef NDEBUG
         int cost_after_sol = sol.ComputeTotalCost();
         int cost_after_delta = cost_before + delta;
@@ -304,6 +397,7 @@ void Heuristic::SelectRS(){
         // cout << "HA cost after = " << sol.ComputeTotalCostTTPViolations() << endl;
         assert(cost_after_sol == cost_after_delta);
 #endif
+        LineGraphUsefull = true;
     }
     return;
 }
@@ -312,7 +406,7 @@ void Heuristic::SelectPRS(){
     // rounds in current schedule
     pair<int,int>pair = SelectTwoRounds();
     int r = pair.first, s = pair.second;
-    const int StartNode = RandomIntegerNumber(0,N-1);
+    const int StartNode = DisN->Sample();
     int cost_before;
 #ifndef NDEBUG
         cost_before = sol.ComputeTotalCost();
@@ -325,21 +419,23 @@ void Heuristic::SelectPRS(){
     else{
         delta = DeltaPRS_YSTP(r, s, StartNode);
     }
-    cost_after = current_obj + delta;
+    cost_after = MetaH->current_obj + delta;
 #ifndef NDEBUG
-    PRS(r, s, StartNode);
-    assert(cost_after == sol.ComputeTotalCost());
-    PRS(r, s, StartNode);
+    // The following does not work anymore because of early exit out of PRS!!
+    // PRS(r, s, StartNode);
+    // assert(cost_after == sol.ComputeTotalCost());
+    // PRS(r, s, StartNode);
 #endif
 
-    if (Update(sol, cost_after)){
+    if (MetaH->Update(sol, cost_after)){
         PRS(r, s, StartNode);
-        UpdateBest(sol, cost_after);
+        MetaH->UpdateBest(sol, cost_after);
 #ifndef NDEBUG
         int cost_after_sol = sol.ComputeTotalCost();
         int cost_after_delta = cost_before + delta;
         assert(cost_after_sol == cost_after_delta);
 #endif
+        LineGraphUsefull = true;
     }
     return;
 }
@@ -353,8 +449,8 @@ void Heuristic::SelectiPRS(const bool bipartite){
     assert(sol.validate());
     // cout << "Travel cost before: " << sol.ComputeTravelCost() << endl;
 
-    const int l = RandomIntegerNumber(0, sol.getNrLeagues()-1); // Chose a random league
-    const int r = RandomIntegerNumber(0,sol.getNrRounds()-1); // Chose a random round to do the matching
+    const int l = DisL->Sample(); // Chose a random league
+    const int r = DisR->Sample(); // Chose a random round to do the matching
     // int cost_before = current_obj;
 
     // cout << "Matching" << endl;
@@ -394,15 +490,19 @@ void Heuristic::SelectiPRS(const bool bipartite){
     else{
         assert(bipartite);
         // cout << "FindMinCostBalancedCycle" << endl;
-        FindMinCostBalancedACycle(r);
+        if (!FindMinCostBalancedACycle(r)){
+            MetaH->it_idle++;
+            return;
+        }
     }
 
+    /*
     if (!bipartite){
-        std::fill(CostBeforeTTPTeams.begin(), CostBeforeTTPTeams.end(), 0);
         for (int t = 0; t < N; ++t){
             CostBeforeTTPTeams[t] = -sol.ComputeTotalCostTeamTTP(t);
         }
     }
+    */
     
         // cout << "AlternatingCycle found!!" << endl;
         // a_cycle contains only initially uncoloured edges!!!
@@ -410,9 +510,11 @@ void Heuristic::SelectiPRS(const bool bipartite){
         int cost_before = sol.ComputeTotalCost();
         // cout << "cost_before = " << cost_before << endl;
 #endif 
-
+        bool ConstrViolationAllowedCopy = sol.ConstraintViolationAllowed;
+        sol.ConstraintViolationAllowed = true;
         int delta = 0;
         EvaluateAlternatingCycleWithPaths(r, bipartite, delta, MinCostPR);
+        // for TTP: only teams whose orientations did not change are included so far in delta
 
 #ifndef NDEBUG
         for (int i = 0; i < N; ++i){
@@ -421,40 +523,14 @@ void Heuristic::SelectiPRS(const bool bipartite){
         if (bipartite){
             assert(sol.ComputeTotalHACost() == 0);
         }
-#endif
-
-    if (!bipartite && sol.getSetting() == Setting::TTP){
-        assert(delta == 0);
-        clearVisited();
-        int t1,t2,e;
-        for (e = 1; e < AlternatingCycle.size(); e+=2){
-            t1 = AlternatingCycle[e].first, t2 = AlternatingCycle[e].second;
-            delta += (CostBeforeTTPTeams[t1] + sol.ComputeTotalCostTeamTTP(t1));
-            delta += (CostBeforeTTPTeams[t2] + sol.ComputeTotalCostTeamTTP(t2));
-            Visited[t1] = 1, Visited[t2] = 1;
-        }
-        for (auto& current_path: PathsAC){
-            path = current_path;
-            for (e = 0; e < path.size(); ++e){
-                t1 = path[e][0], t2 = path[e][1];
-                if (!Visited[t1]){
-                    delta += (CostBeforeTTPTeams[t1] + sol.ComputeTotalCostTeamTTP(t1));
-                    Visited[t1] = 1;
-                }
-                if (!Visited[t2]){
-                    delta += (CostBeforeTTPTeams[t2] + sol.ComputeTotalCostTeamTTP(t2));
-                    Visited[t2] = 1;
-                }
-            }
-        }
-    }
+#endif 
 
     int cost_after;
     if (sol.getSetting() == Setting::TTP){
-        cost_after = current_obj+delta;
+        cost_after = MetaH->current_obj+delta;
     }
     else if (bipartite){
-        cost_after = current_obj+delta;
+        cost_after = MetaH->current_obj+delta;
     }
     else {
         cost_after = sol.ComputeTotalCost();
@@ -462,10 +538,13 @@ void Heuristic::SelectiPRS(const bool bipartite){
 
 #ifndef NDEBUG
     // cout << "cost_after = " << cost_after << ", total_cost = " << sol.ComputeTotalCost() << endl;
-    assert(cost_after == sol.ComputeTotalCost());
+    if (sol.ConstraintViolationAllowed){
+        // cout << cost_after << " == " << sol.ComputeTotalCost() << endl;
+        assert(cost_after == sol.ComputeTotalCost());
+    }
 #endif  
 
-    if (!Update(sol, cost_after)){
+    if (!MetaH->Update(sol, cost_after)){
         // reverse paths again
         /*
         IMPORTANT: first reverse the paths
@@ -483,34 +562,52 @@ void Heuristic::SelectiPRS(const bool bipartite){
 #endif
     }
     else{
-        UpdateBest(sol, cost_after);
+        MetaH->UpdateBest(sol, cost_after);
+        LineGraphUsefull = true;
     }
 
     if (AlternatingCycle.empty()){
         // do this here because update is not called when cycles are empty
-        Update(sol, current_obj);
+        MetaH->Update(sol, MetaH->current_obj);
     }
+    sol.ConstraintViolationAllowed = ConstrViolationAllowedCopy;
     assert(sol.validate());
     return;
 } 
 
 void Heuristic::SelectBalancedCycle(){
 
+    bool Success = false;
     if (MinCostC){
         // First try to find a negative cycle
-        if (!FindCycleLineGraph(current_obj, true)){
-            // This only works if we have a guarantee that there are no negative cycles in the graph!
-            cout << "Find MinWeight cycle" << endl;
-            if (!FindCycleLineGraph(current_obj, false)){
-                cout << "no cycle without violations found" << endl;
-                return;
+        if (LineGraphUsefull){
+            if (FindCycleLineGraph(MetaH->current_obj, true)){
+                Success = true;
             }
+            LineGraphUsefull = false;
+        }
+
+        // it does not seem that this works better!!!
+
+        /*
+        if (!Success && HistoryLength > 1){
+            if (FindCycleLineGraph(current_obj, false)){
+                Success = true;
+            }
+        }
+            */
+
+        if (!Success){
+            ++MetaH->it_idle;
+            return;
         }
     }
     else{
-        CycleBalanced();
+        Success = CycleBalanced();
     }
-    assert(!path.empty());
+    if (sol.ConstraintViolationAllowed){
+        assert(!path.empty());
+    }
  
     int cost_before;
 #ifndef NDEBUG
@@ -520,91 +617,159 @@ void Heuristic::SelectBalancedCycle(){
 
     // assert(Cycle[0][0] == Cycle[(int)Cycle.size()-1][1]);
     // cout << "Reverse path" << endl;
-    int delta = ReversePath(false, true);
+    int delta;
+    if (Success){
+        delta = ReversePath(false, true);
+    }
+    else{
+        delta = sol.getCostTTPViolation();
+    }
     // cout << "Cost after = " << sol.ComputeTotalCost() << endl;
     // cout << "Cost delta = " << cost_before + delta << endl;
     // cout << "done" << endl;
 
     int cost_after;
     if (sol.getSetting() == Setting::TTP){
-        cost_after = current_obj+delta;
+        cost_after = MetaH->current_obj+delta;
 #ifndef NDEBUG
-        assert(cost_after == sol.ComputeTotalCost());
+        // cout << cost_after << " = " << sol.ComputeTotalCost() << endl;
+        // assert(cost_after == sol.ComputeTotalCost()); // Does not work anymore because of early exit out of BalancedCycle!
 #endif
     }
     else{
         cost_after = sol.ComputeTotalCost();
     }
 
-    if (!Update(sol, cost_after)){
+    if (!MetaH->Update(sol, cost_after)){
         // If not better: reverse the cycle again as if nothing happened
-        ReversePath(false, false);
+        if (Success){
+            ReversePath(false, false);
+        }
 #ifndef NDEBUG
         assert(sol.ComputeTotalCost() == cost_before);
 #endif
     }
     else{
-        UpdateBest(sol, cost_after);
+        MetaH->UpdateBest(sol, cost_after);
+        LineGraphUsefull = true;
     }
     return;
 }
 
+void Heuristic::SelectGPTS(){
+    pair<int,int>pair = SelectTwoRounds();
+    int r = pair.first, s = pair.second;
+    int i = DisN->Sample();
+    int cost_before;
+#ifndef NDEBUG
+        cost_before = sol.ComputeTotalCost();
+#endif
+    if (GPTS(i,r,s)){
+        SwapColorsGPTSLantarn(false);
+    }
+    else{
+        // cout << "No GPTS found" << endl;
+        return;
+    }
+    int cost_after = sol.ComputeTotalCost();
+    if (!MetaH->Update(sol, cost_after)){
+        SwapColorsGPTSLantarn(true);
+#ifndef NDEBUG
+        // cout << sol.ComputeTotalCost() << " == " << cost_before << endl;
+        assert(sol.ComputeTotalCost() == cost_before);
+#endif
+    }
+    else{
+        MetaH->UpdateBest(sol, cost_after);
+    }
+    assert(sol.validate());
+    return;
+}
+
+void Heuristic::PushLocalOptimum(){
+    if (MetaH->LocalOptimum){
+        // TODO: only do this if we found a better solution when we increased the history length or decreased the temperature
+        int start_obj = MetaH->current_obj+10;
+        int it = -1;
+        while (start_obj > MetaH->current_obj){
+            ++it;
+            start_obj = MetaH->current_obj;
+            MinCostC = true;
+            SelectBalancedCycle();
+        }
+        if (it > 0){
+            cout << it << " negative cycles found" << endl;
+        }
+        for (int k = 0; k < R; ++k){
+            MinCostAC = true;
+            SelectiPRS(true);
+            if (start_obj > MetaH->current_obj){
+                cout << " MinCostAC found!" << endl;
+                start_obj = MetaH->current_obj;
+            }
+        }
+        MetaH->LocalOptimum = false;
+    }
+}
+
 void Heuristic::DoMove(){
-    bool bipartite;
-    CurrentMove = SelectNB();
     // auto beg = std::chrono::high_resolution_clock::now();
     // cout << "Select " << Moves.at(CurrentMove) << endl; 
-    NrChosen.at(CurrentMove)++;
+    // NrChosen.at(CurrentMove)++;
+    bool bipartite;
 #ifndef NDEBUG
     // cout << "Select " << Moves.at(CurrentMove) << endl; 
 #endif
-    if (CurrentMove == Move::TS){
+    if (MetaH->CurrentMove == Move::TS){
         SelectTS();
     }
-    else if (CurrentMove == Move::PTS){
+    else if (MetaH->CurrentMove == Move::PTS){
         MinCostPR = false;
         SelectiPTS();
     }
-    else if (CurrentMove == Move::iPTS_Random_PR || CurrentMove == Move::iPTS_Random_PR_CR){
+    else if (MetaH->CurrentMove == Move::iPTS_Random_PR || MetaH->CurrentMove == Move::iPTS_Random_PR_CR){
         MinCostPR = false;
         SelectiPTS();
     }
-    else if (CurrentMove == Move::iPTS_MinCost_PR){
+    else if (MetaH->CurrentMove == Move::iPTS_MinCost_PR){
         MinCostPR = true;
         SelectiPTS();
     }
-    else if (CurrentMove == Move::RS){
+    else if (MetaH->CurrentMove == Move::RS){
         SelectRS();
     }
-    else if (CurrentMove == Move::PRS){
+    else if (MetaH->CurrentMove == Move::PRS){
         SelectPRS();
     }
-    else if (CurrentMove == Move::Random_M_Random_PR){
+    else if (MetaH->CurrentMove == Move::Random_M_Random_PR){
         MinCostPR = false;
         MinCostAC = false;
         bipartite = false;
         SelectiPRS(bipartite);
     }   
-    else if (CurrentMove == Move::MinCost_BM){
+    else if (MetaH->CurrentMove == Move::MinCost_BM){
         MinCostAC = true;
         bipartite = true;
         SelectiPRS(bipartite);
     }
-    else if (CurrentMove == Move::Random_BM){
+    else if (MetaH->CurrentMove == Move::Random_BM){
         MinCostAC = false;
         bipartite = true;
         SelectiPRS(bipartite);
     }
-    else if (CurrentMove == Move::C){
+    else if (MetaH->CurrentMove == Move::C){
         MinCostC = false;
         SelectBalancedCycle();
     }
-    else if (CurrentMove == Move::NC){
+    else if (MetaH->CurrentMove == Move::NC){
         MinCostC = true;
         SelectBalancedCycle();
     }
+    else if (MetaH->CurrentMove == Move::GPTS){
+        SelectGPTS();
+    }
     else{
-        cout << "Current selected move = " << Moves.at(CurrentMove) << " not known" << endl;
+        cout << "Current selected move = " << MetaH->Moves.at(MetaH->CurrentMove) << " not known" << endl;
         std::abort();
     }
     // LAHC
@@ -623,65 +788,15 @@ void Heuristic::DoMove(){
 #ifndef NDEBUG
     for (int i = 0; i < N; ++i){
         if (!sol.IsTeamBalanced(i)){
-            cout << "Team " << i << " not balanced after doing move " << Moves.at(CurrentMove) << endl;
+            cout << "Team " << i << " not balanced after doing move " << MetaH->Moves.at(MetaH->CurrentMove) << endl;
             return;
         }
     }
 #endif
-    UpdateListLength(sol);
-}
-
- // ILS:
- /*
-void Heuristic::Perturbe(Solution& sol){
-    // cout << "--------------------" << endl;
-    // cout << "Perturbe" << endl;
-    // cout << "Current obj = " << current_obj << endl;
-    // cout << "Best obj = " << best_obj << endl;
-    PERTURBE = true;
-    it_accepted_perturbation = 0;
-    cout << sol.ComputeTotalCost() << endl;
-    SaveBestSolution(sol);
-    current_obj = best_obj;
-    while (it_accepted_perturbation < 2){
-        DoMove(sol);
+    if (false){
+        // If enabled, if stuck we do min cost neighborhoods to check whether
+        // we have really hit the bottom
+        PushLocalOptimum();
     }
-    it_accepted_perturbation = 0;
-    it_idle = 0;
-    it_idle_best = 0;
-    PERTURBE = false;
-    cout << "New current obj = " << current_obj << " - " << sol.ComputeTotalCost() << endl;
-    // cout << "--------------------" << endl;
-}
-*/
 
-void Heuristic::solve(Input& in, Solution& sol){
-
-    BestOrientation = vector<vector<HA>>(sol.getNrTeams(), vector<HA>(sol.getNrRounds()));
-    BestTeamColorOpp = vector<vector<int>>(sol.getNrTeams(), vector<int>(sol.getNrRounds()));
-    CostBeforeTTPTeams.resize(sol.getNrTeams());
-    OrientationCopy_i.resize(sol.getNrRounds());
-    OrientationCopy_j.resize(sol.getNrRounds());
-    cout << "start solve" << endl;
-    Reset();
-    best_obj = sol.ComputeTotalCost();
-    current_obj = best_obj;
-    UpdateBestSolution(sol);
-    cout << "updated best solution" << endl;
-    // cout << "current_obj = " << current_obj << ", best_obj = " << best_obj << endl;
-
-    // cout << "Start" << endl;
-
-    do {
-        DoMove(); // do random move
-        /*
-        if (it_idle > 100000){ // ILS
-            // perturbe
-            Perturbe(sol);
-        }
-            */
-    }
-    while(!STOP);
-    SaveBestSolution(sol);
-    sol.validate();
 }

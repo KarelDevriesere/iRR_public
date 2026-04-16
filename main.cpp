@@ -13,9 +13,63 @@
 #include "Input.h"
 #include "AlgoSelection.h"
 
+void setWeight(const unordered_map<Move,string>& Moves, unordered_map<Move, double>& InputWeights, string MoveName, double Weight){
+    bool NameFound = false;
+    for (auto& [move, name]: Moves){
+        if (name == MoveName){
+            NameFound = true;
+            InputWeights[move] = Weight;
+            if (InputWeights.at(move) < 0.0){
+                std::cerr << MoveName << " should be positive!" << endl;
+                std::abort();
+            }
+        }
+    }
+}
+
+void ModifyWeights(const unordered_map<Move,string>& Moves, unordered_map<Move, double>& InputWeights){
+    unordered_map<Move, double>InputWeightsCopy = InputWeights;
+    double sum = 0.0;
+    double sum_weights = 0.0;
+    bool NoMoveSeen = true;
+    for (const auto& [move, weight]: InputWeights){
+        sum += InputWeights.at(move);
+        NoMoveSeen = false;
+    }
+    for (const auto& [move, weight]: InputWeights){
+        InputWeights.at(move) /= sum;
+        sum_weights += InputWeights.at(move);
+#ifdef PRINT
+#if PRINT == 1
+        cout << Moves.at(move) << ": " << InputWeights.at(move) << endl;
+#endif 
+#endif
+    }
+    if (NoMoveSeen){
+        assert(sum == 0);
+        for (const auto& [move, name]: Moves){
+            sum += 1.0;
+        }
+        for (const auto& [move, name]: Moves){
+            InputWeights[move] = 1.0 / sum;
+            sum_weights += InputWeights.at(move);
+#ifdef PRINT
+#if PRINT == 1
+            cout << Moves.at(move) << ": " << InputWeights.at(move) << endl;
+#endif 
+#endif
+        }
+    }
+    if (sum_weights <= 0.99 || sum_weights >= 1.01){
+        cout << "Sum of the weights should be equal to 1.0 but is now" << sum_weights << endl;
+        std::abort();
+    }
+}
+
 int main(int argc, const char* argv[]){
 
-    InputData data;
+    InputData data; // Concerned with the input instance
+    ParameterValues param; // Concerned with parameter values for metaheuristics
 
     data.Instance = "Instances/TTP/NL16_4.xml";
 
@@ -38,21 +92,8 @@ int main(int argc, const char* argv[]){
                 std::cerr << "Heuristic should be 0 or 1" << endl;
                 return 1;
             }
-        }
-        else if (arg == "--HistoryLength"){ // if not provided: history length is dynamic!!
-            data.HistoryLength = std::stoi(argv[++i]); 
-            if (data.HistoryLength <= 0){
-                std::cerr << "HistoryLength should be strictly positive" << endl;
-                return 1;
-            }
-            data.HistoryLengthProvided = true;
-        }
-        else if (arg == "PerturbeIncrease"){ // default is 100
-            data.PerturbeIncrease = std::stod(argv[++i]);
-            if (data.PerturbeIncrease <= 0){
-                std::cerr << "PerturbeIncrease should be strictly positive" << endl;
-                return 1;
-            }
+            data.RunGM = 0;
+            data.FO = 0;
         }
         else if (arg == "--InstanceTTP"){ // TTP
             data.Instance = argv[++i];
@@ -62,7 +103,6 @@ int main(int argc, const char* argv[]){
             //    return 1;
             //}
             data.TTP = true;
-    std::cout << "Set data TTP true" << std::endl;
             data.Football = false;
             data.Hockey = false;
         }
@@ -109,7 +149,13 @@ int main(int argc, const char* argv[]){
                 */
         }
         else if (arg == "--GM"){ // YSTP, football
-            data.RunGM = std::stoi(argv[++i]);
+            data.Heuristic = 0;
+            data.FO = 0;
+        }
+        else if (arg == "--FO"){ // YSTP, football, hockey
+            data.FO = std::stoi(argv[++i]);
+            data.Heuristic = 0;
+            data.RunGM = 0;
         }
         else if (arg == "--InstanceHockey"){
             int hockey_i = std::stoi(argv[++i]);
@@ -124,43 +170,159 @@ int main(int argc, const char* argv[]){
                 data.Instance = "i0" + to_string(hockey_i);
             }
         }
-        else if (arg == "--TimeLimit"){
-            data.TimeLimit = std::stoi(argv[++i]);
-            if (data.TimeLimit < 0){
+        else if (arg == "--Weight"){ // Selection probability of each neighborhood
+            string MoveName = argv[++i];
+            double Weight = std::stod(argv[++i]);
+            setWeight(data.Moves, data.InputWeights, MoveName, Weight);
+        }
+        else if (arg == "--WeightPerturb"){ // Selection probability of each neighborhood when perturbing (ILS)
+            string MoveName = argv[++i];
+            double Weight = std::stod(argv[++i]);
+            setWeight(data.Moves, data.InputWeightsPerturb, MoveName, Weight);
+        }
+        else if (arg == "--TimeLimit"){ // Generic parameters
+            param.TIME_LIMIT = std::stoi(argv[++i]);
+            if (param.TIME_LIMIT < 0){
                 std::cerr << "TimeLimit should be positive" << endl;
                 return 1;
             }
         }
-        else if (arg == "--MaxIt"){
-            data.MaxIt = std::stoi(argv[++i]);
-            if (data.MaxIt < 0){
+        else if (arg == "--MaxIt"){ // Generic parameters
+            param.MAX_IT = std::stoi(argv[++i]);
+            if (param.MAX_IT < 0){
                 std::cerr << "Max no iterations should be positive" << endl;
                 return 1;
             }
         }
-        else if (arg == "--Weight"){
-            string MoveName = argv[++i];
-            double Weight = std::stod(argv[++i]);
-            bool NameFound = false;
-            for (auto& [move, name]: data.Moves){
-                if (name == MoveName){
-                    NameFound = true;
-                    data.InputWeights[move] = Weight;
-                    if (data.InputWeights.at(move) < 0.0){
-                        std::cerr << MoveName << " should be positive!" << endl;
-                        return 1;
-                    }
-                }
+        else if (arg == "--HC"){
+            if (!std::stoi(argv[++i])){
+                continue;
+            }
+            param.HC = true;
+        }
+        else if (arg == "--SA"){
+            if (!std::stoi(argv[++i])){
+                continue;
+            }
+            param.SA = true;
+        }
+        else if (arg == "--T_begin"){ // SA
+            param.T_begin = std::stod(argv[++i]);
+            if (param.T_begin < 0){
+                std::cerr << "T_begin should be positive" << endl;
+                return 1;
+            }
+            param.SA = true;
+        }
+        else if (arg == "--T_end"){ // SA
+            param.T_end = std::stod(argv[++i]);
+            if (param.T_end < 0){
+                std::cerr << "T_end should be positive" << endl;
+                return 1;
+            }
+            param.SA = true;
+        }
+        else if (arg == "--CoolingRate"){ // SA
+            param.cooling_rate = std::stod(argv[++i]);
+            if (param.cooling_rate < 0){
+                std::cerr << "CoolingRate should be positive" << endl;
+                return 1;
+            }
+            param.SA = true;
+        }
+        else if (arg == "--I_temp"){ // SA
+            param.I_temp = std::stoi(argv[++i]);
+            if (param.I_temp < 0){
+                std::cerr << "I_temp should be positive" << endl;
+                return 1;
+            }
+            param.SA = true;
+        }
+        else if (arg == "--I_accept"){ // SA
+            param.I_accept = std::stoi(argv[++i]);
+            if (param.I_accept < 0){
+                std::cerr << "I_accept should be positive" << endl;
+                return 1;
+            }
+            param.SA = true;
+        }
+        else if (arg == "--Reheat"){ // SA
+            if (std::stoi(argv[++i]) > 0){
+                param.IncludeReheating = true;
             }
         }
-        else if (arg == "--ConstrViolationCost"){
+        else if (arg == "--ILS"){ // Iterated Local Search
+            if (!std::stoi(argv[++i])){
+                continue;
+            }
+            param.ILS = true;
+        }
+        else if (arg == "--ItMaxPert"){ // ILS
+            param.IT_MAX_PERT = std::stoi(argv[++i]);
+            if (param.IT_MAX_PERT < 0){
+                std::cerr << "ItMaxPert should be positive" << endl;
+                return 1;
+            }
+            param.ILS = true;
+        }
+        else if (arg == "--LAHC"){ // Iterated Local Search
+            if (!std::stoi(argv[++i])){
+                continue;
+            }
+            param.LAHC = true;
+        }
+        else if (arg == "--HistoryLength"){ // if not provided: history length is dynamic!!
+            param.HistoryLength = std::stoi(argv[++i]); 
+            if (param.HistoryLength <= 0){
+                std::cerr << "HistoryLength should be strictly positive" << endl;
+                return 1;
+            }
+            param.HistoryLengthProvided = true;
+            param.LAHC = true;
+        }
+        else if (arg == "PerturbeIncrease"){ // default is 100
+            param.PerturbeIncrease = std::stod(argv[++i]);
+            if (param.PerturbeIncrease <= 0){
+                std::cerr << "PerturbeIncrease should be strictly positive" << endl;
+                return 1;
+            }
+            param.LAHC = true;
+        }
+        else if (arg == "HistoryMultiplier"){ // default is 100
+            param.HistoryMultiplier = std::stod(argv[++i]);
+            if (param.HistoryMultiplier <= 0){
+                std::cerr << "HistoryMultiplier should be strictly positive" << endl;
+                return 1;
+            }
+            param.LAHC = true;
+        }
+        else if (arg == "PerturbeValueInitial"){ // default is 100
+            param.PerturbeValue_INITIAL = std::stod(argv[++i]);
+            if (param.PerturbeValue_INITIAL < 0){
+                std::cerr << "PerturbeValueInitial should be positive" << endl;
+                return 1;
+            }
+            param.LAHC = true;
+        }
+        else if (arg == "--VNS"){ // Variable Neighborhood Search
+            if (!std::stoi(argv[++i])){
+                continue;
+            }
+            param.VNS = true;
+        }
+        else if (arg == "--ConstrViolationAllowed"){
+            if (std::stol(argv[++i]) > 0){
+                data.ConstraintViolationAllowed = true;
+            }
+        }
+        else if (arg == "--ConstrViolationCost"){ // Not used in paper
             // 1 cost for violating all types of hard constraints
             data.ConstrViolationCost = std::stol(argv[++i]);
             if (data.ConstrViolationCost < 0){
                 std::cerr << "ConstrViolationCost should be positive!" << endl;
                 return 1;
             }
-
+            param.LAHC = true;
         }
         else if (arg == "--Bounds"){ // TTP
             ComputeBounds = std::stoi(argv[++i]);
@@ -192,88 +354,55 @@ int main(int argc, const char* argv[]){
         }
     }
 
-if(teamSwapper == 1){
-    if(data.startSol.empty()){
-        std::cout << "Team swapper requires to set --startSol" << std::endl;
+    int count_meta = 0;
+    if (param.HC){
+        ++count_meta;
     }
-    std::cout << "Perform the team swapper for " << data.Instance << " and solution " << data.startSol << std::endl;
-
-    // Read the instance
-    std::cout << "Read the instance" << std::endl;
-    Input in;
-    if (data.TTP && !in.read_TTP(data.Instance)){
-        cout << "could not read TTP path " << data.Instance << endl;
-        return -1;
+    if (param.SA){
+        ++count_meta;
     }
-    else if ((data.Football || data.Hockey) && !in.read_YSTP(data.Instance, data.Football)){
-        cout << "could not read Football or Hockey path " << data.Instance << endl;
-        return -1;
+    if (param.ILS){
+        ++count_meta;
     }
-
-    // Read the starting solution
-    Solution sol(in);
-        sol.SetOneCostAllViolations(data.ConstrViolationCost);
-    ReadSolutionXML(data.startSol, sol);
-        sol.validate();
-
-    // Perform the team swapper
-    //sol.SetOneCostAllViolations(data.ConstrViolationCost);
-    int obj = sol.ComputeTotalCost();
-    std::mt19937 gen(data.seed);
-    int HL = 1;
-    if (data.HistoryLengthProvided){
-        HL = data.HistoryLength;
-    }	
-        Heuristic algo(data.Moves, data.InputWeights, gen, HL, obj, sol);
-        algo.TeamSwapper();
-
-    return 0;
-}
+    if (param.LAHC){
+        ++count_meta;
+    }
+    if (count_meta > 1){
+        cout << "Choose only one metaheuristic!!" << endl;
+        std::abort();
+    }
 
     if (ComputeBounds == 1){
-        cout << "Compute TTP bound for " << data.Instance << "_" << data.NrRounds << " with TimeLimit " << data.TimeLimit << endl;
-        BoundsTTP_OneInstance(data);
+        cout << "Compute TTP bound for " << data.Instance << "_" << data.NrRounds << " with TimeLimit " << param.TIME_LIMIT << endl;
+        BoundsTTP_OneInstance(data, param);
         return 1;
     }
 
-    unordered_map<Move, double>InputWeightsCopy = data.InputWeights;
-
-    double sum = 0.0;
-    double sum_weights = 0.0;
+    if (data.Heuristic){
+#ifdef PRINT
+#if PRINT == 1
     cout << "------ Weights ------" << endl;
-    InputWeightsCopy = data.InputWeights;
-    bool NoMoveSeen = true;
-    for (const auto& [move, weight]: data.InputWeights){
-        sum += data.InputWeights.at(move);
-        NoMoveSeen = false;
+#endif
+#endif
+    ModifyWeights(data.Moves, data.InputWeights);
+    ModifyWeights(data.Moves, data.InputWeightsPerturb);
+#ifdef PRINT
+#if PRINT == 1
+    cout << "---------------------" << endl;
+#endif
+#endif
     }
-    for (const auto& [move, weight]: data.InputWeights){
-        data.InputWeights.at(move) /= sum;
-        sum_weights += data.InputWeights.at(move);
-        cout << data.Moves.at(move) << ": " << data.InputWeights.at(move) << endl;
-    }
-    if (NoMoveSeen){
-        assert(sum == 0);
-        for (const auto& [move, name]: data.Moves){
-            sum += 1.0;
-        }
-        for (const auto& [move, name]: data.Moves){
-            data.InputWeights[move] = 1.0 / sum;
-            sum_weights += data.InputWeights.at(move);
-            cout << data.Moves.at(move) << ": " << data.InputWeights.at(move) << endl;
-        }
-    }
-    if (sum_weights <= 0.99 || sum_weights >= 1.01){
-        cout << "Sum of the weights should be equal to 1.0 but is now" << sum_weights << endl;
-        return 1;
-    }
+#ifdef PRINT
+#if PRINT == 1
     cout << "---------------------" << endl;
     cout << "Instance = " << data.Instance << endl;
     cout << "Parameters specified:" << endl;
-    cout << "TimeLimit = " << data.TimeLimit << endl;
-    cout << "Max iterations = " << data.MaxIt << endl;
-    cout << "HistoryLength = " << data.HistoryLength << endl;
-    SelectAlgo(data);
+    cout << "TimeLimit = " << param.TIME_LIMIT << endl;
+    cout << "Max iterations = " << param.MAX_IT << endl;
+    cout << "HistoryLength = " << param.HistoryLength << endl;
+#endif
+#endif
+    SelectAlgo(data, param);
 
     return 1;
 }

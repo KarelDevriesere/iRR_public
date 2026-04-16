@@ -32,7 +32,8 @@ class GurSolver : public Input
         vector<vector<GRBVar>>z_tr; // TTP trip model
         vector<vector<vector<GRBVar>>>z_trp; // TTP trip model
         vector<vector<vector<GRBVar>>>z_trs; // TTP trip model
-        vector<vector<HA>>Orientation;
+        
+        vector<vector<HA>>Orientation; // for fix and optimize
 
         vector<GRBConstr> C1; // iTTP bounds
 	    vector<GRBConstr> C2; // iTTP bounds
@@ -109,6 +110,8 @@ class GurSolver : public Input
         void AddObj(const bool min_travel, const bool min_capacity_violations);
         void AddObjGeneralCosts(); // for cost minimization
         void AddObjMinBreaks(); // break minimization
+        void AddObj_iTTP();
+        void AddObjPerturb(const vector<vector<vector<bool>>>& x_fixed, const vector<vector<vector<bool>>>& x_value);
         void setTimeLimit(const int time_limit);
         void setBoundCapacityViolations();
         int solve();
@@ -121,12 +124,12 @@ class GurSolver : public Input
         
         void Fix_x(Solution& sol);
         void FixHAP(Solution& sol);
-        void BuildMiaoFormulation(const bool relax_x, const bool min_travel, const bool min_capacity_violations);
+        void BuildIntegratedFormulation(const bool relax_x, const bool min_travel, const bool min_capacity_violations);
         void BuildPatternFormulation();
         void Fix_y_Patterns(const Solution& sol);
-        void AssignHAPsToTeams(Solution& sol); // For Miao's algorithm
+        void AssignHAPsToTeams(Solution& sol);
         void StoreHAPs(Solution& sol);
-        void AddMiaoSymmetryConstraint();
+        void AddSymmetryConstraint();
         void iTTP();
         
         bool TrackTimeBestSolution = true;

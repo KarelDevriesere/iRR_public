@@ -34,19 +34,6 @@ void Input::setBaseAlgo(){
         */
 }
 
-int Input::getDistanceTeams(const int i, const int j)const{
-    if (i > IsTeamDummy.size() || j > IsTeamDummy.size() || i < 0 || j < 0){
-        cout << "i = " << i << ", j = " << j << " in getDistanceTeams()" << endl;
-        std::abort();
-    }
-    if (isTeamDummy(i) || isTeamDummy(j)){
-        return 0;
-    }
-    else{
-        return DistanceClubs[TeamClub[i]][TeamClub[j]];
-    }
-}
-
 void Input::SetDefault(const int NrTeams){
     // All teams same strength, every team has its own club, no dummy teams, all teams in same league
     // In solution: modify everything such that instead of travel cost, we compute the costs
@@ -83,7 +70,7 @@ void Input::SetDefault(const int NrTeams){
 
 int Input::read_TTP(const std::string file_path){
     Setting_ = Setting::TTP;
-    cout << "Read TTP files" << endl;
+    // cout << "Read TTP files" << endl;
     file<> xmlFile(file_path.c_str()); // replace with your file path
     xml_document<> doc;
     doc.parse<0>(xmlFile.data());
@@ -116,10 +103,13 @@ int Input::read_TTP(const std::string file_path){
         if (auto* yearAttr = dateNode->first_attribute("year")) {
             year = std::stoi(yearAttr->value());
         }
-
+#ifdef PRINT
+#if PRINT == 1
         std::cout << "Instance: " << InstanceName << ", Type: " << dataType
                   << ", Contributor: " << contributor << std::endl;
         std::cout << "Date: " << day << "/" << month << "/" << year << std::endl;
+#endif 
+#endif
     }
 
     // ---- Read Teams ----
@@ -148,11 +138,13 @@ int Input::read_TTP(const std::string file_path){
 
     if(NrRounds >= NrTeams){
 	    std::cout << "Too many slots: " << NrRounds << " vs. " << NrTeams <<". Impossible to play i1RR" << std::endl;
+        std::abort();
     }
 
     // ---- Read Distances ----
     MaxEdgeCost = 0;
     DistanceClubs = vector<vector<int>>(NrTeams, vector<int>(NrTeams, 0));
+    DistanceTeams = vector<vector<int>>(NrTeams, vector<int>(NrTeams, 0));
     CostMatchRound = vector<vector<vector<int>>>(NrTeams,vector<vector<int>>(NrTeams,vector<int>(NrRounds, 0)));
     xml_node<> *distancesNode = root->first_node("Data")->first_node("Distances");
     if (distancesNode) {
@@ -160,6 +152,7 @@ int Input::read_TTP(const std::string file_path){
             int t1 = std::stoi(dist->first_attribute("team1")->value());
             int t2 = std::stoi(dist->first_attribute("team2")->value());
             DistanceClubs[t1][t2] = std::stoi(dist->first_attribute("dist")->value());
+            DistanceTeams[t1][t2] = std::stoi(dist->first_attribute("dist")->value());
             // std::cout << "Distance between team " << t1 << " and " << t2 << " = " << DistanceClubs[t1][t2] << std::endl;
             if (MaxEdgeCost < DistanceClubs[t1][t2]){
                 MaxEdgeCost = DistanceClubs[t1][t2];
@@ -171,7 +164,7 @@ int Input::read_TTP(const std::string file_path){
         }
     }
 
-    cout << "NrTeams = " << NrTeams << ", NrRounds =  " << NrRounds  << endl;
+    // cout << "NrTeams = " << NrTeams << ", NrRounds =  " << NrRounds  << endl;
 
     SetDefault(NrTeams);
 
@@ -248,7 +241,7 @@ void Input::setAllowedNrCapacityViolations1RR(const InputData& data){
 
 int Input::read_YSTP(const std::string file_path, const bool Miao){
 
-    cout << "This function is intended ONLY for Hockey and Miao instances!!" << endl;
+    // cout << "This function is intended ONLY for Hockey and Miao instances!!" << endl;
 
     if (Miao){
         Setting_ = Setting::Football;
@@ -284,6 +277,7 @@ int Input::read_YSTP(const std::string file_path, const bool Miao){
                     if (Miao){
                         InstanceFootball = getFootballInstance();
                     }
+                    DistanceTeams = vector<vector<int>>(NrTeams, vector<int>(NrTeams, 0));
                 }
                 else if (j == 1){
                     NrLeagues = num;
@@ -435,10 +429,10 @@ int Input::read_YSTP(const std::string file_path, const bool Miao){
     }
     int DummyCapacity = 0;
     for (l = 0; l < getNrLeagues(); ++l){
-        cout << "League " << l << " has size " << LeagueTeams[l].size() << endl;
+        // cout << "League " << l << " has size " << LeagueTeams[l].size() << endl;
         if ((int)LeagueTeams[l].size() % 2 != 0){
             assert(false); // All instances should have leagues of even size!!!
-            cout << "add dummy" << endl;
+            // cout << "add dummy" << endl;
             Teams.push_back(NrTeams);
             TeamStrength.push_back(l);
             TeamClub.push_back(IndexDummyClub);
@@ -456,6 +450,28 @@ int Input::read_YSTP(const std::string file_path, const bool Miao){
     for (int p = NrNonDummyTeams; p < IsTeamDummy.size(); p++){
         IsTeamDummy[p] = true;
     }   
+
+    // distance of the teams
+    for (int c1 = 0; c1 < NrClubs; ++c1){
+        for (int c2 = c1+1; c2 < NrClubs; ++c2){
+            for (int t1: getTeamsClub(c1)){
+                for (int t2: getTeamsClub(c2)){
+                    DistanceTeams[t1][t2] = DistanceClubs[c1][c2];
+                    DistanceTeams[t2][t1] = DistanceClubs[c1][c2];
+                    // cout << "distance vs " << t1 << " and " << t2 << " = " << DistanceTeams[t1][t2] << endl;
+                }
+            }
+        }
+    }
+    // distance of dummy teams
+    for (int i = 0; i < NrTeams; ++i){
+        if (IsTeamDummy[i]){
+            for (int j = 0; j < NrTeams; ++j){
+                DistanceTeams[i][j] = 0;
+                DistanceTeams[j][i] = 0;
+            }
+        }
+    }
 
     for (int c = 0; c < NrClubs; ++c){
         if (ClubTeams[c].size() == 1){
@@ -520,27 +536,16 @@ int Input::read_YSTP(const std::string file_path, const bool Miao){
                 MultiTeamClubsLeague[l].push_back(c);
             }
         }
-        cout << "Size SingleTeamClubs in league " << l << " = " << SingleTeamClubsLeague[l].size() << endl;
-        cout << "Size MultiTeamClubs in league " << l << " = " << MultiTeamClubsLeague[l].size() << endl;
+        // cout << "Size SingleTeamClubs in league " << l << " = " << SingleTeamClubsLeague[l].size() << endl;
+        // cout << "Size MultiTeamClubs in league " << l << " = " << MultiTeamClubsLeague[l].size() << endl;
     }
 
     // set Maximum cost of an edge )> for maximum weight matching
     MaxEdgeCost = MaxDistanceClubs;
 
-    // In Matching: always use CostMatchRound from now on!!
-    CostMatchRound = vector<vector<vector<int>>>(NrTeams,vector<vector<int>>(NrTeams,vector<int>(NrRounds, 0)));
-    for (int r = 0; r < NrRounds; ++r){
-        for (int i = 0; i < NrTeams; ++i){
-            for (int j = i; j < NrTeams; ++j){
-                CostMatchRound[i][j][r] = getDistanceTeams(i,j);
-                CostMatchRound[j][i][r] = getDistanceTeams(i,j);
-            }
-        }
-    }
-
     // ++NrClubs;
 
-    std::cout << "NrTeams = " << NrTeams << ", NrLeagues = " << NrLeagues << ", NrClubs = " << NrClubs << ", NrRounds = " << NrRounds << std::endl;
+    // std::cout << "NrTeams = " << NrTeams << ", NrLeagues = " << NrLeagues << ", NrClubs = " << NrClubs << ", NrRounds = " << NrRounds << std::endl;
 
     /*
     for (l = 0; l < NrLeagues; ++l){
@@ -717,7 +722,7 @@ int Input::read_HAPs(){
         ++h;
     }
     int index = 0;
-    cout << "Nr of HAPs listed = " << h << endl;
+    // cout << "Nr of HAPs listed = " << h << endl;
     for (h = 0; h < HAPs_even.size(); ++h){
         if (InstanceFootball != FootballInstance::M && !HAP_satisfies_all_requirements(HAPs_even[h])){ // preprocess the haps!
             // Do do not preprocess for the canoncial HAP set
@@ -731,7 +736,11 @@ int Input::read_HAPs(){
         index += 2;
     }
     TeamsHAP = vector<int>(NrTeams);
+#ifdef PRINT
+#if PRINT == 1
     cout << HAPs.size() << " satisfactory haps" << endl;
+#endif 
+#endif
 
     return 1;
 

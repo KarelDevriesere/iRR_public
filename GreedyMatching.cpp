@@ -2,6 +2,21 @@
 #include "assert.h"
 #include <algorithm>
 
+#include <boost/config.hpp>
+#include <boost/graph/properties.hpp>
+#include <boost/graph/adjacency_list.hpp>
+// TODO Overwrite maximum weighted matching with the newest boost file.
+// See https://github.com/boostorg/graph/issues/399
+//#include <boost/graph/maximum_weighted_matching.hpp>
+#include "maximum_weighted_matching.hpp"
+
+typedef boost::adjacency_list <boost::vecS, boost::vecS, boost::directedS, boost::no_property, boost::property <boost::edge_weight_t, int>>BGraph;
+// shortest path needs listS?
+// typedef boost::adjacency_list< boost::listS, boost::vecS, boost::directedS, boost::no_property, boost::property< boost::edge_weight_t, int > >BGraph;
+typedef pair<int, int>Edge;
+typedef boost::property_map<BGraph, boost::edge_weight_t>::type WeightMap;
+typedef boost::graph_traits<BGraph>::vertex_descriptor Vertex;
+
 void FindScheduleWithIP(Input& in, Solution& sol){
     GurSolver gur(in);
     const bool relax_x = false;
@@ -38,7 +53,7 @@ bool ForbiddenEdge(const int i, const int j, const int r, const vector<bool>& Te
     return false;
 }
 
-vector<pair<int,int>>GreedyMatching::MWPBM(const int r, std::mt19937& gen, const int l, Solution& sol){
+vector<pair<int,int>>GreedyMatching::MWPBM(const int r, const int l){
 
     int N = sol.getNrTeamsLeague(l);
     int R = sol.getNrRounds();
@@ -166,7 +181,7 @@ void setHAP(Solution& sol, const int i, const int h){
     sol.setHAPIndexTeam(i, h);
 }
 
-void GreedyMatching::SetAllOpponents(Solution& sol){
+void GreedyMatching::SetAllOpponents(){
     for (int i = 0; i < sol.getNrTeams(); ++i){
         for (int r = 0; r < sol.getNrRounds(); ++r){
             Opponents[i][r] = sol.TeamColorOpp[i][r];
@@ -174,7 +189,7 @@ void GreedyMatching::SetAllOpponents(Solution& sol){
     }
 }
 
-void GreedyMatching::SetOpponentsCurrentLeague(Solution& sol){
+void GreedyMatching::SetOpponentsCurrentLeague(){
     for (int i = 0; i < sol.getNrTeamsLeague(CurrentLeague); ++i){
         int i_ = sol.getGlobalIndexTeam(CurrentLeague, i);
         for (int r = 0; r < sol.getNrRounds(); ++r){
@@ -184,7 +199,7 @@ void GreedyMatching::SetOpponentsCurrentLeague(Solution& sol){
 }
 
 GreedyMatching::GreedyMatching(const std::unordered_map<Move, string>& moves, // moves, weights and in are defined in main
-           const std::unordered_map<Move, double>& weights, const int NrRounds, std::mt19937& g): HC<Move>(moves, weights, g){
+           const std::unordered_map<Move, double>& weights, const int NrRounds, std::mt19937& g, Solution& current_sol): HC<Move>(moves, weights, g), sol(current_sol){
     Rounds = vector<int>(NrRounds);
     for (int r = 0; r < NrRounds; ++r){
         Rounds[r] = r;
@@ -193,7 +208,7 @@ GreedyMatching::GreedyMatching(const std::unordered_map<Move, string>& moves, //
 
 GreedyMatching::~GreedyMatching(){}
 
-void GreedyMatching::ReverseMove(Solution& sol){
+void GreedyMatching::ReverseMove(){
     if (CurrentMove == Move::ComplementInsertion){
         setHAP(sol, team1, hap_index1);
         setHAP(sol, team2, hap_index2);
@@ -218,7 +233,7 @@ void GreedyMatching::ReverseMove(Solution& sol){
     }
 }
 
-void GreedyMatching::Reset(Solution& sol){
+void GreedyMatching::Reset(){
     // cout << "Reset" << endl;
     // Such that we can do the matchings again without conflicts
     // But: do not reset the orientations!!
@@ -236,36 +251,36 @@ void GreedyMatching::Reset(Solution& sol){
     }
 }
 
-void GreedyMatching::ReAssignHAPs(Solution& sol){
+void GreedyMatching::DoMove(){
     // cout << "ReAssign HAPs" << endl;
     double rnd;
     bool MoveChosen = false;
     sol.NrColouredRounds = sol.getNrRounds(); // such that capacity costs are computed correctly
     while(!MoveChosen && !STOP){
-        rnd = RandomDoubleNumber(0.0, 1.0);
+        rnd = this->RandomDoubleNumber->Sample();
         auto iterator = WeightsCumul.upper_bound(rnd); 
         CurrentMove = iterator->second;
         if (CurrentMove == Move::InterClubSwap){
-            MoveChosen = InterClubSwap(sol);
+            MoveChosen = InterClubSwap();
         }
         else if (CurrentMove == Move::IntraClubSwap){
-            MoveChosen = IntraClubSwap(sol);
+            MoveChosen = IntraClubSwap();
         }
         else if (CurrentMove == Move::RandomSwap){
-            MoveChosen = RandomSwap(sol);
+            MoveChosen = RandomSwap();
         }
         else if (CurrentMove == Move::HomeAwaySwap){
-            MoveChosen = HomeAwaySwap(sol);
+            MoveChosen = HomeAwaySwap();
         }
         else{
-            MoveChosen = ComplementInsertion(sol);
+            MoveChosen = ComplementInsertion();
         }
         NrChosen.at(CurrentMove)++;
     }
     // cout << "Move = " << Moves.at(CurrentMove) << endl;
 }
 
-bool GreedyMatching::SchedulePhase(Solution& sol){
+bool GreedyMatching::SchedulePhase(){
     assert(sol.ComputeTotalHACost() <= 0);
     const int N = sol.getNrTeamsLeague(CurrentLeague);
     const bool bipartite = true;
@@ -281,7 +296,7 @@ bool GreedyMatching::SchedulePhase(Solution& sol){
         // cout << "Optimize round " << r << endl;
 
         // cout << "find matching" << endl;
-        vector<pair<int,int>>matching = MWPBM(r, gen, CurrentLeague, sol);
+        vector<pair<int,int>>matching = MWPBM(r, CurrentLeague);
         if ((int)matching.size() < N/2){
             // shuffling rounds does not seem a good idea, instead go back to the old HAP assignement and do a new HAP move
             // cout << "matching failed in round " << s << endl;
@@ -316,7 +331,7 @@ bool GreedyMatching::SchedulePhase(Solution& sol){
                     a = i, h = j;
                 }
                 // cout << h << ", " << a << endl;
-                SetValueCircleMethod(h, a, r, sol);
+                sol.SetColorMatch(h, a, r);
             }
             ++s;
         }
@@ -337,7 +352,7 @@ bool GreedyMatching::SchedulePhase(Solution& sol){
     return true;
 }
 
-bool GreedyMatching::HomeAwaySwap(Solution& sol){
+bool GreedyMatching::HomeAwaySwap(){
     // pick a random league + random team
     int l = RandomIntegerNumber(0, sol.getNrLeagues()-1);
     CurrentLeague = l;
@@ -394,7 +409,7 @@ bool GreedyMatching::HomeAwaySwap(Solution& sol){
     return true;
 }
 
-bool GreedyMatching::InterClubSwap(Solution& sol){
+bool GreedyMatching::InterClubSwap(){
     // Must they be of the same league->yes?
     // So modify code!!!
 
@@ -441,7 +456,7 @@ bool GreedyMatching::InterClubSwap(Solution& sol){
     return true;
 }
 
-bool GreedyMatching::IntraClubSwap(Solution& sol){
+bool GreedyMatching::IntraClubSwap(){
     assert(sol.ComputeCostCapacities() <= 0);
     /*
     int c_ = RandomIntegerNumber(0, sol.getMultiTeamClubs().size()-1);
@@ -487,7 +502,7 @@ bool GreedyMatching::IntraClubSwap(Solution& sol){
     return true;
 }
 
-bool GreedyMatching::RandomSwap(Solution& sol){
+bool GreedyMatching::RandomSwap(){
     int i,j,c1,c2;
     if (sol.getNrLeagues() <= 1){
         c1 = RandomIntegerNumber(0, sol.getNrClubs()-1);
@@ -533,7 +548,7 @@ bool GreedyMatching::RandomSwap(Solution& sol){
     return true;
 }
 
-bool GreedyMatching::ComplementInsertion(Solution& sol){
+bool GreedyMatching::ComplementInsertion(){
     // TODO
     // Also fill TeamsHAP!!
     // Given two teams with complementary HAPs, replace their patterns with a newly chosen pair of 
@@ -684,7 +699,7 @@ void AssignsHAPsToTeamsBasedOnSol(Solution& sol){
     }
 }
 
-void GreedyMatching::solve(Input& in, Solution& sol){
+void GreedyMatching::solve(Input& in, Solution& current_sol){
 
     StartTime = std::chrono::high_resolution_clock::now();
 
@@ -697,12 +712,12 @@ void GreedyMatching::solve(Input& in, Solution& sol){
             GurSolver gursol(in);
             // gursol.AssignHAPsToTeams(sol);
             const bool relax_x = false, min_travel = false, min_capacity_violations = false;
-            // gursol.BuildMiaoFormulation(relax_x, min_travel, min_capacity_violations);
+            // gursol.BuildIntegratedFormulation(relax_x, min_travel, min_capacity_violations);
             gursol.BuildPatternFormulation(); // just assign HAPs to teams without objective!!
             gursol.solve();
             gursol.StoreHAPs(sol);
             // Use Benders here to find feasible opponent schedule?
-            ReAssignHAPs(sol);
+            DoMove();
         }
         else{
             // We know that this always produces an initial solution!!
@@ -744,10 +759,10 @@ void GreedyMatching::solve(Input& in, Solution& sol){
         cout << "Assign Haps to teams" << endl;
         AssignsHAPsToTeamsBasedOnSol(sol);
         UpdateBestSolution(sol);
-        SetAllOpponents(sol);
+        SetAllOpponents();
         cout << "Ready" << endl;
         sol.validate();
-        ReAssignHAPs(sol);
+        DoMove();
         cout << "Travel cost = " << sol.ComputeTravelCostTTP() << endl;
     }
 
@@ -809,21 +824,21 @@ void GreedyMatching::solve(Input& in, Solution& sol){
         }
     }
 
-    Reset(sol);
+    Reset();
 
     while(!STOP){
         // cout << "solve matchings with following haps" << endl;
         // for (int t = 0; t < sol.getNrTeams(); ++t){
         //    printHAP(sol, t);
         //}
-        if (SchedulePhase(sol)){ // solve sequence of matching problems (round per round)
+        if (SchedulePhase()){ // solve sequence of matching problems (round per round)
             if (!Update(sol, sol.ComputeTotalCost())){ // update best objective
                 // if solution not accepted: reverse
-                ReverseMove(sol);
+                ReverseMove();
                 // Problem is that with multi leagues, if we do not accept the HAP move, in the next iteration we might choose a HAP operator from another league. Then the new opponent schedule is not compatible again with the reversed HAPs for the previous league. Hence we also have to go back to the old matching
             } 
             else{
-                SetOpponentsCurrentLeague(sol);
+                SetOpponentsCurrentLeague();
                 if (InitialOnly){
                     STOP = true;
                 }
@@ -831,11 +846,11 @@ void GreedyMatching::solve(Input& in, Solution& sol){
         }
         else{
             Update(sol, INT_MAX); // infeasible solution but still update values
-            ReverseMove(sol); // if schedule phase not succesful: reverse move, and try with new HAP move
+            ReverseMove(); // if schedule phase not succesful: reverse move, and try with new HAP move
         }
-        ReAssignHAPs(sol); // do a HAP move
+        DoMove(); // do a HAP move
         assert(sol.ComputeTotalHACost() <= 0);
-        Reset(sol); // this deletes all the matchups in the rounds of the league chosen by the HAP operator
+        Reset(); // this deletes all the matchups in the rounds of the league chosen by the HAP operator
     }
 
     // cout << "done" << endl;
@@ -844,67 +859,4 @@ void GreedyMatching::solve(Input& in, Solution& sol){
         cout << "NrSuccesfullMatchings = " << NrSuccesfullMatchings << endl;
         SaveBestSolution(sol);
     }
-}
-
-void GreedyMatching::SolveGivenSeqeuence(Input& in, Solution& sol){
-    cout << "Solve given sequence" << endl;
-    string file_path = "Instances" + std::string(PATHSEP) + "Miao";
-
-    if (in.IsCapacityConstant()){
-        file_path += (std::string(PATHSEP) + "SolutionsFoundByMiao" + std::string(PATHSEP) + "ConstantCapacity");
-    }
-    else if (in.getMiaoHAPSetting() == 1){
-        file_path += (std::string(PATHSEP) + "SolutionsFoundByMiao" + std::string(PATHSEP) + "VariableCapacity" + std::string(PATHSEP) + "Setting1");
-    }
-    else if (in.getMiaoHAPSetting() == 2){
-        file_path += (std::string(PATHSEP) + "SolutionsFoundByMiao" + std::string(PATHSEP) + "VariableCapacity" + std::string(PATHSEP) + "Setting2");
-    }
-
-    if (in.getNrTeams() == 184){
-        file_path += (std::string(PATHSEP) + "i02.txt");
-    }
-    else if (in.getNrTeams() == 216){
-        file_path += (std::string(PATHSEP) + "i03.txt");
-    }
-    else if (in.getNrTeams() == 144){
-        file_path += (std::string(PATHSEP) + "i04.txt");
-    }
-    std::ifstream file(file_path);
-    if (!file.is_open()) {
-        std::cerr << "Error opening the file " << file_path;
-        return;
-    }
-
-    std::string line;
-    cout << "Read HAP assignment" << endl;
-    // First read the HAP assignment
-    int nr = 0;
-    while (std::getline(file, line)) {
-        std::stringstream ss(line);
-        if (nr < in.getNrTeams()){
-            int i, h;
-            ss >> i;
-            ss >> h;
-            
-            if ((int)sol.getHAP(h).size() != sol.getNrRounds()){
-                cout << "HAP " << h << " has size " << sol.getHAP(h).size() << " but there are " << sol.getNrRounds() << " rounds " << endl;
-            }
-            assert(sol.getHAP(h).size() == sol.getNrRounds());
-            setHAP(sol, i, h);
-            // cout << "Team " << i << " is assigned HAP " << h << endl;
-        }
-        else{
-            int k = 0;
-            int r;
-            std::stringstream ss(line);
-            while(ss >> r){
-                Rounds[k++] = r-1; // rounds start from 1 in the files of Miao
-            }
-        }
-        ++nr;
-    }
-    file.close();
-
-    Reset(sol);
-    SchedulePhase(sol);
 }

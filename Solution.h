@@ -14,10 +14,11 @@ class Solution: public Input{
 
         int NrColouredRounds;
 
-        bool ViolationHAP_allowed = true; // whether we allow solutions that violate the HAP constraints (at a high cost)
-        bool ViolationEligibleOpponents_allowed = true; // whether we allow solutions where non-eligible opponents play vs each other (at a high cost)
+        bool ViolationHAP_allowed = false; // whether we allow solutions that violate the HAP constraints (at a high cost)
+        bool ViolationEligibleOpponents_allowed = false; // whether we allow solutions where non-eligible opponents play vs each other (at a high cost)
         // We only allow this in TS and PTS because in the matchings wo do not create those edges
-        bool ViolationSameClubAllowed = true;
+        bool ViolationSameClubAllowed = false;
+        bool ConstraintViolationAllowed = false;
 
         Solution(const Input& in);
         ~Solution();
@@ -39,6 +40,8 @@ class Solution: public Input{
 
         int CostTTPViolation = 1000000;
         int CostImbalance = 1000000;
+
+        void SetColorMatch(const int h, const int a, const int c);
 
         int getCostTTPViolation()const{return CostTTPViolation;};
         int getCostImbalance()const{return CostImbalance;};
@@ -76,7 +79,7 @@ class Solution: public Input{
         int ComputeCostBreakBeginningEnd();
         int ComputeCostQuarterBalanced();
 
-        int ComputeTTPViolations(const int i);
+        int ComputeTTPViolations(const int i, const int min_round, const int max_round);
         int ComputeTotalCostTTP();
         int ComputeTotalCostTTPViolations();
         int ComputeCostMatchRoundTTP(const int h, const int a, const int r);

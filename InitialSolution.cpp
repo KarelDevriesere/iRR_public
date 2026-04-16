@@ -1,4 +1,4 @@
-#include "Algo.h"
+#include "InitialSolution.h"
 #include <assert.h>
 #include <iostream>
 #include <fstream>
@@ -9,28 +9,6 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/edge_coloring.hpp>
 #include <boost/graph/properties.hpp>
-
-/*
-void setHAofMatch(int& a, int& b, int& c, Solution& sol){
-	G.Orientation[a][c] = HA::H;
-	G.Orientation[b][c] = HA::A;
-	if (c < sol.getNrRounds()){
-		++sol.NrH[sol.getTeamClub(a)][c];
-		++sol.NrH_team[a];
-	}
-}
-*/
-
-void SetValueCircleMethod(const int h, const int a, const int c, Solution& sol){
-    sol.MatchColor[h][a] = c;
-	if (sol.SRR){
-		sol.MatchColor[a][h] = c;
-	} 
-    sol.TeamColorOpp[h][c] = a;
-    sol.TeamColorOpp[a][c] = h;
-	// sol.Orientation[h][c] = HA::H;
-	// sol.Orientation[a][c] = HA::A;
-}
 
 void setHaps(const int c1, const int c2, Solution& sol){
 	// The idea is that even 2 disjoint perfect matchings decompose into even cycles, so we can always find an orientation where the
@@ -136,7 +114,7 @@ void CircleMethod(vector<int>& Teams, Solution& sol){
 			b = circle[N - 1];
 			a = circle[0];
 		}
-		SetValueCircleMethod(a, b, c, sol);
+		sol.SetColorMatch(a, b, c);
 		for (int k = 1; k < N / 2; ++k)
 		{
 			if (c % 2 == 0){
@@ -147,7 +125,7 @@ void CircleMethod(vector<int>& Teams, Solution& sol){
 				b = circle[k];
 				a = circle[N - 1 - k];
 			}
-			SetValueCircleMethod(a, b, c, sol);
+			sol.SetColorMatch(a, b, c);
 		}
 		temp = circle[0];
 		for (int j = 0; j < N - 1; j++)
@@ -284,97 +262,3 @@ void VizingConstruction(Solution& sol, const int seed){
 
 	return;
 }
-
-
-bool CyclicConstruction(Solution& sol){
-	/*
-	Note: in Miao's paper wordt gezegd dat als er 2 complementaire HAPs zijn, het makkelijk is om na te gaan of er een opponent schedule bestaat,
-	door een bipartite graph te maken en alle teams met HAP1 aan een kant en alle teams met HAP2 aan de andere kant. Kijken of deze graph
-	k edge disjoint perfect matchings heeft is polynomiaal zegt Ganesh (2021), die verwijst naar Konig + Tutte
-
-	Via deze constructie hier maken we ook impliciet 2 HAPs aan
-	Bovendien zijn er hier geen breaks!!
-	=> Geen 3 consecutive H/A, geen break in begin/einde, half balanced..
-
-	Misschien dat deze constructie ook ergens in Froncek staat
-
-	=> MAAR: single iRR, iedereen mag tegen iedereen: feasible schedule vinden met alle HAP constraints gaat snel met Gurobi (< 60s)
-	
-	*/
-	cout << "nr of nodes of G = " << sol.getNrTeams() << endl;
-	assert(sol.getNrLeagues() == 1);
-	const int N = sol.getNrTeams();
-	const int R = sol.getNrRounds();
-	const int C = sol.getNrClubs();
-	if (R > N/2){
-		cerr << "Cyclic construction not possible because R > N/2" << endl;
-		return false;
-	}
-
-	// Order the clubs
-	int p = 0;
-	vector<int>teams(N, -1);
-
-	int c, i,j,r, r_start, a,b;
-	for (c = 0; c < C; ++c){
-		// cout << "Capacity of club " << c << " = " << sol.getCapacityClub(c) << endl;
-		for (auto& i: sol.getTeamsClub(c)){
-			// cout << "Club " << c << " in position " << p << endl;
-			teams[p++] = i;
-		}
-	}
-
-	for (i = 0; i < N; ++i){
-		if (i % 2 == 0){
-			r_start = 0;
-		}
-		else{
-			r_start = 1;
-		}
-		for (r = r_start; r < R; r+=2){
-			j = (i+r+1-r_start)%N;
-			a = teams[i];
-			b = teams[j];
-			SetValueCircleMethod(a, b, r, sol); 
-		}
-	}
-
-	return true;
-}
-
-/*
-int GreedyConstruction(const int l, Solution& sol){
-	int obj_greedy = 0; // TODO
-	const int N = sol.getNrTeams();
-	vector<pair<int, int>>Matching;
-	vector<vector<bool>>ForbiddenEdge(N, vector<bool>(N, false));
-	int i_,j_,i,j;
-	for (i_ = 0; i_ < sol.getNrTeamsLeague(l); ++i_){
-		for (j_ = i_+1; j_ < sol.getNrTeamsLeague(l); j_++){
-			i = sol.getTeamsLeague(l)[i_], j = sol.getTeamsLeague(l)[j_];
-			if (!sol.isEligible(i, j)){
-				ForbiddenEdge[i][j] = true;
-				ForbiddenEdge[j][i] = true;
-			}
-		}
-	}
-	for (int r = 0; r < sol.getNrRounds(); ++r){
-		Matching = MWPM(sol.getTeamsLeague(l), sol, ForbiddenEdge, delta);
-		// Test whether matching is perfect, otherwise return obj_greedy = -1
-		if (Matching.empty()){
-			return -1;
-		}
-		for (auto& m: Matching){
-			i = m.first;
-			j = m.second;
-			ForbiddenEdge[i][j] = true;
-            ForbiddenEdge[j][i] = true;
-			obj_greedy += sol.getDistanceTeams(i, j);
-			SetValueCircleMethod(i, j, r, sol);
-		}
-	}
-	RepairBalanceHA(sol);
-
-	return obj_greedy; // greedy succesfull
-}
-*/
