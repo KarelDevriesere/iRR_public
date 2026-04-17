@@ -491,7 +491,8 @@ void Heuristic::SelectiPRS(const bool bipartite){
         assert(bipartite);
         // cout << "FindMinCostBalancedCycle" << endl;
         if (!FindMinCostBalancedACycle(r)){
-            MetaH->it_idle++;
+            MinCostAC = true;
+            SelectiPRS(bipartite);
             return;
         }
     }
@@ -579,6 +580,10 @@ void Heuristic::SelectBalancedCycle(){
 
     bool Success = false;
     if (MinCostC){
+        /*
+        Either do MinCost cycle or normal cycle
+        Normal cycle are also in MinCost cycles if none is found
+        */
         // First try to find a negative cycle
         if (LineGraphUsefull){
             if (FindCycleLineGraph(MetaH->current_obj, true)){
@@ -596,11 +601,9 @@ void Heuristic::SelectBalancedCycle(){
             }
         }
             */
+        // if no negative cycle found, do normal cycle
 
-        if (!Success){
-            ++MetaH->it_idle;
-            return;
-        }
+        Success = CycleBalanced();
     }
     else{
         Success = CycleBalanced();

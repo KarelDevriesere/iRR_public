@@ -500,7 +500,7 @@ bool ILS<Move>::Update(Solution& sol, const int obj){
             if (this->current_obj < obj && !this->PERTURB){
                 ++this->it_idle;
             }
-            if (this->current_obj >= obj || (this->PERTURB && obj < 3*sol.getCostTTPViolation()-100)){
+            if (this->current_obj >= obj || (this->PERTURB && obj < sol.getCostTTPViolation()-100)){
                 this->current_obj = obj;
                 SolutionAccepted = true;
 
@@ -529,14 +529,14 @@ void ILS<Move>::Reconfigure(Solution& sol){
     }
     // cout << "--------------------" << endl;
     // cout << "Perturbe" << endl;
-    // cout << "Current obj = " << current_obj << endl;
-    // cout << "Best obj = " << best_obj << endl;
+    // cout << "Current obj = " << this->current_obj << endl;
+    // cout << "Best obj = " << this->best_obj << endl;
     this->PERTURB = true;
     it_accepted_perturbation = 0;
-    cout << sol.ComputeTotalCost() << endl;
     this->SaveBestSolution(sol);
     this->current_obj = this->best_obj;
-    while (it_accepted_perturbation < IT_MAX_PERT){
+    int MaxPerturbations = this->gen()%IT_MAX_PERT+1;
+    while (it_accepted_perturbation < MaxPerturbations){
         this->CurrentMove = SelectPerturbNB();
         this->executor->DoMove();
     }

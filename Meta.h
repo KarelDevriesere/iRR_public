@@ -434,8 +434,7 @@ class ILS: public MetaBase<Move>{ // Hill Climbing
         Move SelectPerturbNB(){
             double rnd = this->RandomDoubleNumber->Sample();
             auto iterator = WeightsCumulPerturb.upper_bound(rnd);
-            Move BestMove = iterator->second;
-            return BestMove;
+            return iterator->second;
         }
 
 };
@@ -443,7 +442,7 @@ class ILS: public MetaBase<Move>{ // Hill Climbing
 template<typename Move>
 class VNS: public MetaBase<Move>{ // Variable Neighborhood Search
     private:
-        const vector<string>OrderedMoves = {"C", "PRS", "TS", "Random_BM", "iPTS_Random_PR", "Random_M_Random_PR"};
+        const vector<string>OrderedMoves = {"MinCost_BM", "NC", "C", "PRS", "TS", "Random_BM", "iPTS_Random_PR", "Random_M_Random_PR"};
         vector<Move>OrderedPresentMoves;
         int previous_best_obj = INT_MAX;
     public:
