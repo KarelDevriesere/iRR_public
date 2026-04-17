@@ -525,14 +525,14 @@ void SolveFixAndOptimize(Input& in, vector<int>& TimeStamps, const string Folder
     InitializeSol(sol, data);
 
     int obj = sol.ComputeTotalCost();
-    cout << "Cost initial solution = " << obj << endl;
+    // cout << "Cost initial solution = " << obj << endl;
 
     auto MetaStrategy = MetaFactory<FO_move>::create(MetaHeuristic::HC, obj, param, FixAndOptimizeMoves, FixAndOptimizeWeights, FixAndOptimizeWeights, gen);
     FO FO(in, std::move(MetaStrategy));
     FO.InitializeModel(sol, data);
     FO.solve(in, sol, data);
 
-    cout << "Final objective = " << sol.ComputeTotalCost() << endl;
+    // cout << "Final objective = " << sol.ComputeTotalCost() << endl;
 
     string FilePath;
     string config;
@@ -580,7 +580,6 @@ void SolveFixAndOptimize(Input& in, vector<int>& TimeStamps, const string Folder
 
     output_file.close();
     cout << sol.ComputeTotalCost() << endl; // for irace: print final solution
-    return;
 
     return;
 }

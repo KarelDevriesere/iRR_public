@@ -8,6 +8,7 @@
 class FO: public GurSolver, public MoveExecutor
 {
     private:
+
         std::unique_ptr<MetaBase<FO_move>> MetaH;
 
         vector<vector<vector<bool>>>x_value;
@@ -24,6 +25,7 @@ class FO: public GurSolver, public MoveExecutor
 
 
     public:
+
         FO(Input& in, std::unique_ptr<MetaBase<FO_move>> strategy);
         ~FO();
 

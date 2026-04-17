@@ -27,7 +27,7 @@ struct EdgeNode{ // (a -> h)
 // We want one graph, do not delete edges and nodes but instead modify the weights
 // i.e. if node u is forbidden, set a cost of INF to all edges u->v
 
-struct LineGraph{
+struct LG{
     int N,R;
     int SOURCE,SINK;
     vector<EdgeNode>Nodes;
@@ -124,7 +124,7 @@ class Operator{
         vector<vector<int>>predLG;
 
         Lantarn lantarn;
-        LineGraph LineGraph;
+        LG LineGraph;
         GPTS_lantarn lantarnGPTS;
 
         void clearVisited(){

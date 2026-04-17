@@ -599,7 +599,8 @@ void VNS<Move>::solve(Input& in, Solution& sol){
         else{
             ++k;
             if (k >= k_last){
-                k = this->gen()%k_last;
+                std::shuffle(OrderedPresentMoves.begin(), OrderedPresentMoves.end(), MetaH->gen)
+                k = 0;
                 this->CurrentMove = OrderedPresentMoves[k];
                 cout << "Accept " << this->Moves.at(this->CurrentMove) << " no matter what" << endl;
                 perturb = true;
