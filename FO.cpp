@@ -43,8 +43,12 @@ int FO::Perturb(Solution& sol){
 	const bool HA = true;
 	const bool relax_x = false;
 	AddObjPerturb(x_fixed, x_value);
+#ifdef PRINT
+#if PRINT == 1
 	cout << "PERTURB" << endl;
 	cout << "previous solution = " << sol.ComputeTotalCost() << endl;
+#endif 
+#endif
 	auto time_before_solve = std::chrono::high_resolution_clock::now();
 	GurSolver::solve();
 	auto time_diff = std::chrono::high_resolution_clock::now() - time_before_solve;
@@ -61,7 +65,11 @@ int FO::Perturb(Solution& sol){
 	}
 	SaveSolution(sol);
 	int obj = sol.ComputeTotalCost();
+#ifdef PRINT
+#if PRINT == 1
 	cout << "new solution = " << obj << endl;
+#endif 
+#endif
 	Store_x_value();
 	// cin.get();
 	return obj;
@@ -464,9 +472,7 @@ void FO::solve(Input& in, Solution& sol, const InputData& data){
 		}
 
 		if (MetaH->it_idle >= MetaH->MAX_IT){
-			cout << "Perturb, previous obj = " << sol.ComputeTotalCost() << endl;
 			obj = Perturb(sol);
-			cout << "New obj = " << obj << endl;
 			MetaH->it_idle = 0;
 			if (data.TTP){
 				AddObj_iTTP();// set normal objective again
@@ -482,5 +488,5 @@ void FO::solve(Input& in, Solution& sol, const InputData& data){
 		fix_all();
 		prev_obj = obj;
 	}
-	SaveSolution(sol);
+	MetaH->SaveBestSolution(sol);
 }

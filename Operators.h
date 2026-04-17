@@ -124,7 +124,7 @@ class Operator{
         vector<vector<int>>predLG;
 
         Lantarn lantarn;
-        LineGraph LineGraph;
+        LG LineGraph;
         GPTS_lantarn lantarnGPTS;
 
         void clearVisited(){

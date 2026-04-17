@@ -16,13 +16,12 @@ GurSolver::~GurSolver(){}
 
 GRBModel GurSolver::createModel(GRBEnv& env) {
 	env.start();
-	env.set(GRB_IntParam_Threads, 8); // Very important when using HPC!!!
 #ifdef PRINT
 #if PRINT == 0
-	// env.set(GRB_IntParam_LogToConsole, 0); // surpress all output
+	env.set(GRB_IntParam_LogToConsole, 0); // surpress all output
 #endif
 #endif
-	env.set(GRB_IntParam_LogToConsole, 0);
+	env.set(GRB_IntParam_Threads, 8); // Very important when using HPC!!!
 	return GRBModel(env);
   }
 
@@ -2251,7 +2250,7 @@ void GurSolver::build_HAP_constraints(){
 	int i,j,r;
 
     if (getHAP_requirement(HAP_requirement_name::NoThreeConsecutive)){
-		cout << "Add constraint NoThreeConsecutive to model" << endl;
+		// cout << "Add constraint NoThreeConsecutive to model" << endl;
 		for (i = 0; i < getNrTeams(); ++i){
 			for (r = 2; r < getNrRounds(); ++r){
 				GRBLinExpr sum_H = 0, sum_A = 0;
