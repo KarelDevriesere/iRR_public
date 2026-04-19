@@ -263,7 +263,6 @@ int main(int argc, const char* argv[]){
                 std::cerr << "ItMaxPert should be positive" << endl;
                 return 1;
             }
-            param.ILS = true;
         }
         else if (arg == "--LAHC"){ // Iterated Local Search
             if (!std::stoi(argv[++i])){
@@ -309,6 +308,12 @@ int main(int argc, const char* argv[]){
                 continue;
             }
             param.VNS = true;
+        }
+        else if (arg == "--MAB"){
+            if (!std::stoi(argv[++i])){
+                continue;
+            }
+            param.MAB = true;
         }
         else if (arg == "--ConstrViolationAllowed"){
             if (std::stol(argv[++i]) > 0){

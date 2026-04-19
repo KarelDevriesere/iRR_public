@@ -207,7 +207,7 @@ bool LAHC<Move>::Update(Solution& sol, const int obj) {
                 this->it_idle = 0;
             }
             bool diff = false;
-            if (obj <= this->current_obj || obj < HistoricValues.at(v)){
+            if (obj <= this->current_obj || (!this->LocalOptimum && obj < HistoricValues.at(v))){
 
                 if (obj != this->current_obj){
                     diff = true;
@@ -442,7 +442,7 @@ void SA<Move>::Reconfigure(Solution& sol){
     }
     if (this->it_idle > 50*I_temp){
         T = T_last_improv;
-        cout << this->it_idle << " iterations without finding a better value, new T = " << T << endl;
+        // cout << this->it_idle << " iterations without finding a better value, new T = " << T << endl;
         this->it_idle = 0;
         this->SaveBestSolution(sol);
         this->current_obj = this->best_obj;
@@ -458,9 +458,6 @@ bool HC<Move>::Update(Solution& sol, const int obj){
 
             if (obj >= this->current_obj){
                 this->it_idle++;
-                if (this->it_idle % 10000 == 0 && this->it_idle > 0){
-                    cout << "it_idle = " << this->it_idle << endl;
-                }
             }
             else{
                 this->it_idle = 0;
@@ -560,10 +557,10 @@ bool VNS<Move>::Update(Solution& sol, const int obj){
             else{
                 this->it_idle = 0;
             }
-            if (this->current_obj >= obj || (perturb && obj < sol.getCostTTPViolation())){
+            if (this->current_obj >= obj || (this->PERTURB && obj < sol.getCostTTPViolation()-100)){
                 this->current_obj = obj;
                 SolutionAccepted = true;
-                perturb = false;
+                ++it_accepted_perturbation;
 #if PRINT == 1
                     this->print_solution();
 #endif
@@ -587,10 +584,17 @@ void VNS<Move>::solve(Input& in, Solution& sol){
     int k_last = OrderedPresentMoves.size();
     while (!this->STOP){
         this->CurrentMove = OrderedPresentMoves[k];
-        cout << "CurrentMove = " << this->Moves.at(this->CurrentMove) << endl;
+        // cout << "CurrentMove = " << this->Moves.at(this->CurrentMove) << endl;
         while (this->it_idle < this->MAX_IT){
             this->executor->DoMove();
+            if (this->Moves.at(this->CurrentMove) == "MinCost_BM" && this->it_idle > 2*sol.getNrRounds()){
+                break; // makes no sense to do more moves
+            }
+            else if (this->Moves.at(this->CurrentMove) == "NC" && this->it_idle > 1){
+                break; // break early when LG does not have a negative cycle
+            }
         }
+        this->UpdateBest(sol, this->current_obj);
         if (this->current_obj < previous_best_obj){
             previous_best_obj = this->current_obj;
             assert(previous_best_obj == this->best_obj);
@@ -599,14 +603,25 @@ void VNS<Move>::solve(Input& in, Solution& sol){
         else{
             ++k;
             if (k >= k_last){
-                std::shuffle(OrderedPresentMoves.begin(), OrderedPresentMoves.end(), MetaH->gen)
+                this->SaveBestSolution(sol); // return to best found solution
+                this->current_obj = this->best_obj;
+                cout << "best objective = " << sol.ComputeTotalCost() << " = " << this->best_obj << endl;
+                std::shuffle(OrderedPresentMoves.begin(), OrderedPresentMoves.end(), this->gen);
                 k = 0;
-                this->CurrentMove = OrderedPresentMoves[k];
-                cout << "Accept " << this->Moves.at(this->CurrentMove) << " no matter what" << endl;
-                perturb = true;
-                while (perturb){
+                while (this->Moves.at(OrderedPresentMoves[k]) == "MinCost_BM" || this->Moves.at(OrderedPresentMoves[k]) == "NC"){
+                    ++k; // makes no sense to do perturbation with minimum cost moves
+                }
+                this->PERTURB = true;
+                it_accepted_perturbation = 0;
+                int MaxPerturbations = this->gen()%IT_MAX_PERT+1;
+                cout << "Max nr of perturbations = " << MaxPerturbations << endl;
+                while (it_accepted_perturbation < MaxPerturbations){
+                    this->CurrentMove = OrderedPresentMoves[k];
                     this->executor->DoMove();
                 }
+                this->PERTURB = false;
+                cout << "new objective = " << sol.ComputeTotalCost() << endl;
+                k = 0;
             }
         }
         this->it_idle = 0;

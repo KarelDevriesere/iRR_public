@@ -16,6 +16,7 @@ GurSolver::~GurSolver(){}
 
 GRBModel GurSolver::createModel(GRBEnv& env) {
 	env.start();
+	env.set(GRB_IntParam_LogToConsole, 0);
 #ifdef PRINT
 #if PRINT == 0
 	env.set(GRB_IntParam_LogToConsole, 0); // surpress all output

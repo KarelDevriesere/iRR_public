@@ -691,6 +691,8 @@ void Heuristic::SelectGPTS(){
 
 void Heuristic::PushLocalOptimum(){
     if (MetaH->LocalOptimum){
+        // cout << "Push local optimum" << endl;
+        // cout << "Previous objective = " << sol.ComputeTotalCost() << endl;
         // TODO: only do this if we found a better solution when we increased the history length or decreased the temperature
         int start_obj = MetaH->current_obj+10;
         int it = -1;
@@ -712,6 +714,9 @@ void Heuristic::PushLocalOptimum(){
             }
         }
         MetaH->LocalOptimum = false;
+        // cout << "New objective = " << sol.ComputeTotalCost() << endl;
+        // cout << "done" << endl;
+        // cin.get();
     }
 }
 
@@ -796,7 +801,7 @@ void Heuristic::DoMove(){
         }
     }
 #endif
-    if (false){
+    if (true){
         // If enabled, if stuck we do min cost neighborhoods to check whether
         // we have really hit the bottom
         PushLocalOptimum();

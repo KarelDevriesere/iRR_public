@@ -411,7 +411,7 @@ void FO::solve(Input& in, Solution& sol, const InputData& data){
 	MetaH->current_obj = MetaH->best_obj;
 	MetaH->it = 0;
 	while (MetaH->getTimeDiff() <= MetaH->TIME_LIMIT){
-		if (++MetaH->it < MaxNrRandomIterations){
+		if (++MetaH->it < MaxNrRandomIterations || !MetaH->MAB){
 			MetaH->CurrentMove = MetaH->SelectNB();
 		}
 		else{

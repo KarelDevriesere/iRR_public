@@ -23,6 +23,7 @@ struct ParameterValues{
     double TIME_LIMIT = 7200; // TimeLimit
     long MaxIt = 10000000; // Maximum number of iterations (I only do time based)
     int MAX_IT = 100000; // Maximum number of iterations of local search before changing internal state of algorithm
+    bool MAB = false; // Multi Armed Bandit
 
     // HC:
     bool HC = false;
@@ -38,11 +39,13 @@ struct ParameterValues{
 
     // ILS:
     bool ILS = false;
-    int IT_MAX_PERT = 1; // Maximum number of perturbations
     // TODO: weights of moves when doing perturbation?
 
     // VS: TimeBased, so no parameters (except for the order in which we do them)
     bool VNS = false;
+
+    // VS and ILS:
+    int IT_MAX_PERT = 1; // Maximum number of perturbations
 
     // LAHC:
     bool LAHC = false;
@@ -146,7 +149,12 @@ class MetaBase{ // Everything that can be used for all metaheuristics
                 throw std::runtime_error("Critical Error: MoveExecutor was never set before calling solve()!");
             }
             do {
-                CurrentMove = SelectNB();
+                if (MAB && it > 100){
+                    CurrentMove = SelectNB_MAB();
+                }
+                else{
+                    CurrentMove = SelectNB();
+                }
                 executor->DoMove(); // do a move of CurrentMove
                 Reconfigure(sol); // check internal state of the algorithm 
                 if (current_obj < 0){
@@ -413,7 +421,7 @@ class ILS: public MetaBase<Move>{ // Hill Climbing
 
         int it_idle_current = 0;
         
-        int IT_MAX_PERT; // ParameterValues
+        int IT_MAX_PERT = 1; // ParameterValues
         int it_accepted_perturbation = 0;
 
         ILS(const std::unordered_map<Move, string>& moves, // moves, weights and in are defined in main
@@ -446,7 +454,9 @@ class VNS: public MetaBase<Move>{ // Variable Neighborhood Search
         vector<Move>OrderedPresentMoves;
         int previous_best_obj = INT_MAX;
     public:
-        bool perturb = false;
+        
+        int IT_MAX_PERT = 1; // ParameterValues
+        int it_accepted_perturbation = 0;
 
         VNS(const std::unordered_map<Move, string>& moves, // moves, weights and in are defined in main
            const std::unordered_map<Move, double>& weights, std::mt19937& g): MetaBase<Move>(moves, weights, g){
@@ -507,6 +517,7 @@ class MetaFactory{
             }
             else if (M == MetaHeuristic::VNS){
                 auto vns_ptr = std::make_unique<VNS<Move>>(moves, weights, g);
+                vns_ptr->IT_MAX_PERT = ParamV.IT_MAX_PERT;
                 MetaH = std::move(vns_ptr);
             }
             else{
@@ -515,6 +526,7 @@ class MetaFactory{
             MetaH->TIME_LIMIT = ParamV.TIME_LIMIT; // TimeLimit
             MetaH->MaxIt = ParamV.MaxIt; // Maximum number of iterations (I only do time based)
             MetaH->MAX_IT = ParamV.MAX_IT;
+            MetaH->MAB = ParamV.MAB;
             return MetaH;
         }
 };

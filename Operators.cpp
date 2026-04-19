@@ -1003,16 +1003,18 @@ bool Operator::RepairOrientationsEdgesLantarn(const bool MinCostP, int& delta){
         // Now, everything is balanced except for i and j
         // Fix this by finding a path between them!
         // cout << "try to find path from " << source << " to " << sink << endl;
+        /*
         if (MinCostP){
             if (!ShortestPathLineGraph(source, sink, delta)){
                 return false;
             }
         }
         else{
+            */
             if (!FindNormalPathOneLeague(source, sink, delta, true)){
                 return false;
             }
-        }
+        //}
         // cout << "Found path outside lantern" << endl;
         // Now, everyone should be balanced!!
 #ifndef NDEBUG
