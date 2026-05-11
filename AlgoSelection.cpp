@@ -903,6 +903,22 @@ void SelectAlgo(InputData& data, ParameterValues& param){
         file_path = folder_path + data.Instance + ".txt";
     }
 
+    string FilePath = "Vizing_n36_r14.txt";
+    std::ofstream output_file(FilePath);
+    output_file << "s,r,h,a" << endl;
+    for (int s = 0; s < 100000; ++s){
+        if (s % 1000 == 0){
+            cout << s << endl;
+        }
+        vector<vector<vector<int>>>schedule = VizingConstructionPython(data.seed+s);
+        for (int r = 0; r < schedule.size(); ++r){
+            for (int m = 0; m < schedule[r].size(); ++m){
+                output_file << s << "," << r << "," << schedule[r][m][0] << "," << schedule[r][m][1] << endl;
+            }
+        }
+    }
+    return;
+
     Input in;
     if (data.TTP && !in.read_TTP(file_path)){
         cout << "could not read TTP path " << file_path << endl;
