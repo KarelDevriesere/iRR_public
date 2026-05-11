@@ -801,7 +801,7 @@ void Heuristic::DoMove(){
         }
     }
 #endif
-    if (true){
+    if (false){
         // If enabled, if stuck we do min cost neighborhoods to check whether
         // we have really hit the bottom
         PushLocalOptimum();
