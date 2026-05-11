@@ -512,6 +512,7 @@ class MetaFactory{
                 lahc_ptr->PerturbeIncrease = ParamV.PerturbeIncrease; 
                 lahc_ptr->HistoryMultiplier = ParamV.HistoryMultiplier; 
                 lahc_ptr->PerturbeValue_INITIAL = ParamV.PerturbeValue_INITIAL;
+                lahc_ptr->PerturbeValue = ParamV.PerturbeValue_INITIAL;
                 lahc_ptr->InitializeHistoricValues(obj, obj, lahc_ptr->HistoryLength);
                 MetaH = std::move(lahc_ptr);
             }

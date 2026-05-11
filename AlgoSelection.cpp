@@ -463,7 +463,7 @@ void InitializeSol(Solution& sol, const InputData& data){
     return;
 }
 
-string FolderHeuristic(const Input& in, const InputData& data){
+string FolderHeuristic(const Input& in, const InputData& data, const ParameterValues& param){
     string FolderPath = "Instances" + string(PATHSEP);
     if (in.getSetting() == Setting::TTP){
         FolderPath += "TTP";
@@ -474,10 +474,10 @@ string FolderHeuristic(const Input& in, const InputData& data){
     else{
         FolderPath += "Hockey";
     }
-    FolderPath += string(PATHSEP) + "Results" + string(PATHSEP) + "Heuristic" + string(PATHSEP);
+    FolderPath += string(PATHSEP) + "Results" + string(PATHSEP) + "Heuristic" + string(PATHSEP);;
     // contains requires C++ 20
     if (data.InputWeights.contains(Move::TS) && data.InputWeights.contains(Move::PRS) && data.InputWeights.contains(Move::C)){
-        if (data.InputWeights.contains(Move::iPTS_Random_PR) && data.InputWeights.contains(Move::Random_M_Random_PR)){
+        if ((data.InputWeights.contains(Move::iPTS_Random_PR) || data.InputWeights.contains(Move::iPTS_Random_PR_CR)) && data.InputWeights.contains(Move::Random_M_Random_PR)){
             FolderPath += "All";
         }
         else {
@@ -501,6 +501,9 @@ string FolderHeuristic(const Input& in, const InputData& data){
     }
     else{
         FolderPath += "Other";
+    }
+    if (param.MAB){
+        FolderPath += "_MAB";
     }
     // Check if FolderPath exists
     if (!std::filesystem::exists(FolderPath)) {
@@ -538,15 +541,36 @@ void SolveFixAndOptimize(Input& in, vector<int>& TimeStamps, const string Folder
     string config;
     
     if (in.getSetting() == Setting::TTP){
-        FilePath = FolderPath + "Results" + std::string(PATHSEP) + "FO" + std::string(PATHSEP) + sol.getInstanceName() + ".txt";
+        FilePath = FolderPath + "Results" + std::string(PATHSEP);
+        if (param.MAB){
+            FilePath += "FO_MAB" ;
+        }
+        else{
+            FilePath += "FO";
+        }
+        FilePath += std::string(PATHSEP) + sol.getInstanceName() + ".txt";
         config = to_string(data.seed) + ",FO," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
     }
     else if (in.getSetting() == Setting::Football){
-        FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP) + "FO" + std::string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
+        FilePath = "Instances" + string(PATHSEP) + "Miao" + string(PATHSEP) + "Results" + string(PATHSEP);
+        if (param.MAB){
+            FilePath += "FO_MAB";
+        }
+        else{
+            FilePath += "FO";
+        } 
+        FilePath += std::string(PATHSEP) + data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
         config = to_string(data.seed) + ",FO," + data.Instance + "," + to_string(data.CapacitySetting) + "," + to_string(data.MaxNrBreaks);
     }
     else if (in.getSetting() == Setting::Hockey){
-        FilePath = "Instances" + string(PATHSEP) + "Hockey" + string(PATHSEP) + "Results" + string(PATHSEP) + "FO" + std::string(PATHSEP) + data.Instance + ".txt";
+        FilePath = "Instances" + string(PATHSEP) + "Hockey" + string(PATHSEP) + "Results" + string(PATHSEP);
+        if (param.MAB){
+            FilePath += "FO_MAB";
+        }
+        else{
+            FilePath += "FO";
+        }
+        FilePath += std::string(PATHSEP) + data.Instance + ".txt";
         config = to_string(data.seed) + ",IP," + data.Instance;
     }
 #ifdef PRINT
@@ -596,7 +620,7 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
     InitializeSol(sol, data);
 
     int obj = sol.ComputeTotalCost();
-    cout << "Cost initial solution = " << obj << endl;
+    // cout << "Cost initial solution = " << obj << endl;
 
     std::mt19937 gen(data.seed);
     MetaHeuristic M;
@@ -649,7 +673,7 @@ void SolveHeuristic(Input& in, vector<int>& TimeStamps, const string FolderPath,
 
     string FilePath;
     if (data.OutputFolder.empty()){
-        FilePath = FolderHeuristic(in, data);
+        FilePath = FolderHeuristic(in, data, param);
     }
     else{
         FilePath = data.OutputFolder;

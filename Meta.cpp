@@ -327,7 +327,6 @@ void LAHC<Move>::Reconfigure(Solution& sol) {
                     // cout << "current_obj = " << this->current_obj << ", TotalCost = " << sol.ComputeTotalCost() << endl;
                     int Lb = this->current_obj;
                     int Ub = PerturbeValue*this->current_obj;
-                    
                     InitializeHistoricValues(Lb, Ub, HistoryLength);
 #ifdef PRINT
 #if PRINT == 1
@@ -359,7 +358,6 @@ void LAHC<Move>::Reconfigure(Solution& sol) {
                 }
             }
         }
-
         // cin.get();
         return;
 }
