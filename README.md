@@ -56,7 +56,6 @@ The following arguments can be passed to the executable:
 * --TripModelHAPFixed [0,1]: whether we solve the model with the HAPs of teams fixed
 * --OutputFolder [string]: every output has its own dedicated folder, if the output file should be stored in another folder, it can be specified here
 
-
 # DETAILED GUIDE 
 
 In the papers, we always used seeds in the list `{0, 11, 42, 154, 396, 588, 1217, 2486, 5003, 10000}`. 
@@ -64,9 +63,13 @@ In the papers, we always used seeds in the list `{0, 11, 42, 154, 396, 588, 1217
 Moreover, we next assume Make is used, resulting in the executable ./irr
 
 ## Computing ILB for iTTP instances
+
+```bash
 ./irr --InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --Bounds 1
 
 ## Computing DLB for iTTP instances
+
+```bash
 ./irr --InstanceTTP "Instances/TTP/BRA24_6.xml" --TimeLimit 172800 --Bounds 1 --DLB 1
 
 ## Computing DLB-1F for iTTP instances
