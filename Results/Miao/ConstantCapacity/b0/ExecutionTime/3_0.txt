@@ -1,1 +1,0 @@
-Move,Min,Max,Mean,Instance,Seed
