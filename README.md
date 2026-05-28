@@ -57,74 +57,75 @@ The following arguments can be passed to the executable:
 * --OutputFolder [string]: every output has its own dedicated folder, if the output file should be stored in another folder, it can be specified here
 
 
-## ############### ##
-## DETAILED GUIDE  ##
+# DETAILED GUIDE 
 
-In the papers, we always used seeds in the list {0,11,42,154,396,588,1217,2486,5003,10000}
+In the papers, we always used seeds in the list `{0, 11, 42, 154, 396, 588, 1217, 2486, 5003, 10000}`. 
 
-# Computing ILB for iTTP instances
---InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --Bounds 1
+Moreover, we next assume Make is used, resulting in the executable ./irr
 
-# Computing DLB for iTTP instances
---InstanceTTP "Instances/TTP/BRA24_6.xml" --TimeLimit 172800 --Bounds 1 --DLB 1
+## Computing ILB for iTTP instances
+./irr --InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --Bounds 1
 
-# Computing DLB-1F for iTTP instances
---InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --Bounds 1 --DLB 1 --addColoringConstraint 1
+## Computing DLB for iTTP instances
+./irr --InstanceTTP "Instances/TTP/BRA24_6.xml" --TimeLimit 172800 --Bounds 1 --DLB 1
 
-# Computing DLB-MinLeg for iTTP instances
---InstanceTTP "Instances/TTP/NL16_12.xml" --TimeLimit 172800 --Bounds 1 --DLB 1 --addMinTripConstraint 1
+## Computing DLB-1F for iTTP instances
+./irr --InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --Bounds 1 --DLB 1 --addColoringConstraint 1
+
+## Computing DLB-MinLeg for iTTP instances
+./irr --InstanceTTP "Instances/TTP/NL16_12.xml" --TimeLimit 172800 --Bounds 1 --DLB 1 --addMinTripConstraint 1
 
 Only for instances with r > n/2!
 
-# Computing F1 for iTTP instances
+## Computing F1 for iTTP instances
 
---InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --Heuristic 0
+./irr --InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --Heuristic 0
 
-# Computing LP_F1 for iTTP instances
+## Computing LP_F1 for iTTP instances
 
---InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --Heuristic 0
+./irr --InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --Heuristic 0
 
 Now, set "relax_x" to true in function iTTP() in GurSolver.cpp
 
-# Computing F2 for iTTP instances
+## Computing F2 for iTTP instances
 
---InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --TripModel 1 --Heuristic 0
+./irr --InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --TripModel 1 --Heuristic 0
 
-# Computing LP_F2 for iTTP instances
+## Computing LP_F2 for iTTP instances
 
---InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --TripModel 1 --Heuristic 0
+./irr --InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --TripModel 1 --Heuristic 0
 
 Now, in iTTP_TripModel() in GurSolver.cpp, set GRB_BINARY in definition of z_trs to GRB_CONTINUOUS
 
-# Computing GM-c for iTTP instances
+## Computing GM-c for iTTP instances
 
---InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 43200 --GM 1 --Seed 0 --Constructive 1
+./irr --InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 43200 --GM 1 --Seed 0 --Constructive 1
 
-# Computing GM-it for iTTP instances
+## Computing GM-it for iTTP instances
 
---InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 43200 --GM 1 --Seed 0
+./irr --InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 43200 --GM 1 --Seed 0
 
-# Computing F2-HAP for iTTP instances
+## Computing F2-HAP for iTTP instances
 
---InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --TripModelHAPFixed 1 --Heuristic 0
+./irr --InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --TripModelHAPFixed 1 --Heuristic 0
 
 This assumes solutions for this instance with GreedyMatching for all 10 seeds are available
 If not, first compute solutions with GreedyMatching for this instance
 
-# Computing Base for iTTP instances:
+## Computing Base for iTTP instances:
 
---InstanceTTP  "Instances/TTP/NL16_4.xml" --Heuristic 1 --Seed 0 --TimeLimit $TL --Weight TS 1 --Weight PRS 1 --Weight PTS 1 --Weight C 1
+./irr --InstanceTTP  "Instances/TTP/NL16_4.xml" --Heuristic 1 --Seed 0 --TimeLimit $TL --Weight TS 1 --Weight PRS 1 --Weight PTS 1 --Weight C 1
 
-# Computing All for iTTP instances:
+## Computing All for iTTP instances:
 
---InstanceTTP  "Instances/TTP/NL16_4.xml" --Heuristic 1 --Seed 0 --TimeLimit $TL --Weight Random_M_Random_PR 1 --Weight iPTS_Random_PR_CR 1 --Weight C 1 --Weight TS 1 --Weight PRS 1
+./irr --InstanceTTP  "Instances/TTP/NL16_4.xml" --Heuristic 1 --Seed 0 --TimeLimit $TL --Weight Random_M_Random_PR 1 --Weight iPTS_Random_PR_CR 1 --Weight C 1 --Weight TS 1 --Weight PRS 1
 
-# If MAB: add --MAB 1 
+If MAB: add --MAB 1 
 
-# Computing LB and UB with IP for Football instances:
+## Computing LB and UB with IP for Football instances:
 
---InstanceFootball 1 --CapacitySetting 0 --MaxNrBreaks 3 --TimeLimit 7200 --Heuristic 0
+./irr --InstanceFootball 1 --CapacitySetting 0 --MaxNrBreaks 3 --TimeLimit 7200 --Heuristic 0
 
-# Computing LB and IP for Hockey instances:
+## Computing LB and IP for Hockey instances:
 
---InstanceHockey 1 --TimeLimit 7200 --Heuristic 0
+./irr --InstanceHockey 1 --TimeLimit 7200 --Heuristic 0
