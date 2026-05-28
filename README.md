@@ -6,25 +6,25 @@ Below, we describe first how to run the code. Then, we explain in detail how all
 
 # Compiling and running the code
 
-To compile and run with CMake in release mode:
+## Compile and run with CMake in release mode:
 
 ```bash
 cmake --build build --config Release
 .\build\Release\test.exe 
 ```
 
-To run in release mode, change Release for debug
+To run in release mode, change Release for debug.
 
-To compile and run with Make (automatically runs in release mode):
+## Compile and run with Make (automatically runs in release mode):
 
 ```bash
 make
 ./irr
 ```
 
-To run in release, do "make release"
-To print solutions, do "make PRINT=1"
-After changing a header file, do "make clean"
+* To run in release, do "make release"
+* To print solutions, do "make PRINT=1"
+* After changing a header file, do "make clean"
 
 Gurobi should be loaded, on HPC: module load Gurobi/12.0.0-GCCcore-13.2.0
 
