@@ -6,16 +6,25 @@ Below, we describe first how to run the code. Then, we explain in detail how all
 
 # Compiling and running the code
 
-To compile and run with CMake in debug mode:
-1) cmake --build build --config Debug
-2) .\build\Debug\test.exe "arguments"
-To run in release mode, change Debug for Release
+To compile and run with CMake in release mode:
 
-To compile and run with Make:
-1) make
-2) ./irr "Arguments"
+```bash
+cmake --build build --config Release
+.\build\Release\test.exe 
+```
+
+To run in release mode, change Release for debug
+
+To compile and run with Make (automatically runs in release mode):
+
+```bash
+make
+./irr
+```
+
 To run in release, do "make release"
 To print solutions, do "make PRINT=1"
+After changing a header file, do "make clean"
 
 Gurobi should be loaded, on HPC: module load Gurobi/12.0.0-GCCcore-13.2.0
 
@@ -81,59 +90,84 @@ Moreover, we next assume Make is used, resulting in the executable ./irr
 ```
 
 ## Computing DLB-MinLeg for iTTP instances
+
+```bash
 ./irr --InstanceTTP "Instances/TTP/NL16_12.xml" --TimeLimit 172800 --Bounds 1 --DLB 1 --addMinTripConstraint 1
+```
 
 Only for instances with r > n/2!
 
 ## Computing F1 for iTTP instances
 
+```bash
 ./irr --InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --Heuristic 0
+```
 
 ## Computing LP_F1 for iTTP instances
 
+```bash
 ./irr --InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --Heuristic 0
+```
 
 Now, set "relax_x" to true in function iTTP() in GurSolver.cpp
 
 ## Computing F2 for iTTP instances
 
+```bash
 ./irr --InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --TripModel 1 --Heuristic 0
+```
 
 ## Computing LP_F2 for iTTP instances
 
+```bash
 ./irr --InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --TripModel 1 --Heuristic 0
+```
 
 Now, in iTTP_TripModel() in GurSolver.cpp, set GRB_BINARY in definition of z_trs to GRB_CONTINUOUS
 
 ## Computing GM-c for iTTP instances
 
+```bash
 ./irr --InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 43200 --GM 1 --Seed 0 --Constructive 1
+```
 
 ## Computing GM-it for iTTP instances
 
+```bash
 ./irr --InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 43200 --GM 1 --Seed 0
+```
 
 ## Computing F2-HAP for iTTP instances
 
+```bash
 ./irr --InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --TripModelHAPFixed 1 --Heuristic 0
+```
 
 This assumes solutions for this instance with GreedyMatching for all 10 seeds are available
 If not, first compute solutions with GreedyMatching for this instance
 
 ## Computing Base for iTTP instances:
 
+```bash
 ./irr --InstanceTTP  "Instances/TTP/NL16_4.xml" --Heuristic 1 --Seed 0 --TimeLimit $TL --Weight TS 1 --Weight PRS 1 --Weight PTS 1 --Weight C 1
+```
 
 ## Computing All for iTTP instances:
 
+```bash
 ./irr --InstanceTTP  "Instances/TTP/NL16_4.xml" --Heuristic 1 --Seed 0 --TimeLimit $TL --Weight Random_M_Random_PR 1 --Weight iPTS_Random_PR_CR 1 --Weight C 1 --Weight TS 1 --Weight PRS 1
+```
 
 If MAB: add --MAB 1 
 
 ## Computing LB and UB with IP for Football instances:
 
+```bash
 ./irr --InstanceFootball 1 --CapacitySetting 0 --MaxNrBreaks 3 --TimeLimit 7200 --Heuristic 0
+```
 
 ## Computing LB and IP for Hockey instances:
 
+```bash
 ./irr --InstanceHockey 1 --TimeLimit 7200 --Heuristic 0
+```
