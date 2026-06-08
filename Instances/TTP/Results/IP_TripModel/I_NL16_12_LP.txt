@@ -1,0 +1,4 @@
+0,IP_TripModel,16,12
+Time,Value 
+Final, 91346,91346
+

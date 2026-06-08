@@ -268,7 +268,7 @@ int main(int argc, const char* argv[]){
                 return 1;
             }
         }
-        else if (arg == "--LAHC"){ // Iterated Local Search
+        else if (arg == "--LAHC"){ // Late Acceptance Hill Climbing
             if (!std::stoi(argv[++i])){
                 continue;
             }
