@@ -111,7 +111,7 @@ int main(int argc, const char* argv[]){
             data.Football = true;
             data.TTP = false;
             data.Hockey = false;
-            if (i_ < 0 || i_ > 6){
+            if (i_ <= 0 || i_ > 6){
                 std::cerr << "Football instance must be 1,2,3,4,5 or 6!!" << endl;
                 return 1;
             }
@@ -149,8 +149,12 @@ int main(int argc, const char* argv[]){
                 */
         }
         else if (arg == "--GM"){ // YSTP, football
+            data.RunGM = std::stoi(argv[++i]);
             data.Heuristic = 0;
             data.FO = 0;
+        }
+        else if (arg == "--Constructive"){
+            data.GM_Constructive = std::stoi(argv[++i]);
         }
         else if (arg == "--FO"){ // YSTP, football, hockey
             data.FO = std::stoi(argv[++i]);
@@ -279,7 +283,7 @@ int main(int argc, const char* argv[]){
             param.HistoryLengthProvided = true;
             param.LAHC = true;
         }
-        else if (arg == "PerturbeIncrease"){ // default is 100
+        else if (arg == "--PerturbeIncrease"){ // default is 100
             param.PerturbeIncrease = std::stod(argv[++i]);
             if (param.PerturbeIncrease <= 0){
                 std::cerr << "PerturbeIncrease should be strictly positive" << endl;
@@ -287,7 +291,7 @@ int main(int argc, const char* argv[]){
             }
             param.LAHC = true;
         }
-        else if (arg == "HistoryMultiplier"){ // default is 100
+        else if (arg == "--HistoryMultiplier"){ // default is 100
             param.HistoryMultiplier = std::stod(argv[++i]);
             if (param.HistoryMultiplier <= 0){
                 std::cerr << "HistoryMultiplier should be strictly positive" << endl;
@@ -295,7 +299,7 @@ int main(int argc, const char* argv[]){
             }
             param.LAHC = true;
         }
-        else if (arg == "PerturbeValueInitial"){ // default is 100
+        else if (arg == "--PerturbeValueInitial"){ // default is 100
             param.PerturbeValue_INITIAL = std::stod(argv[++i]);
             if (param.PerturbeValue_INITIAL < 0){
                 std::cerr << "PerturbeValueInitial should be positive" << endl;
@@ -332,6 +336,9 @@ int main(int argc, const char* argv[]){
         else if (arg == "--Bounds"){ // TTP
             ComputeBounds = std::stoi(argv[++i]);
             data.TTP = true;
+        }
+        else if (arg == "--DLB"){ // iTTP
+            data.DLB = std::stoi(argv[++i]);
         }
         else if (arg == "--addMinTripConstraint"){ // TTP
             data.addMinTripConstraint = std::stoi(argv[++i]);

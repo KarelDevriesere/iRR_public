@@ -202,14 +202,14 @@ FootballInstance Input::getFootballInstance(){
 void Input::setAllowedNrCapacityViolations1RR(const InputData& data){
     string FilePath = "Instances" + string(PATHSEP);
     if (data.Football){
-        FilePath += "Miao" + string(PATHSEP) + "Vcr" + string(PATHSEP);
+        FilePath += "Football" + string(PATHSEP) + "Vcr" + string(PATHSEP);
         FilePath += data.Instance + "_s" + to_string(data.CapacitySetting) + "_b" + to_string(data.MaxNrBreaks) + ".txt";
     }
     else if (data.Hockey){
         FilePath += "Hockey" + string(PATHSEP) + "Vcr" + string(PATHSEP) + data.Instance + ".txt";
     }
     else{
-        cout << "Capacity violations only for Miao or Hockey!" << endl;
+        cout << "Capacity violations only for Football or Hockey!" << endl;
         std::abort();
     }
     std::ifstream file(FilePath);
@@ -239,11 +239,11 @@ void Input::setAllowedNrCapacityViolations1RR(const InputData& data){
     }
 }
 
-int Input::read_YSTP(const std::string file_path, const bool Miao){
+int Input::read_YSTP(const std::string file_path, const bool Football){
 
-    // cout << "This function is intended ONLY for Hockey and Miao instances!!" << endl;
+    // cout << "This function is intended ONLY for Hockey and Football instances!!" << endl;
 
-    if (Miao){
+    if (Football){
         Setting_ = Setting::Football;
     }
     else{
@@ -274,7 +274,7 @@ int Input::read_YSTP(const std::string file_path, const bool Miao){
                     TeamStrength = vector<int>(NrTeams);
                     TeamClub = vector<int>(NrTeams);
                     TeamLeague = vector<int>(NrTeams); // TODO: multiple leagues
-                    if (Miao){
+                    if (Football){
                         InstanceFootball = getFootballInstance();
                     }
                     DistanceTeams = vector<vector<int>>(NrTeams, vector<int>(NrTeams, 0));
@@ -341,7 +341,7 @@ int Input::read_YSTP(const std::string file_path, const bool Miao){
             assert(k != IndexDummyClub);
             DistanceClubs[k] = vector<int>(NrClubs+1);
             while (iss >> num) { 
-                if (!(Miao && InstanceFootball == FootballInstance::M)){
+                if (!(Football && InstanceFootball == FootballInstance::M)){
                     DistanceClubs[k][j++] = num;
                 }
                 else if (k < NrTeamsFootballInstances.at(FootballInstance::U13).first-NrTeamsFootballInstances.at(FootballInstance::U13).second
@@ -363,7 +363,7 @@ int Input::read_YSTP(const std::string file_path, const bool Miao){
                     MaxDistanceClubs = num;
                 }
             }
-            if (!(Miao && InstanceFootball == FootballInstance::M)){
+            if (!(Football && InstanceFootball == FootballInstance::M)){
                 assert(j == IndexDummyClub);
                 DistanceClubs[k][j] = 0;
             }
@@ -382,7 +382,7 @@ int Input::read_YSTP(const std::string file_path, const bool Miao){
                     assert(l == 0);
                 }
                 TeamStrength[t] = num-1;
-                if (!(Miao && InstanceFootball == FootballInstance::M)){
+                if (!(Football && InstanceFootball == FootballInstance::M)){
                     LeagueTeams[l].push_back(t); // TODO: only 1 league now, with eligible opponents
                     TeamLeague[t] = l;
                 }
@@ -418,10 +418,10 @@ int Input::read_YSTP(const std::string file_path, const bool Miao){
     }
     // cout << "done" << endl;
 
-    // Add the dummy teams; only when not doing Miao instances (the dummy teams are hidden under the normal teams)
+    // Add the dummy teams; only when not doing Football instances (the dummy teams are hidden under the normal teams)
     // go over the teams and specify which teams are dummy teams and which are not!
     int NrNonDummyTeams = 0;
-    if (Miao){
+    if (Football){
         NrNonDummyTeams = NrTeams - NrTeamsFootballInstances.at(InstanceFootball).second;
     }
     else{

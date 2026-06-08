@@ -262,3 +262,55 @@ void VizingConstruction(Solution& sol, const int seed){
 
 	return;
 }
+
+vector<vector<vector<int>>> VizingConstructionPython(const int seed){ 
+	const int N = 36;
+	const int R = 14;
+
+	pair<BGraph,vector<E>>Output = Vizing(N, seed);
+	BGraph g = Output.first;
+	vector<E>edge_vector = Output.second;
+
+	// Now, for assign colors to the edges with node N
+
+	vector<vector<bool>>ColorLeft(N-1, vector<bool>(N-1, true));
+
+	vector<int>ShuffledTeams(N);
+	iota(ShuffledTeams.begin(), ShuffledTeams.end(), 0);
+	std::mt19937 gen(seed);
+	std::shuffle(ShuffledTeams.begin(), ShuffledTeams.end(), gen);
+
+	// cout << "set Colorleft" << endl;
+	int i,j,c,i_,j_;
+	vector<vector<vector<int>>>schedule(R);
+    for (size_t k = 0; k < edge_vector.size(); ++k)
+    {
+		i = edge_vector[k].first;
+		j = edge_vector[k].second;
+		c = g[boost::edge(i, j, g).first];
+		ColorLeft[i][c] = false;
+		ColorLeft[j][c] = false;
+		vector<vector<int>>round_;
+		if (c < R){
+			i_ = ShuffledTeams[i];
+			j_ = ShuffledTeams[j];
+			schedule[c].push_back({i_,j_});
+		}
+    }
+
+	int LastNode = N-1;
+	int LastNode_ = ShuffledTeams[LastNode];
+
+	for (i = 0; i < N-1; ++i){
+		c = 0;
+		while (!ColorLeft[i][c]){
+			++c;
+		}
+		i_ = ShuffledTeams[i];
+		if (c < R){
+			schedule[c].push_back({i_, LastNode_});
+		}
+	}
+
+	return schedule;
+}

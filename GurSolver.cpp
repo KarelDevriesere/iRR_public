@@ -216,6 +216,7 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 	for (t = 0; t < N; ++t){
 #ifdef PRINT
 #if PRINT == 1
+		/*
 		cout << "HAP of " << t << " : ";
 		for (r = 0; r < R; ++r){
 			if (sol.Orientation[t][r] == HA::H){
@@ -226,6 +227,7 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 			}
 		}
 		cout << endl;
+		*/
 #endif
 #endif
 		vector<int>TeamsList(N-1);
@@ -277,19 +279,21 @@ void GurSolver::iTTP_TripModel_HAP_fixed(Solution& sol){
 			}
 #ifdef PRINT
 #if PRINT == 1
-			cout << t << " starts a trip in " << r << " and can start " << TripsRound[t][r].size() << " trips " << endl;
+			// cout << t << " starts a trip in " << r << " and can start " << TripsRound[t][r].size() << " trips " << endl;
 #endif 
 #endif
 			z_trp[t][r] = vector<GRBVar>(TripsRound[t][r].size());
 			for (p = 0; p < TripsRound[t][r].size(); ++p){
 #ifdef PRINT
-#if PRINT == 1				
+#if PRINT == 1		
+				/*
 				cout << "Trip " << p << " in " << r << endl;
 				cout << t << " -> ";
 				for (auto& j: TripsRound[t][r][p]){
 					cout << j << " -> ";
 				}
 				cout << t << endl;
+				*/
 #endif 
 #endif
 				z_trp[t][r][p] = model.addVar(0, 1, 0.0, GRB_BINARY/*, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]"*/);
@@ -425,7 +429,7 @@ void GurSolver::iTTP_TripModel(){
 
 	const int MinTripLength = 1;
 
-	cout << "MinTripLength = " << MinTripLength << endl;
+	// cout << "MinTripLength = " << MinTripLength << endl;
 
 	vector<pair<vector<vector<int>>,vector<int>>>Trips_CostTrips(N);
 	Trips = vector<vector<vector<int>>>(N);
@@ -454,7 +458,7 @@ void GurSolver::iTTP_TripModel(){
 		}
 	}
 
-	cout << "NrTrips = " << NrTrips << endl;
+	// cout << "NrTrips = " << NrTrips << endl;
 
 	int NrTripVariables = 0;
 
@@ -468,9 +472,9 @@ void GurSolver::iTTP_TripModel(){
 		}
 	}
 
-	cout << "Nr of trip variables = " << NrTripVariables << endl;
+	// cout << "Nr of trip variables = " << NrTripVariables << endl;
 
-	cout << "c1" << endl;
+	// cout << "c1" << endl;
 
 	// Teams face each other at most once
 
@@ -493,7 +497,7 @@ void GurSolver::iTTP_TripModel(){
 		}
 	}
 
-	cout << "c2" << endl;
+	// cout << "c2" << endl;
 
 	// Teams play exactly r/2 away games
 
@@ -508,7 +512,7 @@ void GurSolver::iTTP_TripModel(){
 		model.addConstr(sum_t == R/2, "c2_" + to_string(t));
 	}
 
-	cout << "c3a" << endl;
+	// cout << "c3a" << endl;
 
 	// If a team starts a road trip in s, it cannot start a road trip in earlier round such that this road trip is still active in round s-1 (we need to play home in round s-1)
 
@@ -562,7 +566,7 @@ void GurSolver::iTTP_TripModel(){
 	}
 	*/
 
-	cout << "c4" << endl;
+	// cout << "c4" << endl;
 
 	// If a team plays H in a round, there must be an active trip from another team such that this team visits our team in the right round -> hence write this as an equality
 	
@@ -603,7 +607,7 @@ void GurSolver::iTTP_TripModel(){
 		}
 	}
 
-	cout << "c5" << endl;
+	// cout << "c5" << endl;
 
 	// In every 4 consecutive slots: a team can be visited at most 3 times!!
 
@@ -637,7 +641,7 @@ void GurSolver::iTTP_TripModel(){
 		}
 	}
 
-	cout << "objective" << endl;
+	// cout << "objective" << endl;
 
 	Objective = 0;
 	for (t = 0; t < N; ++t){
@@ -650,7 +654,7 @@ void GurSolver::iTTP_TripModel(){
 	
 	model.setObjective(Objective, GRB_MINIMIZE);
 
-	cout << "done" << endl;
+	// cout << "done" << endl;
 }
 
 void GurSolver::iTTP_TripModel_HAP_driven(){
@@ -976,9 +980,6 @@ void GurSolver::BoundTTP_AllTeams(const bool addMinTripConstraint, const int min
 	const int N = getNrTeams();
 
 	int t,r,i;
-	
-	// Nog eens nakijken of model wel klopt!!!!
-	// Trip r is verschillend voor elk team, is dit een probleem??
 
 	vector<pair<vector<vector<int>>,vector<int>>>Trips_CostTrips(N);
 	Trips = vector<vector<vector<int>>>(N);
@@ -1045,7 +1046,6 @@ void GurSolver::BoundTTP_AllTeams(const bool addMinTripConstraint, const int min
 		}
 	}
 
-	/*
 	if (addMinTripConstraint){
 		GRBLinExpr sum_tr = 0;
 		for (t = 0; t < N; ++t){
@@ -1056,7 +1056,6 @@ void GurSolver::BoundTTP_AllTeams(const bool addMinTripConstraint, const int min
 		cout << "minTrips = " << minTrips << endl;
 		model.addConstr(sum_tr >= minTrips);
 	}
-	*/
 
 	Objective = 0;
 	for (t = 0; t < N; ++t){
@@ -1107,40 +1106,42 @@ void GurSolver::BoundTTP_AllTeams(const bool addMinTripConstraint, const int min
 	}
 		*/
 
-	x = vector<vector<vector<GRBVar>>>(N, vector<vector<GRBVar>>(N, vector<GRBVar>(R)));
-	for (t = 0; t < N; ++t){
-		for (i = t+1; i < N; ++i){
-			for (s = 0; s < R; ++s){
-				x[t][i][s] = model.addVar(0, 1, 0.0, GRB_BINARY);
-			}
-			GRBLinExpr sum_ij = 0;
-			for (r = 0; r < Trips[t].size(); ++r){
-				if (IsTeamInTrip(i, Trips[t][r])){
-					sum_ij += z_tr[t][r];
-				}
-			}
-			for (r = 0; r < Trips[i].size(); ++r){
-				if (IsTeamInTrip(t, Trips[i][r])){
-					sum_ij += z_tr[i][r];
-				}
-			}
-			for (s = 0; s < R; ++s){
-				sum_ij -= x[t][i][s];
-			}
-			model.addConstr(sum_ij == 0);
-		}
-	} 
-
-	for (t = 0; t < N; ++t){
-		for (s = 0; s < R; ++s){
-			GRBLinExpr sum_t = 0;
-			for (i = 0; i < t; ++i){
-				sum_t += x[i][t][s];
-			}
+	if (addColoringConstraint){
+		x = vector<vector<vector<GRBVar>>>(N, vector<vector<GRBVar>>(N, vector<GRBVar>(R)));
+		for (t = 0; t < N; ++t){
 			for (i = t+1; i < N; ++i){
-				sum_t += x[t][i][s];
+				for (s = 0; s < R; ++s){
+					x[t][i][s] = model.addVar(0, 1, 0.0, GRB_BINARY);
+				}
+				GRBLinExpr sum_ij = 0;
+				for (r = 0; r < Trips[t].size(); ++r){
+					if (IsTeamInTrip(i, Trips[t][r])){
+						sum_ij += z_tr[t][r];
+					}
+				}
+				for (r = 0; r < Trips[i].size(); ++r){
+					if (IsTeamInTrip(t, Trips[i][r])){
+						sum_ij += z_tr[i][r];
+					}
+				}
+				for (s = 0; s < R; ++s){
+					sum_ij -= x[t][i][s];
+				}
+				model.addConstr(sum_ij == 0);
 			}
-			model.addConstr(sum_t == 1);
+		} 
+
+		for (t = 0; t < N; ++t){
+			for (s = 0; s < R; ++s){
+				GRBLinExpr sum_t = 0;
+				for (i = 0; i < t; ++i){
+					sum_t += x[i][t][s];
+				}
+				for (i = t+1; i < N; ++i){
+					sum_t += x[t][i][s];
+				}
+				model.addConstr(sum_t == 1);
+			}
 		}
 	}
 

@@ -71,8 +71,8 @@ template<typename Move>
 class MetaBase{ // Everything that can be used for all metaheuristics
     protected:
         MoveExecutor* executor = nullptr;
-        std::unique_ptr<Randomizer<double>>RandomDoubleNumber;
     public:
+        std::unique_ptr<Randomizer<double>>RandomDoubleNumber;
         std::mt19937& gen;
         std::unordered_map<Move, string>Moves;
         std::unordered_map<Move, double>Weights;
@@ -98,7 +98,8 @@ class MetaBase{ // Everything that can be used for all metaheuristics
 
         int LowerBound = -1;
         double LowerBoundGap;
-        bool LocalOptimum = false; // whether we hit one or not
+        bool LocalOptimum = false; // whether we hit one or not -> if yes, and PushLocalOptimum is enabled, then we do HC with negative cycles
+        // should only be turned on if we thereafter do PushLocalOptimum!!
 
         long MaxIt; // ParameterValues
         int MAX_IT; // ParameterValues
@@ -193,7 +194,7 @@ class MetaBase{ // Everything that can be used for all metaheuristics
             else{
                 std::cout << Moves.at(CurrentMove) << ": " << "\033[31m" << current_obj << "\033[0m" << std::endl;
             }
-            */
+                */
         }
 
         void setStartTime(std::chrono::high_resolution_clock::time_point start_time){
