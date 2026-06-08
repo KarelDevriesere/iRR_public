@@ -722,7 +722,7 @@ void Heuristic::PushLocalOptimum(){
 
 void Heuristic::DoMove(){
     // auto beg = std::chrono::high_resolution_clock::now();
-    // cout << "Select " << Moves.at(CurrentMove) << endl; 
+    // cout << "Select " << MetaH->Moves.at(MetaH->CurrentMove) << endl; 
     // NrChosen.at(CurrentMove)++;
     bool bipartite;
 #ifndef NDEBUG

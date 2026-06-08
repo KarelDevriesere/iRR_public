@@ -111,7 +111,7 @@ int main(int argc, const char* argv[]){
             data.Football = true;
             data.TTP = false;
             data.Hockey = false;
-            if (i_ < 0 || i_ > 6){
+            if (i_ <= 0 || i_ > 6){
                 std::cerr << "Football instance must be 1,2,3,4,5 or 6!!" << endl;
                 return 1;
             }
@@ -149,8 +149,12 @@ int main(int argc, const char* argv[]){
                 */
         }
         else if (arg == "--GM"){ // YSTP, football
+            data.RunGM = std::stoi(argv[++i]);
             data.Heuristic = 0;
             data.FO = 0;
+        }
+        else if (arg == "--Constructive"){
+            data.GM_Constructive = std::stoi(argv[++i]);
         }
         else if (arg == "--FO"){ // YSTP, football, hockey
             data.FO = std::stoi(argv[++i]);
@@ -332,6 +336,9 @@ int main(int argc, const char* argv[]){
         else if (arg == "--Bounds"){ // TTP
             ComputeBounds = std::stoi(argv[++i]);
             data.TTP = true;
+        }
+        else if (arg == "--DLB"){ // iTTP
+            data.DLB = std::stoi(argv[++i]);
         }
         else if (arg == "--addMinTripConstraint"){ // TTP
             data.addMinTripConstraint = std::stoi(argv[++i]);

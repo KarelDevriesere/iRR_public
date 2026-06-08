@@ -13,4 +13,6 @@ vector<vector<bool>>VizingRegularColorableGraph(const int N, const int R, const 
 
 void VizingConstruction(Solution& sol, const int seed);
 
+vector<vector<vector<int>>> VizingConstructionPython(const int seed);
+
 #endif

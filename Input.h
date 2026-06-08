@@ -24,6 +24,9 @@ enum class FootballInstance{S, U13, U15, U17, U21, M, Tiny}; // Instances paper 
 const std::unordered_map<Move, string>GreedyMatchingMoves = {{Move::InterClubSwap, "InterClubSwap"}, {Move::IntraClubSwap, "IntraClubSwap"}, {Move::RandomSwap, "RandomSwap"}, {Move::ComplementInsertion, "ComplementInsertion"}};
 const std::unordered_map<Move, double>GreedyMatchingWeights = {{Move::InterClubSwap, 1.0/3.0}, {Move::IntraClubSwap, 1.0/3.0}, {Move::RandomSwap, 1.0/6.0}, {Move::ComplementInsertion, 1.0/6.0}};
 
+const std::unordered_map<Move, string>GreedyMatchingMovesiTTP = {{Move::HomeAwaySwap, "HomeAwaySwap"}};
+const std::unordered_map<Move, double>GreedyMatchingWeightsiTTP = {{Move::HomeAwaySwap, 1.0}};
+
 // R1: 1 round free, R2: 2 rounds free, R3: 3 rounds free, T: free subset of teams
 enum class FO_move{R1, R2C, R3C, R2NC, R3NC, T}; 
 
@@ -79,6 +82,7 @@ struct InputData{
     unordered_map<Move, double>InputWeightsPerturb;
     bool addMinTripConstraint = false;
     bool addColoringConstraint = false;
+    bool DLB = false;
 
     bool Football = false; // YSTP, football
     bool ConstantCapacity = true; // YSTP, football
@@ -96,6 +100,7 @@ struct InputData{
 
     bool SolveTripModel = false; // iTTP
     bool TripModelHAP_Fixed = false; //iTTP
+    bool GM_Constructive = false; //iTTP
 
     bool ConstraintViolationAllowed = false;
 };
@@ -140,7 +145,7 @@ class Input
         vector<vector<HA>>HAPs; 
         vector<int>TeamsHAP;
         vector<int>ComplementHAP;
-        int MiaoHAPSetting = -1;
+        int HAPSetting = -1;
 
         FootballInstance InstanceFootball = FootballInstance::S;
         // pair<TotalNrTeams,NrDummyTeams>
@@ -156,7 +161,7 @@ class Input
         ~Input();
         int read_TTP(const std::string file_path);
         int read_CostMinimizationJasper(const string file_path);
-        int read_YSTP(const string file_path, const bool Miao);
+        int read_YSTP(const string file_path, const bool Football);
         void readAllowedNrCapacityViolations(const int num);
         int getNrTeams()const{return NrTeams;}
         int getNrLeagues()const{return NrLeagues;}
@@ -207,8 +212,8 @@ class Input
             MaxSameClub = max;
         };
         bool IsCapacityConstant(){return ConstantCapacity;};
-        void setMiaoHAPSetting(const int nr){assert(nr == 1 || nr == 2);MiaoHAPSetting = nr;};
-        int getMiaoHAPSetting()const{return MiaoHAPSetting;};
+        void setHAPSetting(const int nr){assert(nr == 1 || nr == 2);HAPSetting = nr;};
+        int getHAPSetting()const{return HAPSetting;};
         bool IsMaxSameClubConstraint()const{return MaxSameClubConstraint;};
 
         bool SRR = false;

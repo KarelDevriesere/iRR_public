@@ -3,7 +3,7 @@
 #include "Operators.h"
 #include "Meta.h"
 
-class GreedyMatching: public HC<Move>{
+class GreedyMatching {
     private:
         void MakeForbiddenEdges(const int l, const int r, Solution& sol);
         int team1; // if InterClubSwap, IntraClubSwap or RandomSwap, the haps of team1 and team2 are switched
@@ -16,16 +16,18 @@ class GreedyMatching: public HC<Move>{
 
         vector<vector<int>>Opponents; // Opponents[i][r] = j means that j is the opponent of j in round r
 
+        std::unique_ptr<MetaBase<Move>> MetaH;
+
         int RandomIntegerNumber(const int a, const int b){ // TODO
             std::uniform_int_distribution<>dist = std::uniform_int_distribution<>(a,b);
-            return dist(gen);
+            return dist(MetaH->gen);
         }
 
     protected:
         Solution& sol;
 
     public:
-        GreedyMatching(const std::unordered_map<Move, string>& moves, const std::unordered_map<Move, double>& weights, const int NrRounds, std::mt19937& g, Solution& current_sol);
+        GreedyMatching(const std::unordered_map<Move, string>& moves, const std::unordered_map<Move, double>& weights, const int NrRounds, std::mt19937& g, Solution& current_sol, std::unique_ptr<MetaBase<Move>> strategy);
         ~GreedyMatching();
 
         int NrInfeasibleMatchings = 0;
@@ -49,6 +51,12 @@ class GreedyMatching: public HC<Move>{
         void ReverseMove();
         void SetAllOpponents();
         void SetOpponentsCurrentLeague();
-        void solve(Input& in, Solution& sol) override;
+        void solve(Input& in, Solution& sol);
         void DoMove();
+
+        void saveTimeStamps(std::ofstream& output_file) { // wrapper to save time stamps
+            if (MetaH) {
+                MetaH->SaveSolutionsTimeStamps(output_file);
+            }
+        }
 };

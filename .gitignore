@@ -6,3 +6,11 @@ build/
 out/
 .vscode/
 Instances/TTP/Results/
+Ablation/
+Code_Benders/
+Irace/
+tuning/
+VizTrips/
+*.sh
+*.lp
+*.txt

@@ -776,7 +776,6 @@ void Operator::TS(const int i, const int j){
         std::swap(sol.MatchColor[k][i], sol.MatchColor[k][j]);
         if (sol.getSetting() != Setting::Football){
             assert(sol.ComputeHACostTeam(k) == 0); // test assumption that the HAPs of the middle teams do not change
-            // For Miao instances, we do allow HAP violations
         }
     }
     std::swap(sol.MatchColor[i][j], sol.MatchColor[j][i]); // do this to make the HAPs of i and j balanced!

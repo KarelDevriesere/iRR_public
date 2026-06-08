@@ -77,6 +77,10 @@ void MetaBase<Move>::UpdateBestSolution(Solution& sol){
                         assert(sol.Orientation[i][r] == HA::A);
                         h = j, a = i;
                     }
+                    if (BestOrientation.empty()){
+                        BestOrientation = vector<vector<HA>>(sol.getNrTeams(), vector<HA>(sol.getNrRounds()));
+                        BestTeamColorOpp = vector<vector<int>>(sol.getNrTeams(), vector<int>(sol.getNrRounds()));
+                    }
                     BestOrientation[h][r] = HA::H;
                     BestOrientation[a][r] = HA::A;
                     BestTeamColorOpp[h][r] = a;
@@ -291,6 +295,8 @@ void LAHC<Move>::Reconfigure(Solution& sol) {
                         */
 #ifdef PRINT
 #if PRINT == 1
+                        // cout << "idle = " << this->it_idle << endl;
+                        // cout << "current objective = " << this->current_obj << ", best obj = " << this->best_obj << endl;
                         cout << "New HistoryLength = " << HistoryLength << endl;
 #endif
 #endif
@@ -353,7 +359,7 @@ void LAHC<Move>::Reconfigure(Solution& sol) {
                     this->it_idle = 0;
                     this->it = 0;
 
-                    this->LocalOptimum = true;
+                    // this->LocalOptimum = true;
                     // cin.get();
                 }
             }
@@ -426,7 +432,7 @@ bool SA<Move>::Update(Solution& sol, const int obj){
 #endif
                 this->it_accepted = 0;
                 this->it = 0;
-                this->LocalOptimum = true;
+                // this->LocalOptimum = true;
             }
             return SolutionAccepted;
 }

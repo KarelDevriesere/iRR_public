@@ -1,5 +1,0 @@
-Move, NrChosen, NrAccepted, % Times improvement found, Average improvement found, % Times contribution to best objective, Instance, Seed
-InterClubSwap,0,0,-nan(ind),-nan(ind),-nan(ind),2,1
-IntraClubSwap,0,0,-nan(ind),-nan(ind),-nan(ind),2,1
-RandomSwap,0,0,-nan(ind),-nan(ind),-nan(ind),2,1
-ComplementInsertion,0,0,-nan(ind),-nan(ind),-nan(ind),2,1

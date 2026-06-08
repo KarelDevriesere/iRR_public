@@ -95,7 +95,7 @@ class Solution: public Input{
         void clear();
         bool validate();
 
-        vector<vector<bool>>TeamsHAP; // HAP of the teams, this is for algorithm of Miao
+        vector<vector<bool>>TeamsHAP; // HAP of the teams
 };
 
 #endif
