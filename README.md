@@ -171,3 +171,8 @@ If MAB: add --MAB 1
 ```bash
 ./irr --InstanceHockey 1 --TimeLimit 7200 --Heuristic 0
 ```
+
+# Solutions
+Instances can be found in the folder "Instances":
+* For Hockey and Football, txt files are provided. For an explanation of the format of these instances, please consult the Readme in the folders "Instances\Hockey" and in "Instances\Football\VariableCapacity\Setting1".
+* For TTP instances, an XML is provided, in the format of all instances on the RobinX website, i.e. please consult https://robinxval.ugent.be/RobinX/.
