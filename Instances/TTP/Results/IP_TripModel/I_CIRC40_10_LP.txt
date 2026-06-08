@@ -1,0 +1,4 @@
+0,IP_TripModel,40,10
+Time,Value 
+Final, 560,560
+

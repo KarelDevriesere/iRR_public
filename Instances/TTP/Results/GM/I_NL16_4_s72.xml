@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Solution>
+    <MetaData>
+        <InstanceName>INSTANCE_NAME_TO_BE_FILLED_IN</InstanceName>
+        <Contributor>Devriesere, Karel</Contributor>
+        <Date year="2025" month="" day=""/>
+        <ObjectiveValue infeasibility="0" objective="29086"/>
+        <Remarks/>
+    </MetaData>
+    <Games>
+        <ScheduledMatch home="0" away="4" slot="0"/>
+        <ScheduledMatch home="2" away="1" slot="0"/>
+        <ScheduledMatch home="3" away="5" slot="0"/>
+        <ScheduledMatch home="6" away="7" slot="0"/>
+        <ScheduledMatch home="8" away="9" slot="0"/>
+        <ScheduledMatch home="15" away="10" slot="0"/>
+        <ScheduledMatch home="12" away="11" slot="0"/>
+        <ScheduledMatch home="14" away="13" slot="0"/>
+        <ScheduledMatch home="0" away="8" slot="1"/>
+        <ScheduledMatch home="3" away="1" slot="1"/>
+        <ScheduledMatch home="5" away="2" slot="1"/>
+        <ScheduledMatch home="6" away="4" slot="1"/>
+        <ScheduledMatch home="7" away="9" slot="1"/>
+        <ScheduledMatch home="11" away="10" slot="1"/>
+        <ScheduledMatch home="14" away="12" slot="1"/>
+        <ScheduledMatch home="13" away="15" slot="1"/>
+        <ScheduledMatch home="1" away="0" slot="2"/>
+        <ScheduledMatch home="4" away="2" slot="2"/>
+        <ScheduledMatch home="7" away="3" slot="2"/>
+        <ScheduledMatch home="5" away="6" slot="2"/>
+        <ScheduledMatch home="10" away="8" slot="2"/>
+        <ScheduledMatch home="9" away="11" slot="2"/>
+        <ScheduledMatch home="13" away="12" slot="2"/>
+        <ScheduledMatch home="15" away="14" slot="2"/>
+        <ScheduledMatch home="2" away="0" slot="3"/>
+        <ScheduledMatch home="1" away="6" slot="3"/>
+        <ScheduledMatch home="9" away="3" slot="3"/>
+        <ScheduledMatch home="4" away="5" slot="3"/>
+        <ScheduledMatch home="8" away="7" slot="3"/>
+        <ScheduledMatch home="10" away="13" slot="3"/>
+        <ScheduledMatch home="11" away="14" slot="3"/>
+        <ScheduledMatch home="12" away="15" slot="3"/>
+    </Games>
+</Solution>
