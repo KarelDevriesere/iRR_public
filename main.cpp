@@ -264,7 +264,7 @@ int main(int argc, const char* argv[]){
                 return 1;
             }
         }
-        else if (arg == "--LAHC"){ // Iterated Local Search
+        else if (arg == "--LAHC"){ // Late Acceptance Hill Climbing
             if (!std::stoi(argv[++i])){
                 continue;
             }
@@ -279,7 +279,7 @@ int main(int argc, const char* argv[]){
             param.HistoryLengthProvided = true;
             param.LAHC = true;
         }
-        else if (arg == "PerturbeIncrease"){ // default is 100
+        else if (arg == "--PerturbeIncrease"){ // default is 100
             param.PerturbeIncrease = std::stod(argv[++i]);
             if (param.PerturbeIncrease <= 0){
                 std::cerr << "PerturbeIncrease should be strictly positive" << endl;
@@ -287,7 +287,7 @@ int main(int argc, const char* argv[]){
             }
             param.LAHC = true;
         }
-        else if (arg == "HistoryMultiplier"){ // default is 100
+        else if (arg == "--HistoryMultiplier"){ // default is 100
             param.HistoryMultiplier = std::stod(argv[++i]);
             if (param.HistoryMultiplier <= 0){
                 std::cerr << "HistoryMultiplier should be strictly positive" << endl;
@@ -295,7 +295,7 @@ int main(int argc, const char* argv[]){
             }
             param.LAHC = true;
         }
-        else if (arg == "PerturbeValueInitial"){ // default is 100
+        else if (arg == "--PerturbeValueInitial"){ // default is 100
             param.PerturbeValue_INITIAL = std::stod(argv[++i]);
             if (param.PerturbeValue_INITIAL < 0){
                 std::cerr << "PerturbeValueInitial should be positive" << endl;
