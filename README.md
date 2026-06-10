@@ -172,7 +172,13 @@ If MAB: add --MAB 1
 ./irr --InstanceHockey 1 --TimeLimit 7200 --Heuristic 0
 ```
 
-# Solutions
+# Instances
 Instances can be found in the folder "Instances":
 * For Hockey and Football, txt files are provided. For an explanation of the format of these instances, please consult the Readme in the folders "Instances\Hockey" and in "Instances\Football\VariableCapacity\Setting1".
 * For TTP instances, an XML is provided, in the format of all instances on the RobinX website, i.e. please consult https://robinxval.ugent.be/RobinX/.
+
+# Solutions
+Solutions can also be found in the folder "Instances", navigate to the desired instance set and then "Results".
+In this folder, the solutions for each algorithm can be found, both in txt and XML (except for IP, IP_TripModel and IP_TripModel_HAP_fixed, where only the txt is given)
+* To interpret the XML files, please consult https://robinxval.ugent.be/RobinX/.
+* To interpret the txt files: Each line following the line "Round,H_team,A_team" denotes a game scheduled in a round, i.e. the line "0,0,8" in the file "Instances/TTP/Results/IP/I_BRA24_6.txt" denotes that in round 0, the match where team 0 plays home against team 8 is scheduled.
