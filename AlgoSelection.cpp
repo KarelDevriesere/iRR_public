@@ -1,18 +1,26 @@
 #include "AlgoSelection.h"
 
 const unordered_map<string,int>ConSolutions = {
+    {"I_CON16_2",32}, 		// Formula
     {"I_CON16_4",48}, 		// Via Benders -> optimal values, see map Code_Benders/Best
     {"I_CON16_8",96}, 		// Via Benders
     {"I_CON16_12",132}, 	// Via Benders
+    {"I_CON16_15",0}, 	// ignore
+    {"I_CON24_4",72}, 		// Formula
     {"I_CON24_6",96}, 		// Via Benders
     {"I_CON24_12",192}, 	// Via Benders
     {"I_CON24_18",294}, 	// Via Benders, running on HPC
+    {"I_CON24_23",0}, 	// ignore
+    {"I_CON32_4",96}, 		// Formula
     {"I_CON32_8",192}, 		// Via Benders
     {"I_CON32_16",352}, 	// Via Benders
     {"I_CON32_24",520}, 	// Via Benders, running on HPC
+    {"I_CON32_31",0}, 	// ignore
+    {"I_CON40_6",160}, 	// Formula
     {"I_CON40_10",280}, 	// Via Benders
     {"I_CON40_20",560},     // Via Benders
-    {"I_CON40_30",810} 	// Via Benders, running on HPC
+    {"I_CON40_30",810}, 	// Via Benders, running on HPC
+    {"I_CON40_39",0} 	// ignore
 };
 
 void ReadSolutionXML(const string path, Solution& sol){
@@ -337,7 +345,7 @@ void SolveGreedyMatching(Input& in, vector<int>& TimeStamps, const string Folder
     else{
         FilePath = "Instances" + string(PATHSEP) + "TTP" + string(PATHSEP) + "Results" + string(PATHSEP) + "GM";
         if (GM.InitialOnly){
-            FilePath += "Constructive";
+            FilePath += "_Constructive";
         }
         FilePath += std::string(PATHSEP) + sol.getInstanceName();
         FilePath += "_s" + to_string(data.seed) + ".txt";
@@ -361,6 +369,7 @@ void SolveGreedyMatching(Input& in, vector<int>& TimeStamps, const string Folder
 	    cout << "Save XML file as " << FilePath << endl;
 #endif
 #endif
+        cout << "Save XML file as " << FilePath << endl;
 	    std::ofstream output_fileXML(FilePath);
 	    SaveSolutionXML(output_fileXML, sol);
     }

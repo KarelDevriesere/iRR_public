@@ -16,10 +16,10 @@ GurSolver::~GurSolver(){}
 
 GRBModel GurSolver::createModel(GRBEnv& env) {
 	env.start();
-	env.set(GRB_IntParam_LogToConsole, 0);
+	// env.set(GRB_IntParam_LogToConsole, 0);
 #ifdef PRINT
 #if PRINT == 0
-	env.set(GRB_IntParam_LogToConsole, 0); // surpress all output
+	// env.set(GRB_IntParam_LogToConsole, 0); // surpress all output
 #endif
 #endif
 	env.set(GRB_IntParam_Threads, 8); // Very important when using HPC!!!
@@ -498,8 +498,10 @@ void GurSolver::iTTP_TripModel(){
 	}
 
 	// cout << "c2" << endl;
-
-	// Teams play exactly r/2 away games
+	
+	// Teams play exactly r/2 away games if R is even
+	// If R is odd, they must play at least floor(R/2) and at most ceil(R/2) away games
+	// The min and max nr of home games follows from this!!
 
 	for (t = 0; t < N; ++t){
 		GRBLinExpr sum_t = 0;
@@ -509,7 +511,13 @@ void GurSolver::iTTP_TripModel(){
 				sum_t += L*z_trs[t][r][s];
 			}
 		}
-		model.addConstr(sum_t == R/2, "c2_" + to_string(t));
+		if (R % 2 == 0){
+			model.addConstr(sum_t == R/2, "c2_" + to_string(t));
+		}
+		else{
+			model.addConstr(sum_t >= floor((double)R/2.0), "c2_min_" + to_string(t));
+			model.addConstr(sum_t <= ceil((double)R/2.0), "c2_max_" + to_string(t));
+		}
 	}
 
 	// cout << "c3a" << endl;
@@ -1015,7 +1023,13 @@ void GurSolver::BoundTTP_AllTeams(const bool addMinTripConstraint, const int min
 		for (r = 0; r < Trips[t].size(); ++r){
 			sum_t1 += (int)Trips[t][r].size()*z_tr[t][r];
 		}
-		model.addConstr(sum_t1 == getNrRounds()/2);
+		if (getNrRounds() % 2 == 0){
+			model.addConstr(sum_t1 == getNrRounds()/2);
+		}
+		else{
+			model.addConstr(sum_t1 <= ceil((double)getNrRounds()/2.0));
+			model.addConstr(sum_t1 >= floor((double)getNrRounds()/2.0));
+		}
 
 		GRBLinExpr sum_t2 = 0;
 		for (i = 0; i < N; ++i){
@@ -1028,7 +1042,13 @@ void GurSolver::BoundTTP_AllTeams(const bool addMinTripConstraint, const int min
 				}
 			}
 		}
-		model.addConstr(sum_t2 == getNrRounds()/2);
+		if (getNrRounds() % 2 == 0){
+			model.addConstr(sum_t2 == getNrRounds()/2);
+		}
+		else{
+			model.addConstr(sum_t2 <= ceil((double)getNrRounds()/2.0));
+			model.addConstr(sum_t2 >= floor((double)getNrRounds()/2.0));
+		}
 
 		for (i = t+1; i < N; ++i){
 			GRBLinExpr sum_ij = 0;
@@ -1148,6 +1168,8 @@ void GurSolver::BoundTTP_AllTeams(const bool addMinTripConstraint, const int min
 	// AddSymmetryBreakingLINE();
 
 	model.optimize();
+
+	cout << "optimized, status = " << (int)model.get(GRB_IntAttr_Status) << endl;
 
 }
 
@@ -1460,7 +1482,13 @@ void GurSolver::BoundTTP(const int t){
 		}
 		model.addConstr(sum_r == y_i[i]);
 	}
-	model.addConstr(sum_i == getNrRounds()/2);
+	if (getNrRounds() % 2 == 0){
+		model.addConstr(sum_i == getNrRounds()/2);
+	}
+	else{
+		model.addConstr(sum_i <= ceil((double)getNrRounds()/2.0));
+		model.addConstr(sum_i >= floor((double)getNrRounds()/2.0));
+	}
 
 	Objective = 0;
 	for (r = 0; r < NrTrips; ++r){
@@ -1716,9 +1744,13 @@ void GurSolver::AddOddSetConstraint(const int r, const vector<bool>InSubset, con
 }
 
 int ReturnMinTripLB(const int n, const int r){
+	// this function returns the CON solutions in AlgoSelection.cpp
 	int LB = 0;
 	if (n == 40){
-		if (r == 10){
+		if (r == 6){
+			LB = 160;
+		}
+		else if (r == 10){
 			LB = 280;
 		}
 		else if (r == 20){
@@ -1728,12 +1760,14 @@ int ReturnMinTripLB(const int n, const int r){
 			LB = 810;
 		}
 		else{
-			cout << "n = 40 but r = " << r << endl;
-			std::abort();
+			LB = 0;
 		}
 	}
 	else if (n == 32){
-		if (r == 8){
+		if (r == 4){
+			LB = 96;
+		}
+		else if (r == 8){
 			LB = 192;
 		}
 		else if (r == 16){
@@ -1743,12 +1777,14 @@ int ReturnMinTripLB(const int n, const int r){
 			LB = 520;
 		}
 		else{
-			cout << "n = 32 but r = " << r << endl;
-			std::abort();
+			LB = 0;
 		}
 	}
 	else if (n == 24){
-		if (r == 6){
+		if (r == 4){
+			LB = 72;
+		}
+		else if (r == 6){
 			LB = 96;
 		}
 		else if (r == 12){
@@ -1758,12 +1794,14 @@ int ReturnMinTripLB(const int n, const int r){
 			LB = 294;
 		}
 		else{
-			cout << "n = 24 but r = " << r << endl;
-			std::abort();
+			LB = 0;
 		}
 	}
 	else if (n == 16){
-		if (r == 4){
+		if (r == 2){
+			LB = 32;
+		}
+		else if (r == 4){
 			LB = 48;
 		}
 		else if (r == 8){
@@ -1773,8 +1811,7 @@ int ReturnMinTripLB(const int n, const int r){
 			LB = 132;
 		}
 		else{
-			cout << "n = 16 but r = " << r << endl;
-			std::abort();
+			LB = 0;
 		}
 	}
 	else{
@@ -2182,23 +2219,45 @@ void GurSolver::build_base(const bool HA, const bool relax_x){
 
 	// cout << "c4" << endl;
 
-	assert(getNrRounds() % 2 == 0);
-
-	int nrH = getNrRounds() / 2;
-	int nrA = nrH;
-	for (i = 0; i < getNrTeams(); ++i){
-		GRBLinExpr sum_jr_H = 0;
-		GRBLinExpr sum_jr_A = 0;
-		for (j = 0; j < getNrTeams(); ++j){
-			if (isEligible(i, j) /*true*/){
-				for (r = 0; r < getNrRounds(); ++r){
-					sum_jr_H += x[i][j][r];
-					sum_jr_A += x[j][i][r];
+	if (getNrRounds() % 2 == 0){
+		int nrH = getNrRounds() / 2;
+		int nrA = nrH;
+		for (i = 0; i < getNrTeams(); ++i){
+			GRBLinExpr sum_jr_H = 0;
+			GRBLinExpr sum_jr_A = 0;
+			for (j = 0; j < getNrTeams(); ++j){
+				if (isEligible(i, j) /*true*/){
+					for (r = 0; r < getNrRounds(); ++r){
+						sum_jr_H += x[i][j][r];
+						sum_jr_A += x[j][i][r];
+					}
 				}
 			}
+			model.addConstr(sum_jr_H == nrH, "c_3H");
+			model.addConstr(sum_jr_A == nrA, "c_3A");
 		}
-		model.addConstr(sum_jr_H == nrH, "c_3H");
-		model.addConstr(sum_jr_A == nrA, "c_3A");
+	}
+	else{
+		int nrHmin = floor((double)getNrRounds() / 2.0);
+		int nrHmax = ceil((double)getNrRounds() / 2.0);
+		int nrAmin = nrHmin;
+		int nrAmax = nrHmax;
+		for (i = 0; i < getNrTeams(); ++i){
+			GRBLinExpr sum_jr_H = 0;
+			GRBLinExpr sum_jr_A = 0;
+			for (j = 0; j < getNrTeams(); ++j){
+				if (isEligible(i, j) /*true*/){
+					for (r = 0; r < getNrRounds(); ++r){
+						sum_jr_H += x[i][j][r];
+						sum_jr_A += x[j][i][r];
+					}
+				}
+			}
+			model.addConstr(sum_jr_H >= nrHmin, "c_3H_min");
+			model.addConstr(sum_jr_A >= nrAmin, "c_3A_min");
+			model.addConstr(sum_jr_H <= nrHmax, "c_3H_max");
+			model.addConstr(sum_jr_A <= nrAmax, "c_3A_max");
+		}
 	}
 
 	// cout << "base done" << endl;
@@ -2544,6 +2603,7 @@ int GurSolver::solve(){
 
 		// Check status
 		int status = model.get(GRB_IntAttr_Status);
+
 		if (status == GRB_INFEASIBLE || status == GRB_INF_OR_UNBD) { 
 			model.write("gurobi_model.lp");
 			std::cout << "Model is infeasible. Computing IIS...\n";
