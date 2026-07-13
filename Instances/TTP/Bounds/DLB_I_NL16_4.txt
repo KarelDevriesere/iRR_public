@@ -1,1 +1,1 @@
-Instances/TTP/NL16_4.xml,23625,23625,0,4
+Instances/TTP/NL16_4.xml,23625,23625,0.481,0,4
