@@ -957,6 +957,7 @@ void SelectAlgo(InputData& data, ParameterValues& param){
         cout << "could not read Football or Hockey path " << file_path << endl;
         return;
     }
+
     in.SRR = true;
     if (!data.Football && !data.Hockey){
         in.setHAP_requirements(false, false, false, false, in.getNrRounds());
@@ -1012,7 +1013,8 @@ void BoundTTP(const int TimeLimit, const bool DLB, const string Instance, const 
     Solution sol(in);
     int LB = 0;
     int UB = 0;
-    double gap = 0;
+    double gap = 0.0;
+    double RT = 0.0;
     gur.setTimeLimit(TimeLimit); 
 
     /*
@@ -1043,20 +1045,22 @@ void BoundTTP(const int TimeLimit, const bool DLB, const string Instance, const 
         LB = gur.getBestBound();
         UB = gur.getBestObjValue();
         gap = gur.getMipGap();
+        RT = gur.getRunTime();
 #ifdef PRINT
 #if PRINT == 1
-        cout << "LB for instance " << Instance << " with " << NrRoundsTTP << " = " << LB << ", UB = " << UB << ", gap = " << gap << endl;
+        cout << "LB for instance " << Instance << " with " << NrRoundsTTP << " = " << LB << ", UB = " << UB << ", gap = " << gap << "Time spend = " << RT << endl;
 #endif 
 #endif
-        output_file << Instance << "," << LB << "," << UB << "," << gap << "," << NrRoundsTTP << "\n";
+        output_file << Instance << "," << LB << "," << UB << "," << RT << "," << gap << "," << NrRoundsTTP << "\n";
     }
     else{
         int sum = 0;
         for (int t = 0; t < in.getNrTeams(); ++t){
             gur.BoundTTP(t);
             sum += gur.solve();
+            RT += gur.getRunTime();
         }
-        output_file << Instance << "," << sum << "," << NrRoundsTTP << "\n";
+        output_file << Instance << "," << sum << "," << RT << "," << NrRoundsTTP << "\n";
     }
 }
 
@@ -1082,12 +1086,8 @@ void BoundsTTP_OneInstance(InputData& data, ParameterValues& param){
         OutputFilePath += "ILB_";
     }
     OutputFilePath += in.getInstanceName() + ".txt";
-#ifdef PRINT
-#if PRINT == 1
-    cout << "Save file as " << OutputFilePath << endl;
-#endif 
-#endif
     std::ofstream output_file(OutputFilePath);
     BoundTTP(param.TIME_LIMIT, data.DLB, data.Instance, data.NrRounds, output_file, data.addMinTripConstraint, data.addColoringConstraint);
     output_file.close();
+    cout << "Saved file as " << OutputFilePath << endl;
 }

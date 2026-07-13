@@ -2500,6 +2500,7 @@
             <slot id="36" name="Slot36" slotGroup="0"/>
             <slot id="37" name="Slot37" slotGroup="0"/>
             <slot id="38" name="Slot38" slotGroup="0"/>
+            <slot id="39" name="Slot39" slotGroup="0"/>
         </Slots>
     </Resources>
     <Constraints>

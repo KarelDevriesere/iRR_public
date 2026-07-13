@@ -20,8 +20,8 @@ NrRoundsTTP = {"BRA24": RoundSet24, "CIRC40": RoundSet40, "CON40": RoundSet40, "
 def ResultsInstances(InstanceSetting, iTTP=False):
     instances = []
     PathRoot = "Instances"
-    if InstanceSetting == "Miao":
-        PathRoot = os.path.join(PathRoot, "Miao")
+    if InstanceSetting == "Football":
+        PathRoot = os.path.join(PathRoot, "Football")
         I = ["i01", "i02", "i03", "i04", "i05", "i06"]
         S = ["0","1","2"]
         B = ["3", "100"]
@@ -41,19 +41,19 @@ def ResultsInstances(InstanceSetting, iTTP=False):
             instances.append(i)
     PathRoot = os.path.join(PathRoot, "Results")
 
-    TableComp = {"IP_time": [], "MiaoAlgo_time": [], "IP_TripModel_HAP_fixed_time": [], "IP_TripModel_time": [], "Heuristic_time": []}
-    Table = {inst: {"IP_value": -1, "IP_gap": -1, "IP_time": [], "IP_bound": -1, "Initial_Avg_value": [], "Initial_seed": [], "Initial_gap": -1, "Initial_time": [], "MiaoAlgo_Avg_value": [], "MiaoAlgo_time": [], "MiaoAlgo_seed": [], "Ip_TripModel_HAP_fixed_value": 10000000, "IP_TripModel_HAP_fixed_gap": 10000000, "IP_TripModel_HAP_fixed_time": [], "Miao_gap": -1, "IP_TripModel_value": 10000000, "IP_TripModel_gap": -1, "IP_TripModel_bound": 10000000, "IP_TripModel_time": [], "Heuristic_Avg_value": [], "Heuristic_HL": [], "Heuristic_gap": -1, "Heuristic_Avg_time": []} for inst in instances}
+    TableComp = {"IP_time": [], "GM_time": [], "IP_TripModel_HAP_fixed_time": [], "IP_TripModel_time": [], "Heuristic_time": []}
+    Table = {inst: {"IP_value": -1, "IP_gap": -1, "IP_time": [], "IP_bound": -1, "Initial_Avg_value": [], "Initial_seed": [], "Initial_gap": -1, "Initial_time": [], "GM_Avg_value": [], "GM_time": [], "GM_seed": [], "Ip_TripModel_HAP_fixed_value": 10000000, "IP_TripModel_HAP_fixed_gap": 10000000, "IP_TripModel_HAP_fixed_time": [], "GM_gap": -1, "IP_TripModel_value": 10000000, "IP_TripModel_gap": -1, "IP_TripModel_bound": 10000000, "IP_TripModel_time": [], "Heuristic_Avg_value": [], "Heuristic_HL": [], "Heuristic_gap": -1, "Heuristic_Avg_time": []} for inst in instances}
 
     TableMatchings = {inst: {"NrSuccesfullMatchings": [], "NrInfeasibleMatchings": []} for inst in instances}
     PathIP = os.path.join(PathRoot, "IP")
-    PathHeuristic = os.path.join(os.path.join(PathRoot, "Heuristic"), "All") # HeuristicStartingFromMiao
-    PathMiaoAlgo = os.path.join(PathRoot, "MiaoAlgo")
+    PathHeuristic = os.path.join(os.path.join(PathRoot, "Heuristic"), "All") # HeuristicStartingFromGM
+    PathGM = os.path.join(PathRoot, "GM")
     if InstanceSetting == "TTP":
         PathTripModel = os.path.join(PathRoot, "IP_TripModel")
         PathTripModel_HAP_fixed = os.path.join(PathRoot, "IP_TripModel_HAP_fixed")
-        Paths = [PathIP, PathMiaoAlgo, PathTripModel, PathTripModel_HAP_fixed, PathHeuristic]
+        Paths = [PathIP, PathGM, PathTripModel, PathTripModel_HAP_fixed, PathHeuristic]
     else:
-        Paths = [PathIP, PathMiaoAlgo, PathHeuristic]
+        Paths = [PathIP, PathGM, PathHeuristic]
 
     for Path in Paths:
         for file_index, filename in enumerate(os.listdir(Path)):
@@ -73,17 +73,17 @@ def ResultsInstances(InstanceSetting, iTTP=False):
                     if i == 0:
                         seed = str(row[0])
                         method = row[1]
-                        if InstanceSetting == "Miao":
+                        if InstanceSetting == "Football":
                             inst = row[2]
                             setting = str(row[3])
                             nr_breaks = str(row[4])
                             Instance = inst + "_s" + setting + "_b" + nr_breaks
-                            if method == "Heuristic": # HeuristicStartingFromMiao
+                            if method == "Heuristic": # HeuristicStartingFromGM
                                 HL = str(row[5])
                                 Table[Instance]["Heuristic_HL"].append(HL)
                         elif InstanceSetting == "Hockey":
                             Instance = row[2]
-                            if method == "Heuristic": # HeuristicStartingFromMiao
+                            if method == "Heuristic": # HeuristicStartingFromGM
                                 HL = str(row[3])
                                 Table[Instance]["Heuristic_HL"].append(HL)
                         elif InstanceSetting == "TTP":
@@ -105,7 +105,7 @@ def ResultsInstances(InstanceSetting, iTTP=False):
                             else:
                                 print(f'No match for {filename} in path {FilePath}')
                                 break
-                            if method == "Heuristic": # HeuristicStartingFromMiao
+                            if method == "Heuristic": # HeuristicStartingFromGM
                                 HL = str(row[4])
                                 Table[Instance]["Heuristic_HL"].append(HL)
 
@@ -138,11 +138,11 @@ def ResultsInstances(InstanceSetting, iTTP=False):
                             else:
                                 TableComp["IP_TripModel_time"].append(max_time)
                         elif method == "MiaoAlgo":
-                            Table[Instance]["MiaoAlgo_Avg_value"].append(int(row[1]))
-                            TableComp["MiaoAlgo_time"].append(max_time)
-                            Table[Instance]["MiaoAlgo_time"].append(max_time)
-                            Table[Instance]["MiaoAlgo_seed"].append(seed)
-                        elif method == "Heuristic": # HeuristicStartingFromMiao
+                            Table[Instance]["GM_Avg_value"].append(int(row[1]))
+                            TableComp["GM_time"].append(max_time)
+                            Table[Instance]["GM_time"].append(max_time)
+                            Table[Instance]["GM_seed"].append(seed)
+                        elif method == "Heuristic": # HeuristicStartingFromGM
                             Table[Instance]["Heuristic_Avg_value"].append(float(row[1]))
                             Table[Instance]["Heuristic_Avg_time"].append(float(row[2]))
                             TableComp["Heuristic_time"].append(max_time)
@@ -158,9 +158,9 @@ def ResultsInstances(InstanceSetting, iTTP=False):
     if iTTP:
         print(f"COMPUTATION TIMES:")
         print(f"& F1 & F2 & GM-c & GM-it & F2-HAP \\\\ \n")
-        print(f"Min & {round(min(TableComp['IP_time'])/60.0, 2)} & {round(min(TableComp['IP_TripModel_time'])/60.0, 2)} & & {round(min(TableComp['MiaoAlgo_time'])/60.0, 2)} &  {round(min(TableComp['IP_TripModel_HAP_fixed_time'])/60.0, 2)} \\\\ \n")
-        print(f"Max & {round(max(TableComp['IP_time'])/60.0, 2)} & {round(max(TableComp['IP_TripModel_time'])/60.0, 2)} & & {round(max(TableComp['MiaoAlgo_time'])/60.0, 2)} &  {round(max(TableComp['IP_TripModel_HAP_fixed_time'])/60.0, 2)} \\\\ \n")
-        print(f"Average & {round(np.mean(TableComp['IP_time'])/60.0, 2)} & {round(np.mean(TableComp['IP_TripModel_time'])/60.0, 2)} & & {round(np.mean(TableComp['MiaoAlgo_time'])/60.0, 2)} &  {round(np.mean(TableComp['IP_TripModel_HAP_fixed_time'])/60.0, 2)} \\\\ \n")
+        print(f"Min & {round(min(TableComp['IP_time'])/60.0, 2)} & {round(min(TableComp['IP_TripModel_time'])/60.0, 2)} & & {round(min(TableComp['GM_time'])/60.0, 2)} &  {round(min(TableComp['IP_TripModel_HAP_fixed_time'])/60.0, 2)} \\\\ \n")
+        print(f"Max & {round(max(TableComp['IP_time'])/60.0, 2)} & {round(max(TableComp['IP_TripModel_time'])/60.0, 2)} & & {round(max(TableComp['GM_time'])/60.0, 2)} &  {round(max(TableComp['IP_TripModel_HAP_fixed_time'])/60.0, 2)} \\\\ \n")
+        print(f"Average & {round(np.mean(TableComp['IP_time'])/60.0, 2)} & {round(np.mean(TableComp['IP_TripModel_time'])/60.0, 2)} & & {round(np.mean(TableComp['GM_time'])/60.0, 2)} &  {round(np.mean(TableComp['IP_TripModel_HAP_fixed_time'])/60.0, 2)} \\\\ \n")
 
     for inst in TableMatchings.keys():
         if len(TableMatchings[inst]["NrSuccesfullMatchings"]) > 0:
@@ -168,8 +168,8 @@ def ResultsInstances(InstanceSetting, iTTP=False):
             avg_fail = round(sum(TableMatchings[inst]["NrInfeasibleMatchings"]) / len(TableMatchings[inst]["NrInfeasibleMatchings"]),2)
             print('{} & {} & {} \\\\ \n'.format(inst, avg_succes, avg_fail))
     
-    if InstanceSetting == "Miao":
-        OutputPath = os.path.join(os.path.join("Results", "Miao"), "Analysis.txt")   
+    if InstanceSetting == "Football":
+        OutputPath = os.path.join(os.path.join("Results", "Football"), "Analysis.txt")   
     elif InstanceSetting == "TTP":
         if iTTP:
             OutputPath = os.path.join(os.path.join("Results", "TTP"), "Analysis_iTTP.txt")
@@ -187,13 +187,13 @@ def ResultsInstances(InstanceSetting, iTTP=False):
     write_header = not os.path.exists(PathBoxPlot)
 
     with open(OutputPath, 'w') as output_file, open(PathBoxPlot, "a", newline="") as output_file_boxplot:
-        if InstanceSetting == "Miao":
-            output_file.write("Instance & IP_v & IP_b & IP_t & Miao_{av} & Miao_{at} & Miao_{bv} & Miao_{bt} & Heur_{av} & Heur_{at} & Heur_{bv} & Heur_{bt} & Heur_{bHL}\n")
+        if InstanceSetting == "Football":
+            output_file.write("Instance & IP_v & IP_b & IP_t & GM_{av} & GM_{at} & GM_{bv} & GM_{bt} & Heur_{av} & Heur_{at} & Heur_{bv} & Heur_{bt} & Heur_{bHL}\n")
         else:
             if iTTP:
-                output_file.write("Instance & Bound & IP_v & IP_gap & IP_Trip & Ip_trip_gap & Init_v & Init_gap & Miao_{av} & Miao_{bv} & Miao_gap & IP-HAP & IP-HAP_gap\n")
+                output_file.write("Instance & Bound & IP_v & IP_gap & IP_Trip & Ip_trip_gap & Init_v & Init_gap & GM_{av} & GM_{bv} & GM_gap & IP-HAP & IP-HAP_gap\n")
             else:
-                output_file.write("Instance & Bound & IP_v & IP_b & IP_t & Miao_{av} & Miao_{at} & Miao_{bv} & Miao_{bt} & Heur_{av} & Heur_{at} & Heur_{bv} & Heur_{bt} & Heur_{bHL}\n")
+                output_file.write("Instance & Bound & IP_v & IP_b & IP_t & GM_{av} & GM_{at} & GM_{bv} & GM_{bt} & Heur_{av} & Heur_{at} & Heur_{bv} & Heur_{bt} & Heur_{bHL}\n")
 
         writer = csv.writer(output_file_boxplot)
 
@@ -210,11 +210,11 @@ def ResultsInstances(InstanceSetting, iTTP=False):
         for Instance in Table.keys():
             Heuristic_Avg_value = -1
             Heuristic_Avg_time = -1
-            MiaoAlgo_Avg_value = -1
-            MiaoAlgo_Avg_time = -1
-            MiaoAlgo_Best_value = -1
-            MiaoAlgo_Best_time = -1
-            MiaoAlgoBestSeed = -1
+            GM_Avg_value = -1
+            GM_Avg_time = -1
+            GM_Best_value = -1
+            GM_Best_time = -1
+            GMBestSeed = -1
             Heuristic_Best_value = -1
             Heuristic_Best_time = -1
             Heuristic_best_HL = -1
@@ -238,21 +238,21 @@ def ResultsInstances(InstanceSetting, iTTP=False):
                 Results[Instance]["Avg_all"] = int(Heuristic_Avg_value)
                 Results[Instance]["Min_all"] = int(Heuristic_Best_value) 
                 
-            if len(Table[Instance]["MiaoAlgo_Avg_value"]) > 0:
-                MiaoAlgo_Avg_value = round(sum(Table[Instance]["MiaoAlgo_Avg_value"]) / len(Table[Instance]["MiaoAlgo_Avg_value"]))
-                MiaoAlgo_Avg_time = round(sum(Table[Instance]["MiaoAlgo_time"]) / len(Table[Instance]["MiaoAlgo_time"]))
-                MiaoAlgo_Best_value = Table[Instance]["MiaoAlgo_Avg_value"][0]
-                MiaoAlgo_Best_time = Table[Instance]["MiaoAlgo_time"][0]
-                MiaoAlgoBestSeed = Table[Instance]["MiaoAlgo_seed"][0]
+            if len(Table[Instance]["GM_Avg_value"]) > 0:
+                GM_Avg_value = round(sum(Table[Instance]["GM_Avg_value"]) / len(Table[Instance]["GM_Avg_value"]))
+                GM_Avg_time = round(sum(Table[Instance]["GM_time"]) / len(Table[Instance]["GM_time"]))
+                GM_Best_value = Table[Instance]["GM_Avg_value"][0]
+                GM_Best_time = Table[Instance]["GM_time"][0]
+                GMBestSeed = Table[Instance]["GM_seed"][0]
     
-                for i in range(1,len(Table[Instance]["MiaoAlgo_Avg_value"])):
-                    if Table[Instance]["MiaoAlgo_Avg_value"][i] < MiaoAlgo_Best_value:
-                        MiaoAlgo_Best_value = Table[Instance]["MiaoAlgo_Avg_value"][i]
-                        MiaoAlgo_Best_time = Table[Instance]["MiaoAlgo_time"][i]
-                        MiaoAlgoBestSeed = Table[Instance]["MiaoAlgo_seed"][i]
+                for i in range(1,len(Table[Instance]["GM_Avg_value"])):
+                    if Table[Instance]["GM_Avg_value"][i] < GM_Best_value:
+                        GM_Best_value = Table[Instance]["GM_Avg_value"][i]
+                        GM_Best_time = Table[Instance]["GM_time"][i]
+                        GMBestSeed = Table[Instance]["GM_seed"][i]
 
-                Results[Instance]["Min_GM"] = int(MiaoAlgo_Best_value) 
-                Results[Instance]["Avg_GM"] = int(MiaoAlgo_Avg_value) 
+                Results[Instance]["Min_GM"] = int(GM_Best_value) 
+                Results[Instance]["Avg_GM"] = int(GM_Avg_value) 
 
             if iTTP and len(Table[Instance]["Initial_Avg_value"]) > 0:
                 Initial_Avg_value = round(sum(Table[Instance]["Initial_Avg_value"]) / len(Table[Instance]["Initial_Avg_value"]))
@@ -260,11 +260,11 @@ def ResultsInstances(InstanceSetting, iTTP=False):
                 InitialBestSeed = Table[Instance]["Initial_seed"][0]
     
                 for i in range(1,len(Table[Instance]["Initial_Avg_value"])):
-                    if Table[Instance]["MiaoAlgo_Avg_value"][i] < MiaoAlgo_Best_value:
+                    if Table[Instance]["GM_Avg_value"][i] < GM_Best_value:
                         Initial_Best_value = Table[Instance]["Initial_Avg_value"][i]
                         InitialBestSeed = Table[Instance]["Initial_seed"][i]
 
-            # print(f'{{"{Instance}",{MiaoAlgoBestSeed}}},')
+            # print(f'{{"{Instance}",{GMBestSeed}}},')
             
             line = Instance + " & "
 
@@ -295,13 +295,13 @@ def ResultsInstances(InstanceSetting, iTTP=False):
                 
             line += str(Bounds[Instance]) + " & "
 
-            if (Table[Instance]["IP_value"] <= MiaoAlgo_Best_value or MiaoAlgo_Best_value == -1) and (Table[Instance]["IP_value"] <= Heuristic_Best_value or Heuristic_Best_value == -1) and Table[Instance]["IP_value"] != -1 and (Table[Instance]["IP_value"] <= Table[Instance]["IP_TripModel_value"] or Table[Instance]["IP_TripModel_value"] == -1):
+            if (Table[Instance]["IP_value"] <= GM_Best_value or GM_Best_value == -1) and (Table[Instance]["IP_value"] <= Heuristic_Best_value or Heuristic_Best_value == -1) and Table[Instance]["IP_value"] != -1 and (Table[Instance]["IP_value"] <= Table[Instance]["IP_TripModel_value"] or Table[Instance]["IP_TripModel_value"] == -1):
                 # line += "\\cellcolor{green!25}" 
                 if not iTTP or (iTTP and Table[Instance]["IP_value"] <= Table[Instance]["IP_TripModel_HAP_fixed_value"]):
                     line += "\\textbf{" + str(Table[Instance]["IP_value"]) + "}"
                 else:
                     line += str(Table[Instance]["IP_value"])
-            elif Table[Instance]["IP_value"] >= MiaoAlgo_Best_value and Table[Instance]["IP_value"] >= Heuristic_Best_value and Table[Instance]["IP_value"] >= Table[Instance]["IP_TripModel_value"]:
+            elif Table[Instance]["IP_value"] >= GM_Best_value and Table[Instance]["IP_value"] >= Heuristic_Best_value and Table[Instance]["IP_value"] >= Table[Instance]["IP_TripModel_value"]:
                 # line += "\\cellcolor{red!25}" 
                 if not iTTP or (iTTP and Table[Instance]["IP_value"] >= Table[Instance]["IP_TripModel_HAP_fixed_value"]):
                     line += "\\emph{" + str(Table[Instance]["IP_value"]) + "}"
@@ -322,9 +322,9 @@ def ResultsInstances(InstanceSetting, iTTP=False):
                     gap_trip_model = round(((Table[Instance]["IP_TripModel_value"] - int(Bounds[Instance])) /  Table[Instance]["IP_TripModel_value"])*100,2)
                 else:
                     gap_trip_model = -1
-                if Table[Instance]["IP_TripModel_value"] <= MiaoAlgo_Best_value and Table[Instance]["IP_TripModel_value"] <= Table[Instance]["IP_value"] and Table[Instance]["IP_TripModel_value"] != -1 and (Table[Instance]["IP_TripModel_value"] <= Table[Instance]["IP_TripModel_HAP_fixed_value"]):
+                if Table[Instance]["IP_TripModel_value"] <= GM_Best_value and Table[Instance]["IP_TripModel_value"] <= Table[Instance]["IP_value"] and Table[Instance]["IP_TripModel_value"] != -1 and (Table[Instance]["IP_TripModel_value"] <= Table[Instance]["IP_TripModel_HAP_fixed_value"]):
                     line += " \\textbf{" + str(Table[Instance]["IP_TripModel_value"]) + "}"
-                elif Table[Instance]["IP_TripModel_value"] <= MiaoAlgo_Best_value and Table[Instance]["IP_TripModel_value"] <= Table[Instance]["IP_value"] and Table[Instance]["IP_TripModel_value"] <= Table[Instance]["IP_TripModel_HAP_fixed_value"] and Table[Instance]["IP_TripModel_value"] != -1:
+                elif Table[Instance]["IP_TripModel_value"] <= GM_Best_value and Table[Instance]["IP_TripModel_value"] <= Table[Instance]["IP_value"] and Table[Instance]["IP_TripModel_value"] <= Table[Instance]["IP_TripModel_HAP_fixed_value"] and Table[Instance]["IP_TripModel_value"] != -1:
                     line += " \\emph{" + str(Table[Instance]["IP_TripModel_value"]) + "}"
                 else:
                     line += str(Table[Instance]["IP_TripModel_value"])
@@ -334,33 +334,33 @@ def ResultsInstances(InstanceSetting, iTTP=False):
                 gap_initial = round(((Initial_Best_value - int(Bounds[Instance])) / Initial_Best_value)*100,2)
                 line += str(Initial_Best_value)  +" & " + str(gap_initial)  + " & "
             
-            if (MiaoAlgo_Best_value <= Table[Instance]["IP_value"] or Table[Instance]["IP_value"] == -1) and (MiaoAlgo_Best_value <= Heuristic_Best_value or Heuristic_Best_value == -1) and MiaoAlgo_Best_value != -1 and (MiaoAlgo_Best_value <= Table[Instance]["IP_TripModel_value"] or Table[Instance]["IP_TripModel_value"] == -1):
+            if (GM_Best_value <= Table[Instance]["IP_value"] or Table[Instance]["IP_value"] == -1) and (GM_Best_value <= Heuristic_Best_value or Heuristic_Best_value == -1) and GM_Best_value != -1 and (GM_Best_value <= Table[Instance]["IP_TripModel_value"] or Table[Instance]["IP_TripModel_value"] == -1):
                 # line += "\\cellcolor{green!25}" 
-                if not iTTP or (iTTP and MiaoAlgo_Best_value <= Table[Instance]["IP_TripModel_HAP_fixed_value"]):
-                    line += "\\textbf{" + str(MiaoAlgo_Best_value) + "}"
+                if not iTTP or (iTTP and GM_Best_value <= Table[Instance]["IP_TripModel_HAP_fixed_value"]):
+                    line += "\\textbf{" + str(GM_Best_value) + "}"
                 else:
-                    line += str(MiaoAlgo_Best_value) 
-            elif MiaoAlgo_Best_value >= Table[Instance]["IP_value"] and MiaoAlgo_Best_value >= Heuristic_Best_value and MiaoAlgo_Best_value >= Table[Instance]["IP_TripModel_value"]:
+                    line += str(GM_Best_value) 
+            elif GM_Best_value >= Table[Instance]["IP_value"] and GM_Best_value >= Heuristic_Best_value and GM_Best_value >= Table[Instance]["IP_TripModel_value"]:
                 # line += "\\cellcolor{red!25}" 
-                if not iTTP or (iTTP and MiaoAlgo_Best_value >= Table[Instance]["IP_TripModel_HAP_fixed_value"]):
-                    line += "\\emph{" + str(MiaoAlgo_Best_value) + "}"
+                if not iTTP or (iTTP and GM_Best_value >= Table[Instance]["IP_TripModel_HAP_fixed_value"]):
+                    line += "\\emph{" + str(GM_Best_value) + "}"
                 else:
-                    line += str(MiaoAlgo_Best_value) 
+                    line += str(GM_Best_value) 
             else:
-                line += str(MiaoAlgo_Best_value) 
+                line += str(GM_Best_value) 
 
-            gap_miao = round(((MiaoAlgo_Best_value - int(Bounds[Instance])) / MiaoAlgo_Best_value)*100,2)
-            line += " & " + str(gap_miao)
+            gap_GM = round(((GM_Best_value - int(Bounds[Instance])) / GM_Best_value)*100,2)
+            line += " & " + str(gap_GM)
 
-            line += " & " + str(MiaoAlgo_Avg_value)
+            line += " & " + str(GM_Avg_value)
 
             # line += " \\\\ \n"
 
             if iTTP:
                 gap_trip_model = round(((Table[Instance]["IP_TripModel_HAP_fixed_value"] - int(Bounds[Instance])) /  Table[Instance]["IP_TripModel_HAP_fixed_value"])*100,2)
-                if Table[Instance]["IP_TripModel_HAP_fixed_value"] <= MiaoAlgo_Best_value and Table[Instance]["IP_TripModel_HAP_fixed_value"] <= Table[Instance]["IP_value"] and Table[Instance]["IP_TripModel_HAP_fixed_value"] != -1 and (Table[Instance]["IP_TripModel_value"] < 0 or Table[Instance]["IP_TripModel_HAP_fixed_value"] <= Table[Instance]["IP_TripModel_value"]):
+                if Table[Instance]["IP_TripModel_HAP_fixed_value"] <= GM_Best_value and Table[Instance]["IP_TripModel_HAP_fixed_value"] <= Table[Instance]["IP_value"] and Table[Instance]["IP_TripModel_HAP_fixed_value"] != -1 and (Table[Instance]["IP_TripModel_value"] < 0 or Table[Instance]["IP_TripModel_HAP_fixed_value"] <= Table[Instance]["IP_TripModel_value"]):
                     line += " & \\textbf{" + str(Table[Instance]["IP_TripModel_HAP_fixed_value"]) + "}"
-                elif Table[Instance]["IP_TripModel_HAP_fixed_value"] <= MiaoAlgo_Best_value and Table[Instance]["IP_TripModel_HAP_fixed_value"] <= Table[Instance]["IP_value"] and Table[Instance]["IP_TripModel_HAP_fixed_value"] <= Table[Instance]["IP_TripModel_value"]:
+                elif Table[Instance]["IP_TripModel_HAP_fixed_value"] <= GM_Best_value and Table[Instance]["IP_TripModel_HAP_fixed_value"] <= Table[Instance]["IP_value"] and Table[Instance]["IP_TripModel_HAP_fixed_value"] <= Table[Instance]["IP_TripModel_value"]:
                     line += " & \\emph{" + str(Table[Instance]["IP_TripModel_HAP_fixed_value"]) + "}"
                 else:
                     line += " & " + str(Table[Instance]["IP_TripModel_HAP_fixed_value"])
@@ -372,10 +372,10 @@ def ResultsInstances(InstanceSetting, iTTP=False):
 
                 line += " & " + str(Heuristic_Avg_value) + " & "
                 
-                if (Heuristic_Best_value <= Table[Instance]["IP_value"] or Table[Instance]["IP_value"] == -1) and (Heuristic_Best_value <= MiaoAlgo_Best_value or MiaoAlgo_Best_value == -1) and Heuristic_Best_value != -1:
+                if (Heuristic_Best_value <= Table[Instance]["IP_value"] or Table[Instance]["IP_value"] == -1) and (Heuristic_Best_value <= GM_Best_value or GM_Best_value == -1) and Heuristic_Best_value != -1:
                     # line += "\\cellcolor{green!25}" + str(Heuristic_Best_value)  
                     line += "\\textbf{" + str(Heuristic_Best_value) + "}"
-                elif Heuristic_Best_value >= Table[Instance]["IP_value"] and Heuristic_Best_value >= MiaoAlgo_Best_value:
+                elif Heuristic_Best_value >= Table[Instance]["IP_value"] and Heuristic_Best_value >= GM_Best_value:
                     # line += "\\cellcolor{red!25}" + str(Heuristic_Best_value)
                     line += "\\emph{" + str(Heuristic_Best_value) + "}"
                 else:
@@ -387,7 +387,7 @@ def ResultsInstances(InstanceSetting, iTTP=False):
                 line += " & " + str(gap_heuristic) + " \\\\ \n"
 
                 if InstanceSetting == "TTP":
-                    for value in Table[Instance]["MiaoAlgo_Avg_value"]:
+                    for value in Table[Instance]["GM_Avg_value"]:
                         writer.writerow(["Greedy", Bounds[Instance], value])
                     writer.writerow(["IP", Bounds[Instance], Table[Instance]["IP_value"]])
                 else:
@@ -397,7 +397,7 @@ def ResultsInstances(InstanceSetting, iTTP=False):
                         if value < int(Bounds[Instance]):
                             print(Instance)
                             breakpoint()
-                    for value in Table[Instance]["MiaoAlgo_Avg_value"]:
+                    for value in Table[Instance]["GM_Avg_value"]:
                         writer.writerow(["Greedy", InstanceSetting, Bounds[Instance], value])
                         if value < int(Bounds[Instance]):
                             print(Instance)
@@ -436,7 +436,7 @@ def ResultsInstances(InstanceSetting, iTTP=False):
                 max_time = 0
                 for i, row in enumerate(reader):
                     if i == 0:
-                        if InstanceSetting == "Miao":
+                        if InstanceSetting == "Football":
                             inst = row[2]
                             setting = str(row[3])
                             nr_breaks = str(row[4])
@@ -527,7 +527,7 @@ def ResultsInstances(InstanceSetting, iTTP=False):
 
     if InstanceSetting == "TTP":
         plt.savefig("boxplot_TTP")
-    elif InstanceSetting == "Miao":
+    elif InstanceSetting == "Football":
         plt.savefig("boxplot_Football")
     else:
         plt.savefig("boxplot_Hockey")
@@ -587,13 +587,13 @@ if __name__ == "__main__":
         TTP = True
         FolderPath = os.path.join(FolderPath, "TTP")
         print("Analyze results TTP")
-    elif setting == "Miao":
-        Miao = True
-        FolderPath = os.path.join(FolderPath, "Miao")
+    elif setting == "Football":
+        Football = True
+        FolderPath = os.path.join(FolderPath, "Football")
     elif setting == "Hockey":
         FolderPath = os.path.join(FolderPath, "Hockey")
     else:
-        print("Specify TTP or Miao or Hockey")
+        print("Specify TTP or Football or Hockey")
     FolderPath = os.path.join(FolderPath, "Results")
 
     if not os.path.exists(FolderPath):
