@@ -2,10 +2,10 @@
 
 const unordered_map<string,int>ConSolutions = {
     {"I_CON16_2",32}, 		// Formula
-    {"I_CON16_4",48}, 		// Via Benders -> optimal values, see map Code_Benders/Best
-    {"I_CON16_8",96}, 		// Via Benders
+    {"I_CON16_4",48}, 		// Formula
+    {"I_CON16_8",96}, 		// Formula
     {"I_CON16_12",132}, 	// Via Benders
-    {"I_CON16_15",0}, 	// ignore
+    {"I_CON16_15",168}, 	// Via Benders
     {"I_CON24_4",72}, 		// Formula
     {"I_CON24_6",96}, 		// Via Benders
     {"I_CON24_12",192}, 	// Via Benders
@@ -20,7 +20,7 @@ const unordered_map<string,int>ConSolutions = {
     {"I_CON40_10",280}, 	// Via Benders
     {"I_CON40_20",560},     // Via Benders
     {"I_CON40_30",810}, 	// Via Benders, running on HPC
-    {"I_CON40_39",0} 	// ignore
+    {"I_CON40_39",0} 	// Via Benders
 };
 
 void ReadSolutionXML(const string path, Solution& sol){
