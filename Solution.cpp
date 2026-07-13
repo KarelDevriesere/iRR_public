@@ -107,8 +107,15 @@ bool Solution::IsTeamBalanced(const int i){
     // For 2 rounds, the following assert can easily be violated:
     // assert(nr_H > 0);
     // assert(nr_A > 0);
-    if (nr_H != nr_A){
-        return false;
+    if (NrColouredRounds % 2 == 0){
+        if (nr_H != nr_A){
+            return false;
+        }
+    }
+    else{
+        if (abs(nr_H-nr_A) > 1){
+            return false;
+        }
     }
     nr_H = 0, nr_A = 0;
     if (!SRR){
@@ -154,7 +161,7 @@ int Solution::NrThreeConsecutiveHA(const int i){
         cout << "B";
     }
         */
-    for (int c = 1; c < Orientation[i].size(); ++c){
+    for (int c = 1; c < NrColouredRounds; ++c){
         /*
         if (Orientation[i][c] == HA::H){
             cout << "H";
@@ -765,10 +772,20 @@ bool Solution::validate(){
 
     for (int i = 0; i < getNrTeams(); ++i){
         // cout << "Home games of " <<i << " = " << HomeGamesTeam[i] << endl;
-        if (HomeGamesTeam[i] != NrColouredRounds/2){
-            cout << i << " has " << HomeGamesTeam[i] << " home games" << endl;
+        if (NrColouredRounds % 2 == 0){
+            if (HomeGamesTeam[i] != NrColouredRounds/2){
+                cout << i << " has " << HomeGamesTeam[i] << " home games" << endl;
+            }
+            assert(HomeGamesTeam[i] == NrColouredRounds/2);
         }
-        assert(HomeGamesTeam[i] == NrColouredRounds/2);
+        else{
+            if (HomeGamesTeam[i] < floor((double)NrColouredRounds/2.0)){
+                cout << i << " has " << HomeGamesTeam[i] << " home games" << endl;
+            }
+            else if (HomeGamesTeam[i] > ceil((double)NrColouredRounds/2.0)){
+                cout << i << " has " << HomeGamesTeam[i] << " home games" << endl;
+            }
+        }
     }
     if (!ViolationHAP_allowed){
         assert(ComputeTotalHACost() == 0);

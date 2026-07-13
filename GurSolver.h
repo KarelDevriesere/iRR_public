@@ -116,6 +116,7 @@ class GurSolver : public Input
         void setBoundCapacityViolations();
         int solve();
         double getMipGap();
+        double getRunTime();
         int getBestBound();
         int getBestObjValue();
         void SaveSolution(Solution& sol);

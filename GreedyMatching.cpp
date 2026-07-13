@@ -359,7 +359,11 @@ bool GreedyMatching::HomeAwaySwap(){
     int i_ = RandomIntegerNumber(0, sol.getNrTeamsLeague(l)-1);
     int i = sol.getGlobalIndexTeam(l,i_);
     // pick a random round
-    int r = RandomIntegerNumber(0, sol.getNrRounds()-1);
+    int R = sol.getNrRounds();
+    if (R % 2 == 1){
+        ++R;
+    }
+    int r = RandomIntegerNumber(0, R-1);
     // find a team that plays the opposite home in round r
     int j_ = RandomIntegerNumber(0, sol.getNrTeamsLeague(l)-1);
     int j = sol.getGlobalIndexTeam(l,j_);
@@ -372,10 +376,10 @@ bool GreedyMatching::HomeAwaySwap(){
         }
     }
     // Now pick randomly another round s, such that in this round i plays the opposite home-away status
-    int s = RandomIntegerNumber(0, sol.getNrRounds()-1);
+    int s = RandomIntegerNumber(0, R-1);
     int start_s = s;
     while ((sol.Orientation[i][r] == sol.Orientation[i][s]) || (sol.Orientation[j][r] == sol.Orientation[j][s])){
-        s = (s+1)%sol.getNrRounds();
+        s = (s+1)%R;
         if (start_s == s){
             cout << "Infinite loop over s in HomeAwaySwap!!" << endl;
         }
@@ -389,7 +393,7 @@ bool GreedyMatching::HomeAwaySwap(){
         for (int q: {r,s}){
             for (int v = max(0, q-3); v <= q; ++v){
                 int NrH = 0, NrA = 0;
-                for (int w = v; w < min(sol.getNrRounds(), v+4); ++w){
+                for (int w = v; w < min(R, v+4); ++w){
                     if (sol.Orientation[k][w] == HA::H){
                         NrH++;
                     }
@@ -820,6 +824,28 @@ void GreedyMatching::solve(Input& in, Solution& current_sol){
             }
             for (auto it = MetaH->WeightsCumul.begin(); it != MetaH->WeightsCumul.end(); ++it) {
                 cout << "Weight = " << it->first << ", move = " << MetaH->Moves.at(it->second) << endl;
+            }
+        }
+    }
+
+    // First, if r is odd, we have to add an additional H or A to each of the teams their orientations. But first, add an additional round!
+    if (sol.getNrRounds()%2 == 1){
+        for (int i = 0; i < sol.getNrTeams(); ++i){
+            int nrH = 0, nrA = 0;
+            for (int r = 0; r < sol.getNrRounds(); ++r){
+                if (sol.Orientation[i][r] == HA::H){
+                    nrH++;
+                }
+                else if (sol.Orientation[i][r] == HA::A){
+                    nrA++;
+                }
+            }
+            assert(nrH != nrA);
+            if (nrH > nrA){
+                sol.Orientation[i].push_back(HA::A);
+            }
+            else{
+                sol.Orientation[i].push_back(HA::H);
             }
         }
     }

@@ -16,7 +16,7 @@ GurSolver::~GurSolver(){}
 
 GRBModel GurSolver::createModel(GRBEnv& env) {
 	env.start();
-	// env.set(GRB_IntParam_LogToConsole, 0);
+	env.set(GRB_IntParam_LogToConsole, 0);
 #ifdef PRINT
 #if PRINT == 0
 	// env.set(GRB_IntParam_LogToConsole, 0); // surpress all output
@@ -2656,6 +2656,10 @@ double GurSolver::getMipGap(){
 
 int GurSolver::getBestBound(){
 	return (int)model.get(GRB_DoubleAttr_ObjBound);
+}
+
+double GurSolver::getRunTime(){
+	return (double)model.get(GRB_DoubleAttr_Runtime);
 }
 
 void GurSolver::SaveSolution(Solution& sol){
