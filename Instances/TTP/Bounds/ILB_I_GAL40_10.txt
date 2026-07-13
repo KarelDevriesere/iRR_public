@@ -1,0 +1,1 @@
+Instances/TTP/GAL40_10.xml,15546,67.073,4

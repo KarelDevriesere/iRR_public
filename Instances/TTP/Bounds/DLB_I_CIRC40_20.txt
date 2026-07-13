@@ -1,1 +1,1 @@
-Instances/TTP/CIRC40_20.xml,1760,1760,0,4
+Instances/TTP/CIRC40_20.xml,1760,1760,60.275,0,4
