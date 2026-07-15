@@ -89,13 +89,13 @@ Moreover, we next assume Make is used, resulting in the executable ./irr
 ./irr --InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --Bounds 1 --DLB 1 --addColoringConstraint 1
 ```
 
+Only for instances with r > n/2!
+
 ## Computing DLB-MinLeg for iTTP instances
 
 ```bash
 ./irr --InstanceTTP "Instances/TTP/NL16_12.xml" --TimeLimit 172800 --Bounds 1 --DLB 1 --addMinTripConstraint 1
 ```
-
-Only for instances with r > n/2!
 
 ## Computing F1 for iTTP instances
 
