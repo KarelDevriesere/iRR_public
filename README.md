@@ -117,10 +117,16 @@ Now, set "relax_x" to true in function iTTP() in GurSolver.cpp
 ./irr --InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --TripModel 1 --Heuristic 0
 ```
 
+> [!WARNING]
+> Not all instances may run because the trip model may not fit in memory.
+
 ## Computing LP_F2 for iTTP instances
 
 ```bash
 ./irr --InstanceTTP "Instances/TTP/NL16_4.xml" --TimeLimit 172800 --TripModel 1 --Heuristic 0
+
+> [!WARNING]
+> Not all instances may run because the trip model may not fit in memory.
 ```
 
 Now, in iTTP_TripModel() in GurSolver.cpp, set GRB_BINARY in definition of z_trs to GRB_CONTINUOUS
