@@ -16,6 +16,7 @@ GurSolver::~GurSolver(){}
 
 GRBModel GurSolver::createModel(GRBEnv& env) {
 	env.start();
+	// env.set(GRB_IntParam_NumericFocus, 3); // matters for ttp bounds
 	env.set(GRB_IntParam_LogToConsole, 0);
 #ifdef PRINT
 #if PRINT == 0
@@ -466,7 +467,12 @@ void GurSolver::iTTP_TripModel(){
 	for (t = 0; t < N; ++t){
 		for (r = 0; r < NrTrips; ++r){
 			for (s = 0; s <= LastStartRoundTrip[t][r]; ++s){
-				z_trs[t][r][s] = model.addVar(0, 1, 0.0, GRB_BINARY /*, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]"*/);
+				if (LP_relaxation){
+					z_trs[t][r][s] = model.addVar(0, 1, 0.0, GRB_CONTINUOUS /*, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]"*/);
+				}
+				else{
+					z_trs[t][r][s] = model.addVar(0, 1, 0.0, GRB_BINARY /*, "z[" + to_string(t) + "," + to_string(r) + "," + to_string(s) + "]"*/);
+				}
 				NrTripVariables++;
 			}
 		}
@@ -493,7 +499,7 @@ void GurSolver::iTTP_TripModel(){
 					}
 				}
 			}
-			model.addConstr(sum_rs <= 1, "c1_" + to_string(t) + "_" + to_string(i));
+			model.addConstr(sum_rs <= 1 /*, "c1_" + to_string(t) + "_" + to_string(i)*/);
 		}
 	}
 
@@ -515,8 +521,8 @@ void GurSolver::iTTP_TripModel(){
 			model.addConstr(sum_t == R/2, "c2_" + to_string(t));
 		}
 		else{
-			model.addConstr(sum_t >= floor((double)R/2.0), "c2_min_" + to_string(t));
-			model.addConstr(sum_t <= ceil((double)R/2.0), "c2_max_" + to_string(t));
+			model.addConstr(sum_t >= floor((double)R/2.0) /*, "c2_min_" + to_string(t)*/);
+			model.addConstr(sum_t <= ceil((double)R/2.0) /*, "c2_max_" + to_string(t)*/);
 		}
 	}
 
@@ -542,7 +548,7 @@ void GurSolver::iTTP_TripModel(){
 				}
 				sum_rsh += z_trs[t][r][s];
 			}
-			model.addConstr(sum_rsh <= 1, "c3_" + to_string(t) + "_" + to_string(s));
+			model.addConstr(sum_rsh <= 1 /*, "c3_" + to_string(t) + "_" + to_string(s)*/);
 		}
 	}
 	
@@ -611,7 +617,7 @@ void GurSolver::iTTP_TripModel(){
 					sum_rsh += z_trs[t][r][s_];
 				}
 			}
-			model.addConstr(sum_rsh == 1, "c4_" + to_string(t) + "_" + to_string(s));
+			model.addConstr(sum_rsh == 1 /*, "c4_" + to_string(t) + "_" + to_string(s)*/);
 		}
 	}
 
@@ -645,7 +651,7 @@ void GurSolver::iTTP_TripModel(){
 					}
 				}
 			}
-			model.addConstr(sum_a <= 3, "c5_" + to_string(t) + "_" + to_string(s));
+			model.addConstr(sum_a <= 3 /*, "c5_" + to_string(t) + "_" + to_string(s)*/);
 		}
 	}
 
@@ -1048,6 +1054,10 @@ void GurSolver::BoundTTP_AllTeams(const bool addMinTripConstraint, const int min
 		else{
 			model.addConstr(sum_t2 <= ceil((double)getNrRounds()/2.0));
 			model.addConstr(sum_t2 >= floor((double)getNrRounds()/2.0));
+		}
+
+		if (getNrRounds() % 2 != 0){
+			model.addConstr(sum_t1 + sum_t2 == getNrRounds());
 		}
 
 		for (i = t+1; i < N; ++i){
@@ -1568,8 +1578,7 @@ void GurSolver::iTTP(){
 
 	int t,i,j,r;
 	const bool HA = true;
-	const bool relax_x = false;
-	build_base(HA, relax_x); // all base constraints
+	build_base(HA); // all base constraints
 
 	/*
 	if (getNrRounds() < 4){
@@ -1602,7 +1611,12 @@ void GurSolver::iTTP(){
 					continue;
 				}
 				std::string varName = "z_" + std::to_string(t) + "_" + std::to_string(i) + "_" + std::to_string(j);
-				z[t][i][j] = model.addVar(0, 1, 0.0, GRB_BINARY, varName);	   
+				if (LP_relaxation){
+					z[t][i][j] = model.addVar(0, 1, 0.0, GRB_CONTINUOUS, varName);	
+				}
+				else{
+					z[t][i][j] = model.addVar(0, 1, 0.0, GRB_BINARY, varName);	
+				}   
 			}
 		}
     }
@@ -1743,11 +1757,12 @@ void GurSolver::AddOddSetConstraint(const int r, const vector<bool>InSubset, con
 	model.addConstr(OddSet <= (U-1)/2); 
 }
 
+
 int ReturnMinTripLB(const int n, const int r){
 	// this function returns the CON solutions in AlgoSelection.cpp
 	int LB = 0;
 	if (n == 40){
-		if (r == 6){
+		if (r == 5){
 			LB = 160;
 		}
 		else if (r == 10){
@@ -1781,7 +1796,7 @@ int ReturnMinTripLB(const int n, const int r){
 		}
 	}
 	else if (n == 24){
-		if (r == 4){
+		if (r == 3){
 			LB = 72;
 		}
 		else if (r == 6){
@@ -1992,7 +2007,7 @@ void GurSolver::FixHAP(Solution& sol){
 }
 
 
-void GurSolver::build_base_league(const bool HA, const bool relax_x, const int l){ // l = league
+void GurSolver::build_base_league(const bool HA, const int l){ // l = league
 
 	assert(getNrTeamsLeague(l) % 2 == 0);
 	assert(getNrTeamsLeague(l)-1 >= getNrRounds());
@@ -2007,7 +2022,7 @@ void GurSolver::build_base_league(const bool HA, const bool relax_x, const int l
 			// cout << i << " and " << j << " of strength " << getStrenghtTeam(i) << " and " << getStrenghtTeam(j) << " can play vs each other" << endl;
 			   for (r = 0; r < getNrRounds(); ++r){
 				   std::string varName = "x_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(r);
-				   if (!relax_x){
+				   if (!LP_relaxation){
 						x[i][j][r] = model.addVar(0, 1, 0.0, GRB_BINARY, varName);
 				   }
 				   else{
@@ -2125,7 +2140,7 @@ void GurSolver::build_base_league(const bool HA, const bool relax_x, const int l
 
 }
 
-void GurSolver::build_base(const bool HA, const bool relax_x){ 
+void GurSolver::build_base(const bool HA){ 
 
 	assert(getNrTeams() % 2 == 0);
 	assert(getNrTeams()-1 >= getNrRounds());
@@ -2142,7 +2157,7 @@ void GurSolver::build_base(const bool HA, const bool relax_x){
 			// cout << i << " and " << j << " of strength " << getStrenghtTeam(i) << " and " << getStrenghtTeam(j) << " can play vs each other" << endl;
 			   for (r = 0; r < getNrRounds(); ++r){
 				   std::string varName = "x_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(r);
-				   if (!relax_x){
+				   if (!LP_relaxation){
 						x[i][j][r] = model.addVar(0, 1, 0.0, GRB_BINARY, varName);
 				   }
 				   else{
@@ -2263,9 +2278,9 @@ void GurSolver::build_base(const bool HA, const bool relax_x){
 	// cout << "base done" << endl;
 }
 
-void GurSolver::build_league(const bool HA, const bool relax_x){
+void GurSolver::build_league(const bool HA){
 
-	build_base(HA, relax_x);
+	build_base(HA);
 
 	int i,j,r;
 
@@ -2430,11 +2445,11 @@ void GurSolver::build_capacity_constraint_league(Solution& sol, const int l){
 	}
 }
 
-int GurSolver::build_all(const bool HA, const bool relax_x){
+int GurSolver::build_all(const bool HA){
     
 	Objective = 0;
 
-	build_league(HA, relax_x); // We now have 1 single "league"
+	build_league(HA); // We now have 1 single "league"
 	// teams of different leagues cannot play vs each other bc of eligible opponents
 
 	if (HA){
@@ -2939,10 +2954,10 @@ void GurSolver::AddSymmetryConstraint(){
 	// cout << "added symmetry constraint" << endl;
 }
 
-void GurSolver::BuildIntegratedFormulation(const bool relax_x, const bool min_travel, const bool min_capacity_violations){
+void GurSolver::BuildIntegratedFormulation(const bool min_travel, const bool min_capacity_violations){
 	// Big model described in Li et al (2025)
 	const bool HA = false;
-	build_all(HA, relax_x);
+	build_all(HA);
 	if (min_travel){
 		setBoundCapacityViolations();
 	}

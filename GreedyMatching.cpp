@@ -19,8 +19,7 @@ typedef boost::graph_traits<BGraph>::vertex_descriptor Vertex;
 
 void FindScheduleWithIP(Input& in, Solution& sol){
     GurSolver gur(in);
-    const bool relax_x = false;
-    gur.build_all(true, relax_x);
+    gur.build_all(true);
     gur.setTimeLimit(6000);
     gur.setBoundCapacityViolations();
     for (int i = 0; i < sol.getNrTeams(); ++i){
@@ -299,7 +298,9 @@ bool GreedyMatching::SchedulePhase(){
         vector<pair<int,int>>matching = MWPBM(r, CurrentLeague);
         if ((int)matching.size() < N/2){
             // shuffling rounds does not seem a good idea, instead go back to the old HAP assignement and do a new HAP move
+            // cout << "*********************" << endl;
             // cout << "matching failed in round " << s << endl;
+            // cout << "*********************" << endl;
             // cout << "matching has size of only " << (int)matching.size() << endl;
             // cin.get();
             ++NrInfeasibleMatchings;
@@ -319,6 +320,7 @@ bool GreedyMatching::SchedulePhase(){
                 */
         }
         else{
+            // cout << "*********************" << endl;
             // cout << "Matching in round " << r << ":" << endl;
             for (auto& [i, j]: matching){
                 if (sol.Orientation[i][r] == HA::H){
@@ -333,6 +335,7 @@ bool GreedyMatching::SchedulePhase(){
                 // cout << h << ", " << a << endl;
                 sol.SetColorMatch(h, a, r);
             }
+            // cout << "*********************" << endl;
             ++s;
         }
     }
@@ -649,54 +652,30 @@ void AssignsHAPsToTeamsBasedOnSol(Solution& sol){
         }
         if (h == sol.getNrHAPs()){
             // When r > n/2, we start from Vizing, but it can be that, if we included only promising HAPs, this HAP is not found!!
-#ifdef PRINT
-#if PRINT == 1
             cout << "HAP of " << i << " not found when assign HAPs to teams based on sol" << endl;
-#endif
-#endif
             // This can be because we did not include all HAPs!!
             vector<HA>NewHAP = vector<HA>(sol.getNrRounds());
             vector<HA>NewHAP_c = vector<HA>(sol.getNrRounds());
             for (r = 0; r < sol.getNrRounds(); ++r){
                 if (sol.Orientation[i][r] == HA::H){
-#ifdef PRINT
-#if PRINT == 1
                     cout << "H";
-#endif
-#endif
                     NewHAP[r] = HA::H;
                     NewHAP_c[r] = HA::A;
                 }
                 else{
-#ifdef PRINT
-#if PRINT == 1
                     cout << "A";
-#endif
-#endif
                     NewHAP[r] = HA::A;
                     NewHAP_c[r] = HA::H;
                 }
             }
-#ifdef PRINT
-#if PRINT == 1
             cout << endl;
-#endif
-#endif
 
             if (sol.HAP_satisfies_all_requirements(NewHAP)){
                 sol.AddHAPWithComplement(NewHAP, NewHAP_c);
-#ifdef PRINT
-#if PRINT == 1
                 cout << "HAP added" << endl;
-#endif
-#endif
             }
             else{
-#ifdef PRINT
-#if PRINT == 1
                 cout << "Infeasible HAP" << endl;
-#endif
-#endif
                 std::abort();
             }
         }
@@ -715,13 +694,13 @@ void GreedyMatching::solve(Input& in, Solution& current_sol){
         if (in.getNrRounds() > in.getNrTeams()/2){
             GurSolver gursol(in);
             // gursol.AssignHAPsToTeams(sol);
-            const bool relax_x = false, min_travel = false, min_capacity_violations = false;
-            // gursol.BuildIntegratedFormulation(relax_x, min_travel, min_capacity_violations);
+            const bool min_travel = false, min_capacity_violations = false;
+            // gursol.BuildIntegratedFormulation(min_travel, min_capacity_violations);
             gursol.BuildPatternFormulation(); // just assign HAPs to teams without objective!!
             gursol.solve();
             gursol.StoreHAPs(sol);
             // Use Benders here to find feasible opponent schedule?
-            DoMove();
+            // DoMove();
         }
         else{
             // We know that this always produces an initial solution!!
@@ -766,7 +745,7 @@ void GreedyMatching::solve(Input& in, Solution& current_sol){
         SetAllOpponents();
         cout << "Ready" << endl;
         sol.validate();
-        DoMove();
+        // DoMove();
         cout << "Travel cost = " << sol.ComputeTravelCostTTP() << endl;
     }
 
@@ -873,8 +852,13 @@ void GreedyMatching::solve(Input& in, Solution& current_sol){
             }
         }
         else{
-            MetaH->Update(sol, INT_MAX); // infeasible solution but still update values
-            ReverseMove(); // if schedule phase not succesful: reverse move, and try with new HAP move
+            if (InitialOnly){
+                MetaH->STOP = true;
+            }
+            else{
+                MetaH->Update(sol, INT_MAX); // infeasible solution but still update values
+                ReverseMove(); // if schedule phase not succesful: reverse move, and try with new HAP move
+            }
         }
         DoMove(); // do a HAP move
         assert(sol.ComputeTotalHACost() <= 0);

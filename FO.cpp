@@ -82,8 +82,7 @@ void FO::InitializeModel(Solution& sol, const InputData& data){
 	}
 	else{
 		const bool HA = true;
-		const bool relax_x = false;
-		build_all(HA, relax_x);
+		build_all(HA);
 		setBoundCapacityViolations();
 		AddObj(true, false);
 		Set_x_value_from_sol(sol);

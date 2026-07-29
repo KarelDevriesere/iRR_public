@@ -6,7 +6,7 @@ const unordered_map<string,int>ConSolutions = {
     {"I_CON16_8",96}, 		// Formula
     {"I_CON16_12",132}, 	// Via Benders
     {"I_CON16_15",168}, 	// Via Benders
-    {"I_CON24_3",72}, 		// Formula
+    {"I_CON24_3",60}, 		// Formula
     {"I_CON24_6",96}, 		// Via Benders
     {"I_CON24_12",192}, 	// Via Benders
     {"I_CON24_18",294}, 	// Via Benders, running on HPC
@@ -16,7 +16,7 @@ const unordered_map<string,int>ConSolutions = {
     {"I_CON32_16",352}, 	// Via Benders
     {"I_CON32_24",520}, 	// Via Benders, running on HPC
     {"I_CON32_31",0}, 	// ignore
-    {"I_CON40_5",160}, 	// Formula
+    {"I_CON40_5",140}, 	// Formula
     {"I_CON40_10",280}, 	// Via Benders
     {"I_CON40_20",560},     // Via Benders
     {"I_CON40_30",810}, 	// Via Benders, running on HPC
@@ -196,7 +196,6 @@ void SaveSolution(std::ofstream& output_file, Solution& sol){
 
 void SolveLeagueByLeague(Input& in, const InputData& data, const bool ComputeTravelBound){
 	const bool HA = true;
-	const bool relax_x = false;
 	bool min_travel = false;
 	bool min_cap = true;
     if (ComputeTravelBound){
@@ -221,7 +220,7 @@ void SolveLeagueByLeague(Input& in, const InputData& data, const bool ComputeTra
 	for (auto& [l, league_size]: LeagueSize){
         GurSolver gursol(in);
         // cout << "build base " << l << endl;
-		gursol.build_base_league(HA, relax_x, l);
+		gursol.build_base_league(HA, l);
         if (!ComputeTravelBound){
             gursol.build_capacity_constraint_league(sol,l);
             gursol.AddObj(min_travel, min_cap);
@@ -730,9 +729,11 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     GurSolver gur(in);
     Solution sol(in);
     bool HA = true;
-    bool relax_x = false;
     const bool min_travel = true, min_cap = false;
     if (in.getSetting() == Setting::TTP){
+         if (data.LP){
+            gur.LP_relaxation = true;
+        }
         if (data.TripModelHAP_Fixed){
             // First, read best found solution so far by greedy matching
             // string path = "Code_Benders" + string(PATHSEP) + "BestNoLex" + string(PATHSEP) + "I_CON" + to_string(sol.getNrTeams()) + "_" + to_string(sol.getNrRounds()) + ".xml";
@@ -795,9 +796,8 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
                 ReadSolution(path, sol);
             }
         }
-        const bool relax_x = false;
         if (min_travel || (min_cap && in.getSetting() == Setting::Football)){
-            gur.build_all(HA, relax_x);
+            gur.build_all(HA);
         }
         else{
             const bool TravelBound = false;
@@ -819,17 +819,19 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     gur.SetTimeStamps(TimeStamps);
     gur.solve();
     // cout << "save solution" << endl;
-    gur.SaveSolution(sol);
-    // cout << "test whether solution is feasible" << endl;
-    sol.validate();
-    /*
-    cout << "Travel cost = " << sol.ComputeTotalCostTTP() << endl;
-    GurSolver gur_validate(in);
-    gur_validate.iTTP();
-    gur_validate.Fix_x(sol);
-    gur_validate.solve();
-    cout << "feasible!!" << endl;
-    */
+    if (!data.LP){
+        gur.SaveSolution(sol);
+        // cout << "test whether solution is feasible" << endl;
+        sol.validate();
+        /*
+        cout << "Travel cost = " << sol.ComputeTotalCostTTP() << endl;
+        GurSolver gur_validate(in);
+        gur_validate.iTTP();
+        gur_validate.Fix_x(sol);
+        gur_validate.solve();
+        cout << "feasible!!" << endl;
+        */
+    }
 
     // Save solution in file:
     if ((in.getSetting() == Setting::Football || in.getSetting() == Setting::Hockey) && min_cap){
@@ -861,22 +863,42 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
     string config;
     
     if (in.getSetting() == Setting::TTP){
-        FilePath = FolderPath + "Results" + std::string(PATHSEP);
-        if (data.TripModelHAP_Fixed){
-            FilePath += "IP_TripModel_HAP_fixed";
-        }
-        else if (data.SolveTripModel){
-            FilePath += "IP_TripModel";
+        if (data.LP){
+            FilePath = FolderPath + "Bounds" + std::string(PATHSEP);
+            if (data.SolveTripModel){
+                FilePath += "IP_TripModel_";
+            }
+            else{
+                FilePath += "IP_";
+            }
+            FilePath += sol.getInstanceName() + ".txt";
+            std::ofstream output_file(FilePath);
+            int LB = gur.getBestBound();
+            int UB = gur.getBestObjValue();
+            double RT = gur.getRunTime();
+            output_file << sol.getInstanceName() << "," << LB << "," << UB << "," << RT << "\n";
+            output_file.close();
+            cout << "Saved files as " << FilePath << endl;
+            return;
         }
         else{
-            FilePath += "IP";
-        }
-        FilePath += std::string(PATHSEP) + sol.getInstanceName() + ".txt";
-        if (data.SolveTripModel){
-            config = to_string(data.seed) + ",IP_TripModel," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
-        }
-        else{
-            config = to_string(data.seed) + ",IP," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
+            FilePath = FolderPath + "Results" + std::string(PATHSEP);
+            if (data.TripModelHAP_Fixed){
+                FilePath += "IP_TripModel_HAP_fixed";
+            }
+            else if (data.SolveTripModel){
+                FilePath += "IP_TripModel";
+            }
+            else{
+                FilePath += "IP";
+            }
+            FilePath += std::string(PATHSEP) + sol.getInstanceName() + ".txt";
+            if (data.SolveTripModel){
+                config = to_string(data.seed) + ",IP_TripModel," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
+            }
+            else{
+                config = to_string(data.seed) + ",IP," + to_string(sol.getNrTeams()) + "," + to_string(sol.getNrRounds());
+            }
         }
     }
     else if (in.getSetting() == Setting::Football){
@@ -903,7 +925,7 @@ void SolveIP(Input& in, vector<int>& TimeStamps, const string FolderPath, const 
         output_file << "TTP violations cost = " << sol.ComputeTotalCostTTPViolations() << "\n";
     }
     output_file.close();
-    // cout << "Close file" << endl;
+    cout << "Save file as " << FilePath << endl;
 
     // cin.get();
     return;

@@ -101,6 +101,7 @@ struct InputData{
     bool SolveTripModel = false; // iTTP
     bool TripModelHAP_Fixed = false; //iTTP
     bool GM_Constructive = false; //iTTP
+    bool LP = false; //iTTP
 
     bool ConstraintViolationAllowed = false;
 };

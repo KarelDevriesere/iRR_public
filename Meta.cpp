@@ -87,7 +87,6 @@ void MetaBase<Move>::UpdateBestSolution(Solution& sol){
                     BestTeamColorOpp[a][r] = h;
                 }
             }
-            // cout << "New best solution value = " << sol.ComputeTotalCost() << endl;
         }
 
 

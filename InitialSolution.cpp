@@ -88,6 +88,10 @@ void RepairBalanceHA(Solution& sol){
 				sol.Orientation[j][c1] = HA::A;
 				NodeSeen[i] = true;
 				NodeSeen[j] = true;
+				sol.MatchColor[i][j] = c1;
+				if (sol.SRR){
+					sol.MatchColor[j][i] = c1;
+				}
 			}
 		}
 	}

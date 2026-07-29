@@ -352,6 +352,9 @@ int main(int argc, const char* argv[]){
         else if (arg == "--TripModelHAPFixed"){ // TTP
             data.TripModelHAP_Fixed = std::stoi(argv[++i]);
         }
+        else if (arg == "--LP"){ // TTP
+            data.LP = std::stoi(argv[++i]); // If 1 then if we solve a formulation, we compute its Linear Programming relaxation!
+        }
         else if (arg == "--OutputFolder"){
             data.OutputFolder = argv[++i];
             if (!std::filesystem::is_directory(data.OutputFolder)){

@@ -91,6 +91,8 @@ class GurSolver : public Input
 
     public:
 
+        bool LP_relaxation = false;
+
         int CurrentTimeStampIndexOuter = 0; // duplicate in SA.h
         vector<int>TimeStampsOuter; // duplicate in SA.h
         unordered_map<int,int>TimeStampSolutionOuter; // Best solution after certain time (in seconds) // duplicate in SA.h
@@ -100,12 +102,12 @@ class GurSolver : public Input
 
         vector<bool>HapFixed; // whether the hap of team i is fixed
         
-        void build_base(const bool HA, const bool relax_x);
-        void build_league(const bool HA, const bool relax_x);
-        void build_base_league(const bool HA, const bool relax_x, const int l);
+        void build_base(const bool HA);
+        void build_league(const bool HA);
+        void build_base_league(const bool HA, const int l);
         void build_capacity_constraint_league(Solution& sol, const int l);
         void AddObjMinTravelLeague(const int l);
-        int build_all(const bool HA, const bool relax_x);
+        int build_all(const bool HA);
         void build_HAP_constraints();
         void AddObj(const bool min_travel, const bool min_capacity_violations);
         void AddObjGeneralCosts(); // for cost minimization
@@ -125,7 +127,7 @@ class GurSolver : public Input
         
         void Fix_x(Solution& sol);
         void FixHAP(Solution& sol);
-        void BuildIntegratedFormulation(const bool relax_x, const bool min_travel, const bool min_capacity_violations);
+        void BuildIntegratedFormulation(const bool min_travel, const bool min_capacity_violations);
         void BuildPatternFormulation();
         void Fix_y_Patterns(const Solution& sol);
         void AssignHAPsToTeams(Solution& sol);
